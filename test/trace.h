@@ -24,12 +24,12 @@
 #endif
 
 #define TRACE_INIT \
-		struct timeval _TRACE_TIME_START; \
-		struct timeval _TRACE_TIME_END; \
-		double _TRACE_TIME_DIFF; \
-		clock_t _TRACE_CLOCK_START; \
-		clock_t _TRACE_CLOCK_END; \
-		double _TRACE_CLOCK_DIFF;
+	struct timeval _TRACE_TIME_START; \
+	struct timeval _TRACE_TIME_END; \
+	double _TRACE_TIME_DIFF; \
+	clock_t _TRACE_CLOCK_START; \
+	clock_t _TRACE_CLOCK_END; \
+	double _TRACE_CLOCK_DIFF;
 /*
  * Leaving the variadic args off only works with LLVM/GCC
  * see http://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
