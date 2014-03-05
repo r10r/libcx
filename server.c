@@ -10,6 +10,7 @@ void
 enable_so_opt(int fd, int option)
 {
 	int enable = 1;
+
 	setsockopt(fd, SOL_SOCKET, option, (void*)&enable, sizeof(enable));
 }
 
