@@ -3,3 +3,7 @@
 coverage
 coverage.info
 .coverage
+
+# generated executables
+src/server
+test/unit/test_list
