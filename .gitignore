@@ -1,5 +1,3 @@
-.cproject
-.project
 coverage
 coverage.info
 .coverage
@@ -7,3 +5,4 @@ coverage.info
 # generated executables
 src/server
 test/unit/test_list
+
