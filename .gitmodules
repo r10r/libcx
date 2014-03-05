@@ -13,3 +13,6 @@
 [submodule "libcx-buffer"]
 	path = libcx-buffer
 	url = git@github.com:r10r/libcx-buffer.git
+[submodule "libcx-sandbox"]
+	path = libcx-sandbox
+	url = git@github.com:r10r/libcx-sandbox.git
