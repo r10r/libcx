@@ -54,7 +54,7 @@ endif
 # You can set objects,CFLAGS,LDFLAGS per program/test.
 define PROGRAM_template
 $(1): $$($(2)_OBJS) $(1).c
-	$$(CC) $$(CFLAGS) $$($(2)_CFLAGS) $$(LDFLAGS) $$($(2)_LDFLAGS) \
+	$$(CC) $$(CFLAGS) $$(LDFLAGS) $$($(2)_FLAGS) \
 	-o $(1) $$($(2)_OBJS)
 
 OBJS += $$($(2)_OBJS)
@@ -64,7 +64,7 @@ $(foreach prog,$(PROGRAMS),$(eval $(call PROGRAM_template,$(prog),$(notdir $(pro
 # The test template executes the generated program afterwards (runs the test).
 define TEST_template
 $(1): $$($(2)_OBJS) $(1).c
-	$$(CC) $$(CFLAGS) $$($(2)_CFLAGS) $$(LDFLAGS) $$($(2)_LDFLAGS) \
+	$$(CC) $$(CFLAGS) $$(LDFLAGS) $$($(2)_FLAGS) \
 	-o $(1) $$($(2)_OBJS) && $(1)
 
 OBJS += $$($(2)_OBJS)

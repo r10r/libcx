@@ -6,12 +6,12 @@ L := $(LOCAL_DIR)
 #TESTS += $(L)/
 
 # -- executables --
-#_OBJS := 
-#_CFLAGS := 
+#_OBJS := $(L)/
+#_FLAGS := $(L)/
 
 # -- tests -- 
-TEST_CFLAGS := -Wall -w -g -I$(BASE_DIR) -DTEST -DTRACE
+TEST_FLAGS := -Wall -w -g -I$(BASE_DIR)
 TEST_OBJS := $(BASE_DIR)/test/unity.o
 
 #_OBJS := $(TEST_OBJS)
-#_CFLAGS := $(TEST_CFLAGS)
+#_FLAGS := $(TEST_FLAGS)
