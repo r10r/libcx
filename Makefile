@@ -50,7 +50,7 @@ endif
 
 # [ templates ]
 # =============
-# Templates for programms and tests.
+# Templates for programs and tests.
 # You can set objects,CFLAGS,LDFLAGS per program/test.
 define PROGRAM_template
 $(1): $$($(2)_OBJS) $(1).c
@@ -79,16 +79,14 @@ $(foreach prog,$(TESTS),$(eval $(call TEST_template,$(prog),$(notdir $(prog)))))
 %.o.mk: %.o
 	$(OBJECT_DEPENDENCY_SCRIPT) $*.c $(CFLAGS) $*.c > $@
 	
-
-	
-# include a dependency file per object
-# when it does not exist the rule above automatically
-# creates the dependency file
+# Include a dependency file per object.
+# The dependency file is created automatically by the rule above.
 include $(OBJS:=.mk)
 	
 
 # [ uncrustify ]
 # ==============
+# Keep your code nice and shiny ;)
 .uncrustify: $(SRC)
 	uncrustify --mtime -c $(UNCRUSTIFY_CONFIG) --replace $? &&\
 	touch .uncrustify
@@ -96,8 +94,8 @@ include $(OBJS:=.mk)
 uncrustify: .uncrustify;
 
 
-# [ gcov/lcov ]
-# =============
+# [ lcov ]
+# ========
 $(LCOV_DIR)/index.html: $(LCOV_INFO_FILE)
 	genhtml --ignore-errors source $(LCOV_INFO_FILE) \
 	--output-directory $(LCOV_DIR)
@@ -107,7 +105,7 @@ $(LCOV_INFO_FILE): $(TESTS)
 	--no-external --output-file $(LCOV_INFO_FILE) \
 	--gcov-tool $(GCOV_TOOL)
 	
-coverage: $(LCOV_DIR)/index.html;
+lcov: $(LCOV_DIR)/index.html;
 
 
 # [ clean ]
