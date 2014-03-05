@@ -10,7 +10,7 @@ TESTS += $(L)/test_list
 #_CFLAGS := 
 
 # -- tests -- 
-TEST_CFLAGS := -Wall -w -g -I$(BASE_DIR) -DTEST -DTRACE
+TEST_CFLAGS := -Wall -w -g -I$(BASE_DIR)
 TEST_OBJS := $(BASE_DIR)/test/unity.o
 
 test_list_OBJS := $(TEST_OBJS) $(L)/test_list.o $(L)/list.o
