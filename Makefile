@@ -2,7 +2,7 @@ default: all
 
 # [ settings ]
 # ============
-# Variables that might be overwritten by commandline or Settings.mk
+# Variables that might be overwritten by commandline or module.mk
 BASE_DIR := $(realpath $(PWD))
 UNCRUSTIFY_CONFIG := $(BASE_DIR)/uncrustify.cfg
 LCOV_INFO_FILE := coverage.info
@@ -31,7 +31,7 @@ include $(patsubst %,%/module.mk,$(MODULES))
 
 # look for include files in each of the modules
 # use -isystem ?
-CFLAGS += $(patsubst %,-I%,$(MODULES))
+#CFLAGS += $(patsubst %,-I%,$(MODULES))
 
 all: $(OBJS) $(PROGRAMS) $(TESTS)
 
@@ -74,9 +74,12 @@ $(foreach prog,$(TESTS),$(eval $(call TEST_template,$(prog),$(notdir $(prog)))))
 
 # [ dependency tracking ]
 # =======================
-# calculate C include dependencies
-%.o.mk: %.c
+# Calculate dependencies for object.
+# Regenerate dependency makefile when object is updated.
+%.o.mk: %.o
 	$(OBJECT_DEPENDENCY_SCRIPT) $*.c $(CFLAGS) $*.c > $@
+	
+
 	
 # include a dependency file per object
 # when it does not exist the rule above automatically

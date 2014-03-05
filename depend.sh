@@ -1,16 +1,14 @@
 #!/bin/sh --posix
-SRC="$1"
-DIR=`dirname $SRC`
-SUFFIX=o.mk
-
+readonly OBJ_DIR=`dirname $1`
 shift 1
+
 # append dependency information
-RULE=`cc -MM -MG "$@"`
-#OBJ=`echo "$RULE" | cut -d':' -f 1`
-SRC=`echo "$RULE" | cut -d':' -f 2`
+readonly RULE=`cc -MM -MG "$@"`
+readonly OBJ=`echo "$RULE" | cut -d':' -f 1`
+readonly SRC=`echo "$RULE" | cut -d':' -f 2`
 
 cat <<EOF
-${DIR}/${RULE}
+${OBJ_DIR}/${RULE}
 
 SRC += ${SRC}
 EOF
