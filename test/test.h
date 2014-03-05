@@ -11,8 +11,8 @@
 #include "trace.h"
 
 #define NOSETUP \
-	void setUp(){}; \
-	void tearDown(){};
+	void setUp(){} \
+	void tearDown(){}
 
 #define RUN(func) \
 	RUN_TEST(func, __LINE__);
