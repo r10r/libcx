@@ -7,11 +7,11 @@ TESTS += $(L)/test_list
 
 # -- executables --
 #_OBJS := 
-#_CFLAGS := 
+#_FLAGS := 
 
 # -- tests -- 
-TEST_CFLAGS := -Wall -w -g -I$(BASE_DIR)
+TEST_FLAGS := -Wall -w -g -I$(BASE_DIR)
 TEST_OBJS := $(BASE_DIR)/test/unity.o
 
 test_list_OBJS := $(TEST_OBJS) $(L)/test_list.o $(L)/list.o
-test_list_CFLAGS := $(TEST_CFLAGS)
+test_list_FLAGS := $(TEST_FLAGS)
