@@ -6,7 +6,13 @@
 #ifndef _TRACE_H
 #define _TRACE_H
 
-#ifdef TRACE
+#ifndef TRACE
+
+#define TRACE_BEGIN
+#define TRACE_BEGIN_FMT
+#define TRACE_END
+
+#else
 
 #include <sys/time.h> /* clock, gettimeofday, CLOCKS_PER_SEC */
 #include <stdio.h>
@@ -53,9 +59,8 @@ static const char *_TRACE_END_FMT =
 	_TRACE_CLOCK_END = clock(); \
 	_TRACE_CLOCK_DIFF = (double)(_TRACE_CLOCK_END - _TRACE_CLOCK_START) / CLOCKS_PER_SEC * 1000.0; \
 	printf(_TRACE_END_FMT, _TRACE_TIME_DIFF, _TRACE_CLOCK_DIFF);
-#else
-#define TRACE_BEGIN
-#define TRACE_END
+
+
 #endif
 
 #endif
