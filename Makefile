@@ -80,8 +80,6 @@ $(foreach prog,$(TESTS),$(eval $(call TEST_template,$(prog))))
 # Regenerate dependency makefile when object is updated.
 %.o.mk:
 	$(OBJECT_DEPENDENCY_SCRIPT) $*.c $(CFLAGS) $*.c > $@
-
-%.o.mk: %o;
 	
 # Include a dependency file per object.
 # The dependency file is created automatically by the rule above.
