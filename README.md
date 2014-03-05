@@ -22,7 +22,8 @@ Include module in header
 ### TODO
 
 * Protect internal API in header files (for proper encapsulation).
-* Make each module self contained (using a module makefile **module.mk** )
+* Make each module self contained (using a module makefile **module.mk**)
+* Do not generate dependency files when running **clean**
 
 ## Makefile
 

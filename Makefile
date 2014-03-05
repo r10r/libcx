@@ -29,6 +29,8 @@ TESTS :=
 -include $(BASE_DIR)/module.mk
 include $(patsubst %,%/module.mk,$(MODULES))
 
+$(info Using dependency script: $(OBJECT_DEPENDENCY_SCRIPT))
+
 # look for include files in each of the modules
 # use -isystem ?
 #CFLAGS += $(patsubst %,-I%,$(MODULES))
@@ -53,31 +55,33 @@ endif
 # Templates for programs and tests.
 # You can set objects,CFLAGS,LDFLAGS per program/test.
 define PROGRAM_template
-$(1): $$($(2)_OBJS) $(1).c
-	$$(CC) $$(CFLAGS) $$(LDFLAGS) $$($(2)_FLAGS) \
-	-o $(1) $$($(2)_OBJS)
+$(1): $$($(1)_OBJS) $(1).c
+	$$(CC) $$(CFLAGS) $$(LDFLAGS) $$($(1)_FLAGS) \
+	-o $(1) $$($(1)_OBJS)
 
-OBJS += $$($(2)_OBJS)
+OBJS += $$($(1)_OBJS)
 endef
-$(foreach prog,$(PROGRAMS),$(eval $(call PROGRAM_template,$(prog),$(notdir $(prog)))))
+$(foreach prog,$(PROGRAMS),$(eval $(call PROGRAM_template,$(prog))))
 
 # The test template executes the generated program afterwards (runs the test).
 define TEST_template
-$(1): $$($(2)_OBJS) $(1).c
-	$$(CC) $$(CFLAGS) $$(LDFLAGS) $$($(2)_FLAGS) \
-	-o $(1) $$($(2)_OBJS) && $(1)
+$(1): $$($(1)_OBJS) $(1).c
+	$$(CC) $$(CFLAGS) $$(LDFLAGS) $$($(1)_FLAGS) \
+	-o $(1) $$($(1)_OBJS) && $(1)
 
-OBJS += $$($(2)_OBJS)
+OBJS += $$($(1)_OBJS)
 endef
-$(foreach prog,$(TESTS),$(eval $(call TEST_template,$(prog),$(notdir $(prog)))))
+$(foreach prog,$(TESTS),$(eval $(call TEST_template,$(prog))))
 
 
 # [ dependency tracking ]
 # =======================
 # Calculate dependencies for object.
 # Regenerate dependency makefile when object is updated.
-%.o.mk: %.o
+%.o.mk:
 	$(OBJECT_DEPENDENCY_SCRIPT) $*.c $(CFLAGS) $*.c > $@
+
+%.o.mk: %o;
 	
 # Include a dependency file per object.
 # The dependency file is created automatically by the rule above.
@@ -112,6 +116,7 @@ lcov: $(LCOV_DIR)/index.html;
 # =========
 # Should remove all generated artifacts
 ARTIFACTS := $(OBJS) $(OBJS:=.mk) \
+	$(PROGRAMS) $(TESTS) \
 	$(OBJS:.o=.gcda) $(OBJS:.o=.gcno) \
 	$(LCOV_DIR) $(LCOV_INFO_FILE)
 	
