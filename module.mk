@@ -7,14 +7,14 @@ PROGRAMS += $(L)/echo-client $(L)/echo-server
 
 # -- executables --
 echo-client_OBJS := $(L)/echo-client.o $(L)/client.o 
-echo-client_LDFLAGS := -lev 
+echo-client_FLAGS := -lev 
 
 echo-server_OBJS := $(L)/echo-server.o $(L)/server.o 
-echo-server_LDFLAGS := -lev 
+echo-server_FLAGS := -lev 
 
 # -- tests -- 
-TEST_CFLAGS := -Wall -w -g -I$(BASE_DIR) -DTEST -DTRACE
+TEST_FLAGS := -Wall -w -g -I$(BASE_DIR)
 TEST_OBJS := $(BASE_DIR)/test/unity.o
 
 #_OBJS := $(TEST_OBJS)
-#_CFLAGS := $(TEST_CFLAGS)
+#_FLAGS := $(TEST_FLAGS)
