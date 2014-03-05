@@ -1,13 +1,13 @@
 #ifndef _TEST_H
 #define _TEST_H
 
-#include <stdlib.h>                             /* prevent unity from overriding malloc and free */
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include "unity/unity.h"
+#include "unity.h"
 #include "trace.h"
 
 #define NOSETUP \
@@ -23,7 +23,7 @@
 #define TEST_END \
 	return UnityEnd();
 
-/* see http://stackoverflow.com/questions/5459868/c-preprocessor-concatenate-int-to-string */
+/* @see http://stackoverflow.com/questions/5459868/c-preprocessor-concatenate-int-to-string */
 #define STR_HELPER(x) #x
 #define S(x) STR_HELPER(x)
 
