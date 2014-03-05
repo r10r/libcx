@@ -17,6 +17,30 @@ Include module in header
 
 	#include <cx/list.h>
 
+### Questions
+
 ### TODO
 
-* protect internal API / proper encapsulation
+* Protect internal API in header files (for proper encapsulation).
+* Make each module self contained (using a module makefile **module.mk** )
+
+## Makefile
+
+* [Recursive Make Considered Harmful](http://miller.emu.id.au/pmiller/books/rmch/)
+
+* Use immediate evaluation `:=` unless you knowingly want deferred evaluation.
+* Record results and include them in the Makefile.
+* Automatic include dependency tracking to rely on interface changes in *.h files.
+* Complete DAG right
+* Use includes, as opening files is relatively inexpensive
+* A whole project make only needs to interpret a single Makefile (build the DAG once)
+* Do full project builds to spot errors/dependencies early
+
+### Debugging
+
+	$(warning $(D))
+
+* use `--debug` parameter
+
+### Resources
+* http://mad-scientist.net/make/
