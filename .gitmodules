@@ -7,3 +7,9 @@
 [submodule "libcx-workqueue"]
 	path = libcx-workqueue
 	url = git@github.com:r10r/libcx-workqueue.git
+[submodule "libcx-ragel"]
+	path = libcx-ragel
+	url = git@github.com:r10r/libcx-ragel.git
+[submodule "libcx-buffer"]
+	path = libcx-buffer
+	url = git@github.com:r10r/libcx-buffer.git
