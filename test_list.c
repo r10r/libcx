@@ -1,20 +1,22 @@
 #include "test/test.h"
 #include "list.h"
+#include <unistd.h> /* sleep */
 
 NOSETUP
+TRACE_INIT
 
 /* test parameterization constants */
 static int elements;
 static int search_for;
 
-int my_strcmp(Node *node, char *data)
+int my_strcmp(Node *node, void *data)
 {
-	return strcmp(node->data.value, data);
+	return strcmp(node->data.value, (char *) data);
 }
 
 void char_node_print(Node *node)
 {
-	printf("Node: %s\n", node->data);
+	printf("Node: %p\n", &node->data);
 }
 
 int hash_key_compare_key(Node *node, unsigned long key)
@@ -33,12 +35,12 @@ void test_linked_list() {
 	// unitialized array does not take up any space
 	// first write to array initializes it ?
 
-	printf("LONG size %d, data struct %d\n", sizeof(unsigned long), sizeof(Data));
+	printf("LONG size %lu, data struct %lu\n", sizeof(unsigned long), sizeof(Data));
 
 	TRACE_BEGIN_FMT("insert %d items\n", elements);
 
 	int i;
-	char *buf[1024];
+	char buf[1024];
 
 	List *list = List_new();
 	list->free_node_cb = free_string_node;
@@ -56,7 +58,7 @@ void test_linked_list() {
 	for(i = 0; i < elements; i++)
 	{
 		Node *node = List_find(list, buf, my_strcmp);
-//		TEST_ASSERT_NOT_NULL(node);
+		TEST_ASSERT_NOT_NULL(node);
 //		TEST_ASSERT_EQUAL_STRING(search_value, node->data.value);
 	}
 	TRACE_END
