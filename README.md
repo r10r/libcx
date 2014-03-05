@@ -36,6 +36,11 @@ Include module in header
 * A whole project make only needs to interpret a single Makefile (build the DAG once)
 * Do full project builds to spot errors/dependencies early
 
+### Tests
+
+* Test includes should be relative to BASE_DIR ?
+* Include test includes / sources in every module ?
+
 ### Debugging
 
 	$(warning $(D))

@@ -12,8 +12,6 @@ MODULES :=
 OS := $(shell uname -s)
 OBJECT_DEPENDENCY_SCRIPT := $(BASE_DIR)/depend.sh
 
--include $(BASE_DIR)/Settings.mk
-
 # A macro that evaluates to the local directory path of an included Makefile.
 LOCAL_DIR = $(realpath $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST)))))
 
