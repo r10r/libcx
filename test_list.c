@@ -11,7 +11,7 @@ static int search_for;
 
 int my_strcmp(Node *node, void *data)
 {
-	return strcmp(node->data.value, (char *) data);
+	return strcmp(node->data.value, (char*)data);
 }
 
 void char_node_print(Node *node)
@@ -29,7 +29,8 @@ void free_string_node(Node *node)
 	free(node->data.value);
 }
 
-void test_linked_list() {
+void test_linked_list()
+{
 //	unsigned long x[ITEMS] = { 0 };
 
 	// unitialized array does not take up any space
@@ -45,7 +46,7 @@ void test_linked_list() {
 	List *list = List_new();
 	list->free_node_cb = free_string_node;
 
-	for(i = 0; i < elements; i++)
+	for (i = 0; i < elements; i++)
 	{
 		sprintf(buf, "foobar %d", i);
 		List_append(list, strdup(buf));
@@ -55,7 +56,7 @@ void test_linked_list() {
 
 	sprintf(buf, "foobar %d", search_for);
 	TRACE_BEGIN_FMT("find item [%s] in %d items\n", buf, elements);
-	for(i = 0; i < elements; i++)
+	for (i = 0; i < elements; i++)
 	{
 		Node *node = List_find(list, buf, my_strcmp);
 		TEST_ASSERT_NOT_NULL(node);
@@ -99,7 +100,8 @@ int main()
 {
 	TEST_BEGIN
 
-	elements = 100;
+		elements = 100;
+
 	search_for = 99;
 	RUN(test_linked_list);
 

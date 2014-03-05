@@ -29,8 +29,8 @@ typedef struct list_t
 	Node *first;
 	Node *last;
 	long length;
-	void(*free_node_cb)(Node *node);
-	void(*hash_node_cb)(Node *node);
+	void (*free_node_cb)(Node *node);
+	void (*hash_node_cb)(Node *node);
 } List;
 
 Node *
@@ -43,15 +43,15 @@ void
 List_destroy(List *list);
 
 void
-Node_destroy(Node *node, void(*free_node_cb)(Node *node));
+Node_destroy(Node *node, void (*free_node_cb)(Node *node));
 
 void
 List_append(List *list, void *data);
 
 Node *
-List_find(List *list, void *key, int(*comp)(Node *node, void *key));
+List_find(List *list, void *key, int (*comp)(Node *node, void *key));
 
 void
-List_each(List *list, void(*iterator)(Node *node));
+List_each(List *list, void (*iterator)(Node *node));
 
 #endif

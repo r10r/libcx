@@ -9,6 +9,7 @@ Node *
 Node_new()
 {
 	Node * node = malloc(sizeof(Node));
+
 	node->next = NULL;
 	nodes_created++;
 	return node;
@@ -18,6 +19,7 @@ List *
 List_new()
 {
 	List *list = malloc(sizeof(List));
+
 	list->first = NULL;
 	list->last = NULL;
 	list->length = 0;
@@ -27,7 +29,7 @@ List_new()
 }
 
 void
-Node_destroy(Node *node, void(*free_node_cb)(Node *node))
+Node_destroy(Node *node, void (*free_node_cb)(Node *node))
 {
 	free_node_cb(node);
 	free(node);
@@ -37,6 +39,7 @@ void
 List_append(List *list, void *data)
 {
 	Node *node = Node_new();
+
 	node->data.value = data;
 	if (list->hash_node_cb)
 		list->hash_node_cb(node);
@@ -60,7 +63,8 @@ void
 List_destroy(List *list)
 {
 	Node *next = list->first;
-	while(next)
+
+	while (next)
 	{
 		Node *cur = next;
 		next = cur->next;
@@ -70,22 +74,25 @@ List_destroy(List *list)
 }
 
 Node *
-List_find(List *list, void *key, int(*comp)(Node *node, void *key))
+List_find(List *list, void *key, int (*comp)(Node *node, void *key))
 {
 	Node *node = list->first;
-	while(node)
+
+	while (node)
 	{
-		if (comp(node, key) == 0) return node;
+		if (comp(node, key) == 0)
+			return node;
 		node = node->next;
 	}
 	return NULL;
 }
 
 void
-List_each(List *list, void(*iterator)(Node *node))
+List_each(List *list, void (*iterator)(Node *node))
 {
 	Node *node = list->first;
-	while(node)
+
+	while (node)
 	{
 		iterator(node);
 		node = node->next;
