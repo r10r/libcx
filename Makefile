@@ -116,9 +116,9 @@ lcov: $(LCOV_DIR)/index.html;
 # malloc/free with xmalloc/xfree is a feasible option.
 # [ valgrind ]
 # ============
-.PHONY
-valgrind:
-	valgrind --error-exitcode=1 --leak-check=full ./libcx-list/test_list
+#.PHONY
+#valgrind:
+#	valgrind --error-exitcode=1 --leak-check=full ./libcx-list/test_list
 
 
 # [ clean ]
