@@ -177,6 +177,50 @@ test_List_pop()
 	List_free(list);
 }
 
+void
+test_List_prepend()
+{
+	List *list = List_new();
+
+	List_prepend(list, "node 1");
+	List_prepend(list, "node 2");
+	List_prepend(list, "node 3");
+
+	TEST_ASSERT_EQUAL_INT(3, list->length);
+
+	TEST_ASSERT_EQUAL_STRING("node 1", List_pop(list));
+	TEST_ASSERT_EQUAL_STRING("node 2", List_pop(list));
+	TEST_ASSERT_EQUAL_STRING("node 3", List_pop(list));
+
+	TEST_ASSERT_EQUAL_INT(0, list->length);
+	TEST_ASSERT_NULL(list->first);
+	TEST_ASSERT_NULL(list->last);
+
+	List_free(list);
+}
+
+void
+test_List_unshift()
+{
+	List *list = List_new();
+
+	List_unshift(list, "node 1");
+	List_unshift(list, "node 2");
+	List_unshift(list, "node 3");
+
+	TEST_ASSERT_EQUAL_INT(3, list->length);
+
+	TEST_ASSERT_EQUAL_STRING("node 1", List_pop(list));
+	TEST_ASSERT_EQUAL_STRING("node 2", List_pop(list));
+	TEST_ASSERT_EQUAL_STRING("node 3", List_pop(list));
+
+	TEST_ASSERT_EQUAL_INT(0, list->length);
+	TEST_ASSERT_NULL(list->first);
+	TEST_ASSERT_NULL(list->last);
+
+	List_free(list);
+}
+
 int main()
 {
 	TEST_BEGIN
@@ -186,5 +230,7 @@ int main()
 	RUN(test_List_each);
 	RUN(test_List_shift);
 	RUN(test_List_pop);
+	RUN(test_List_prepend);
+	RUN(test_List_unshift);
 	TEST_END
 }

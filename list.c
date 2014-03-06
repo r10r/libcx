@@ -98,8 +98,7 @@ List_match(List *list, void *key, F_NodeMatch *f_node_match)
 
 	while (node)
 	{
-		if (f_node_match(node, key) == 0)
-			break;
+		if (f_node_match(node, key) == 0) break;
 		node = node->next;
 	}
 	_LIST_UNLOCK_READ(list);
@@ -167,4 +166,39 @@ List_pop(List *list)
 	}
 	_LIST_UNLOCK_WRITE(list);
 	return data;
+}
+
+static inline void
+_List_prepend(List *list, void *data)
+{
+	_LIST_LOCK_WRITE(list);
+	Node *new = Node_new();
+	new->data = data;
+
+	Node *child = list->first;
+	if (child)
+	{
+		child->previous = new;
+		new->next = child;
+		list->first = new;
+	}
+	else
+	{
+		list->first = new;
+		list->last = new;
+	}
+	list->length++;
+	_LIST_UNLOCK_WRITE(list);
+}
+
+void
+List_prepend(List *list, void *data)
+{
+	_List_prepend(list, data);
+}
+
+void
+List_unshift(List *list, void *data)
+{
+	_List_prepend(list, data);
 }
