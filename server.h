@@ -4,7 +4,7 @@
 #include <stdio.h>      /* puts ... */
 #include <unistd.h>     /* STDIN_FILENO */
 #include <fcntl.h>      /* fcntl, to make socket non-blocking */
-#include <errno.h>
+#include "libcx-base/debug.h"
 
 #include <sys/socket.h> /* guess what ;) */
 #include <sys/un.h>
@@ -29,12 +29,6 @@
 /* set given file descriptor as non-blocking */
 #define unblock(fd) \
 	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK)
-
-
-/* error reporting combinding perror with file/line/function information */
-#define DBG_ERRNO(message) \
-	fprintf( stderr, "Error %d at %s:%d(%s)\n", errno, __FILE__, __LINE__, __func__ ); \
-	perror("--> " message)
 
 /* server socket file descriptor */
 extern int server_fd;

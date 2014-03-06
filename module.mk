@@ -14,7 +14,7 @@ $(L)/echo-server_FLAGS := -lev
 
 # -- tests -- 
 TEST_FLAGS := -Wall -w -g -I$(BASE_DIR)
-TEST_OBJS := $(BASE_DIR)/test/unity.o
+TEST_OBJS := $(BASE_DIR)/libcx-base/unity.o
 
 #_OBJS := $(TEST_OBJS)
 #_FLAGS := $(TEST_FLAGS)

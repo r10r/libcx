@@ -30,7 +30,7 @@ on_client_write(ev_loop *loop, ev_io *watcher, int revents)
 	int data_length = strlen(data);
 	int bytes = send(watcher->fd, data, data_length, 0);
 	if (bytes < data_length)
-		DBG_ERRNO("Failed to send data");
+		XERR("Failed to send data");
 	close(watcher->fd);
 	free(watcher);
 }
@@ -53,7 +53,7 @@ on_client_read(ev_loop *loop, ev_io *data_watcher, int revents)
 
 	if (num_read == IO_ERR)
 	{
-		DBG_ERRNO("Failed to receive data");
+		XERR("Failed to receive data");
 		ev_io_stop(loop, data_watcher);
 	}
 	else
@@ -95,7 +95,7 @@ on_connection(ev_loop *loop, ev_io *connection_watcher, int revents)
 	int client_fd = accept(server_fd, NULL, NULL);
 	if (client_fd == ACCEPT_ERROR)
 	{
-		DBG_ERRNO("Failed to accept");
+		XERR("Failed to accept");
 		return;
 	}
 	else
@@ -150,7 +150,7 @@ unix_socket_connect(const char *sock_path)
 	fd = socket(PF_UNIX, SOCK_STREAM, 0);
 	if (fd == SOCKET_CREATE_ERROR)
 	{
-		DBG_ERRNO("Failed to create socket");
+		XERR("Failed to create socket");
 		return SOCKET_CONNECT_FAILED;
 	}
 
@@ -164,7 +164,7 @@ unix_socket_connect(const char *sock_path)
 	ret = bind(fd, (struct sockaddr *)&address, address_size);
 	if (ret != BIND_SUCCESS)
 	{
-		DBG_ERRNO("Failed to bind to socket");
+		XERR("Failed to bind to socket");
 		return SOCKET_CONNECT_FAILED;
 	}
 
@@ -172,7 +172,7 @@ unix_socket_connect(const char *sock_path)
 	ret = listen(fd, SOCK_BACKLOG);
 	if (ret != LISTEN_SUCCESS)
 	{
-		DBG_ERRNO("Failed to listen to socket");
+		XERR("Failed to listen to socket");
 		return SOCKET_CONNECT_FAILED;
 	}
 	return fd;
