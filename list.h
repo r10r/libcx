@@ -89,5 +89,18 @@ List_shift(List *list);
 void *
 List_pop(List *list);
 
+///* @return data from element removed from given index */
+//void *
+//List_remove(List *list, int index);
+//
+///* @return data from node at given index */
+//void *
+//List_get(List *list, int index);
+
+void
+List_prepend(List *list, void *data);
+
+void
+List_unshift(List *list, void *data);
 
 #endif
