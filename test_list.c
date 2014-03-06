@@ -1,121 +1,190 @@
-#include "test/test.h"
+#include "libcx-base/test.h"
 #include "list.h"
 #include <unistd.h> /* sleep */
 
 NOSETUP
-TRACE_INIT
 
-/* test parameterization constants */
-static int elements;
-static int search_for;
-
-int my_strcmp(Node *node, void *data)
+static
+int data_strcmp(Node *node, void *data)
 {
-	return strcmp(node->data.value, (char*)data);
+	return strcmp(node->data, (char*)data);
 }
 
-void char_node_print(Node *node)
+static
+void node_free(void *data)
 {
-	printf("Node: %p\n", &node->data);
+	free(data);
 }
 
-int hash_key_compare_key(Node *node, unsigned long key)
+static inline
+void lock(List *list, int rw)
 {
-	return node->data.hash - key;
 }
 
-void free_string_node(Node *node)
+static inline
+void unlock(List *list, int rw)
 {
-	free(node->data.value);
 }
 
-void test_linked_list()
+void
+test_List_append()
 {
-//	unsigned long x[ITEMS] = { 0 };
-
-	// unitialized array does not take up any space
-	// first write to array initializes it ?
-
-	printf("LONG size %lu, data struct %lu\n", sizeof(unsigned long), sizeof(Data));
-
-	TRACE_BEGIN_FMT("insert %d items\n", elements);
-
-	int i;
-	char buf[1024];
-
 	List *list = List_new();
-	list->free_node_cb = free_string_node;
+	list->f_lock = lock;
+	list->f_unlock = unlock;
+	list->f_node_data_free = node_free;
 
-	for (i = 0; i < elements; i++)
-	{
-		sprintf(buf, "foobar %d", i);
-		List_append(list, strdup(buf));
-	}
-	TEST_ASSERT_EQUAL(elements, list->length);
-	TRACE_END
+	TEST_ASSERT_EQUAL_INT(0, List_append(list, strdup("node 1")));
+	TEST_ASSERT_EQUAL_STRING("node 1", list->last->data);
+	TEST_ASSERT_EQUAL_INT(1, List_append(list, strdup("node 2")));
+	TEST_ASSERT_EQUAL_STRING("node 2", list->last->data);
+	TEST_ASSERT_EQUAL_INT(2, List_append(list, strdup("node 3")));
+	TEST_ASSERT_EQUAL_STRING("node 3", list->last->data);
 
-	sprintf(buf, "foobar %d", search_for);
-	TRACE_BEGIN_FMT("find item [%s] in %d items\n", buf, elements);
-	for (i = 0; i < elements; i++)
-	{
-		Node *node = List_find(list, buf, my_strcmp);
-		TEST_ASSERT_NOT_NULL(node);
-//		TEST_ASSERT_EQUAL_STRING(search_value, node->data.value);
-	}
-	TRACE_END
+	TEST_ASSERT_EQUAL_INT(3, list->length);
 
-//	TRACE_BEGIN("find one of " S(ITEMS) " hashed items");
-//	unsigned long key = hash_djb2(search_value);
-//	for(i = 0; i < 1000000; i++)
-//	{
-//		Node *node = List_find(list, key, hash_key_compare_key);
-////		TEST_ASSERT_NOT_NULL(node);
-////		TEST_ASSERT_EQUAL_STRING(search_value, node->data.value);
-//	}
-//	TRACE_END
+	TEST_ASSERT_EQUAL_STRING("node 1", list->first->data);
+	TEST_ASSERT_EQUAL_STRING("node 2", list->first->next->data);
+	TEST_ASSERT_EQUAL_STRING("node 2", list->last->previous->data);
+	TEST_ASSERT_EQUAL_STRING("node 3", list->last->data);
 
-// TODO measure memory usage
-//	sleep(9999);
-
-	TRACE_BEGIN_FMT("free %d elements\n", elements);
-	List_destroy(list);
-
-	TRACE_END
+	List_free(list);
 }
 
-typedef struct my_foo_t
+void
+test_List_push()
 {
-	unsigned long hash;
-} MyFoo;
+	List *list = List_new();
+	list->f_node_data_free = node_free;
 
-void test_malloc()
+	TEST_ASSERT_EQUAL_INT(0, List_push(list, strdup("node 1")));
+	TEST_ASSERT_EQUAL_STRING("node 1", list->last->data);
+	TEST_ASSERT_EQUAL_INT(1, List_push(list, strdup("node 2")));
+	TEST_ASSERT_EQUAL_STRING("node 2", list->last->data);
+	TEST_ASSERT_EQUAL_INT(2, List_push(list, strdup("node 3")));
+	TEST_ASSERT_EQUAL_STRING("node 3", list->last->data);
+
+	TEST_ASSERT_EQUAL_INT(3, list->length);
+
+	TEST_ASSERT_EQUAL_STRING("node 1", list->first->data);
+	TEST_ASSERT_EQUAL_STRING("node 2", list->first->next->data);
+	TEST_ASSERT_EQUAL_STRING("node 2", list->last->previous->data);
+	TEST_ASSERT_EQUAL_STRING("node 3", list->last->data);
+
+	List_free(list);
+}
+
+void
+test_List_match()
 {
-//	unsigned long foo[1000000];
-//	MyFoo foo[1000000];
-//	MyFoo *foo  = malloc(sizeof(MyFoo) * 1000000);
-	sleep(9999);
+	List *list = List_new();
+	list->f_node_data_free = node_free;
+
+	List_push(list, strdup("node 1"));
+	List_push(list, strdup("node 2"));
+	List_push(list, strdup("node 3"));
+
+	Node *match = List_match(list, "node", data_strcmp);
+	TEST_ASSERT_NULL(match);
+
+	match = List_match(list, "node 2", data_strcmp);
+	TEST_ASSERT_NOT_NULL(match);
+	TEST_ASSERT_EQUAL_STRING("node 2", match->data);
+
+	List_free(list);
+}
+
+static void
+test_iterator(int index, Node *node)
+{
+	char buf[16];
+	sprintf(buf, "node %d", index+1);
+	TEST_ASSERT_EQUAL_STRING(buf, node->data);
+}
+
+void
+test_List_each()
+{
+	List *list = List_new();
+	list->f_node_data_free = node_free;
+
+	List_push(list, strdup("node 1"));
+	List_push(list, strdup("node 2"));
+	List_push(list, strdup("node 3"));
+
+	List_each(list, test_iterator);
+
+	List_free(list);
+}
+
+void
+test_List_shift()
+{
+	List *list = List_new();
+
+	List_push(list, "node 1");
+	List_push(list, "node 2");
+	List_push(list, "node 3");
+
+	TEST_ASSERT_EQUAL_STRING("node 1", List_shift(list));
+	TEST_ASSERT_EQUAL_STRING("node 2", list->first->data);
+	TEST_ASSERT_EQUAL_STRING("node 3", list->last->data);
+	TEST_ASSERT_EQUAL_INT(2, list->length);
+
+	TEST_ASSERT_EQUAL_STRING("node 2", List_shift(list));
+	TEST_ASSERT_EQUAL_STRING("node 3", list->first->data);
+	TEST_ASSERT_EQUAL_STRING("node 3", list->last->data);
+	TEST_ASSERT_EQUAL_INT(1, list->length);
+
+	TEST_ASSERT_EQUAL_STRING("node 3", List_shift(list));
+	TEST_ASSERT_EQUAL_INT(0, list->length);
+	TEST_ASSERT_NULL(list->first);
+	TEST_ASSERT_NULL(list->last);
+
+	TEST_ASSERT_NULL(List_shift(list));
+	TEST_ASSERT_EQUAL_INT(0, list->length);
+
+	List_free(list);
+}
+
+void
+test_List_pop()
+{
+	List *list = List_new();
+
+	List_push(list, "node 1");
+	List_push(list, "node 2");
+	List_push(list, "node 3");
+
+	TEST_ASSERT_EQUAL_STRING("node 3", List_pop(list));
+	TEST_ASSERT_EQUAL_STRING("node 1", list->first->data);
+	TEST_ASSERT_EQUAL_STRING("node 2", list->last->data);
+	TEST_ASSERT_EQUAL_INT(2, list->length);
+
+	TEST_ASSERT_EQUAL_STRING("node 2", List_pop(list));
+	TEST_ASSERT_EQUAL_STRING("node 1", list->first->data);
+	TEST_ASSERT_EQUAL_STRING("node 1", list->last->data);
+	TEST_ASSERT_EQUAL_INT(1, list->length);
+
+	TEST_ASSERT_EQUAL_STRING("node 1", List_pop(list));
+	TEST_ASSERT_EQUAL_INT(0, list->length);
+	TEST_ASSERT_NULL(list->first);
+	TEST_ASSERT_NULL(list->last);
+
+	TEST_ASSERT_NULL(List_pop(list));
+	TEST_ASSERT_EQUAL_INT(0, list->length);
+
+	List_free(list);
 }
 
 int main()
 {
 	TEST_BEGIN
-
-		elements = 100;
-
-	search_for = 99;
-	RUN(test_linked_list);
-
-	elements = 1000;
-	search_for = 500;
-	RUN(test_linked_list);
-
-	elements = 10000;
-	search_for = 5000;
-	RUN(test_linked_list);
-
-//	elements = 100000;
-//	search_for = 50000;
-//	RUN(test_linked_list);
-
+	RUN(test_List_append);
+	RUN(test_List_push);
+	RUN(test_List_match);
+	RUN(test_List_each);
+	RUN(test_List_shift);
+	RUN(test_List_pop);
 	TEST_END
 }
