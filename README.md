@@ -1,2 +1,2 @@
-libcx-test
+libcx-base
 ==========
