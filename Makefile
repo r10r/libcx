@@ -109,6 +109,17 @@ $(LCOV_INFO_FILE): $(TESTS)
 	
 lcov: $(LCOV_DIR)/index.html;
 
+# Memchecking is essential but unfortunately slow.
+# TODO Create a file for each test executable to
+# indicate the last successful valgrind run 
+# Maybe custom memory profiling by overwriting 
+# malloc/free with xmalloc/xfree is a feasible option.
+# [ valgrind ]
+# ============
+.PHONY
+valgrind:
+	valgrind --error-exitcode=1 --leak-check=full ./libcx-list/test_list
+
 
 # [ clean ]
 # =========
