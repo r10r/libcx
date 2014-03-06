@@ -1,4 +1,4 @@
-#include "test/test.h"
+#include "libcx-base/test.h"
 
 NOSETUP
 
