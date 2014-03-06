@@ -16,6 +16,21 @@ Include module as submodule
 Include module in header
 
 	#include <cx/list.h>
+	
+## Code Conventions
+
+* Typedef all functions that are used as parameters / struct members (IDE support)
+* Typedef all structs
+
+
+Structs: typedef my_type_t MyType
+
+
+### Functions
+
+Function typedefs: F_MyFunction
+Function typedefs parameters: f_my_function
+Function typedefs members: f_my_function
 
 ### Questions
 
