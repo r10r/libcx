@@ -16,3 +16,6 @@
 [submodule "libcx-sandbox"]
 	path = libcx-sandbox
 	url = git@github.com:r10r/libcx-sandbox.git
+[submodule "libcx-base"]
+	path = libcx-base
+	url = git@github.com:r10r/libcx-base.git
