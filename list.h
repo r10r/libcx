@@ -31,13 +31,13 @@ typedef void F_NodeIterator (int index, Node *node);
 #else
 /* locking support is enabled */
 #define _LIST_LOCK_READ(list) \
-	if(list->f_lock) { XDBG("lock READ"); list->f_lock(list, 0); }
+	if (list->f_lock) { XDBG("lock READ"); list->f_lock(list, 0); }
 #define _LIST_LOCK_WRITE(list) \
-		if(list->f_lock) { XDBG("lock WRITE"); list->f_lock(list, 1); }
+	if (list->f_lock) { XDBG("lock WRITE"); list->f_lock(list, 1); }
 #define _LIST_UNLOCK_READ(list) \
-		if(list->f_unlock) { XDBG("unlock READ"); list->f_unlock(list, 0); }
+	if (list->f_unlock) { XDBG("unlock READ"); list->f_unlock(list, 0); }
 #define _LIST_UNLOCK_WRITE(list) \
-		if(list->f_unlock) { XDBG("unlock WRITE"); list->f_unlock(list, 1); }
+	if (list->f_unlock) { XDBG("unlock WRITE"); list->f_unlock(list, 1); }
 #endif
 
 struct node_t
@@ -52,9 +52,12 @@ struct list_t
 	Node *first;
 	Node *last;
 	long length;
+	F_NodeDataFree *f_node_data_free;
+	void *userdata;
+#ifndef _LIST_DISABLE_LOCKING
 	F_ListLock *f_lock;
 	F_ListLock *f_unlock;
-	F_NodeDataFree *f_node_data_free;
+#endif
 };
 
 Node *
@@ -102,5 +105,11 @@ List_prepend(List *list, void *data);
 
 void
 List_unshift(List *list, void *data);
+
+void
+List_userdata_set(List *list, void *userdata);
+
+void *
+List_userdata_get(List *list);
 
 #endif
