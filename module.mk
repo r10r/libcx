@@ -1,4 +1,4 @@
-MODULES := libcx-base libcx-list libcx-socket-unix libcx-workqueue 
+MODULES := libcx-base libcx-list libcx-socket-unix libcx-workqueue libcx-buffer
 
 CFLAGS += --coverage -I$(BASE_DIR) -DTRACE \
 	-Wall -Wextra -Werror -pedantic \
