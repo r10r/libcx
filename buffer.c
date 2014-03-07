@@ -21,7 +21,7 @@ Buffer_append(Buffer *buf, char* data, size_t length)
 {
 	int offset = buf->length;
 
-	XLOG("Append data (size %d) to buffer (size %d)\n",
+	XFLOG("Append data (size %d) to buffer (size %d)\n",
 	       (int)length, (int)buf->length);
 	buf->length += length;
 
