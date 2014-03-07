@@ -30,6 +30,7 @@ void
 test_List_append()
 {
 	List *list = List_new();
+
 	list->f_lock = lock;
 	list->f_unlock = unlock;
 	list->f_node_data_free = node_free;
@@ -55,6 +56,7 @@ void
 test_List_push()
 {
 	List *list = List_new();
+
 	list->f_node_data_free = node_free;
 
 	TEST_ASSERT_EQUAL_INT(0, List_push(list, strdup("node 1")));
@@ -78,6 +80,7 @@ void
 test_List_match()
 {
 	List *list = List_new();
+
 	list->f_node_data_free = node_free;
 
 	List_push(list, strdup("node 1"));
@@ -98,7 +101,8 @@ static void
 test_iterator(int index, Node *node)
 {
 	char buf[16];
-	sprintf(buf, "node %d", index+1);
+
+	sprintf(buf, "node %d", index + 1);
 	TEST_ASSERT_EQUAL_STRING(buf, node->data);
 }
 
@@ -106,6 +110,7 @@ void
 test_List_each()
 {
 	List *list = List_new();
+
 	list->f_node_data_free = node_free;
 
 	List_push(list, strdup("node 1"));
@@ -221,6 +226,16 @@ test_List_unshift()
 	List_free(list);
 }
 
+void
+test_List_userdata_()
+{
+	List *list = List_new();
+
+	TEST_ASSERT_NULL(List_userdata_get(list));
+	List_userdata_set(list, "foobar");
+	TEST_ASSERT_EQUAL_STRING("foobar", List_userdata_get(list));
+}
+
 int main()
 {
 	TEST_BEGIN
@@ -232,5 +247,6 @@ int main()
 	RUN(test_List_pop);
 	RUN(test_List_prepend);
 	RUN(test_List_unshift);
+	RUN(test_List_userdata_);
 	TEST_END
 }
