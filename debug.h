@@ -14,6 +14,7 @@
 
 #ifdef NDEBUG
 #define XDBG(message)
+#define XLOG(fmt, ...)
 #else
 /*
  * Prints the given message to stderr with debug information if errno is not 0.
@@ -21,6 +22,11 @@
 #define XDBG(message) \
 	fprintf(stderr, "XDBG:[%s] - (%s):%s:%d\n", \
 		message, __func__, __FILE__, __LINE__)
+
+
+#define XLOG(fmt, ...) \
+	fprintf(stdout, fmt, __VA_ARGS__)
+
 #endif
 
 /*
