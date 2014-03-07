@@ -1,31 +1,33 @@
 #include "buffer.h"
 
 void
-buffer_free(Buffer *buf)
+Buffer_free(Buffer *buf)
 {
 	free(buf->data);
-	buf->length = 0;
+	free(buf);
 }
 
-void
-buffer_new(Buffer *buf)
+Buffer *
+Buffer_new()
 {
+	Buffer *buf = malloc(sizeof(Buffer));
 	buf->length = 0;
 	buf->data = NULL;
+	return buf;
 }
 
 void
-buffer_append(Buffer *buf, char* data, size_t data_length)
+Buffer_append(Buffer *buf, char* data, size_t length)
 {
 	int offset = buf->length;
 
-	printf("Append data (size %d) to buffer (size %d)\n",
-	       (int)data_length, (int)buf->length);
-	buf->length += data_length;
+	XLOG("Append data (size %d) to buffer (size %d)\n",
+	       (int)length, (int)buf->length);
+	buf->length += length;
 
 	if (offset == 0)
 		buf->data = malloc(sizeof(char) * buf->length);
 	else
 		buf->data = realloc(buf->data, sizeof(char) * buf->length);
-	memcpy(buf->data + offset, data, data_length);
+	memcpy(buf->data + offset, data, length);
 }

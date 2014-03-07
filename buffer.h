@@ -2,6 +2,7 @@
 #include <stdlib.h>     /* free */
 #include <stdio.h>      /* printf */
 #include <string.h>     /* memcpy */
+#include "libcx-base/debug.h"
 
 typedef struct buffer_t
 {
@@ -9,11 +10,11 @@ typedef struct buffer_t
 	size_t length;
 } Buffer;
 
-void
-buffer_free(Buffer *buf);
+Buffer *
+Buffer_new();
 
 void
-buffer_new(Buffer *buf);
+Buffer_free(Buffer *buf);
 
 void
-buffer_append(Buffer *buf, char* data, size_t data_length);
+Buffer_append(Buffer *buf, char* data, size_t length);
