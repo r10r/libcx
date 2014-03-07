@@ -19,3 +19,6 @@
 [submodule "libcx-base"]
 	path = libcx-base
 	url = git@github.com:r10r/libcx-base.git
+[submodule "libcx-umtp"]
+	path = libcx-umtp
+	url = git@github.com:r10r/libcx-umtp.git
