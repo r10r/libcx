@@ -1,0 +1,30 @@
+#ifndef _XMALLOC_H
+#define _XMALLOC_H
+
+#include "stddef.h"     /* size_t */
+#include <stdlib.h>     /* malloc / free */
+#include <stdio.h>      /* printf */
+
+void *
+d_xmalloc(size_t size, const char *func, const char *file, int line);
+
+void *
+d_xrealloc(void *ptr, size_t size, const char *func, const char *file, int line);
+
+void
+d_xfree(void *ptr, const char *func, const char *file, int line);
+
+#ifndef _XMALLOC_DISABLED
+
+#define malloc(size) \
+	d_xmalloc(size, __func__, __FILE__, __LINE__)
+
+#define realloc(ptr, size) \
+	d_xrealloc(ptr, size, __func__, __FILE__, __LINE__)
+
+#define free(ptr) \
+	d_xfree(ptr, __func__, __FILE__, __LINE__)
+
+#endif
+
+#endif
