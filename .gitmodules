@@ -10,9 +10,6 @@
 [submodule "libcx-ragel"]
 	path = libcx-ragel
 	url = git@github.com:r10r/libcx-ragel.git
-[submodule "libcx-buffer"]
-	path = libcx-buffer
-	url = git@github.com:r10r/libcx-buffer.git
 [submodule "libcx-sandbox"]
 	path = libcx-sandbox
 	url = git@github.com:r10r/libcx-sandbox.git
@@ -22,3 +19,6 @@
 [submodule "libcx-umtp"]
 	path = libcx-umtp
 	url = git@github.com:r10r/libcx-umtp.git
+[submodule "libcx-string"]
+	path = libcx-string
+	url = git@github.com:r10r/libcx-string.git
