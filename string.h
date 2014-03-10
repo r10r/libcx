@@ -4,7 +4,7 @@
 #include <string.h>     /* memcpy */
 #include "libcx-base/debug.h"
 
-#define STRING_MAX_PREALLOC (1024*1024)
+#define STRING_MAX_PREALLOC (1024 * 1024)
 
 typedef char *String;
 typedef struct pair_t Pair;
@@ -19,7 +19,7 @@ struct string_header_t
 
 static inline struct string_header_t* String_header(const String s)
 {
-	return (struct string_header_t *) (s - sizeof(struct string_header_t));
+	return (struct string_header_t *)(s - sizeof(struct string_header_t));
 }
 
 static inline size_t String_length(const String s)
@@ -34,7 +34,7 @@ static inline size_t String_unused(const String s)
 
 static inline size_t String_size(int length)
 {
-	return sizeof(struct string_header_t) + sizeof(char)*length + 1;
+	return sizeof(struct string_header_t) + sizeof(char) * length + 1;
 }
 
 struct pair_t
