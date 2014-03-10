@@ -3,7 +3,7 @@ L := $(LOCAL_DIR)
 
 #CFLAGS += -D_LIST_DISABLE_LOCKING
 
-TESTS += $(L)/test_buffer
+TESTS += $(L)/test_string
 
 # -- executables --
 #_OBJS := 
@@ -13,5 +13,6 @@ TESTS += $(L)/test_buffer
 TEST_FLAGS := -Wall -w -g -I$(BASE_DIR)
 TEST_OBJS := $(BASE_DIR)/libcx-base/unity.o
 
-$(L)/test_buffer_OBJS := $(TEST_OBJS) $(L)/test_buffer.o $(L)/buffer.o
-$(L)/test_buffer_FLAGS := $(TEST_FLAGS)
+$(L)/test_string_OBJS := $(TEST_OBJS) \
+	 $(BASE_DIR)/libcx-base/xmalloc.o $(L)/string.o $(L)/test_string.o
+$(L)/test_string_FLAGS := $(TEST_FLAGS)
