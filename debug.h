@@ -24,6 +24,10 @@
 	fprintf(stderr, "XDBG:[%s] - (%s):%s:%d\n", \
 		message, __func__, __FILE__, __LINE__)
 
+#define XFDBG(fmt, ...) \
+	fprintf(stderr, "(%s):%s:%d" fmt, \
+		__func__, __FILE__, __LINE__, __VA_ARGS__)
+
 #define XFLOG(fmt, ...) \
 	fprintf(stdout, fmt, __VA_ARGS__)
 
@@ -47,4 +51,5 @@
 	if (!(expression)) \
 		fprintf(stderr, "XASSERT:[%s] - (%s):%s:%d\n", \
 			message, __func__, __FILE__, __LINE__)
+
 #endif
