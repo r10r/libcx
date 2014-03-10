@@ -58,14 +58,8 @@ String_grow(String s, size_t need);
 String
 String_append(String a, String b);
 
-//inline Pair *
-//StringPair_new(char *key, char *value);
-//
-//void
-//StringPair_free(Pair *pair);
-//
-//String *
-//String_concat(String *a, String *b);
-//
-//String *
-//String_join(String *a, String *b, const char *separator);
+Pair *
+StringPair_new(const char *key, const char *value);
+
+void
+StringPair_free(Pair *pair);

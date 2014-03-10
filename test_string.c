@@ -25,14 +25,14 @@ void test_String_append()
 	String_free(bar);
 }
 
-//void test_String_append()
-//{
-//	String *f = String_ndup("foo");
-//	String *b = String_ndup("bar");
-//	String *foobar = String_concat(f, b);
-//	String_puts(foobar, stdout);
-//	String_free(foobar);
-//}
+void test_StringPair_new()
+{
+	Pair *foobar = StringPair_new("foo", "bar");
+
+	TEST_ASSERT_EQUAL_STRING("foo", foobar->key);
+	TEST_ASSERT_EQUAL_STRING("bar", foobar->value);
+	StringPair_free(foobar);
+}
 
 int main()
 {
@@ -40,6 +40,7 @@ int main()
 
 	RUN(test_String_new);
 	RUN(test_String_append);
+	RUN(test_StringPair_new);
 
 	TEST_END
 }
