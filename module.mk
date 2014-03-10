@@ -1,5 +1,5 @@
 MODULES := libcx-base libcx-list libcx-socket-unix \
-	libcx-workqueue libcx-buffer libcx-umtp
+	libcx-workqueue libcx-string #libcx-umtp
 
 CFLAGS += --coverage -I$(BASE_DIR) -DTRACE \
 	-Wall -Wextra -Werror -pedantic \
