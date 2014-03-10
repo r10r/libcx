@@ -7,6 +7,7 @@ NOSETUP
 void test_String_new()
 {
 	String s = String_new("foo");
+
 	printf("%s\n", s);
 	TEST_ASSERT_EQUAL_INT(3, String_length(s));
 	String_free(s);
@@ -17,6 +18,7 @@ void test_String_append()
 	String foo = String_new("foo");
 	String bar = String_new("bar");
 	String foobar = String_append(foo, bar);
+
 	printf("%s\n", foobar);
 	TEST_ASSERT_EQUAL_INT(6, String_length(foobar));
 	String_free(foobar);

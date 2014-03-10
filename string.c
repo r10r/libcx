@@ -7,12 +7,13 @@ String_init(const void *value, size_t length)
 {
 	struct string_header_t *hdr;
 
-	if(value)
+	if (value)
 		hdr =  malloc(String_size(length));
 	else
 		hdr =  calloc(String_size(length), 1);
 
-	if(hdr == NULL) return NULL; // OOM
+	if (hdr == NULL)
+		return NULL;         // OOM
 
 	hdr->length = length;
 	hdr->unused = 0;
@@ -29,40 +30,44 @@ String
 String_new(const char *value)
 {
 	size_t length = (value == NULL) ? 0 : strlen(value);
+
 	return String_init(value, length);
 }
 
 void
 String_free(String s)
 {
-	if (s == NULL) return;
+	if (s == NULL)
+		return;
 	free(String_header(s));
 }
 
 String
 String_grow(String s, size_t need)
 {
-  struct string_header_t *hdr, *new_hdr;
-  size_t unused = String_unused(s);
-  size_t length, new_length;
+	struct string_header_t *hdr, *new_hdr;
+	size_t unused = String_unused(s);
+	size_t length, new_length;
 
-  if(unused > need) return s;
-  length = String_length(s);
-  hdr = String_header(s);
+	if (unused > need)
+		return s;
+	length = String_length(s);
+	hdr = String_header(s);
 
-  new_length = length + need;
+	new_length = length + need;
 //  if (new_length < STRING_MAX_PREALLOC)
-//  	new_length *= 2;
+//      new_length *= 2;
 //  else
-//  	new_length += STRING_MAX_PREALLOC;
+//      new_length += STRING_MAX_PREALLOC;
 
-  new_hdr = realloc(hdr, String_size(new_length));
-  if (new_hdr == NULL) return NULL;
-  new_hdr->length = new_length;
-  new_hdr->unused = new_length - length;
-  new_hdr->buf[new_length]  = '\0';
+	new_hdr = realloc(hdr, String_size(new_length));
+	if (new_hdr == NULL)
+		return NULL;
+	new_hdr->length = new_length;
+	new_hdr->unused = new_length - length;
+	new_hdr->buf[new_length]  = '\0';
 
-  return new_hdr->buf;
+	return new_hdr->buf;
 }
 
 String
@@ -74,11 +79,14 @@ String_shrink(String s)
 String
 String_append(String a, String b)
 {
-	if (a == NULL) return NULL;
-	if (b == NULL) return a;
+	if (a == NULL)
+		return NULL;
+	if (b == NULL)
+		return a;
 
 	String c = String_grow(a, String_length(b));
-	if (c == NULL) return NULL;
+	if (c == NULL)
+		return NULL;
 	memcpy(&c[String_length(a)], b, String_length(b));
 
 	return c;
