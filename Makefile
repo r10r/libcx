@@ -126,6 +126,9 @@ lcov: $(LCOV_DIR)/index.html;
 # Should remove all generated artifacts
 ARTIFACTS := $(OBJS) $(OBJS:=.mk) \
 	$(PROGRAMS) $(TESTS) \
+	$(wildcard $(MODULES:=/*.gcda)) \
+	$(wildcard $(MODULES:=/*.gcno)) \
+	$(wildcard $(MODULES:=/*.o.mk)) \
 	$(OBJS:.o=.gcda) $(OBJS:.o=.gcno) \
 	$(LCOV_DIR) $(LCOV_INFO_FILE)
 	
