@@ -92,28 +92,26 @@ String_append(String a, String b)
 	return c;
 }
 
-//Pair *
-//StringPair_ndup(char *key, char *value)
-//{
-//	Pair *p = malloc(sizeof(Pair));
-//	p->key = String_ndup(key);
-//	p->value = String_ndup(value);
-//	return p;
-//}
-//
-//Pair *
-//StringPair_map(char *key, int key_len, char *value, int value_len)
-//{
-//	Pair *p = malloc(sizeof(Pair));
-//	p->key = String_const(key, key_len);
-//	p->value = String_const(value, value_len);
-//	return p;
-//}
-//
-//void
-//StringPair_free(Pair *p)
-//{
-//	String_free((String *) p->key);
-//	String_free((String *) p->value);
-//	free(p);
-//}
+Pair *
+StringPair_init(String key, String value)
+{
+	Pair *p = malloc(sizeof(Pair));
+
+	p->key = key;
+	p->value = value;
+	return p;
+}
+
+Pair *
+StringPair_new(const char *key, const char *value)
+{
+	return StringPair_init(String_new(key), String_new(value));
+}
+
+void
+StringPair_free(Pair *p)
+{
+	String_free((String)p->key);
+	String_free((String)p->value);
+	free(p);
+}
