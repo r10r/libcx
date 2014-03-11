@@ -3,7 +3,6 @@
 
 #include "stddef.h"     /* size_t */
 #include <stdlib.h>     /* free */
-#include <stdio.h>      /* printf */
 #include <string.h>     /* memcpy */
 #include "libcx-base/debug.h"
 
@@ -15,7 +14,7 @@ typedef struct pair_t Pair;
 /* use char arrays instead of pointers to reduce overhead */
 struct string_header_t
 {
-	unsigned int length;
+	unsigned int space;
 	unsigned int unused;
 	char buf[];
 };
@@ -25,14 +24,19 @@ static inline struct string_header_t* String_header(const String s)
 	return (struct string_header_t *)(s - sizeof(struct string_header_t));
 }
 
-static inline size_t String_length(const String s)
+static inline unsigned int String_space(const String s)
 {
-	return String_header(s)->length;
+	return String_header(s)->space;
 }
 
-static inline size_t String_unused(const String s)
+static inline unsigned int String_unused(const String s)
 {
 	return String_header(s)->unused;
+}
+
+static inline unsigned int String_length(const String s)
+{
+	return String_space(s) - String_unused(s);
 }
 
 static inline size_t String_size(int length)
