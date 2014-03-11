@@ -73,7 +73,8 @@ String_grow(String s, size_t need)
 String
 String_shrink(String s)
 {
-	return NULL; // NOT implemented
+	XASSERT("not yet implemented", 0);
+	return NULL;
 }
 
 String
