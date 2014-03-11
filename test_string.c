@@ -9,7 +9,7 @@ void test_String_new()
 	String s = String_new("foo");
 
 	printf("%s\n", s);
-	TEST_ASSERT_EQUAL_INT(3, String_length(s));
+	TEST_ASSERT_EQUAL_INT(3, String_space(s));
 	String_free(s);
 }
 
@@ -20,7 +20,8 @@ void test_String_append()
 	String foobar = String_append(foo, bar);
 
 	printf("%s\n", foobar);
-	TEST_ASSERT_EQUAL_INT(6, String_length(foobar));
+	TEST_ASSERT_EQUAL_INT(6, String_space(foobar));
+	TEST_ASSERT_EQUAL_STRING("foobar", foobar);
 	String_free(foobar);
 	String_free(bar);
 }
