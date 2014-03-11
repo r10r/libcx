@@ -94,13 +94,15 @@ List_push(List *list, void *data)
 Node *
 List_match(List *list, void *key, F_NodeMatch *f_node_match)
 {
-	if (list->length == 0) return NULL;
+	if (list->length == 0)
+		return NULL;
 	_LIST_LOCK_READ(list);
 	Node *node = list->first;
 
 	while (node)
 	{
-		if (f_node_match(node, key) == 0) break;
+		if (f_node_match(node, key) == 0)
+			break;
 		node = node->next;
 	}
 	_LIST_UNLOCK_READ(list);
@@ -110,7 +112,8 @@ List_match(List *list, void *key, F_NodeMatch *f_node_match)
 void
 List_each(List *list, F_NodeIterator *f_node_iterator)
 {
-	if (list->length == 0) return;
+	if (list->length == 0)
+		return;
 	_LIST_LOCK_READ(list);
 	Node *node = list->first;
 
@@ -127,7 +130,8 @@ List_each(List *list, F_NodeIterator *f_node_iterator)
 void *
 List_shift(List *list)
 {
-	if (list->length == 0) return NULL;
+	if (list->length == 0)
+		return NULL;
 	_LIST_LOCK_WRITE(list);
 	Node *node = list->first;
 	void *data = NULL;
@@ -152,7 +156,8 @@ List_shift(List *list)
 void *
 List_pop(List *list)
 {
-	if (list->length == 0) return NULL;
+	if (list->length == 0)
+		return NULL;
 	_LIST_LOCK_WRITE(list);
 	Node *node = list->last;
 	void *data = NULL;
