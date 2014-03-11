@@ -6,6 +6,9 @@ main(void)
 	// use the default event loop unless you have special needs
 	ev_loop *loop = EV_DEFAULT;
 
+	ev_io connection_watcher;
+	ev_timer timeout_watcher;
+
 #if EV_COMPAT3
 	puts("EV_COMPAT3 is set");
 #endif
