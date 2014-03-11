@@ -1,3 +1,6 @@
+#ifndef _STRING_H
+#define _STRING_H
+
 #include "stddef.h"     /* size_t */
 #include <stdlib.h>     /* free */
 #include <stdio.h>      /* printf */
@@ -63,3 +66,5 @@ StringPair_new(const char *key, const char *value);
 
 void
 StringPair_free(Pair *pair);
+
+#endif
