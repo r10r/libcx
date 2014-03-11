@@ -42,9 +42,9 @@ typedef void F_NodeIterator (int index, Node *node);
 
 struct node_t
 {
-	void *data;
 	Node *next;
 	Node *previous;
+	void *data;
 };
 
 struct list_t
