@@ -1,4 +1,5 @@
 #include "server.h"
+#include "libcx-workqueue/pool.h"
 
 /*
  * http://stackoverflow.com/questions/108183/how-to-prevent-sigpipes-or-handle-them-properly
@@ -14,34 +15,43 @@ enable_so_opt(int fd, int option)
 	setsockopt(fd, SOL_SOCKET, option, (void*)&enable, sizeof(enable));
 }
 
-// every watcher type has its own typedef'd struct  with the name ev_TYPE
-ev_io connection_watcher;
-ev_io data_watcher;
-ev_timer timeout_watcher;
-
 #define READ_EOF 0
 #define IO_ERR -1               /* recv/send or read/write error */
 
-void
-on_client_write(ev_loop *loop, ev_io *watcher, int revents)
+static void
+thread_wait(int nanos)
 {
-	ev_io_stop(loop, watcher);
-	char *data = "foo";
-	int data_length = strlen(data);
-	int bytes = send(watcher->fd, data, data_length, 0);
-	if (bytes < data_length)
-		XERR("Failed to send data");
-	close(watcher->fd);
-	free(watcher);
+	int sleep_nanos = nanos;
+	struct timespec sleep_time;
+
+	sleep_time.tv_sec = 0;
+	sleep_time.tv_nsec = sleep_nanos;
+	nanosleep(&sleep_time, NULL);
 }
 
 void
-on_client_read(ev_loop *loop, ev_io *data_watcher, int revents)
+on_client_write(ev_loop *loop, ev_io *w, int revents)
 {
+	Worker *worker = (Worker *) ev_userdata(loop);
+	XFLOG("Worker[%d] fd:%d - sending response\n", worker->id, w->fd);
+	ev_io_stop(loop, w);
+	char *data = "foo";
+	int data_length = strlen(data);
+	int bytes = send(w->fd, data, data_length, 0);
+	if (bytes < data_length)
+		XFLOG("Worker[%d] fd:%d - failed to send response\n", worker->id, w->fd);
+//	thread_wait(100 * 1000000); /* delay used for testing purposes */
+	close(w->fd);
+	free(w);
+}
+
+void
+on_client_read(ev_loop *loop, ev_io *w, int revents)
+{
+	Worker *worker = (Worker *) ev_userdata(loop);
 	char buf[200];
 
-	printf("Events (revents:%d) on client connection %d\n", revents,
-	       data_watcher->fd);
+	XFLOG("Worker[%d] fd:%d - read connection (revents:%d)\n", worker->id, w->fd, revents);
 	/*
 	 * @see man 1 read
 	 * A value of zero indicates end-of-file (except if the value of the size argument is also zero).
@@ -49,26 +59,26 @@ on_client_read(ev_loop *loop, ev_io *data_watcher, int revents)
 	 * it will keep returning zero and doing nothing else.
 	 */
 
-	int num_read = read(data_watcher->fd, buf, 200);
+	int num_read = read(w->fd, buf, 200);
 
 	if (num_read == IO_ERR)
 	{
-		XERR("Failed to receive data");
-		ev_io_stop(loop, data_watcher);
+		XFLOG("Worker[%d] fd:%d - failed to receive data\n", worker->id, w->fd);
+		ev_io_stop(loop, w);
 	}
 	else
 	{
 		if (num_read == READ_EOF)
 		{
-			printf("EOF\n");
+			XFLOG("Worker[%d] fd:%d - EOF\n", worker->id, w->fd);
 			ev_io *send_response_w = malloc(sizeof(ev_io));
-			ev_io_init(send_response_w, on_client_write, data_watcher->fd, EV_WRITE);
+			ev_io_init(send_response_w, on_client_write, w->fd, EV_WRITE);
 			ev_io_start(loop, send_response_w);
-			ev_io_stop(loop, data_watcher); /* stop reading from socket */
-			free(data_watcher);
+			ev_io_stop(loop, w); /* stop reading from socket */
+			free(w);
 		}
 		else
-			printf("Received data %d\n", num_read);
+			XFLOG("Worker[%d] fd:%d - received data (length %d)\n", worker->id, w->fd, num_read);
 	}
 }
 
@@ -79,7 +89,6 @@ listen_to_client(ev_loop *loop, int fd)
 {
 	unblock(fd);
 	ev_io *client_data_w = malloc(sizeof(ev_io));
-	printf("next client %p fd:%d\n", client_data_w, fd);
 	ev_io_init(client_data_w, on_client_read, fd, EV_READ);
 	ev_io_start(loop, client_data_w);
 }
@@ -87,31 +96,32 @@ listen_to_client(ev_loop *loop, int fd)
 // all watcher callbacks have a similar signature
 // this callback is called when data is readable on stdin
 void
-on_connection(ev_loop *loop, ev_io *connection_watcher, int revents)
+on_connection(ev_loop *loop, ev_io *w, int revents)
 {
+		Worker *worker = ev_userdata(loop);
 //	ev_io_stop(loop, connection_watcher);
-	printf("Client connected on fd %d, revents %d\n", connection_watcher->fd,
-	       revents);
+		XFLOG("Worker[%d] fd:%d - new connection (revents:%d)\n",
+			worker->id, w->fd, revents);
+
 	int client_fd = accept(server_fd, NULL, NULL);
 	if (client_fd == ACCEPT_ERROR)
 	{
-		XERR("Failed to accept");
+		XFLOG("Worker[%d] fd:%d - failed to accept\n", worker->id, w->fd);
 		return;
 	}
 	else
 	{
 		enable_so_opt(client_fd, SO_NOSIGPIPE); /* do not send SIGIPIPE on EPIPE */
-		printf("I've accepted\n");
+		XFLOG("Worker[%d] fd:%d - accepted connection\n", worker->id, w->fd);
 		// TODO start data watcher here
 
 		listen_to_client(loop, client_fd);
 	}
-//	ev_break(loop, EVBREAK_ALL);
 }
 
-// another callback, this time for a time-out
+/* connection timeout */
 void
-timeout_cb(ev_loop *loop, ev_timer *timer, int revents)
+timeout_cb(ev_loop *loop, ev_timer *w, int revents)
 {
 	printf("At your service!\n");
 	// this causes the innermost ev_run to stop iterating
@@ -135,7 +145,7 @@ unix_socket_connect(const char *sock_path)
 
 	sock_path_len = strlen(sock_path);
 	address_size = sizeof(address);
-	printf("Starting on socket : [%s]\n", sock_path);
+	XFLOG("Starting on socket : [%s]\n", sock_path);
 
 	/* check preconditions */
 	if (sock_path_len > UNIX_PATH_MAX)
@@ -175,6 +185,8 @@ unix_socket_connect(const char *sock_path)
 		XERR("Failed to listen to socket");
 		return SOCKET_CONNECT_FAILED;
 	}
+	// both server and client socket must be protected against SIGPIPE
+	enable_so_opt(fd, SO_NOSIGPIPE); /* do not send SIGIPIPE on EPIPE */
 	return fd;
 }
 
