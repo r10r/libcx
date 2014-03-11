@@ -1,8 +1,9 @@
 #ifndef _DEBUG_H
 #define _DEBUG_H
 
-#include <string.h> /* strerror */
+#include <string.h>     /* strerror */
 #include <errno.h>
+#include <stdio.h>      /* fprintf */
 
 /*
  * debug message convetions:
@@ -25,7 +26,7 @@
 		message, __func__, __FILE__, __LINE__)
 
 #define XFDBG(fmt, ...) \
-	fprintf(stderr, "(%s):%s:%d" fmt, \
+	fprintf(stderr, "(%s):%s:%d " fmt, \
 		__func__, __FILE__, __LINE__, __VA_ARGS__)
 
 #define XFLOG(fmt, ...) \
