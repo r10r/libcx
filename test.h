@@ -26,7 +26,7 @@ extern void tearDown(void);
 /* @cast unity has a unsigned int counter for test failures,
  * but it's unlikely that the number of test failures is > INT_MAX */
 #define TEST_END \
-	return (int) UnityEnd();
+	return (int)UnityEnd();
 
 /* @see http://stackoverflow.com/questions/5459868/c-preprocessor-concatenate-int-to-string */
 #define STR_HELPER(x) #x

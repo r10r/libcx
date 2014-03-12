@@ -63,7 +63,7 @@
 	if (!(condition)) { \
 		fprintf(stderr, "XASSERT:[%s] - (%s):%s:%d\n", \
 			message, __func__, __FILE__, __LINE__); \
-			exit(XEXIT_CODE); \
+		exit(XEXIT_CODE); \
 	}
 
 #endif
