@@ -16,21 +16,21 @@
 
 struct _Unity Unity = { 0, 0, 0, 0, 0, 0, 0, 0, { 0 } };
 
-const char* UnityStrNull     = "NULL";
-const char* UnityStrSpacer   = ". ";
-const char* UnityStrExpected = " Expected ";
-const char* UnityStrWas      = " Was ";
-const char* UnityStrTo       = " To ";
-const char* UnityStrElement  = " Element ";
-const char* UnityStrByte     = " Byte ";
-const char* UnityStrMemory   = " Memory Mismatch.";
-const char* UnityStrDelta    = " Values Not Within Delta ";
-const char* UnityStrPointless = " You Asked Me To Compare Nothing, Which Was Pointless.";
-const char* UnityStrNullPointerForExpected = " Expected pointer to be NULL";
-const char* UnityStrNullPointerForActual  = " Actual pointer was NULL";
-const char* UnityStrInf      = "Infinity";
-const char* UnityStrNegInf   = "Negative Infinity";
-const char* UnityStrNaN      = "NaN";
+static const char* UnityStrNull     = "NULL";
+static const char* UnityStrSpacer   = ". ";
+static const char* UnityStrExpected = " Expected ";
+static const char* UnityStrWas      = " Was ";
+static const char* UnityStrTo       = " To ";
+static const char* UnityStrElement  = " Element ";
+static const char* UnityStrByte     = " Byte ";
+static const char* UnityStrMemory   = " Memory Mismatch.";
+static const char* UnityStrDelta    = " Values Not Within Delta ";
+static const char* UnityStrPointless = " You Asked Me To Compare Nothing, Which Was Pointless.";
+static const char* UnityStrNullPointerForExpected = " Expected pointer to be NULL";
+static const char* UnityStrNullPointerForActual  = " Actual pointer was NULL";
+static const char* UnityStrInf      = "Infinity";
+static const char* UnityStrNegInf   = "Negative Infinity";
+static const char* UnityStrNaN      = "NaN";
 
 #ifndef UNITY_EXCLUDE_FLOAT
 // Dividing by these constants produces +/- infinity.
@@ -42,7 +42,7 @@ static const _UD d_zero = 0.0;
 #endif
 
 // compiler-generic print formatting masks
-const _U_UINT UnitySizeMask[] =
+static const _U_UINT UnitySizeMask[] =
 {
 	255u,           // 0xFF
 	65535u,         // 0xFFFF
@@ -105,7 +105,7 @@ void UnityPrintNumberByStyle(const _U_SINT number, const UNITY_DISPLAY_STYLE_T s
 	else if ((style & UNITY_DISPLAY_RANGE_UINT) == UNITY_DISPLAY_RANGE_UINT)
 		UnityPrintNumberUnsigned(  (_U_UINT)number  &  UnitySizeMask[((_U_UINT)style & (_U_UINT)0x0F) - 1]  );
 	else
-		UnityPrintNumberHex((_U_UINT)number, (style & 0x000F) << 1);
+		UnityPrintNumberHex((_U_UINT)number, (char) ((style & 0x000F) << 1));
 }
 
 //-----------------------------------------------
@@ -231,7 +231,7 @@ void UnityPrintOk(void)
 }
 
 //-----------------------------------------------
-void UnityTestResultsBegin(const char* file, const UNITY_LINE_TYPE line)
+static void UnityTestResultsBegin(const char* file, const UNITY_LINE_TYPE line)
 {
 	UnityPrint(file);
 	UNITY_OUTPUT_CHAR(':');
@@ -242,7 +242,7 @@ void UnityTestResultsBegin(const char* file, const UNITY_LINE_TYPE line)
 }
 
 //-----------------------------------------------
-void UnityTestResultsFailBegin(const UNITY_LINE_TYPE line)
+static void UnityTestResultsFailBegin(const UNITY_LINE_TYPE line)
 {
 	UnityTestResultsBegin(Unity.TestFile, line);
 	UnityPrint("FAIL:");
@@ -267,7 +267,7 @@ void UnityConcludeTest(void)
 }
 
 //-----------------------------------------------
-void UnityAddMsgIfSpecified(const char* msg)
+static void UnityAddMsgIfSpecified(const char* msg)
 {
 	if (msg)
 	{
@@ -277,7 +277,7 @@ void UnityAddMsgIfSpecified(const char* msg)
 }
 
 //-----------------------------------------------
-void UnityPrintExpectedAndActualStrings(const char* expected, const char* actual)
+static void UnityPrintExpectedAndActualStrings(const char* expected, const char* actual)
 {
 	UnityPrint(UnityStrExpected);
 	if (expected != NULL)
@@ -303,7 +303,7 @@ void UnityPrintExpectedAndActualStrings(const char* expected, const char* actual
 // Assertion & Control Helpers
 //-----------------------------------------------
 
-int UnityCheckArraysForNull(UNITY_PTR_ATTRIBUTE const void* expected, UNITY_PTR_ATTRIBUTE const void* actual, const UNITY_LINE_TYPE lineNumber, const char* msg)
+static int UnityCheckArraysForNull(UNITY_PTR_ATTRIBUTE const void* expected, UNITY_PTR_ATTRIBUTE const void* actual, const UNITY_LINE_TYPE lineNumber, const char* msg)
 {
 	//return true if they are both NULL
 	if ((expected == NULL) && (actual == NULL))
@@ -1083,7 +1083,7 @@ void UnityBegin(void)
 }
 
 //-----------------------------------------------
-int UnityEnd(void)
+_U_UINT UnityEnd(void)
 {
 	UnityPrint("-----------------------");
 	UNITY_PRINT_EOL;

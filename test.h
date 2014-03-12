@@ -4,12 +4,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include "unity.h"
 #include "profile.h"
 #include "debug.h"
+
+extern void setUp(void);
+extern void tearDown(void);
 
 #define NOSETUP \
 	void setUp(){} \
@@ -21,8 +23,10 @@
 #define TEST_BEGIN \
 	UnityBegin();
 
+/* @cast unity has a unsigned int counter for test failures,
+ * but it's unlikely that the number of test failures is > INT_MAX */
 #define TEST_END \
-	return UnityEnd();
+	return (int) UnityEnd();
 
 /* @see http://stackoverflow.com/questions/5459868/c-preprocessor-concatenate-int-to-string */
 #define STR_HELPER(x) #x
