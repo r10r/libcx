@@ -3,7 +3,7 @@
 
 NOSETUP
 
-void test_Array_new_empty()
+static void test_Array_new_empty()
 {
 	Array a = Array_new(0);
 
@@ -13,7 +13,7 @@ void test_Array_new_empty()
 	Array_free(a);
 }
 
-void test_Array_new()
+static void test_Array_new()
 {
 	Array a = Array_new(2);
 
@@ -24,7 +24,7 @@ void test_Array_new()
 	Array_free(a);
 }
 
-void test_Array_grow()
+static void test_Array_grow()
 {
 	Array a = Array_new(0);
 
@@ -36,7 +36,7 @@ void test_Array_grow()
 	Array_free(a);
 }
 
-void test_Array_push()
+static void test_Array_push()
 {
 	char *first = "foo";
 	char *second = "bar";
@@ -71,7 +71,7 @@ void test_Array_push()
 	Array_free(a);
 }
 
-void test_Array_pop()
+static void test_Array_pop()
 {
 	char *first = "foo";
 	char *second = "bar";
@@ -102,7 +102,7 @@ match_element(void *data, void *key)
 	return strcmp((char*)data, (char*)key);
 }
 
-void test_Array_match()
+static void test_Array_match()
 {
 	char *first = "foo";
 	char *second = "bar";
@@ -132,7 +132,7 @@ element_iterator(int index, void *data)
 		TEST_ASSERT_EQUAL_STRING("third", (char*)data);
 }
 
-void test_Array_each()
+static void test_Array_each()
 {
 	char *first = "foo";
 	char *second = "bar";
@@ -149,7 +149,8 @@ void test_Array_each()
 	Array_free(a);
 }
 
-int main()
+int
+main()
 {
 	TEST_BEGIN
 

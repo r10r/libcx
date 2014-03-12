@@ -43,8 +43,8 @@ typedef void F_ArrayLock (struct array_header_t *hdr, int rw);
 
 struct array_header_t
 {
-	unsigned int length;
-	unsigned int unused;
+	unsigned long length;
+	unsigned long unused;
 #ifndef _ARRAY_DISABLE_LOCKING
 	F_ArrayLock *f_lock;
 	F_ArrayLock *f_unlock;
@@ -63,25 +63,25 @@ static inline struct array_header_t* Array_header(const Array a)
 }
 
 /* array data length */
-static inline unsigned int Array_length(const Array a)
+static inline unsigned long Array_length(const Array a)
 {
 	return Array_header(a)->length;
 }
 
 /* available space */
-static inline unsigned int Array_unused(const Array a)
+static inline unsigned long Array_unused(const Array a)
 {
 	return Array_header(a)->unused;
 }
 
 /* next index */
-static inline unsigned int Array_next(Array a)
+static inline unsigned long Array_next(Array a)
 {
 	return Array_length(a) - Array_unused(a);
 }
 
 /* calculate required size of array (header + length) */
-static inline size_t Array_size(int length)
+static inline size_t Array_size(unsigned long length)
 {
 	return sizeof(struct array_header_t) + sizeof(char *) * length;
 }
@@ -99,7 +99,10 @@ static inline void* Array_last(Array a)
 }
 
 Array
-Array_new(unsigned int length);
+Array_init(const void *value, unsigned long length);
+
+Array
+Array_new(unsigned long length);
 
 void
 	Array_free(Array);
@@ -112,7 +115,7 @@ int
 Array_match(Array a, void *key, F_ArrayMatch f_array_match);
 
 Array
-Array_grow(Array a, unsigned int elements);
+Array_grow(Array a, unsigned long elements);
 
 Array
 Array_shrink(Array a);
