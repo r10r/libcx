@@ -2,7 +2,7 @@
     Unity Project - A Test Framework for C
     Copyright (c) 2007 Mike Karlesky, Mark VanderVoord, Greg Williams
     [Released under MIT License. Please refer to license.txt for details]
-========================================== */
+   ========================================== */
 
 #ifndef UNITY_FRAMEWORK_H
 #define UNITY_FRAMEWORK_H
@@ -30,7 +30,7 @@
 //     - define UNITY_INCLUDE_DOUBLE to allow double floating point comparisons
 //     - define UNITY_EXCLUDE_DOUBLE to disallow double floating point comparisons (default)
 //     - define UNITY_DOUBLE_PRECISION to specify the precision to use when doing TEST_ASSERT_EQUAL_DOUBLE
-//     - define UNITY_DOUBLE_TYPE to specify something other than double 
+//     - define UNITY_DOUBLE_TYPE to specify something other than double
 //     - define UNITY_DOUBLE_VERBOSE to print floating point values in errors (uses sprintf)
 
 // Output
@@ -52,7 +52,7 @@
 
 #define TEST_PROTECT() (setjmp(Unity.AbortFrame) == 0)
 
-#define TEST_ABORT() {longjmp(Unity.AbortFrame, 1);}
+#define TEST_ABORT() { longjmp(Unity.AbortFrame, 1); }
 
 #ifndef RUN_TEST
 #define RUN_TEST(func, line_num) UnityDefaultTestRun(func, #func, line_num)

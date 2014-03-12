@@ -105,7 +105,7 @@ void UnityPrintNumberByStyle(const _U_SINT number, const UNITY_DISPLAY_STYLE_T s
 	else if ((style & UNITY_DISPLAY_RANGE_UINT) == UNITY_DISPLAY_RANGE_UINT)
 		UnityPrintNumberUnsigned(  (_U_UINT)number  &  UnitySizeMask[((_U_UINT)style & (_U_UINT)0x0F) - 1]  );
 	else
-		UnityPrintNumberHex((_U_UINT)number, (char) ((style & 0x000F) << 1));
+		UnityPrintNumberHex((_U_UINT)number, (char)((style & 0x000F) << 1));
 }
 
 //-----------------------------------------------
