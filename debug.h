@@ -18,6 +18,7 @@
 #define XFLOG(fmt, ...)
 #define XLOG(message)
 #else
+
 /*
  * Prints the given message to stderr with debug information if errno is not 0.
  */
@@ -37,6 +38,8 @@
 
 #endif
 
+#define XEXIT_CODE -1
+
 /*
  * Prints the given message to stderr with debug information if errno is not 0.
  */
@@ -48,9 +51,19 @@
 /*
  * Print message to stderr when assertion fails.
  */
-#define XASSERT(message, expression) \
-	if (!(expression)) \
+#define XCHECK(message, condition) \
+	if (!(condition)) \
 		fprintf(stderr, "XASSERT:[%s] - (%s):%s:%d\n", \
 			message, __func__, __FILE__, __LINE__)
+
+/*
+ * Print message to stderr and exit with XEXIT_CODE when assertion fails.
+ */
+#define XASSERT(message, condition) \
+	if (!(condition)) { \
+		fprintf(stderr, "XASSERT:[%s] - (%s):%s:%d\n", \
+			message, __func__, __FILE__, __LINE__); \
+			exit(XEXIT_CODE); \
+	}
 
 #endif
