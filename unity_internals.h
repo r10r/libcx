@@ -325,7 +325,7 @@ extern struct _Unity Unity;
 //-------------------------------------------------------
 
 void UnityBegin(void);
-int  UnityEnd(void);
+_U_UINT  UnityEnd(void);
 void UnityConcludeTest(void);
 void UnityDefaultTestRun(UnityTestFunction Func, const char* FuncName, const int FuncLineNum);
 

@@ -24,12 +24,12 @@
 #endif
 
 #define PROFILE_INIT \
-	struct timeval _PROFILE_TIME_START; \
-	struct timeval _PROFILE_TIME_END; \
-	double _PROFILE_TIME_DIFF; \
-	clock_t _PROFILE_CLOCK_START; \
-	clock_t _PROFILE_CLOCK_END; \
-	double _PROFILE_CLOCK_DIFF;
+	static struct timeval _PROFILE_TIME_START; \
+	static struct timeval _PROFILE_TIME_END; \
+	static double _PROFILE_TIME_DIFF; \
+	static clock_t _PROFILE_CLOCK_START; \
+	static clock_t _PROFILE_CLOCK_END; \
+	static double _PROFILE_CLOCK_DIFF;
 /*
  * Leaving the variadic args off only works with LLVM/GCC
  * see http://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
