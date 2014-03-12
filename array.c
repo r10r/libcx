@@ -3,7 +3,7 @@
 /* NOTICE: list modification/access is not thread safe */
 
 Array
-Array_init(const void *value, unsigned int length)
+Array_init(const void *value, unsigned long length)
 {
 	XASSERT("void pointer size should equal char pointer", sizeof(void *) == sizeof(char *));
 	struct array_header_t *hdr;
@@ -35,7 +35,7 @@ Array_init(const void *value, unsigned int length)
 }
 
 Array
-Array_new(unsigned int length)
+Array_new(unsigned long length)
 {
 	return Array_init(NULL, length);
 }
@@ -86,11 +86,11 @@ Array_match(Array a, void *key, F_ArrayMatch f_array_match)
 }
 
 Array
-Array_grow(Array a, unsigned int elements)
+Array_grow(Array a, unsigned long elements)
 {
 	struct array_header_t *hdr, *new_hdr;
-	unsigned int unused = Array_unused(a);
-	unsigned int length, new_length;
+	unsigned long unused = Array_unused(a);
+	unsigned long length, new_length;
 
 	if (unused > elements)
 		return a;
@@ -131,7 +131,7 @@ _Array_append(Array a, void *data)
 	struct array_header_t *a_hdr = Array_header(a);
 
 	_ARRAY_LOCK_WRITE(a_hdr);
-	unsigned int next_index = Array_next(a);
+	unsigned long next_index = Array_next(a);
 
 	Array c = a;
 	struct array_header_t *c_hdr = a_hdr;
@@ -169,7 +169,7 @@ Array_pop(Array arr)
 	struct array_header_t *hdr = Array_header(arr);
 
 	_ARRAY_LOCK_WRITE(hdr);
-	unsigned int index = Array_next(arr);
+	unsigned long index = Array_next(arr);
 
 	if (index == 0)
 		return NULL;

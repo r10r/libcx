@@ -42,6 +42,7 @@ List_free(List *list)
 	_LIST_LOCK_WRITE(list);
 	if (list)
 	{
+		// FIXME use iterator to free nodes instead ?
 		Node *next = list->first;
 
 		while (next)
@@ -55,7 +56,7 @@ List_free(List *list)
 	_LIST_UNLOCK_WRITE(list);
 }
 
-static inline int
+static inline unsigned long
 _List_push(List *list, void *data)
 {
 	_LIST_LOCK_WRITE(list);
@@ -74,18 +75,18 @@ _List_push(List *list, void *data)
 		list->first = new;
 		list->last = new;
 	}
-	int length = list->length++;
+	unsigned long length = list->length++;
 	_LIST_UNLOCK_WRITE(list);
 	return length;
 }
 
-int
+unsigned long
 List_append(List *list, void *data)
 {
 	return _List_push(list, data);
 }
 
-int
+unsigned long
 List_push(List *list, void *data)
 {
 	return _List_push(list, data);

@@ -51,7 +51,7 @@ struct list_t
 {
 	Node *first;
 	Node *last;
-	long length;
+	unsigned long length;
 	F_NodeDataFree *f_node_data_free;
 	void *userdata;
 #ifndef _LIST_DISABLE_LOCKING
@@ -61,23 +61,23 @@ struct list_t
 };
 
 Node *
-Node_new();
+Node_new(void);
 
 void
 Node_free(Node *node, F_NodeDataFree *f_free_node);
 
 List *
-List_new();
+List_new(void);
 
 void
 List_free(List *list);
 
 /* @return the index of the appended element */
-int
+unsigned long
 List_append(List *list, void *data);
 
 /* @return the index of the pushed element */
-int
+unsigned long
 List_push(List *list, void *data);
 
 Node *

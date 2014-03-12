@@ -26,7 +26,7 @@ void unlock(List *list, int rw)
 {
 }
 
-void
+static void
 test_List_append()
 {
 	List *list = List_new();
@@ -52,7 +52,7 @@ test_List_append()
 	List_free(list);
 }
 
-void
+static void
 test_List_push()
 {
 	List *list = List_new();
@@ -76,7 +76,7 @@ test_List_push()
 	List_free(list);
 }
 
-void
+static void
 test_List_match()
 {
 	List *list = List_new();
@@ -106,7 +106,7 @@ test_iterator(int index, Node *node)
 	TEST_ASSERT_EQUAL_STRING(buf, node->data);
 }
 
-void
+static void
 test_List_each()
 {
 	List *list = List_new();
@@ -122,7 +122,7 @@ test_List_each()
 	List_free(list);
 }
 
-void
+static void
 test_List_shift()
 {
 	List *list = List_new();
@@ -152,7 +152,7 @@ test_List_shift()
 	List_free(list);
 }
 
-void
+static void
 test_List_pop()
 {
 	List *list = List_new();
@@ -182,7 +182,7 @@ test_List_pop()
 	List_free(list);
 }
 
-void
+static void
 test_List_prepend()
 {
 	List *list = List_new();
@@ -204,7 +204,7 @@ test_List_prepend()
 	List_free(list);
 }
 
-void
+static void
 test_List_unshift()
 {
 	List *list = List_new();
@@ -226,7 +226,7 @@ test_List_unshift()
 	List_free(list);
 }
 
-void
+static void
 test_List_userdata_()
 {
 	List *list = List_new();
@@ -234,6 +234,8 @@ test_List_userdata_()
 	TEST_ASSERT_NULL(List_userdata_get(list));
 	List_userdata_set(list, "foobar");
 	TEST_ASSERT_EQUAL_STRING("foobar", List_userdata_get(list));
+
+	List_free(list);
 }
 
 int main()
