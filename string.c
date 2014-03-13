@@ -1,4 +1,3 @@
-//#include "libcx-base/xmalloc.h"
 #include "string.h"
 /* based on the redis sds.c (simple dynamic string) */
 
@@ -9,20 +8,21 @@ String_init(const void *value, unsigned int length)
 	struct string_header_t *hdr;
 
 	if (value)
+	{
 		hdr =  malloc(String_size(length));
+		memcpy(hdr->buf, value, length);
+		hdr->unused = 0;
+		hdr->buf[length] =  '\0';
+	}
 	else
-		hdr =  calloc(String_size(length), 1);
+	{
+		hdr =  calloc(String_size(length), sizeof(char));
+		hdr->unused = length;
+		hdr->buf[0] =  '\0';
 
-	if (hdr == NULL)
-		return NULL;         // OOM
+	}
 
 	hdr->available = length;
-	hdr->unused = 0;
-
-	if (length > 0 && value)
-		memcpy(hdr->buf, value, length);
-
-	hdr->buf[length] =  '\0';
 	return hdr->buf;
 }
 
@@ -73,12 +73,12 @@ String_grow(String s, unsigned int required_size)
 	return new_hdr->buf;
 }
 
-String
-String_shrink(String s)
-{
-	XASSERT("not yet implemented", 0);
-	return NULL;
-}
+//String
+//String_shrink(String s)
+//{
+//	XASSERT("not yet implemented", 0);
+//	return NULL;
+//}
 
 static inline String
 _append(String a, size_t a_length, const char *b, unsigned int b_length)
@@ -88,6 +88,8 @@ _append(String a, size_t a_length, const char *b, unsigned int b_length)
 	if (c == NULL)
 		return NULL;
 	memcpy(&c[a_length], b, b_length);
+	struct string_header_t *hdr = String_header(c);
+	hdr->unused -= b_length;
 	return c;
 }
 
@@ -96,7 +98,7 @@ String_append_array(String a, const char *b, unsigned int b_length)
 {
 	if (a == NULL)
 		return NULL;
-	if (b == NULL)
+	if (b == NULL || b_length == 0)
 		return a;
 	return _append(a, String_length(a), b, b_length);
 }
@@ -106,10 +108,9 @@ String_append_constant(String a, const char *b)
 {
 	if (a == NULL)
 		return NULL;
-	if (b == NULL)
+	if (b == NULL || strlen(b) == 0)
 		return a;
-	// TODO check for string maximum length
-	return _append(a, String_length(a), b, (unsigned int)strlen(b));
+	return _append(a, String_length(a), b, strlen(b));
 }
 
 String
@@ -117,7 +118,7 @@ String_append(String a, String b)
 {
 	if (a == NULL)
 		return NULL;
-	if (b == NULL)
+	if (b == NULL || String_length(b) == 0)
 		return a;
 	return _append(a, String_length(a), b, String_length(b));
 }
@@ -165,3 +166,4 @@ String_append_stream(String s, FILE *file, unsigned int length)
 	hdr->unused = required_size - read;
 	return buf;
 }
+
