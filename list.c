@@ -39,21 +39,26 @@ List_new()
 void
 List_free(List *list)
 {
-	_LIST_LOCK_WRITE(list);
 	if (list)
 	{
+		_LIST_LOCK_WRITE(list);
 		// FIXME use iterator to free nodes instead ?
 		Node *next = list->first;
-
 		while (next)
 		{
 			Node *cur = next;
 			next = cur->next;
 			Node_free(cur, list->f_node_data_free);
 		}
+		/* we must release the lock before we can free the list,
+		 * (invalid read reported by valgrind)
+		 * FIXME this is a candidate for a race condition.
+		 * How does other thread behave when the list is gone
+		 * when the lock is released ?
+		 */
+		_LIST_UNLOCK_WRITE(list);
 		free(list);
 	}
-	_LIST_UNLOCK_WRITE(list);
 }
 
 static inline unsigned long
