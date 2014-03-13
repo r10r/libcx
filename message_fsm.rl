@@ -1,74 +1,74 @@
-#include "parser.h"
+#include "message.h"
+#include "libcx-string/string.h"
 
 %%{
 	machine message_fsm;
 	
-	action Print {
-		XFLOG("Token[%ld] %c -> %p\n", state->token_count, *(state->p), state->p);
+	action PrintToken {
+		XFLOG("Token[%ld] %c -> %p\n", 
+			state->buffer_offset, *(state->buffer_position), state->buffer_position);
 	}
 	
-	action Mark {
-		XFLOG("Mark[%ld] %c -> %p\n", state->token_count, *(state->p), state->p);
-		state->mark = state->p;
-		state->mark_offset = 0;
+	action SetMarker {
+		XFLOG("Mark[%ld] %c -> %p\n", 
+			state->buffer_offset, *(state->buffer_position), state->buffer_position);
+		state->marker = state->buffer_position;
+		state->marker_offset = 0;
 	}
 	
-	action Count {
-		state->token_count++;
-		state->mark_offset++;
+	action CountToken {
+		state->buffer_offset++;
+		state->marker_offset++;
 	}
 	
-	action ProtocolValue {
-		if (state->cb) state->cb(state, message, P_PROTOCOL_VALUE);
-	}
+	action EventProtocolValue { _event(message, P_PROTOCOL_VALUE); }
+	action EventHeaderName { _event(message, P_HEADER_NAME); }
+	action EventHeaderValue { _event(message, P_HEADER_VALUE); }
+	action EventBody { _event(message, P_BODY); }
 	
-	action HeaderName {
-		if (state->cb) state->cb(state, message, P_HEADER_NAME);
-	}
-	
-	action HeaderValue {
-		if (state->cb) state->cb(state, message, P_HEADER_VALUE);
-	}
-	
-	action Body {
-		if (state->cb) state->cb(state, message, P_BODY);
-	}
-	
-	# keep machine state in a struct
+	# keeps parser machine state in a struct
 	access state->;
-	variable p state->p;
-	variable pe state->pe;
+	variable p state->buffer_position;
+	variable pe state->buffer_end;
 	variable eof state->eof;
 	
 	LF = '\r'? '\n';
 	SP = [ \t];
 	
-	protocol_value = graph* >Mark %ProtocolValue;
+	protocol_value = graph* >SetMarker %EventProtocolValue;
+	
 	protocol_line = protocol_value (SP+ protocol_value)*;
+	
 	header_name = (alnum | '-' | '_' )+;
+	
 	header_value = print*;
-	header = (header_name  >Mark %HeaderName) SP* ':' SP* header_value >Mark %HeaderValue;
+	
+	header = ( header_name  >SetMarker %EventHeaderName ) 
+				SP* ':' SP* 
+			 	   ( header_value >SetMarker %EventHeaderValue );
+	
 	envelope = (header LF)*;
-	body = any* >Mark %Body;
 	
-	main :=  ( protocol_line LF envelope (LF body)? ) $Count;  
+	body = any* >SetMarker %EventBody;
+	
+	main :=  ( protocol_line LF envelope (LF body)? ) $CountToken;  
 }%%
-
-
-int 
-ragel_parse_message(MachineState *state, Message *message, bool eof)
+	
+static inline void 
+_event(Message *message, ParseEvent event)
 {
-	%% write data;
-	%% write init;
-	state->p = &(message->data)[0];
-	state->pe = &(message->data)[message->data_size];
-	if (eof) state->eof = state->pe;
-	
+	message->parser_state->event = event;
+	message->parser_state->f_event_handler(message);
+}
+
+%% write data;
+
+void
+ragel_parse_message(Message *message)
+{
+	RagelParserState *state = message->parser_state;
+	if (state->event == P_NEW)
+		%% write init;
+
 	%% write exec;
-	
-	if (state->p != state->pe) {
-		printf("Only consumed %lu of %lu tokens: %p -> [%c]\n", 
-			state->token_count, message->data_size, state->p, *(state->p));
-	}
-	return state->token_count;
 }

@@ -1,176 +1,100 @@
 #include "libcx-base/test.h"
 #include "message.h"
-#include "parser.h"
 
 NOSETUP
 
-void test_new()
+void test_Message_new()
 {
-	Message msg;
+	Message *message = Message_new(1024);
 
-	Message_new(&msg);
-
-	TEST_ASSERT_NULL(msg.body);
-	TEST_ASSERT_NULL(msg.data);
-	TEST_ASSERT_NULL(msg.method);
-	TEST_ASSERT_NULL(msg.sender);
-	TEST_ASSERT_NULL(msg.topic);
-	TEST_ASSERT_EQUAL_INT(0, msg.body_length);
-	TEST_ASSERT_EQUAL_INT(0, msg.data_size);
-
-	TEST_ASSERT_NOT_NULL(&msg.envelope);
-	TEST_ASSERT_NULL(msg.envelope.first);
-	TEST_ASSERT_NULL(msg.envelope.last);
-	TEST_ASSERT_EQUAL_INT(0, msg.envelope.header_count);
+	TEST_ASSERT_EQUAL_INT(0, String_length(message->buffer));
+	TEST_ASSERT_EQUAL_INT(1024, String_available(message->buffer));
+	TEST_ASSERT_EQUAL_INT(0, message->protocol_values->length);
+	TEST_ASSERT_EQUAL_INT(0, message->headers->length);
+	Message_free(message);
 }
 
-void test_set_header()
+void test_Message_parse_single_pass()
 {
-	Message msg;
+	Message *message =  Message_new(1024);
 
-	Message_new(&msg);
-	Header *header = Message_set_header(&msg, METHOD, HEADER_NAME[METHOD], METHOD_NAME[PUBLISH]);
-
-	TEST_ASSERT_NOT_NULL(header);
-	TEST_ASSERT_EQUAL_INT(1, msg.envelope.header_count);
-	TEST_ASSERT_EQUAL_PTR(header, msg.envelope.first);
-	TEST_ASSERT_EQUAL(header, msg.envelope.last);
-	TEST_ASSERT_NULL(header->next);
-
-	TEST_ASSERT_EQUAL_STRING("Method", header->name);
-	TEST_ASSERT_EQUAL_STRING("PUBLISH", header->value);
-	TEST_ASSERT_EQUAL_STRING(METHOD, header->type);
-
-	Message_free(&msg);
-}
-
-void test_set_topic()
-{
-	Message msg;
-
-	Message_new(&msg);
-	Message_set_topic(&msg, "/foo/bar");
-
-	TEST_ASSERT_EQUAL_INT(1, msg.envelope.header_count);
-	TEST_ASSERT_NOT_NULL(msg.topic);
-	TEST_ASSERT_EQUAL(TOPIC, msg.topic->type);
-	TEST_ASSERT_EQUAL_STRING("Topic", msg.topic->name);
-	TEST_ASSERT_EQUAL_STRING("/foo/bar", msg.topic->value);
-
-	Message_free(&msg);
-}
-
-void test_set_sender()
-{
-	Message msg;
-
-	Message_new(&msg);
-	Message_set_sender(&msg, "/foo/bar");
-
-	TEST_ASSERT_EQUAL_INT(1, msg.envelope.header_count);
-	TEST_ASSERT_NOT_NULL(msg.sender);
-	TEST_ASSERT_EQUAL(SENDER, msg.sender->type);
-	TEST_ASSERT_EQUAL_STRING("Sender", msg.sender->name);
-	TEST_ASSERT_EQUAL_STRING("/foo/bar", msg.sender->value);
-
-	Message_free(&msg);
-}
-
-void test_set_method()
-{
-	Message msg;
-
-	Message_new(&msg);
-	Message_set_method(&msg, PUBLISH);
-
-	TEST_ASSERT_EQUAL_INT(1, msg.envelope.header_count);
-	TEST_ASSERT_NOT_NULL(msg.method);
-	TEST_ASSERT_EQUAL(METHOD, msg.method->type);
-	TEST_ASSERT_EQUAL_STRING("Method", msg.method->name);
-	TEST_ASSERT_EQUAL_STRING("PUBLISH", msg.method->value);
-
-	Message_free(&msg);
-}
-
-void test_SetMultipleHeaders()
-{
-	Message msg;
-	char *data =
-		"\nTopic: /foo/bar\n"
-		"Sender: xyz\n"
-		"Method: PUBLISH\n"
-		"Foo: Bar\n"
+	const char *data =
+		"VERIFY /foo/bar\n"
+		"Header1: value1\n"
+		"Header2: value2\n"
 		"\n"
 		"Hello World";
 
-	Message_new(&msg);
+	message->buffer = String_append_constant(message->buffer, data);
+	ParseEvent event = Message_parse_finish(message);
 
-	int data_parsed = Message_parse(&msg, data, strlen(data));
-	TEST_ASSERT_EQUAL_INT(strlen(data), data_parsed);
-	TEST_ASSERT_EQUAL_INT(4, msg.envelope.header_count);
-	TEST_ASSERT_EQUAL_STRING(msg.topic->value, "/foo/bar");
-	TEST_ASSERT_EQUAL_STRING(msg.sender->value, "xyz");
-	TEST_ASSERT_EQUAL_STRING(msg.method->value, "PUBLISH");
-	TEST_ASSERT_EQUAL_STRING(msg.envelope.last->value, "Bar");
-	TEST_ASSERT_EQUAL_STRING(msg.body, "Hello World");
+	TEST_ASSERT_EQUAL_STRING(data, message->buffer);
+
+	TEST_ASSERT_EQUAL_INT(2, message->protocol_values->length);
+	TEST_ASSERT_EQUAL_STRING("VERIFY", List_get(message->protocol_values, 0));
+	TEST_ASSERT_EQUAL_STRING("/foo/bar", List_get(message->protocol_values, 1));
+
+	TEST_ASSERT_EQUAL_INT(2, message->headers->length);
+	Pair *header1 = (Pair*)List_get(message->headers, 0);
+	TEST_ASSERT_EQUAL_STRING("Header1", header1->key);
+	TEST_ASSERT_EQUAL_STRING("value1", header1->value);
+
+	Pair *header2 = (Pair*)List_get(message->headers, 1);
+	TEST_ASSERT_EQUAL_STRING("Header2", header2->key);
+	TEST_ASSERT_EQUAL_STRING("value2", header2->value);
+
+	TEST_ASSERT_EQUAL_STRING("Hello World", message->body);
+
+	Message_free(message);
 }
 
-void test_write_to_buffer()
+void test_Message_parse_multi_pass()
 {
-	Message msg;
-	char *data =
-		"PUBLISH /foo/bar\n"
-		"Topic: /foo/bar\n"
-		"Sender: xyz\n"
-		"Method: PUBLISH\n"
-		"Foo: Bar\n"
+	Message *message = Message_new(1024);
+
+	const char *data =
+		"VERIFY /foo/bar\n"
+		"Header1: value1\n"
+		"Header2: value2\n"
 		"\n"
 		"Hello World";
 
-	Message_new(&msg);
-	Message_parse(&msg, data, strlen(data));
-	Message_print_stats(&msg, stderr);
-	TEST_ASSERT_EQUAL_INT(strlen(data), Message_length(&msg));
+	unsigned int i;
 
-	char buf[Message_length(&msg)];
-	int write_count = Message_write_to_buffer(&msg, buf);
-	TEST_ASSERT_EQUAL_INT( Message_length(&msg), write_count);
-	TEST_ASSERT_EQUAL_STRING(data, buf);
+	for (i = 0; i < strlen(data); i++)
+	{
+		message->buffer = String_append_array(message->buffer, &data[i], 1);
+		Message_parse(message);
+	}
+	TEST_ASSERT_EQUAL_STRING(data, message->buffer);
 
-	Message_free(&msg);
-}
+	ParseEvent event = Message_parse_finish(message);
 
-void test_write_to_file()
-{
-	Message msg;
-	char *data =
-		"PUBLISH\n"
-		"Topic: /foo/bar\n"
-		"Sender: xyz\n"
-		"Method: PUBLISH\n"
-		"Foo: Bar\n"
-		"\n"
-		"Hello World";
+	TEST_ASSERT_EQUAL_INT(2, message->protocol_values->length);
+//	TEST_ASSERT_EQUAL_STRING("VERIFY", List_get(message->protocol_values, 0));
+//	TEST_ASSERT_EQUAL_STRING("/foo/bar", List_get(message->protocol_values, 1));
+//
+//	TEST_ASSERT_EQUAL_INT(2, message->headers->length);
+//	Pair *header1 = (Pair*)List_get(message->headers, 0);
+//	TEST_ASSERT_EQUAL_STRING("Header1", header1->key);
+//	TEST_ASSERT_EQUAL_STRING("value1", header1->value);
+//
+//	Pair *header2 = (Pair*)List_get(message->headers, 1);
+//	TEST_ASSERT_EQUAL_STRING("Header2", header2->key);
+//	TEST_ASSERT_EQUAL_STRING("value2", header2->value);
 
-	Message_new(&msg);
-	Message_parse(&msg, data, strlen(data));
-	TEST_ASSERT_EQUAL_INT(strlen("Hello World"), msg.body_length);
-	TEST_ASSERT_EQUAL_INT(strlen(data), Message_write_to_file(&msg, stdout));
-	Message_free(&msg);
+	TEST_ASSERT_EQUAL_STRING("Hello World", message->body);
+
+	Message_free(message);
 }
 
 int main()
 {
 	TEST_BEGIN
 
-	RUN(test_new);
-	RUN(test_set_header);
-	RUN(test_set_topic);
-	RUN(test_set_sender);
-	RUN(test_set_method);
-	RUN(test_SetMultipleHeaders);
-	RUN(test_write_to_buffer);
-	RUN(test_write_to_file);
+	RUN(test_Message_new);
+	RUN(test_Message_parse_single_pass);
+	RUN(test_Message_parse_multi_pass);
 
 	TEST_END
 }
