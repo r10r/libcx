@@ -10,6 +10,8 @@ readonly SRC=`echo ${RULE} | cut -d':' -f 2`
 
 # both object and dependency file must be updated
 # when a source file or header changes
+# SRC += adds duplicate headers/includes
+# use '$(sort $(SRC))' to remove duplicates
 cat <<EOF
 ${OBJ_DIR}/${OBJ} ${OBJ_DIR}/${OBJ}.mk: ${SRC}
 

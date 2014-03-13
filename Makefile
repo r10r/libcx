@@ -5,9 +5,6 @@ default: all
 # Variables that might be overwritten by commandline or module.mk
 BASE_DIR := $(realpath $(PWD))
 UNCRUSTIFY_CONFIG := $(BASE_DIR)/uncrustify.cfg
-LCOV_INFO_FILE := coverage.info
-LCOV_DIR := coverage
-GCOV_TOOL := gcov
 MODULES := 
 OS := $(shell uname -s)
 OBJECT_DEPENDENCY_SCRIPT := $(BASE_DIR)/depend.sh
@@ -35,7 +32,6 @@ $(info Using dependency script: $(OBJECT_DEPENDENCY_SCRIPT))
 # use -isystem ?
 #CFLAGS += $(patsubst %,-I%,$(MODULES))
 
-all: $(OBJS) $(PROGRAMS) $(TESTS)
 
 # [ os ]
 # ======
@@ -61,18 +57,9 @@ $(1): $$($(1)_OBJS) $(1).c
 
 OBJS += $$($(1)_OBJS)
 endef
+
+PROGRAMS += $(TESTS)
 $(foreach prog,$(PROGRAMS),$(eval $(call PROGRAM_template,$(prog))))
-
-# The test template executes the generated program afterwards (runs the test).
-define TEST_template
-$(1): $$($(1)_OBJS) $(1).c
-	$$(CC) $$(CFLAGS) $$(LDFLAGS) $$($(1)_FLAGS) \
-	-o $(1) $$($(1)_OBJS) && $(1)
-
-OBJS += $$($(1)_OBJS)
-endef
-$(foreach prog,$(TESTS),$(eval $(call TEST_template,$(prog))))
-
 
 # [ dependency tracking ]
 # =======================
@@ -84,51 +71,68 @@ $(foreach prog,$(TESTS),$(eval $(call TEST_template,$(prog))))
 # Include a dependency file per object.
 # The dependency file is created automatically by the rule above.
 include $(OBJS:=.mk)
-	
 
-# [ uncrustify ]
-# ==============
+# after all module/dependency makefiles have been included
+# it's time to remove duplicate objects/sources
+OBJS := $(sort $(OBJS))
+SRC := $(sort $(SRC))
+
+
+all: format $(OBJS) $(PROGRAMS) test decover
+
+
+# [ format ]
+# ==========
 # Keep your code nice and shiny ;)
+# TODO run uncrustify automatically when source changes ?
 .uncrustify: $(SRC)
 	uncrustify --mtime -c $(UNCRUSTIFY_CONFIG) --replace $? &&\
 	touch .uncrustify
 	
-uncrustify: .uncrustify;
+format: .uncrustify;
 
 
-# [ lcov ]
+# [ tests ]
+# =========
+%.testresult: % 
+	$(TEST_RUNNER) $*
+
+test: $(TESTS:=.testresult);
+
+
+# [ gcov ]
 # ========
-$(LCOV_DIR)/index.html: $(LCOV_INFO_FILE)
-	genhtml --ignore-errors source $(LCOV_INFO_FILE) \
-	--output-directory $(LCOV_DIR)
+# Tests must execute to generate the GCOV files.
+# All objects not linked to any test must be build 
+# to include include them in the coverage report.
+# TODO create textmate scheme for GCOV file format 
 
-$(LCOV_INFO_FILE): $(TESTS)
-	lcov --capture --directory $(BASE_DIR) \
-	--no-external --output-file $(LCOV_INFO_FILE) \
-	--gcov-tool $(GCOV_TOOL)
-	
-lcov: $(LCOV_DIR)/index.html;
+.PRECIOUS: %.gcno
+%.gcno: $(OBJS) $(TESTS);
 
-# Memchecking is essential but unfortunately slow.
-# TODO Create a file for each test executable to
-# indicate the last successful valgrind run 
-# Maybe custom memory profiling by overwriting 
-# malloc/free with xmalloc/xfree is a feasible option.
-# [ valgrind ]
-# ============
-#.PHONY
-#valgrind:
-#	valgrind --error-exitcode=1 --leak-check=full ./libcx-list/test_list
+.PRECIOUS: %.cov
+%.cov: %.gcno
+	$(COVERAGE_TOOL) $*.o
+
+# generate all coverage files
+cov: $(OBJS:.o=.cov);
+
+# generate a simple coverage report summary
+decover: cov
+	$(COVERAGE_REPORT_TOOL)
 
 
 # [ clean ]
 # =========
 # Should remove all generated artifacts
 ARTIFACTS := $(OBJS) $(OBJS:=.mk) \
-	$(PROGRAMS) $(TESTS) \
+	$(PROGRAMS) \
+	$(wildcard $(MODULES:=/*.testresult)) \
+	$(wildcard $(MODULES:=/*.testlog)) \
 	$(wildcard $(MODULES:=/*.gcda)) \
 	$(wildcard $(MODULES:=/*.gcno)) \
 	$(wildcard $(MODULES:=/*.o.mk)) \
+	$(wildcard $(MODULES:=/*.cov)) \
 	$(OBJS:.o=.gcda) $(OBJS:.o=.gcno) \
 	$(LCOV_DIR) $(LCOV_INFO_FILE)
 	
