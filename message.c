@@ -5,415 +5,165 @@
 #define HEADER_LINE_FORMAT_LENGTH 3
 #define ENVELOPE_SEPARATOR "\n"
 
-/* keep in sync with MethodType */
-const char *METHOD_NAME[] =
-{ "PUBLISH", "SUBSCRIBE", "UNSUBSCRIBE" };
+static F_MessageEventHandler _parser_event_handler;
 
-MethodType
-MethodType_of(const char *value)
+RagelParserState*
+RagelParserState_new()
 {
-	if (strcmp(value, METHOD_NAME[PUBLISH]) == 0)
-		return PUBLISH;
-	if (strcmp(value, METHOD_NAME[UNSUBSCRIBE]) == 0)
-		return UNSUBSCRIBE;
-	if (strcmp(value, METHOD_NAME[SUBSCRIBE]) == 0)
-		return SUBSCRIBE;
+	RagelParserState *state = malloc(sizeof(RagelParserState));
 
-	return UNDEFINED;
-}
+	state->res = 0;
+	state->cs = 0;
 
-/* keep in sync with HeaderType */
-const char *HEADER_NAME[] =
-{ "Method", "Topic", "Sender" };
+	state->buffer_position = NULL;
+	state->buffer_end = NULL;
+	state->buffer_offset = 0;
+	state->eof = NULL;
 
-HeaderType
-HeaderType_of(const char *value)
-{
-	if (strcmp(value, HEADER_NAME[METHOD]) == 0)
-		return METHOD;
-	if (strcmp(value, HEADER_NAME[TOPIC]) == 0)
-		return TOPIC;
-	if (strcmp(value, HEADER_NAME[SENDER]) == 0)
-		return SENDER;
+	state->marker = NULL;
+	state->marker_offset = 0;
 
-	return OTHER;
+	state->event = P_NEW;
+	state->f_event_handler = _parser_event_handler;
+	return state;
 }
 
 void
-Message_detect_header_type(Message *message, Header *header)
+RagelParserState_free(RagelParserState *state)
 {
-	header->type = HeaderType_of(header->name);
-	if (header->type == METHOD)
-	{
-		message->type = MethodType_of(header->value);
-		message->method = header;
-	}
-	else if (header->type == TOPIC)
-		message->topic = header;
-	else if (header->type == SENDER)
-		message->sender = header;
+	free(state);
 }
 
-void
-Envelope_new(Envelope *envelope)
+static void
+free_protocol_value(void *value)
 {
-	envelope->first = NULL;
-	envelope->last = NULL;
-	envelope->header_count = 0;
+	String_free((String)value);
 }
 
-void ProtocolLine_new(ProtocolLine *protocol_line)
+static void
+free_header(void *value)
 {
-	protocol_line->value_count = 0;
-	protocol_line->first_value = NULL;
-	protocol_line->last_value = NULL;
+	StringPair_free((Pair*)value);
 }
 
-void
-Message_new(Message *message)
+Message *
+Message_new(size_t body_size)
 {
-	ProtocolLine_new(&message->protocol_line);
-	message->type = UNDEFINED;
-	message->data = NULL;
-	message->data_size = 0;
-	Message_set_body(message, NULL, 0);
-	Envelope_new(&message->envelope);
-	message->method = NULL;
-	message->topic = NULL;
-	message->sender = NULL;
-}
+	Message *message = malloc(sizeof(Message));
 
-void
-Header_set_name(Header *header, const char *name)
-{
-	if (name)
-	{
-		header->name = name;
-		header->name_length = strlen(name);
-	}
-	else
-	{
-		header->name = NULL;
-		header->name_length = 0;
-	}
-}
+	message->protocol_values = List_new();
+	message->protocol_values->f_node_data_free = free_protocol_value;
 
-void
-Header_set_value(Header *header, const char *value)
-{
-	if (value)
-	{
-		header->value = value;
-		header->value_length = strlen(value);
-	}
-	else
-	{
-		header->value = NULL;
-		header->value_length = 0;
-	}
-}
+	message->headers = List_new();
+	message->headers->f_node_data_free = free_header;
 
-void
-Header_new(Header *header, const char *name, const char *value)
-{
-	Header_set_name(header, name);
-	Header_set_value(header, value);
-	header->next = NULL;
-	header->type = OTHER;
-}
+	message->buffer = String_init(NULL, body_size);
+	message->body = String_new(NULL);
 
-Header *
-Envelope_add_header(Envelope *envelope, const char *name, const char *value)
-{
-	Header *header = malloc(sizeof(Header));
-
-	Header_new(header, name, value);
-
-	if (envelope->last)
-	{
-		envelope->last->next = header;
-		envelope->last = header;
-	}
-	else
-	{
-		envelope->first = header;
-		envelope->last = header;
-	}
-	envelope->header_count++;
-	return header;
+	message->parser_state = RagelParserState_new();
+	return message;
 }
 
 void
 Message_free(Message *message)
 {
-	Header *header = message->envelope.first;
-
-	while (header)
-	{
-		free(header);
-		header = header->next;
-	}
-	free(message->data);
-}
-
-long
-Envelope_length(Envelope *envelope)
-{
-	Header *header = envelope->first;
-	long count = 0;
-
-	while (header)
-	{
-		count += header->name_length
-			 + header->value_length
-			 + HEADER_LINE_FORMAT_LENGTH;
-		header = header->next;
-	}
-	return count;
-}
-
-long
-ProtocolLine_length(ProtocolLine *line)
-{
-	ProtocolValue *value = line->first_value;
-	long count = 0;
-
-	while (value)
-	{
-		count += value->length;
-		value = value->next;
-	}
-	count += line->value_count; /* separators (blanks + newline) */
-	return count;
-}
-
-long
-Message_length(Message *msg)
-{
-	long envelope_length =  Envelope_length(&msg->envelope);
-	long protocol_length = ProtocolLine_length(&msg->protocol_line);
-	long body_length = 0;
-
-	if (msg->body_length > 0)
-	{
-		/* if message body is not empty, we need to write the separator	 */
-		body_length += strlen(ENVELOPE_SEPARATOR);
-		body_length += msg->body_length;
-	}
-	return protocol_length + envelope_length + body_length;
-}
-
-long
-Envelope_write_to_file(Envelope *envelope, FILE *file)
-{
-	Header *header = envelope->first;
-
-	long count = 0;
-
-	while (header)
-	{
-		if (header->value_length > 0)
-			count += fprintf(file, HEADER_LINE_FORMAT, header->name, header->value);
-		else
-			count += fprintf(file, HEADER_LINE_FORMAT_NOV, header->name);
-		header = header->next;
-	}
-	return count;
-}
-
-/* FIXME use snprintf and length/size parameters, don't rely on '\0' termination */
-long
-Envelope_write_to_buffer(Envelope *envelope, char *buf)
-{
-	Header *header = envelope->first;
-	long count = 0;
-
-	while (header)
-	{
-		if (header->value_length > 0)
-			count += sprintf(&buf[count], HEADER_LINE_FORMAT, header->name, header->value);
-		else
-			count += sprintf(&buf[count], HEADER_LINE_FORMAT_NOV, header->name);
-		header = header->next;
-	}
-	return count;
-}
-
-long
-ProtocolLine_write_to_file(ProtocolLine *line, FILE *file)
-{
-	long count = 0;
-	ProtocolValue *value = line->first_value;
-
-	while (value)
-	{
-		if (count == 0)
-			count += fprintf(file, "%s", value->data);
-		else
-			count += fprintf(file, " %s", value->data);
-
-		value = value->next;
-	}
-	count += fprintf(file, "\n");
-	return count;
-}
-
-long
-ProtocolLine_write_to_buffer(ProtocolLine *line, char *buf)
-{
-	long count = 0;
-	ProtocolValue *value = line->first_value;
-
-	while (value)
-	{
-		if (count == 0)
-			count += sprintf(&buf[count], "%s", value->data);
-		else
-			count += sprintf(&buf[count], " %s", value->data);
-
-		value = value->next;
-	}
-	count += sprintf(&buf[count], "\n");
-	return count;
+	List_free(message->protocol_values);
+	List_free(message->headers);
+	String_free(message->buffer);
+	String_free(message->body);
+	RagelParserState_free(message->parser_state);
+	free(message);
 }
 
 void
 Message_print_stats(Message *message, FILE *file)
 {
 	fprintf(file, "Message: %p\n", message);
-	fprintf(file, "Counters: Protocol values [%d], headers [%d]\n",
-		message->protocol_line.value_count, message->envelope.header_count);
-	fprintf(file, "Lengths: protocol [%ld] envelope [%ld] body [%ld]\n",
-		ProtocolLine_length(&message->protocol_line),
-		Envelope_length(&message->envelope),
-		message->body_length);
+	fprintf(file, "Counters: Protocol values [%ld], headers [%ld]\n",
+		message->protocol_values->length, message->headers->length);
 	fprintf(file, "----------- begin message\n");
-	Message_write_to_file(message, file);
+	String envelope = Message_envelope(message);
+	String_write(envelope, file);
+	String_write(message->buffer, file);
 	fprintf(file, "----------- end message\n");
 }
 
-long
-Message_write_to_file(Message *message, FILE *file)
+#define ENVELOPE_DEFAULT_SIZE 1024
+
+String
+Message_envelope(Message *message)
 {
-	long count = 0;
+	String envelope = String_init(NULL, ENVELOPE_DEFAULT_SIZE);
 
-	count += ProtocolLine_write_to_file(&message->protocol_line, file);
-	count += Envelope_write_to_file(&message->envelope, file);
-
-	if (message->body_length > 0)
-	{
-		count += fprintf(file, ENVELOPE_SEPARATOR);
-		count += fprintf(file, "%s", message->body);
-	}
-	return count;
+	// TODO append protocol line
+	// TODO append headers
+	return envelope;
 }
 
 long
-Message_write_to_buffer(Message *message, char *buf)
+Message_fwrite(Message *message, FILE *file, bool with_body)
 {
-	long count = 0;
+	return 0L;
+}
 
-	count += ProtocolLine_write_to_buffer(&message->protocol_line, &buf[count]);
-	count += Envelope_write_to_buffer(&message->envelope, &buf[count]);
+extern void ragel_parse_message(Message *message);
 
-	if (message->body_length > 0)
+ParseEvent
+Message_parse_finish(Message *message)
+{
+	RagelParserState *s = message->parser_state;
+
+	// buffer might be reallocated so we start at the offset
+	// TODO move to String_index
+	s->buffer_position = &message->buffer[s->buffer_offset];
+	s->buffer_end = String_last(message->buffer);
+	s->eof = s->buffer_end;
+	ragel_parse_message(message);
+	return s->event;
+}
+
+ParseEvent
+Message_parse(Message *message)
+{
+	RagelParserState *s = message->parser_state;
+
+	// buffer might be reallocated so we start at the offset
+	// TODO move to String_index
+	s->buffer_position = &message->buffer[s->buffer_offset];
+	s->buffer_end = String_last(message->buffer);
+	s->eof = NULL;
+	ragel_parse_message(message);
+	return s->event;
+}
+
+static void
+_parser_event_handler(Message *message)
+{
+	RagelParserState *state = message->parser_state;
+
+	XFLOG("Event %d, at index %ld [%c] \n", state->event, state->buffer_offset, *state->buffer_position);
+
+	switch (message->parser_state->event)
 	{
-		count += sprintf(&buf[count], ENVELOPE_SEPARATOR);
-		count += sprintf(&buf[count], "%s", message->body);
+	case P_PROTOCOL_VALUE:
+		List_push(message->protocol_values, String_init(state->marker, state->marker_offset));
+		break;
+	case P_HEADER_NAME:
+	{
+		String header_name = String_init(state->marker, state->marker_offset);
+		Pair *header = StringPair_init(header_name, NULL);
+		List_push(message->headers, header);
+		break;
 	}
-	return count;
-}
-
-Header *
-Envelope_remove_header(Envelope *envelope, HeaderType type, char *name)
-{
-	// decrement header count
-	// decrement envelope length
-	return NULL;
-}
-
-/* TODO watch out for duplicates ! */
-Header *
-Message_set_header(Message *message, HeaderType type, const char *name, const char *value)
-{
-	Header *header = Envelope_add_header(&message->envelope, name, value);
-
-	header->type = type;
-	return header;
-}
-
-void
-Message_set_topic(Message *message, const char *topic)
-{
-	Header *header = Message_set_header(message, TOPIC, HEADER_NAME[TOPIC], topic);
-
-	message->topic = header;
-}
-
-void
-Message_set_sender(Message *message, const char *sender)
-{
-	Header *header = Message_set_header(message, SENDER, HEADER_NAME[SENDER], sender);
-
-	message->sender = header;
-}
-
-void
-Message_set_method(Message *message, MethodType method)
-{
-	Header *header = Message_set_header(message, METHOD, HEADER_NAME[METHOD], METHOD_NAME[(int)method]);
-
-	message->method = header;
-	message->type = method;
-}
-
-/*
- * Set length to -1 to calculate length using strlen
- */
-void
-Message_set_body(Message *message, const char *body, long length)
-{
-	if (body == NULL || length == 0)
+	case P_HEADER_VALUE:
 	{
-		message->body = NULL;
-		message->body_length = 0;
+		Pair *header = (Pair*)message->headers->last->data;
+		header->value = String_init(state->marker, state->marker_offset);
+		break;
 	}
-	else
-	{
-		message->body = body;
-		if (length > 0)
-			message->body_length = length;
-		else
-			message->body_length = strlen(body);
+	case P_BODY:
+		message->body = String_append_array(message->body, state->marker, state->marker_offset + 1);
+		break;
 	}
 }
 
-void
-ProtocolValue_new(ProtocolValue *value, char *data, int length)
-{
-	value->data = data;
-	value->length = length;
-	value->next = NULL;
-}
-
-void
-ProtocolLine_add_value(ProtocolLine *line, char* data, int length)
-{
-	/* FIXME use memory pool for allocation */
-	ProtocolValue *value = malloc(sizeof(ProtocolValue));
-
-	ProtocolValue_new(value, data, length);
-
-	ProtocolValue *parent = line->last_value;
-	if (parent)
-	{
-		parent->next = value;
-		line->last_value = value;
-	}
-	else
-	{
-		line->first_value = value;
-		line->last_value = value;
-	}
-	line->value_count++;
-}

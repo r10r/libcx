@@ -5,157 +5,76 @@
 #include <stdio.h>      /* fprintf, feof, fopen, FILE */
 #include <stdlib.h>     /* free, exit, malloc */
 #include <stdbool.h>    /* true, false */
+#include "libcx-list/list.h"
+#include "libcx-string/string.h"
 
-typedef enum
+typedef struct message_t Message;
+
+typedef enum parse_event_t
 {
-	/*!< publish a message to a topic */
-	PUBLISH,
-	/*!< subscribe to a topic */
-	SUBSCRIBE,
-	/*!< unsubscribe from a topic */
-	UNSUBSCRIBE,
-	/*!< undefined message topic */
-	UNDEFINED
-} MethodType;
+	P_NEW,
+	P_PROTOCOL_VALUE,
+	P_HEADER_NAME,
+	P_HEADER_VALUE,
+	P_BODY,
+	P_ERROR_MESSAGE_MALFORMED
+} ParseEvent;
 
-MethodType
-MethodType_of(const char *value);
+typedef struct ragel_parser_state_t RagelParserState;
+typedef void F_MessageEventHandler (Message *message);
 
-extern const char *METHOD_NAME[];
-extern const char *HEADER_NAME[];
-
-typedef enum
+struct ragel_parser_state_t
 {
-	METHOD,
-	TOPIC,
-	SENDER,
-	OTHER
-} HeaderType;
-
-HeaderType
-HeaderType_of(const char *value);
-
-typedef struct protocol_value_t ProtocolValue;
-
-// FIXME use List implementation here
-struct protocol_value_t
-{
-	char *data;
-	int length;
-	ProtocolValue *next;
+	char *buffer_position;
+	char *buffer_end;
+	unsigned int buffer_offset;
+	char *eof;
+	int res;
+	int cs;
+	char *marker;
+	unsigned int marker_offset;
+	ParseEvent event;
+	F_MessageEventHandler *f_event_handler;
 };
 
-// FIXME use List implementation here
-typedef struct protocol_line_t
+struct message_t
 {
-	int value_count;
-	ProtocolValue *first_value;
-	ProtocolValue *last_value;
-} ProtocolLine;
+	List *protocol_values;  /* list of strings */
+	List *headers;          /* list of string pairs */
+	String buffer;          /* message buffer */
+	String body;
+	RagelParserState *parser_state;
+};
 
-// FIXME use list implementation here
-/* TODO use ProtocolValue for header values and keys ? */
-typedef struct header_t
+static inline size_t Message_size(Message *message)
 {
-	const char *name;
-	const char *value;
-	HeaderType type;
-	struct header_t *next;
-	int name_length;
-	int value_length;
-} Header;
+	return 0;
+}
 
-// FIXME use list implementation here
-typedef struct header_list_t
+// mark begin of body to track envelope  and header size
+static inline size_t Message_body_size(Message *message)
 {
-	Header *first;
-	Header *last;
-	int header_count;
-} Envelope;
+	return 0;
+}
 
-typedef struct parsed_message_t
-{
-	MethodType type;
-	char *data;
-	long data_size;
-	const char *body;
-	ProtocolLine protocol_line;
-	long body_length;
-	Header *method;         /* pointer to method header */
-	Header *topic;          /* pointer to topic header */
-	Header *sender;         /* pointer to sender header */
-	Envelope envelope;      /* topic and sender are included in the envelope */
-} Message;
-
-void
-Message_new(Message *message);
-
-void
-Message_set_body(Message *message, const char *body, long length);
-
-long
-Message_length(Message *msg);
-
-void
-Header_new(Header *header, const char *name, const char *value);
-
-void
-Header_set_value(Header *header, const char *value);
-
-void
-Header_set_name(Header *header, const char *name);
-
-long
-Envelope_length(Envelope *envelope);
-
-long
-ProtocolLine_length(ProtocolLine *line);
-
-void
-ProtocolLine_add_value(ProtocolLine *line, char* data, int length);
-
-/* simply appends the given header */
-Header *
-Envelope_add_header(Envelope *envelope, const char *name, const char *value);
-
-Header *
-Envelope_remove_header(Envelope *envelope, HeaderType type, char *name);
-
-long
-Envelope_write_to_file(Envelope *envelope, FILE *file);
-
-long
-Envelope_write_to_buffer(Envelope *envelope, char *buf);
-
-long
-Message_write_to_buffer(Message *message, char *buf);
-
-long
-Message_write_to_file(Message *message, FILE *file);
+Message *
+Message_new(size_t body_size);
 
 void
 Message_free(Message *message);
 
-/* TODO check for duplicate headers !!! */
-Header *
-Message_set_header(Message *message, HeaderType type, const char *name, const char *value);
-
-void
-Message_detect_header_type(Message *message, Header *header);
-
-void
-Message_set_topic(Message *message, const char *topic);
-
-void
-Message_set_sender(Message *message, const char *sender);
-
-void
-Message_set_method(Message *message, MethodType method);
-
-void
-ProtocolValue_new(ProtocolValue *value, char *data, int length);
+String
+Message_envelope(Message *message);
 
 void
 Message_print_stats(Message *message, FILE *file);
+
+ParseEvent
+Message_parse(Message *message);
+
+// set parser state EOF and run last parse
+// return 0 if finished successful 1 else
+ParseEvent
+Message_parse_finish(Message *message);
 
 #endif
