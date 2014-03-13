@@ -238,6 +238,23 @@ test_List_userdata_()
 	List_free(list);
 }
 
+static void
+test_List_get()
+{
+	List *list = List_new();
+
+	List_push(list, "node 1");
+	List_push(list, "node 2");
+	List_push(list, "node 3");
+
+	TEST_ASSERT_EQUAL_STRING("node 1", List_get(list, 0));
+	TEST_ASSERT_EQUAL_STRING("node 2", List_get(list, 1));
+	TEST_ASSERT_EQUAL_STRING("node 3", List_get(list, 2));
+	TEST_ASSERT_NULL(List_get(list, 3));
+
+	List_free(list);
+}
+
 int main()
 {
 	TEST_BEGIN
@@ -250,5 +267,6 @@ int main()
 	RUN(test_List_prepend);
 	RUN(test_List_unshift);
 	RUN(test_List_userdata_);
+	RUN(test_List_get);
 	TEST_END
 }

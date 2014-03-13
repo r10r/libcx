@@ -230,3 +230,20 @@ List_userdata_get(List *list)
 {
 	return list->userdata;
 }
+
+void *
+List_get(List *list, unsigned int index)
+{
+	if (index >= list->length)
+		return NULL;
+
+	unsigned int i;
+	void *data = NULL;
+	Node *node = list->first;
+	_LIST_LOCK_READ(list);
+	for (i = 0; i < index; i++)
+		node = node->next;
+	data = node->data;
+	_LIST_UNLOCK_READ(list);
+	return data;
+}
