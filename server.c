@@ -32,13 +32,14 @@ thread_wait(int nanos)
 void
 on_client_write(ev_loop *loop, ev_io *w, int revents)
 {
-	Worker *worker = (Worker *) ev_userdata(loop);
+	Worker *worker = (Worker*)ev_userdata(loop);
+
 	XFLOG("Worker[%d] fd:%d - sending response\n", worker->id, w->fd);
 	ev_io_stop(loop, w);
-	char *data = "foo";
-	int data_length = strlen(data);
-	int bytes = send(w->fd, data, data_length, 0);
-	if (bytes < data_length)
+	char data[] = "foo";
+	size_t data_length = strlen(data);
+	ssize_t bytes = send(w->fd, data, data_length, 0);
+	if (bytes < 0 || (int)bytes < (int)data_length)
 		XFLOG("Worker[%d] fd:%d - failed to send response\n", worker->id, w->fd);
 //	thread_wait(100 * 1000000); /* delay used for testing purposes */
 	close(w->fd);
@@ -48,7 +49,7 @@ on_client_write(ev_loop *loop, ev_io *w, int revents)
 void
 on_client_read(ev_loop *loop, ev_io *w, int revents)
 {
-	Worker *worker = (Worker *) ev_userdata(loop);
+	Worker *worker = (Worker*)ev_userdata(loop);
 	char buf[200];
 
 	XFLOG("Worker[%d] fd:%d - read connection (revents:%d)\n", worker->id, w->fd, revents);
@@ -59,7 +60,7 @@ on_client_read(ev_loop *loop, ev_io *w, int revents)
 	 * it will keep returning zero and doing nothing else.
 	 */
 
-	int num_read = read(w->fd, buf, 200);
+	ssize_t num_read = read(w->fd, buf, 200);
 
 	if (num_read == IO_ERR)
 	{
@@ -78,7 +79,7 @@ on_client_read(ev_loop *loop, ev_io *w, int revents)
 			free(w);
 		}
 		else
-			XFLOG("Worker[%d] fd:%d - received data (length %d)\n", worker->id, w->fd, num_read);
+			XFLOG("Worker[%d] fd:%d - received data (length %lu)\n", worker->id, w->fd, num_read);
 	}
 }
 
@@ -98,10 +99,11 @@ listen_to_client(ev_loop *loop, int fd)
 void
 on_connection(ev_loop *loop, ev_io *w, int revents)
 {
-		Worker *worker = ev_userdata(loop);
+	Worker *worker = ev_userdata(loop);
+
 //	ev_io_stop(loop, connection_watcher);
-		XFLOG("Worker[%d] fd:%d - new connection (revents:%d)\n",
-			worker->id, w->fd, revents);
+	XFLOG("Worker[%d] fd:%d - new connection (revents:%d)\n",
+	      worker->id, w->fd, revents);
 
 	int client_fd = accept(server_fd, NULL, NULL);
 	if (client_fd == ACCEPT_ERROR)
@@ -139,9 +141,9 @@ unix_socket_connect(const char *sock_path)
 {
 	struct sockaddr_un address;
 	int fd = SOCKET_CONNECT_FAILED;
-	int sock_path_len;
+	size_t sock_path_len;
 	int ret;
-	int address_size;
+	socklen_t address_size;
 
 	sock_path_len = strlen(sock_path);
 	address_size = sizeof(address);
@@ -151,7 +153,7 @@ unix_socket_connect(const char *sock_path)
 	if (sock_path_len > UNIX_PATH_MAX)
 	{
 		fprintf(stderr,
-			"Socket path to long (%d). Path length is limited to %d tokens.\n",
+			"Socket path to long (%ld). Path length is limited to %d tokens.\n",
 			sock_path_len, UNIX_PATH_MAX);
 		return SOCKET_CONNECT_FAILED;
 	}

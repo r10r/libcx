@@ -39,10 +39,10 @@ void
 receive_response(int sock)
 {
 	char receive_buffer[100];
-	int receive_count;
+	ssize_t receive_count;
 
 	receive_count = recv(sock, receive_buffer, 100, 0);
-	printf("Received %d\n", receive_count);
+	printf("Received %zu\n", receive_count);
 
 	if (receive_count > 0)
 	{

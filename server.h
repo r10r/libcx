@@ -33,11 +33,6 @@
 /* server socket file descriptor */
 extern int server_fd;
 
-// every watcher type has its own typedef'd struct  with the name ev_TYPE
-extern ev_io connection_watcher;
-extern ev_io data_watcher;
-extern ev_timer timeout_watcher;
-
 void
 enable_so_opt(int fd, int option);
 
