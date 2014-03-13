@@ -83,16 +83,15 @@ test_List_match()
 
 	list->f_node_data_free = node_free;
 
+	TEST_ASSERT_NULL(List_match(list, "node 1", data_strcmp));
+
 	List_push(list, strdup("node 1"));
 	List_push(list, strdup("node 2"));
 	List_push(list, strdup("node 3"));
 
-	Node *match = List_match(list, "node", data_strcmp);
-	TEST_ASSERT_NULL(match);
+	TEST_ASSERT_NULL(List_match(list, "node", data_strcmp));
 
-	match = List_match(list, "node 2", data_strcmp);
-	TEST_ASSERT_NOT_NULL(match);
-	TEST_ASSERT_EQUAL_STRING("node 2", match->data);
+	TEST_ASSERT_EQUAL_STRING("node 2", List_match(list, "node 2", data_strcmp)->data);
 
 	List_free(list);
 }
@@ -112,6 +111,8 @@ test_List_each()
 	List *list = List_new();
 
 	list->f_node_data_free = node_free;
+
+	List_each(list, test_iterator); /* test empty list */
 
 	List_push(list, strdup("node 1"));
 	List_push(list, strdup("node 2"));
