@@ -1,9 +1,9 @@
 #include "server.h"
 #include "libcx-workqueue/pool.h"
 
-WorkerPool *pool;
-ev_signal sigint_watcher;
-ev_timer shutdown_timer;
+static WorkerPool *pool;
+static ev_signal sigint_watcher;
+static ev_timer shutdown_timer;
 
 /* check if all workers are released and work is done */
 static void
@@ -18,7 +18,8 @@ shutdown_cb(ev_loop *loop, ev_timer *w, int revents)
 static void
 sigint_cb(ev_loop *loop, ev_signal *w, int revents)
 {
-	ev_timer *schedule_work_timer = (ev_timer *) malloc(sizeof(ev_timer));
+	ev_timer *schedule_work_timer = (ev_timer*)malloc(sizeof(ev_timer));
+
 	/* stop adding work */
 	printf("Starting shutdown timer. Waiting for pending requests\n");
 	ev_timer_stop(loop, schedule_work_timer);
@@ -28,7 +29,7 @@ sigint_cb(ev_loop *loop, ev_signal *w, int revents)
 }
 
 static void
-setup_callbacks(WorkerPool *pool)
+setup_callbacks()
 {
 	/* handle SIGINT */
 	sigint_watcher.data = pool;
@@ -36,11 +37,12 @@ setup_callbacks(WorkerPool *pool)
 	ev_signal_start(EV_DEFAULT, &sigint_watcher);
 }
 
-void
+static void
 worker_watch_connection(Worker *worker)
 {
 	/* get notified on incoming connection */
-	ev_io *connection_watcher = (ev_io *) malloc(sizeof(ev_io));
+	ev_io *connection_watcher = (ev_io*)malloc(sizeof(ev_io));
+
 	ev_io_init(connection_watcher, on_connection, server_fd, EV_READ);
 	ev_io_start(worker->loop, connection_watcher);
 	XFLOG("Worker[%d] - waiting for connection\n", worker->id);
@@ -49,7 +51,7 @@ worker_watch_connection(Worker *worker)
 int
 main(int argc, char** argv)
 {
-	int num_threads = atoi(argv[1]);
+	unsigned int num_threads = (unsigned int)atoi(argv[1]);
 
 	/* SIGINT is handled by a callback */
 	signal(SIGINT, SIG_IGN);
@@ -68,7 +70,7 @@ main(int argc, char** argv)
 		exit(1);
 	}
 
-	setup_callbacks(pool);
+	setup_callbacks();
 	WorkerPool_start(pool);
 	ev_run(loop, 0);
 	WorkerPool_free(pool);

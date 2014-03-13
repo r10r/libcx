@@ -12,13 +12,14 @@ struct client_data_t
 	const char *data;
 };
 
-void*
+static void*
 thread_send_data(void *data)
 {
-	struct client_data_t *d = (struct client_data_t*) data;
+	struct client_data_t *d = (struct client_data_t*)data;
 
 	int i;
-	for(i = 0; i < d->connections; i++)
+
+	for (i = 0; i < d->connections; i++)
 	{
 		int sock = client_connect(d->socket_path);
 		send_data(sock, d->data);
@@ -31,25 +32,23 @@ thread_send_data(void *data)
 
 int main(int argc, char** argv)
 {
-	int sock;
-
 	XASSERT("usage: $0 THREADS CONNECTIONS DATA", argc == 4);
 
 	int thread_count = atoi(argv[1]);
 	int connections = atoi(argv[2]);
 	char *data = argv[3];
 
-	pthread_t threads[thread_count];
+	pthread_t *threads = malloc((size_t)thread_count * sizeof(pthread_t *));
 
 	struct client_data_t d =
-			{ .socket_path = "/tmp/echo.sock",
-					.connections = connections,
-					.data = data };
+	{ .socket_path			= "/tmp/echo.sock",
+	  .connections	= connections,
+	  .data		= data };
 
 	PROFILE_BEGIN_FMT("threads:%d requests/thread:%d\n", thread_count, connections);
 
 	int i;
-	for(i = 0; i < thread_count; i++)
+	for (i = 0; i < thread_count; i++)
 	{
 		pthread_create(&threads[i], NULL, thread_send_data, &d);
 		pthread_join(threads[i], NULL);
@@ -57,5 +56,6 @@ int main(int argc, char** argv)
 
 	PROFILE_END;
 
+	free(threads);
 	return 0;
 }
