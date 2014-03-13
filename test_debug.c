@@ -18,7 +18,13 @@ static void test_XERR()
 {
 	XERR("You should not see this");
 	errno = EPERM;
-	XERR(strerror(errno));
+	char *err = strerror(errno);
+	XERR(err);
+
+//	reported by valgrind:
+//	String allocated by strerror must be freed,
+//	although manpage says it should be 'const'.
+	free(err);
 }
 
 static void test_XDBG()
