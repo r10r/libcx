@@ -23,30 +23,47 @@ struct string_header_t
 	char buf[];
 };
 
-static inline struct string_header_t* String_header(const String s)
+static inline struct string_header_t*
+String_header(const String s)
 {
 	return (struct string_header_t *)(s - sizeof(struct string_header_t));
 }
 
-static inline unsigned int String_space(const String s)
+static inline unsigned int
+String_available(const String s)
 {
 	return String_header(s)->available;
 }
 
-static inline unsigned int String_unused(const String s)
+static inline unsigned int
+String_unused(const String s)
 {
 	return String_header(s)->unused;
 }
 
 /* the string size excluding the '\0' terminator */
-static inline unsigned int String_length(const String s)
+static inline unsigned int
+String_length(const String s)
 {
-	return String_space(s) - String_unused(s);
+	return String_available(s) - String_unused(s);
 }
 
-static inline unsigned int String_size(unsigned int length)
+/* alloc size for string of of given length (including header and '\0' terminator ) */
+static inline unsigned int
+String_size(unsigned int length)
 {
 	return (unsigned int)sizeof(struct string_header_t) + (sizeof(char) * (length + 1 /* '\0' */));
+}
+
+static inline char*
+String_last(const String s)
+{
+	unsigned int length = String_length(s);
+
+	if (length > 0)
+		return &s[length - 1];
+	else
+		return NULL;
 }
 
 struct pair_t
