@@ -112,4 +112,7 @@ List_userdata_set(List *list, void *userdata);
 void *
 List_userdata_get(List *list);
 
+void *
+List_get(List *list, unsigned int index);
+
 #endif
