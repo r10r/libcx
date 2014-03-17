@@ -2,7 +2,7 @@
 
 NOSETUP
 
-tatic void test_Something()
+static void test_Something()
 {
 	TEST_IGNORE_MESSAGE("Not implemented");
 }
