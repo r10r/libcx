@@ -6,15 +6,17 @@ TEST_RUNNER := $(BASE_DIR)/valgrind-testrunner.sh
 
 CC := clang-3.4
 CFLAGS += -Weverything \
-	-Wno-error=incompatible-pointer-types-discards-qualifiers
+	-Wno-error=incompatible-pointer-types-discards-qualifiers # requires downcasting to void * pointer
+
 LDFLAGS += -L/usr/local/lib/llvm-3.4/usr/lib
 
 MODULES := libcx-base libcx-sandbox libcx-list libcx-socket-unix \
-	libcx-workqueue libcx-string #libcx-umtp
+	libcx-workqueue libcx-string libcx-umtp
 
 CFLAGS += -I$(BASE_DIR) -DTRACE \
-	-Wall -pedantic  -coverage \
+	-Werror -Wall -pedantic -coverage \
 	-Wno-error=unused-parameter -Wno-error=unused-function \
 	-Wno-error=unused-variable -Wno-error=padded \
-	-gdwarf-2 -g -O0 -fno-inline  -DPROFILE -DNDEBUG \
+	-Wno-error=unused-macros \
+	-gdwarf-2 -g -O0 -fno-inline  -DPROFILE \
 	-Wno-error=sign-conversion -Wno-error=cast-align -Wno-error=float-equal# unity only
