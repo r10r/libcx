@@ -101,7 +101,10 @@ String_append_stream(String s, FILE *file, unsigned int length);
 
 /* read from file into string (at most String_length(s) characters) */
 ssize_t
-String_read(String s, FILE *file);
+String_fread(String s, FILE *file);
+
+ssize_t
+String_read(String s, int fd);
 
 Pair *
 StringPair_init(String key, String value);
@@ -114,5 +117,11 @@ StringPair_free(Pair *pair);
 
 size_t
 String_write(String s, FILE *file);
+
+void
+String_clear(String s);
+
+void
+String_shift(String s, unsigned int count);
 
 #endif
