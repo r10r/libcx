@@ -110,7 +110,7 @@ String_append_constant(String a, const char *b)
 		return NULL;
 	if (b == NULL || strlen(b) == 0)
 		return a;
-	return _append(a, String_length(a), b, strlen(b));
+	return _append(a, String_length(a), b, (unsigned int)strlen(b));
 }
 
 String
