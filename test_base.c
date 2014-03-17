@@ -29,6 +29,9 @@ static void test_container_of()
 	container = container_of(&bar->foo, struct bar, foo);
 	TEST_ASSERT_EQUAL_PTR(bar, container);
 
+	container = container_of(&bar->xxx, struct bar, xxx);
+	TEST_ASSERT_EQUAL_PTR(bar, container);
+
 	container = UC_container_of(&bar->foo, struct bar, foo);
 	TEST_ASSERT_EQUAL_PTR(bar, container);
 
