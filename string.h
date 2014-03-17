@@ -99,6 +99,10 @@ String_append_constant(String a, const char *b);
 String
 String_append_stream(String s, FILE *file, unsigned int length);
 
+/* read from file into string (at most String_length(s) characters) */
+ssize_t
+String_read(String s, FILE *file);
+
 Pair *
 StringPair_init(String key, String value);
 

@@ -4,21 +4,25 @@
 
 NOSETUP
 
-static void test_String_free()
+static void
+test_String_free()
 {
 	String_free(NULL);
 }
 
-static void test_String_new()
+static void
+test_String_new()
 {
 	String s = String_new("foo");
 
 	TEST_ASSERT_EQUAL_STRING("foo", s);
 	TEST_ASSERT_EQUAL_INT(3, String_available(s));
+	TEST_ASSERT_EQUAL_INT(3, strlen(s));
 	String_free(s);
 }
 
-static void test_String_init()
+static void
+test_String_init()
 {
 	String s = String_init(NULL, 3);
 
@@ -28,11 +32,13 @@ static void test_String_init()
 	String_append_constant(s, "foo");
 	TEST_ASSERT_EQUAL_STRING("foo", s);
 	TEST_ASSERT_EQUAL_INT(3, String_available(s));
+	TEST_ASSERT_EQUAL_INT(3, strlen(s));
 
 	String_free(s);
 }
 
-static void test_String_append()
+static void
+test_String_append()
 {
 	String foo = String_new("foo");
 	String bar = String_new("bar");
@@ -45,13 +51,15 @@ static void test_String_append()
 
 	TEST_ASSERT_EQUAL_INT(6, String_available(foobar));
 	TEST_ASSERT_EQUAL_STRING("foobar", foobar);
+	TEST_ASSERT_EQUAL_INT(6, strlen(foobar));
 
 	String_free(foobar);
 	String_free(bar);
 	String_free(null_s);
 }
 
-static void test_String_append_constant()
+static void
+test_String_append_constant()
 {
 	String foo = String_new("foo");
 
@@ -63,10 +71,13 @@ static void test_String_append_constant()
 
 	TEST_ASSERT_EQUAL_INT(6, String_available(foo));
 	TEST_ASSERT_EQUAL_STRING("foobar", foo);
+	TEST_ASSERT_EQUAL_INT(6, strlen(foo));
+
 	String_free(foo);
 }
 
-static void test_String_append_constant_without_grow()
+static void
+test_String_append_constant_without_grow()
 {
 	String foo = String_init(NULL, 1024);
 
@@ -78,7 +89,8 @@ static void test_String_append_constant_without_grow()
 	String_free(foo);
 }
 
-static void test_String_append_array()
+static void
+test_String_append_array()
 {
 	const char f[] = "foobar";
 	String foo = String_new("foo");
@@ -93,7 +105,8 @@ static void test_String_append_array()
 	String_free(foobar);
 }
 
-static void test_StringPair_new()
+static void
+test_StringPair_new()
 {
 	Pair *foobar = StringPair_new("foo", "bar");
 
@@ -102,7 +115,8 @@ static void test_StringPair_new()
 	StringPair_free(foobar);
 }
 
-static void test_String_write()
+static void
+test_String_write()
 {
 	String foo = String_new("foo\n");
 
@@ -111,7 +125,8 @@ static void test_String_write()
 	String_free(foo);
 }
 
-static void test_String_append_stream()
+static void
+test_String_append_stream()
 {
 	char template[] = "/tmp/temp.XXXXXX";
 	int fd = mkstemp(template);
@@ -136,7 +151,43 @@ static void test_String_append_stream()
 	unlink(template);
 }
 
-static void test_String_last()
+static void
+test_String_read()
+{
+	char template[] = "/tmp/temp.XXXXXX";
+	int fd = mkstemp(template);
+	FILE *tmpfile = fdopen(fd, "w+");
+
+	String s = String_init(NULL, 8);
+
+	rewind(tmpfile);
+	fwrite("bar\n", 4, 1, tmpfile);
+	rewind(tmpfile);
+	TEST_ASSERT_EQUAL_INT(4, String_read(s, tmpfile));
+	TEST_ASSERT_EQUAL_STRING("bar\n", s);
+	TEST_ASSERT_EQUAL_INT(4, String_length(s));
+	TEST_ASSERT_EQUAL_INT(8, String_available(s));
+	TEST_ASSERT_EQUAL_INT(4, String_unused(s));
+	TEST_ASSERT_EQUAL_INT(4, strlen(s));
+
+	rewind(tmpfile);
+	fwrite("foo\nbar\n", 8, 1, tmpfile);
+	rewind(tmpfile);
+	TEST_ASSERT_EQUAL_INT(8, String_read(s, tmpfile));
+	TEST_ASSERT_EQUAL_STRING("foo\nbar\n", s);
+	TEST_ASSERT_EQUAL_INT(8, String_length(s));
+	TEST_ASSERT_EQUAL_INT(8, String_available(s));
+	TEST_ASSERT_EQUAL_INT(0, String_unused(s));
+	TEST_ASSERT_EQUAL_INT(8, strlen(s));
+
+	String_free(s);
+	fclose(tmpfile);
+	unlink(template);
+}
+
+
+static void
+test_String_last()
 {
 	String s = String_new("foo");
 	String null_s = String_new(NULL);
@@ -161,6 +212,7 @@ int main()
 	RUN(test_StringPair_new);
 	RUN(test_String_write);
 	RUN(test_String_append_stream);
+	RUN(test_String_read);
 	RUN(test_String_last);
 
 	TEST_END
