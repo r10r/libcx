@@ -163,7 +163,7 @@ test_String_read()
 	rewind(tmpfile);
 	fwrite("bar\n", 4, 1, tmpfile);
 	rewind(tmpfile);
-	TEST_ASSERT_EQUAL_INT(4, String_read(s, tmpfile));
+	TEST_ASSERT_EQUAL_INT(4, String_fread(s, tmpfile));
 	TEST_ASSERT_EQUAL_STRING("bar\n", s);
 	TEST_ASSERT_EQUAL_INT(4, String_length(s));
 	TEST_ASSERT_EQUAL_INT(8, String_available(s));
@@ -173,7 +173,7 @@ test_String_read()
 	rewind(tmpfile);
 	fwrite("foo\nbar\n", 8, 1, tmpfile);
 	rewind(tmpfile);
-	TEST_ASSERT_EQUAL_INT(8, String_read(s, tmpfile));
+	TEST_ASSERT_EQUAL_INT(8, String_fread(s, tmpfile));
 	TEST_ASSERT_EQUAL_STRING("foo\nbar\n", s);
 	TEST_ASSERT_EQUAL_INT(8, String_length(s));
 	TEST_ASSERT_EQUAL_INT(8, String_available(s));
@@ -185,7 +185,6 @@ test_String_read()
 	unlink(template);
 }
 
-
 static void
 test_String_last()
 {
@@ -196,6 +195,42 @@ test_String_last()
 	TEST_ASSERT_NULL(String_last(null_s));
 	String_free(s);
 	String_free(null_s);
+}
+
+static void
+test_String_clear()
+{
+	String s = String_new("foo");
+
+	TEST_ASSERT_EQUAL_INT(3, String_available(s));
+	TEST_ASSERT_EQUAL_INT(0, String_unused(s));
+	String_clear(s);
+	TEST_ASSERT_EQUAL_INT(3, String_available(s));
+	TEST_ASSERT_EQUAL_INT(3, String_unused(s));
+	TEST_ASSERT_EQUAL_INT(0, strlen(s));
+	String_free(s);
+}
+
+static void
+test_String_shift()
+{
+	String s = String_new("foobar");
+
+	TEST_ASSERT_EQUAL_STRING("foobar", s);
+	String_shift(s, 3);
+	TEST_ASSERT_EQUAL_STRING("bar", s);
+	TEST_ASSERT_EQUAL_INT(6, String_available(s));
+	TEST_ASSERT_EQUAL_INT(3, String_unused(s));
+	TEST_ASSERT_EQUAL_INT(3, strlen(s));
+
+	// properly handle invalid shift count
+	String_shift(s, 6);
+	TEST_ASSERT_EQUAL_STRING("", s);
+	TEST_ASSERT_EQUAL_INT(6, String_available(s));
+	TEST_ASSERT_EQUAL_INT(6, String_unused(s));
+	TEST_ASSERT_EQUAL_INT(0, strlen(s));
+
+	String_free(s);
 }
 
 int main()
@@ -214,6 +249,8 @@ int main()
 	RUN(test_String_append_stream);
 	RUN(test_String_read);
 	RUN(test_String_last);
+	RUN(test_String_clear);
+	RUN(test_String_shift);
 
 	TEST_END
 }

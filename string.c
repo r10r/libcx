@@ -168,12 +168,40 @@ String_append_stream(String s, FILE *file, unsigned int length)
 }
 
 ssize_t
-String_read(String s, FILE *file)
+String_fread(String s, FILE *file)
 {
-	unsigned int read =  (unsigned int )fread(&s[0], 1, String_available(s), file);
-
-	s[read] = '\0';
-	String_header(s)->unused = String_available(s) - read;
-	return read;
+	return String_read(s, fileno(file));
 }
 
+ssize_t
+String_read(String s, int fd)
+{
+	unsigned int len = String_available(s);
+	unsigned int len_read =  (unsigned int)read(fd, &s[0], len);
+
+	s[len_read] = '\0';
+	String_header(s)->unused = len - len_read;
+	return len_read;
+}
+
+void
+String_clear(String s)
+{
+	struct string_header_t *hdr = String_header(s);
+
+	hdr->unused = hdr->available;
+	s[0] = '\0';
+}
+
+void
+String_shift(String s, int unsigned count)
+{
+	if (String_length(s) < count)
+		String_clear(s);
+	else
+	{
+		memcpy(&s[0], &s[count], count);
+		String_header(s)->unused += count;
+		s[String_length(s)] = '\0';
+	}
+}
