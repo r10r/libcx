@@ -167,3 +167,13 @@ String_append_stream(String s, FILE *file, unsigned int length)
 	return buf;
 }
 
+ssize_t
+String_read(String s, FILE *file)
+{
+	unsigned int read =  (unsigned int )fread(&s[0], 1, String_available(s), file);
+
+	s[read] = '\0';
+	String_header(s)->unused = String_available(s) - read;
+	return read;
+}
+
