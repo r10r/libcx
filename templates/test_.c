@@ -2,12 +2,14 @@
 
 NOSETUP
 
-static void test_Something()
+static void
+test_Something()
 {
 	TEST_IGNORE_MESSAGE("Not implemented");
 }
 
-int main()
+int
+main()
 {
 	TEST_BEGIN
 

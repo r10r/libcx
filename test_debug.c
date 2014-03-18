@@ -2,16 +2,27 @@
 
 NOSETUP
 
-static void test_XASSERT()
+static void
+test_XASSERT()
 {
-	XASSERT("0 equals 0", 0 == 0);
+	XASSERT(0 == 0,
+		"0 equals 0");
 }
 
-
-static void test_XCHECK()
+static void
+test_XCHECK()
 {
-	XCHECK("0 equals 0", 0 == 0);
-	XCHECK("0 does not equal 1", 0 == 1);
+	XCHECK(0 == 0,
+	       "0 equals 0");
+	XCHECK(0 == 1,
+	       "0 does not equal 1");
+}
+
+static void
+test_XFCHECK()
+{
+	XFCHECK(1 == 3,
+		"%d equals %d", 1, 3);
 }
 
 static void test_XERR()
@@ -39,6 +50,7 @@ int main()
 
 	RUN(test_XASSERT);
 	RUN(test_XCHECK);
+	RUN(test_XFCHECK);
 	RUN(test_XERR);
 	RUN(test_XDBG);
 
