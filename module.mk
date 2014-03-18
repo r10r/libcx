@@ -3,7 +3,7 @@ L := $(LOCAL_DIR)
 
 #CFLAGS += -D_LIST_DISABLE_LOCKING
 
-TESTS += $(L)/test_list $(L)/test_array
+TESTS += $(L)/test_list $(L)/test_array $(L)/test_queue
 
 # -- executables --
 #_OBJS := 
@@ -18,3 +18,7 @@ $(L)/test_list_FLAGS := $(TEST_FLAGS)
 
 $(L)/test_array_OBJS := $(TEST_OBJS) $(L)/test_array.o $(L)/array.o
 $(L)/test_array_FLAGS := $(TEST_FLAGS)
+
+$(L)/test_queue_OBJS := $(TEST_OBJS) $(L)/test_queue.o $(L)/queue.o \
+	$(L)/list.o
+$(L)/test_queue_FLAGS := $(TEST_FLAGS)
