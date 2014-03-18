@@ -38,9 +38,9 @@ static void test_Array_grow()
 
 static void test_Array_push()
 {
-	char *first = "foo";
-	char *second = "bar";
-	char *third = "third";
+	const char *first = "foo";
+	const char *second = "bar";
+	const char *third = "third";
 
 	Array a = Array_new(2);
 
@@ -73,9 +73,9 @@ static void test_Array_push()
 
 static void test_Array_pop()
 {
-	char *first = "foo";
-	char *second = "bar";
-	char *third = "third";
+	const char *first = "foo";
+	const char *second = "bar";
+	const char *third = "third";
 
 	Array a = Array_new(0);
 
@@ -104,9 +104,9 @@ match_element(void *data, void *key)
 
 static void test_Array_match()
 {
-	char *first = "foo";
-	char *second = "bar";
-	char *third = "third";
+	const char *first = "foo";
+	const char *second = "bar";
+	const char *third = "third";
 
 	Array a = Array_new(0);
 
@@ -134,9 +134,9 @@ element_iterator(int index, void *data)
 
 static void test_Array_each()
 {
-	char *first = "foo";
-	char *second = "bar";
-	char *third = "third";
+	const char *first = "foo";
+	const char *second = "bar";
+	const char *third = "third";
 
 	Array a = Array_new(0);
 
