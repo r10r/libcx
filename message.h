@@ -9,10 +9,11 @@
 #include "libcx-string/string.h"
 
 typedef struct message_t Message;
+extern void ragel_parse_message(Message *message);
 
 typedef enum parse_event_t
 {
-	P_NEW,
+	P_NONE,
 	P_PROTOCOL_VALUE,
 	P_HEADER_NAME,
 	P_HEADER_VALUE,
@@ -35,13 +36,14 @@ struct ragel_parser_state_t
 	unsigned int marker_offset;
 	ParseEvent event;
 	F_MessageEventHandler *f_event_handler;
+	unsigned int iterations;        /* the parser iteration */
+	char *buffer;                   /* message buffer */
 };
 
 struct message_t
 {
 	List *protocol_values;  /* list of strings */
 	List *headers;          /* list of string pairs */
-	String buffer;          /* message buffer */
 	String body;
 	RagelParserState *parser_state;
 };
@@ -57,8 +59,14 @@ static inline size_t Message_body_size(Message *message)
 	return 0;
 }
 
+RagelParserState*
+RagelParserState_new(void);
+
+void
+RagelParserState_free(RagelParserState *state);
+
 Message *
-Message_new(size_t body_size);
+Message_new(unsigned int body_length);
 
 void
 Message_free(Message *message);
@@ -76,5 +84,8 @@ Message_parse(Message *message);
 // return 0 if finished successful 1 else
 ParseEvent
 Message_parse_finish(Message *message);
+
+void
+Message_buffer_append(Message *message, const char *buf, unsigned int count);
 
 #endif

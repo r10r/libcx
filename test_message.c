@@ -3,18 +3,18 @@
 
 NOSETUP
 
-void test_Message_new()
+static void test_Message_new()
 {
 	Message *message = Message_new(1024);
 
-	TEST_ASSERT_EQUAL_INT(0, String_length(message->buffer));
-	TEST_ASSERT_EQUAL_INT(1024, String_available(message->buffer));
+	TEST_ASSERT_EQUAL_INT(0, String_length(message->parser_state->buffer));
+	TEST_ASSERT_EQUAL_INT(1024, String_available(message->parser_state->buffer));
 	TEST_ASSERT_EQUAL_INT(0, message->protocol_values->length);
 	TEST_ASSERT_EQUAL_INT(0, message->headers->length);
 	Message_free(message);
 }
 
-void test_Message_parse_single_pass()
+static void test_Message_parse_single_pass()
 {
 	Message *message =  Message_new(1024);
 
@@ -25,10 +25,10 @@ void test_Message_parse_single_pass()
 		"\n"
 		"Hello World";
 
-	message->buffer = String_append_constant(message->buffer, data);
+	Message_buffer_append(message, data, (unsigned int)strlen(data));
 	ParseEvent event = Message_parse_finish(message);
 
-	TEST_ASSERT_EQUAL_STRING(data, message->buffer);
+	TEST_ASSERT_EQUAL_STRING(data, message->parser_state->buffer);
 
 	TEST_ASSERT_EQUAL_INT(2, message->protocol_values->length);
 	TEST_ASSERT_EQUAL_STRING("VERIFY", List_get(message->protocol_values, 0));
@@ -48,7 +48,7 @@ void test_Message_parse_single_pass()
 	Message_free(message);
 }
 
-void test_Message_parse_multi_pass()
+static void test_Message_parse_multi_pass()
 {
 	Message *message = Message_new(1024);
 
@@ -63,25 +63,25 @@ void test_Message_parse_multi_pass()
 
 	for (i = 0; i < strlen(data); i++)
 	{
-		message->buffer = String_append_array(message->buffer, &data[i], 1);
+		Message_buffer_append(message, &data[i], 1);
 		Message_parse(message);
 	}
-	TEST_ASSERT_EQUAL_STRING(data, message->buffer);
-
-	ParseEvent event = Message_parse_finish(message);
+	TEST_ASSERT_EQUAL_STRING(data, message->parser_state->buffer);
+	TEST_ASSERT_EQUAL_INT(strlen(data), message->parser_state->iterations);
+	Message_parse_finish(message);
 
 	TEST_ASSERT_EQUAL_INT(2, message->protocol_values->length);
-//	TEST_ASSERT_EQUAL_STRING("VERIFY", List_get(message->protocol_values, 0));
-//	TEST_ASSERT_EQUAL_STRING("/foo/bar", List_get(message->protocol_values, 1));
-//
-//	TEST_ASSERT_EQUAL_INT(2, message->headers->length);
-//	Pair *header1 = (Pair*)List_get(message->headers, 0);
-//	TEST_ASSERT_EQUAL_STRING("Header1", header1->key);
-//	TEST_ASSERT_EQUAL_STRING("value1", header1->value);
-//
-//	Pair *header2 = (Pair*)List_get(message->headers, 1);
-//	TEST_ASSERT_EQUAL_STRING("Header2", header2->key);
-//	TEST_ASSERT_EQUAL_STRING("value2", header2->value);
+	TEST_ASSERT_EQUAL_STRING("VERIFY", List_get(message->protocol_values, 0));
+	TEST_ASSERT_EQUAL_STRING("/foo/bar", List_get(message->protocol_values, 1));
+
+	TEST_ASSERT_EQUAL_INT(2, message->headers->length);
+	Pair *header1 = (Pair*)List_get(message->headers, 0);
+	TEST_ASSERT_EQUAL_STRING("Header1", header1->key);
+	TEST_ASSERT_EQUAL_STRING("value1", header1->value);
+
+	Pair *header2 = (Pair*)List_get(message->headers, 1);
+	TEST_ASSERT_EQUAL_STRING("Header2", header2->key);
+	TEST_ASSERT_EQUAL_STRING("value2", header2->value);
 
 	TEST_ASSERT_EQUAL_STRING("Hello World", message->body);
 

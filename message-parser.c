@@ -8,7 +8,7 @@ main(int argc, char **argv)
 
 	while (true)
 	{
-		message->buffer = String_append_stream(message->buffer, stdin, 1024);
+		message->parser_state->buffer = String_append_stream(message->parser_state->buffer, stdin, 1024);
 
 		if (feof(stdin))
 		{
