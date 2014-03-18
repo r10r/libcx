@@ -96,13 +96,24 @@ String_append_array(String a, const char *b, unsigned int b_length);
 String
 String_append_constant(String a, const char *b);
 
-String
-String_append_stream(String s, FILE *file, unsigned int length);
+ssize_t
+String_fread_append(String s, FILE *file);
 
-/* read from file into string (at most String_length(s) characters) */
+ssize_t
+String_read_append(String s, int fd);
+
+/*
+ * Read from file into string. Starts at the beginning of the string.
+ * Any existing value is overwritten.
+ * Reading stops when there is no more input or the end of the string is reached.
+ *
+ */
 ssize_t
 String_fread(String s, FILE *file);
 
+/*
+ * @see #String_fread
+ */
 ssize_t
 String_read(String s, int fd);
 

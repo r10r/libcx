@@ -126,7 +126,7 @@ test_String_write()
 }
 
 static void
-test_String_append_stream()
+test_String_fread_append()
 {
 	char template[] = "/tmp/temp.XXXXXX";
 	int fd = mkstemp(template);
@@ -134,15 +134,31 @@ test_String_append_stream()
 
 	fwrite("foo\n", 4, 1, tmpfile);
 
-	String foo = String_new(NULL);
+	String foo = String_init(NULL, 4);
 
 	rewind(tmpfile);
-	foo = String_append_stream(foo, tmpfile, 4);
+	TEST_ASSERT_EQUAL_INT(4, String_fread_append(foo, tmpfile));
 	TEST_ASSERT_EQUAL_STRING("foo\n", foo);
+	TEST_ASSERT_EQUAL_INT(4, String_length(foo));
+	TEST_ASSERT_EQUAL_INT(4, String_available(foo));
+	TEST_ASSERT_EQUAL_INT(0, String_unused(foo));
 	TEST_ASSERT_EQUAL_INT(4, String_write(foo, stdout));
 
+	/* nothing changes */
 	rewind(tmpfile);
-	foo = String_append_stream(foo, tmpfile, 4);
+	TEST_ASSERT_EQUAL_INT(0, String_fread_append(foo, tmpfile));
+	TEST_ASSERT_EQUAL_STRING("foo\n", foo);
+	TEST_ASSERT_EQUAL_INT(4, String_length(foo));
+	TEST_ASSERT_EQUAL_INT(4, String_available(foo));
+	TEST_ASSERT_EQUAL_INT(0, String_unused(foo));
+	TEST_ASSERT_EQUAL_INT(4, String_write(foo, stdout));
+
+	/* grow string and append again */
+	rewind(tmpfile);
+	foo = String_grow(foo, 4);
+	String_fread_append(foo, tmpfile);
+	TEST_ASSERT_EQUAL_INT(8, String_available(foo));
+	TEST_ASSERT_EQUAL_INT(0, String_unused(foo));
 	TEST_ASSERT_EQUAL_STRING("foo\nfoo\n", foo);
 	TEST_ASSERT_EQUAL_INT(8, String_write(foo, stdout));
 
@@ -246,7 +262,7 @@ int main()
 	RUN(test_String_append_array);
 	RUN(test_StringPair_new);
 	RUN(test_String_write);
-	RUN(test_String_append_stream);
+	RUN(test_String_fread_append);
 	RUN(test_String_read);
 	RUN(test_String_last);
 	RUN(test_String_clear);
