@@ -2,6 +2,17 @@
 #define _LIST_H
 
 /*
+ * TODO add macros to manipulate lists typed checked to avoid
+ * -Wincompatible-pointer-types-discards-qualifiers warnings/errors
+ * Look at the UTHASH macros for how it is done
+ *
+ * e.g LIST_PUSH(list, xxxx)
+ */
+
+//#define PUSH(list, data)\
+// //	List_push(list, (void *) data);
+
+/*
  * http://stackoverflow.com/questions/487258/plain-english-explanation-of-big-o/487278#487278
  * http://stackoverflow.com/questions/393556/when-to-use-a-linked-list-over-an-array-array-list
  * http://pseudomuto.com/development/2013/05/02/implementing-a-generic-linked-list-in-c.html

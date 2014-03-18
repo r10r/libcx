@@ -5,7 +5,9 @@
 Array
 Array_init(const void *value, unsigned long length)
 {
-	XASSERT("void pointer size should equal char pointer", sizeof(void *) == sizeof(char *));
+	XASSERT(sizeof(void *) == sizeof(char *),
+		"void pointer size should equal char pointer size");
+
 	struct array_header_t *hdr;
 
 	if (value)
@@ -116,7 +118,8 @@ Array_grow(Array a, unsigned long elements)
 Array
 Array_shrink(Array s)
 {
-	XASSERT("not yet implemented", 0);
+	XASSERT(0,
+		"not yet implemented");
 	return NULL;
 }
 
