@@ -26,12 +26,12 @@
 	fprintf(stderr, "XDBG:[%s] - (%s):%s:%d\n", \
 		message, __func__, __FILE__, __LINE__)
 
-#define XFDBG(fmt, ...) \
-	fprintf(stderr, "(%s):%s:%d " fmt, \
+#define XFDBG(format, ...) \
+	fprintf(stderr, "(%s):%s:%d " format, \
 		__func__, __FILE__, __LINE__, __VA_ARGS__)
 
-#define XFLOG(fmt, ...) \
-	fprintf(stdout, fmt, __VA_ARGS__)
+#define XFLOG(format, ...) \
+	fprintf(stdout, format, __VA_ARGS__)
 
 #define XLOG(message) \
 	fprintf(stdout, message)
@@ -51,15 +51,29 @@
 /*
  * Print message to stderr when assertion fails.
  */
-#define XCHECK(message, condition) \
+#define XCHECK(condition, message) \
 	if (!(condition)) \
-		fprintf(stderr, "XASSERT:[%s] - (%s):%s:%d\n", \
+		fprintf(stderr, "XCHECK:[%s] - (%s):%s:%d\n", \
 			message, __func__, __FILE__, __LINE__)
+
+#define XCHECK_EQUALS_INT(expected, actual, message) \
+	if (expected != actual) \
+		fprintf(stderr, "XFCHECK:[%s (expected %d, was %d)] - (%s):%s:%d\n", \
+			message, expected, actual, __func__, __FILE__, __LINE__)
+
+#define XFCHECK(condition, format, ...) \
+	if (!(condition)) \
+	{ \
+		fprintf(stderr, "XFCHECK:["); \
+		fprintf(stderr, format, __VA_ARGS__); \
+		fprintf(stderr, "] - (%s):%s:%d\n", \
+			__func__, __FILE__, __LINE__); \
+	}
 
 /*
  * Print message to stderr and exit with XEXIT_CODE when assertion fails.
  */
-#define XASSERT(message, condition) \
+#define XASSERT(condition, message) \
 	if (!(condition)) { \
 		fprintf(stderr, "XASSERT:[%s] - (%s):%s:%d\n", \
 			message, __func__, __FILE__, __LINE__); \
