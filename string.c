@@ -1,5 +1,12 @@
 #include "string.h"
-/* based on the redis sds.c (simple dynamic string) */
+/*
+ * A safe dynamic string / string buffer implementation.
+ * A String is always NUL terminated and can be used in exchange to char*.
+ *
+ * TODO : benchmark
+ *
+ * based on the redis sds.c (simple dynamic string)
+ */
 
 String
 String_init(const void *value, unsigned int length)
@@ -19,7 +26,6 @@ String_init(const void *value, unsigned int length)
 		hdr =  calloc(String_size(length), sizeof(char));
 		hdr->unused = length;
 		hdr->buf[0] =  '\0';
-
 	}
 
 	hdr->available = length;
@@ -80,6 +86,8 @@ String_grow(String s, unsigned int required_size)
 //	return NULL;
 //}
 
+// TODO (add a copy method (similar to read ?))
+
 static inline String
 _append(String a, size_t a_length, const char *b, unsigned int b_length)
 {
@@ -91,6 +99,26 @@ _append(String a, size_t a_length, const char *b, unsigned int b_length)
 	struct string_header_t *hdr = String_header(c);
 	hdr->unused -= b_length;
 	return c;
+}
+
+static inline ssize_t
+_read(String s, int fd, unsigned int start_at)
+{
+	struct string_header_t *header = String_header(s);
+	unsigned int can_read = header->available - start_at;
+
+	if (can_read == 0)
+		return 0;
+
+	ssize_t len_read =  read(fd, &s[start_at], can_read);
+	if (len_read > 0)
+	{
+		unsigned int offset = start_at + (unsigned int)len_read;
+		s[offset] = '\0';
+		struct string_header_t *hdr = String_header(s);
+		hdr->unused = header->available - offset;
+	}
+	return len_read;
 }
 
 String
@@ -113,6 +141,7 @@ String_append_constant(String a, const char *b)
 	return _append(a, String_length(a), b, (unsigned int)strlen(b));
 }
 
+/* you have to free b afterwards if it is not required anymore */
 String
 String_append(String a, String b)
 {
@@ -153,35 +182,37 @@ String_write(String s, FILE *file)
 	return fwrite(s, sizeof(char), String_length(s), file);
 }
 
-String
-String_append_stream(String s, FILE *file, unsigned int length)
+/* does not grow the buffer */
+ssize_t
+String_read_append(String s, int fd)
 {
-	unsigned int required_size = length * sizeof(char);
-	String buf = String_grow(s, required_size);
+	unsigned int len = String_length(s);
 
-	struct string_header_t *hdr = String_header(buf);
-	/* we don't read more than required_size chars/bytes */
-	unsigned int read = (unsigned int )fread(&buf[String_length(buf)], 1, required_size, file);
-
-	hdr->unused = required_size - read;
-	return buf;
+	if (len == 0)
+		return _read(s, fd, 0);
+	else
+		return _read(s, fd, len);
 }
 
+/* does not grow the buffer */
+ssize_t
+String_fread_append(String s, FILE *file)
+{
+	return String_read_append(s, fileno(file));
+}
+
+/* does not grow the buffer */
 ssize_t
 String_fread(String s, FILE *file)
 {
-	return String_read(s, fileno(file));
+	return _read(s, fileno(file), 0);
 }
 
+/* does not grow the buffer */
 ssize_t
 String_read(String s, int fd)
 {
-	unsigned int len = String_available(s);
-	unsigned int len_read =  (unsigned int)read(fd, &s[0], len);
-
-	s[len_read] = '\0';
-	String_header(s)->unused = len - len_read;
-	return len_read;
+	return _read(s, fd, 0);
 }
 
 void
