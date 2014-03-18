@@ -5,12 +5,12 @@
 	machine message_fsm;
 	
 	action PrintToken {
-		XFLOG("Token[%ld] %c -> %p\n", 
+		XFLOG("Token[%u] %c -> %p\n", 
 			state->buffer_offset, *(state->buffer_position), state->buffer_position);
 	}
 	
 	action SetMarker {
-		XFLOG("Mark[%ld] %c -> %p\n", 
+		XFLOG("Mark[%u] %c -> %p\n", 
 			state->buffer_offset, *(state->buffer_position), state->buffer_position);
 		state->marker = state->buffer_position;
 		state->marker_offset = 0;
@@ -67,8 +67,10 @@ void
 ragel_parse_message(Message *message)
 {
 	RagelParserState *state = message->parser_state;
-	if (state->event == P_NEW)
+	if (state->iterations == 0)
 		%% write init;
 
 	%% write exec;
+	
+	state->iterations++;
 }
