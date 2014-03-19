@@ -11,8 +11,8 @@ TESTS += $(L)/test_string
 
 # -- tests -- 
 TEST_FLAGS := -Wall -w -g -I$(BASE_DIR)
-TEST_OBJS := $(BASE_DIR)/libcx-base/unity.o
+TEST_OBJS := $(BASE_DIR)/libcx-base/unity.o #$(BASE_DIR)/libcx-base/xmalloc.o 
 
 $(L)/test_string_OBJS := $(TEST_OBJS) \
-	 $(BASE_DIR)/libcx-base/xmalloc.o $(L)/string.o $(L)/test_string.o
+	 $(L)/string.o $(L)/test_string.o
 $(L)/test_string_FLAGS := $(TEST_FLAGS)

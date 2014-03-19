@@ -6,133 +6,83 @@
 #include <string.h>     /* memcpy */
 #include <unistd.h>     /* write */
 #include "libcx-base/debug.h"
+//#include "libcx-base/xmalloc.h"
 
-#define STRING_MAX_PREALLOC (1024 * 1024)
-//#define STRING_MAX_LENGTH (UINT32_MAX - sizeof(struct string_header_t))
-// TODO define custom type e.g string_size_t ?
-
-typedef char *String;
-typedef struct pair_t Pair;
-
-/* use char arrays instead of pointers to reduce overhead */
-// FIXME string alignment is 4 bytes instead of 1 when it is casted to the header
-struct string_header_t
+typedef struct string_t
 {
-	unsigned int available;
-	unsigned int unused;
-	char buf[];
-};
+	size_t length;  /* used data */
+	char value[];   /* incomplete type, can only be used as last field */
+} String;
 
-static inline struct string_header_t*
-String_header(const String s)
+typedef struct string_pointer_t
 {
-	return (struct string_header_t *)(s - sizeof(struct string_header_t));
-}
+	size_t length;
+	const char *data;
+} StringPointer;
 
-static inline unsigned int
-String_available(const String s)
+
+// should the string contain data type information ?
+typedef struct string_buffer_t
 {
-	return String_header(s)->available;
-}
+	size_t length;                                          /* total buffer length */
+	String *string;                                         /* we can now grow the string data */
+} StringBuffer;
 
-static inline unsigned int
-String_unused(const String s)
-{
-	return String_header(s)->unused;
-}
+#define S_free(s) (free(s))
 
-/* the string size excluding the '\0' terminator */
-static inline unsigned int
-String_length(const String s)
-{
-	return String_available(s) - String_unused(s);
-}
+#define SBuf_unused(buf) \
+	(buf->length - buf->string->length)
 
-/* alloc size for string of of given length (including header and '\0' terminator ) */
-static inline unsigned int
-String_size(unsigned int length)
-{
-	return (unsigned int)sizeof(struct string_header_t) + (sizeof(char) * (length + 1 /* '\0' */));
-}
+#define S_last(s) \
+	(s->length == 0) ? NULL : s->value[s->length - 1]
 
-static inline char*
-String_last(const String s)
-{
-	unsigned int length = String_length(s);
+#define S_at(s, index) \
+	s->value[((index >= 0) ? (long)index : index + (long)s->length)]
 
-	if (length > 0)
-		return &s[length - 1];
-	else
-		return NULL;
-}
+String*
+String_init(const char *value, size_t length);
 
-struct pair_t
-{
-	void *key;
-	void *value;
-};
+#define S_dup(value) \
+	value == NULL ? NULL : String_init(value, strlen(value))
 
-String
-String_init(const void *value, unsigned int length);
+// grow or shrink the buffer
+#define S_realloc(string, nchars) \
+	realloc(string, sizeof(String) + sizeof(char) * (string->length + nchars));
 
-String
-String_new(const char *value);
 
-void
-String_free(String string);
+StringBuffer*
+StringBuffer_new(size_t length);
 
-String
-String_grow(String s, unsigned int need);
+#define SBuf_free(buffer) \
+	S_free(buffer->string); \
+	free(buffer);
 
-String
-String_shrink(String s);
-
-String
-String_append(String a, String b);
-
-String
-String_append_array(String a, const char *b, unsigned int b_length);
-
-String
-String_append_constant(String a, const char *b);
+int
+StringBuffer_make_room(StringBuffer *buffer, size_t nchars);
 
 ssize_t
-String_fread_append(String s, FILE *file);
+StringBuffer_ncopy(StringBuffer *buffer, ssize_t offset, const char* source, size_t nchars);
+
+#define StringBuffer_ncat(buffer, offset, s) \
+	StringBuffer_ncopy(buffer, offset, s->value, s->length);
+
+#define StringBuffer_cat(buffer, s) \
+	StringBuffer_ncopy(buffer, (ssize_t)buffer->string->length, s->value, s->length);
+
+#define S_comp(a, b) \
+	((a->length == b->length) ? strncmp(a->value, b->value, a->length) : ((long)a->length - (long)b->length))
 
 ssize_t
-String_read_append(String s, int fd);
+StringBuffer_nread(StringBuffer *buffer, int offset, int fd, size_t nchars);
 
-/*
- * Read from file into string. Starts at the beginning of the string.
- * Any existing value is overwritten.
- * Reading stops when there is no more input or the end of the string is reached.
- *
- */
-ssize_t
-String_fread(String s, FILE *file);
+#define StringBuffer_fread(buffer, offset, file, nchars) \
+	StringBuffer_nread(buffer, offset, fileno(file), nchars)
 
-/*
- * @see #String_fread
- */
-ssize_t
-String_read(String s, int fd);
+#define StringBuffer_read_append(buffer, fd, nchars) \
+	StringBuffer_nread(buffer, S_last(buffer->string), fd, nchars)
 
-Pair *
-StringPair_init(String key, String value);
+#define StringBuffer_fread_append(buffer, file, nchars) \
+	StringBuffer_nread(buffer, S_last(buffer->string), fileno(file), nchars)
 
-Pair *
-StringPair_new(const char *key, const char *value);
-
-void
-StringPair_free(Pair *pair);
-
-size_t
-String_write(String s, FILE *file);
-
-void
-String_clear(String s);
-
-void
-String_shift(String s, unsigned int count);
 
 #endif

@@ -1,272 +1,156 @@
 #include "libcx-base/test.h"
-#include "libcx-base/xmalloc.h"
+//#include "libcx-base/xmalloc.h"
 #include "string.h"
 
 NOSETUP
 
 static void
-test_String_free()
+test_String_dup()
 {
-	String_free(NULL);
+	String *s = S_dup(NULL);
+
+	TEST_ASSERT_NULL(s);
+
+	s = S_dup("bar");
+	TEST_ASSERT_EQUAL_INT(s->length, 3);
+
+	TEST_ASSERT_EQUAL_INT('b', S_at(s, 0));
+	TEST_ASSERT_EQUAL_INT('a', S_at(s, 1));
+	TEST_ASSERT_EQUAL_INT('r', S_at(s, 2));
+
+	TEST_ASSERT_EQUAL_INT('b', S_at(s, -3));
+	TEST_ASSERT_EQUAL_INT('a', S_at(s, -2));
+	TEST_ASSERT_EQUAL_INT('r', S_at(s, -1));
+
+	free(s);
 }
 
 static void
-test_String_new()
+test_S_comp()
 {
-	String s = String_new("foo");
+	String *a = S_dup("bar");
+	String *b = S_dup("foo");
+	String *c = S_dup("foobar");
 
-	TEST_ASSERT_EQUAL_STRING("foo", s);
-	TEST_ASSERT_EQUAL_INT(3, String_available(s));
-	TEST_ASSERT_EQUAL_INT(3, strlen(s));
-	String_free(s);
+	TEST_ASSERT_TRUE(S_comp(a, a) == 0);
+	TEST_ASSERT_TRUE(S_comp(a, b) < 0);
+	TEST_ASSERT_TRUE(S_comp(b, a) > 0);
+	TEST_ASSERT_TRUE(S_comp(a, c) < 0);
+	TEST_ASSERT_TRUE(S_comp(c, a) > 0);
+
+	S_free(a);
+	S_free(b);
+	S_free(c);
 }
 
 static void
-test_String_init()
+test_String_Buffer_ncopy()
 {
-	String s = String_init(NULL, 3);
+	StringBuffer *buf = StringBuffer_new(1024);
 
-	TEST_ASSERT_EQUAL_STRING("", s);
-	TEST_ASSERT_EQUAL_INT(3, String_available(s));
+	TEST_ASSERT_EQUAL_INT(1024, buf->length);
+	TEST_ASSERT_EQUAL_INT(0, buf->string->length);
+	TEST_ASSERT_EQUAL_INT(1024, SBuf_unused(buf));
 
-	String_append_constant(s, "foo");
-	TEST_ASSERT_EQUAL_STRING("foo", s);
-	TEST_ASSERT_EQUAL_INT(3, String_available(s));
-	TEST_ASSERT_EQUAL_INT(3, strlen(s));
+	TEST_ASSERT_EQUAL_INT(3, StringBuffer_ncopy(buf, 0, "foo", 3));
+	TEST_ASSERT_EQUAL_INT(3, buf->string->length);
+	TEST_ASSERT_EQUAL_INT(1024 - 3, SBuf_unused(buf));
 
-	String_free(s);
+	TEST_ASSERT_EQUAL_INT(3, StringBuffer_ncopy(buf, 3, "bar", 3));
+	TEST_ASSERT_EQUAL_INT(6, buf->string->length);
+	TEST_ASSERT_EQUAL_INT(1024 - 6, SBuf_unused(buf));
+
+	TEST_ASSERT_EQUAL_INT('f', S_at(buf->string, 0));
+	TEST_ASSERT_EQUAL_INT('o', S_at(buf->string, 1));
+	TEST_ASSERT_EQUAL_INT('o', S_at(buf->string, 2));
+	TEST_ASSERT_EQUAL_INT('b', S_at(buf->string, 3));
+	TEST_ASSERT_EQUAL_INT('a', S_at(buf->string, 4));
+	TEST_ASSERT_EQUAL_INT('r', S_at(buf->string, 5));
+
+
+	SBuf_free(buf);
 }
 
 static void
-test_String_append()
+test_String_Buffer_ncopy_grow()
 {
-	String foo = String_new("foo");
-	String bar = String_new("bar");
-	String null_s = String_new(NULL);
-	String foobar = String_append(foo, bar);
+	StringBuffer *buf = StringBuffer_new(3);
 
-	TEST_ASSERT_NULL(String_append(NULL, bar));
-	TEST_ASSERT_EQUAL_PTR(foo, String_append(foo, NULL));
-	TEST_ASSERT_EQUAL_PTR(foo, String_append(foo, null_s));
+	TEST_ASSERT_EQUAL_INT(3, buf->length);
+	TEST_ASSERT_EQUAL_INT(0, buf->string->length);
+	TEST_ASSERT_EQUAL_INT(3, SBuf_unused(buf));
 
-	TEST_ASSERT_EQUAL_INT(6, String_available(foobar));
-	TEST_ASSERT_EQUAL_STRING("foobar", foobar);
-	TEST_ASSERT_EQUAL_INT(6, strlen(foobar));
+	StringBuffer_ncopy(buf, 0, "foo", 3);
+	TEST_ASSERT_EQUAL_INT(3, buf->length);
+	TEST_ASSERT_EQUAL_INT(3, buf->string->length);
+	TEST_ASSERT_EQUAL_INT(0, SBuf_unused(buf));
 
-	String_free(foobar);
-	String_free(bar);
-	String_free(null_s);
+	StringBuffer_ncopy(buf, 3, "foo", 3);
+	TEST_ASSERT_EQUAL_INT(6, buf->length);
+	TEST_ASSERT_EQUAL_INT(6, buf->string->length);
+	TEST_ASSERT_EQUAL_INT(0, SBuf_unused(buf));
+
+	SBuf_free(buf);
 }
 
 static void
-test_String_append_constant()
+test_String_Buffer_ncopy_grow_zero()
 {
-	String foo = String_new("foo");
+	StringBuffer *buf = StringBuffer_new(0);
 
-	foo = String_append_constant(foo, "bar");
+	StringBuffer_ncopy(buf, 0, "foo", 3);
+	TEST_ASSERT_EQUAL_INT(3, buf->length);
+	TEST_ASSERT_EQUAL_INT(3, buf->string->length);
+	TEST_ASSERT_EQUAL_INT(0, SBuf_unused(buf));;
 
-	TEST_ASSERT_NULL(String_append_constant(NULL, foo));
-	TEST_ASSERT_EQUAL_PTR(foo, String_append_constant(foo, NULL));
-	TEST_ASSERT_EQUAL_PTR(foo, String_append_constant(foo, ""));
-
-	TEST_ASSERT_EQUAL_INT(6, String_available(foo));
-	TEST_ASSERT_EQUAL_STRING("foobar", foo);
-	TEST_ASSERT_EQUAL_INT(6, strlen(foo));
-
-	String_free(foo);
+	SBuf_free(buf);
 }
 
 static void
-test_String_append_constant_without_grow()
+test_String_Buffer_cat()
 {
-	String foo = String_init(NULL, 1024);
+	StringBuffer *buf = StringBuffer_new(0);
+	String *s = S_dup("foobar");
 
-	String_append_constant(foo, "foo");
+	StringBuffer_cat(buf, s);
+	TEST_ASSERT_EQUAL_INT(6, buf->length);
+	TEST_ASSERT_EQUAL_INT(6, buf->string->length);
+	TEST_ASSERT_EQUAL_INT(0, SBuf_unused(buf));;
 
-	TEST_ASSERT_EQUAL_INT(1024, String_available(foo));
-	TEST_ASSERT_EQUAL_INT(1024 - 3, String_unused(foo));
-	TEST_ASSERT_EQUAL_STRING("foo", foo);
-	String_free(foo);
+	TEST_ASSERT_EQUAL(0, S_comp(s, buf->string));
+
+	S_free(s);
+	SBuf_free(buf);
 }
 
-static void
-test_String_append_array()
-{
-	const char f[] = "foobar";
-	String foo = String_new("foo");
-	String foobar = String_append_array(foo, &f[3], 3);
-
-	TEST_ASSERT_NULL(String_append_array(NULL, &f[0], 6));
-	TEST_ASSERT_EQUAL_PTR(foo, String_append_array(foo, NULL, 66));
-	TEST_ASSERT_EQUAL_PTR(foo, String_append_array(foo, &f[0], 0));
-
-	TEST_ASSERT_EQUAL_INT(6, String_available(foobar));
-	TEST_ASSERT_EQUAL_STRING("foobar", foobar);
-	String_free(foobar);
-}
-
-static void
-test_StringPair_new()
-{
-	Pair *foobar = StringPair_new("foo", "bar");
-
-	TEST_ASSERT_EQUAL_STRING("foo", foobar->key);
-	TEST_ASSERT_EQUAL_STRING("bar", foobar->value);
-	StringPair_free(foobar);
-}
-
-static void
-test_String_write()
-{
-	String foo = String_new("foo\n");
-
-	TEST_ASSERT_EQUAL_STRING("foo\n", foo);
-	TEST_ASSERT_EQUAL_INT(4, String_write(foo, stdout));
-	String_free(foo);
-}
-
-static void
-test_String_fread_append()
-{
-	char template[] = "/tmp/temp.XXXXXX";
-	int fd = mkstemp(template);
-	FILE *tmpfile = fdopen(fd, "w+");
-
-	fwrite("foo\n", 4, 1, tmpfile);
-
-	String foo = String_init(NULL, 4);
-
-	rewind(tmpfile);
-	TEST_ASSERT_EQUAL_INT(4, String_fread_append(foo, tmpfile));
-	TEST_ASSERT_EQUAL_STRING("foo\n", foo);
-	TEST_ASSERT_EQUAL_INT(4, String_length(foo));
-	TEST_ASSERT_EQUAL_INT(4, String_available(foo));
-	TEST_ASSERT_EQUAL_INT(0, String_unused(foo));
-	TEST_ASSERT_EQUAL_INT(4, String_write(foo, stdout));
-
-	/* nothing changes */
-	rewind(tmpfile);
-	TEST_ASSERT_EQUAL_INT(0, String_fread_append(foo, tmpfile));
-	TEST_ASSERT_EQUAL_STRING("foo\n", foo);
-	TEST_ASSERT_EQUAL_INT(4, String_length(foo));
-	TEST_ASSERT_EQUAL_INT(4, String_available(foo));
-	TEST_ASSERT_EQUAL_INT(0, String_unused(foo));
-	TEST_ASSERT_EQUAL_INT(4, String_write(foo, stdout));
-
-	/* grow string and append again */
-	rewind(tmpfile);
-	foo = String_grow(foo, 4);
-	String_fread_append(foo, tmpfile);
-	TEST_ASSERT_EQUAL_INT(8, String_available(foo));
-	TEST_ASSERT_EQUAL_INT(0, String_unused(foo));
-	TEST_ASSERT_EQUAL_STRING("foo\nfoo\n", foo);
-	TEST_ASSERT_EQUAL_INT(8, String_write(foo, stdout));
-
-	String_free(foo);
-	fclose(tmpfile);
-	unlink(template);
-}
-
-static void
-test_String_read()
-{
-	char template[] = "/tmp/temp.XXXXXX";
-	int fd = mkstemp(template);
-	FILE *tmpfile = fdopen(fd, "w+");
-
-	String s = String_init(NULL, 8);
-
-	rewind(tmpfile);
-	fwrite("bar\n", 4, 1, tmpfile);
-	rewind(tmpfile);
-	TEST_ASSERT_EQUAL_INT(4, String_fread(s, tmpfile));
-	TEST_ASSERT_EQUAL_STRING("bar\n", s);
-	TEST_ASSERT_EQUAL_INT(4, String_length(s));
-	TEST_ASSERT_EQUAL_INT(8, String_available(s));
-	TEST_ASSERT_EQUAL_INT(4, String_unused(s));
-	TEST_ASSERT_EQUAL_INT(4, strlen(s));
-
-	rewind(tmpfile);
-	fwrite("foo\nbar\n", 8, 1, tmpfile);
-	rewind(tmpfile);
-	TEST_ASSERT_EQUAL_INT(8, String_fread(s, tmpfile));
-	TEST_ASSERT_EQUAL_STRING("foo\nbar\n", s);
-	TEST_ASSERT_EQUAL_INT(8, String_length(s));
-	TEST_ASSERT_EQUAL_INT(8, String_available(s));
-	TEST_ASSERT_EQUAL_INT(0, String_unused(s));
-	TEST_ASSERT_EQUAL_INT(8, strlen(s));
-
-	String_free(s);
-	fclose(tmpfile);
-	unlink(template);
-}
-
-static void
-test_String_last()
-{
-	String s = String_new("foo");
-	String null_s = String_new(NULL);
-
-	TEST_ASSERT_EQUAL_PTR(&s[2], String_last(s));
-	TEST_ASSERT_NULL(String_last(null_s));
-	String_free(s);
-	String_free(null_s);
-}
-
-static void
-test_String_clear()
-{
-	String s = String_new("foo");
-
-	TEST_ASSERT_EQUAL_INT(3, String_available(s));
-	TEST_ASSERT_EQUAL_INT(0, String_unused(s));
-	String_clear(s);
-	TEST_ASSERT_EQUAL_INT(3, String_available(s));
-	TEST_ASSERT_EQUAL_INT(3, String_unused(s));
-	TEST_ASSERT_EQUAL_INT(0, strlen(s));
-	String_free(s);
-}
-
-static void
-test_String_shift()
-{
-	String s = String_new("foobar");
-
-	TEST_ASSERT_EQUAL_STRING("foobar", s);
-	String_shift(s, 3);
-	TEST_ASSERT_EQUAL_STRING("bar", s);
-	TEST_ASSERT_EQUAL_INT(6, String_available(s));
-	TEST_ASSERT_EQUAL_INT(3, String_unused(s));
-	TEST_ASSERT_EQUAL_INT(3, strlen(s));
-
-	// properly handle invalid shift count
-	String_shift(s, 6);
-	TEST_ASSERT_EQUAL_STRING("", s);
-	TEST_ASSERT_EQUAL_INT(6, String_available(s));
-	TEST_ASSERT_EQUAL_INT(6, String_unused(s));
-	TEST_ASSERT_EQUAL_INT(0, strlen(s));
-
-	String_free(s);
-}
+//static void
+//test_String_Buffer_ncat()
+//{
+//	StringBuffer *buf = StringBuffer_new(0);
+//	String *s = S_dup("foobar");
+//
+//	StringBuffer_cat(buf, s);
+//	TEST_ASSERT_EQUAL_INT(6, buf->length);
+//	TEST_ASSERT_EQUAL_INT(6, buf->string->length);
+//	TEST_ASSERT_EQUAL_INT(0, SBuf_unused(buf));;
+//
+//	TEST_ASSERT_EQUAL(0, S_comp(s, buf->string));
+//
+//	S_free(s);
+//	SBuf_free(buf);
+//}
 
 int main()
 {
 	TEST_BEGIN
 
-	RUN(test_String_free);
-	RUN(test_String_new);
-	RUN(test_String_init);
-	RUN(test_String_append);
-	RUN(test_String_append_constant);
-	RUN(test_String_append_constant_without_grow);
-	RUN(test_String_append_array);
-	RUN(test_StringPair_new);
-	RUN(test_String_write);
-	RUN(test_String_fread_append);
-	RUN(test_String_read);
-	RUN(test_String_last);
-	RUN(test_String_clear);
-	RUN(test_String_shift);
+	RUN(test_S_comp);
+	RUN(test_String_dup);
+	RUN(test_String_Buffer_ncopy);
+	RUN(test_String_Buffer_ncopy_grow);
+	RUN(test_String_Buffer_ncopy_grow_zero);
+	RUN(test_String_Buffer_cat);
+//	RUN(test_String_Buffer_ncat);
 
 	TEST_END
 }
