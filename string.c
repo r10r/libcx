@@ -3,19 +3,16 @@
 String*
 String_init(const char *value, size_t length)
 {
-	String *s;
-	size_t size = sizeof(String) + sizeof(char) * length;
+	if (length > STRING_MAX_LENGTH)
+		return NULL;
+
+	String *s = S_alloc(length);
+	s->length = 0;
 
 	if (value)
 	{
-		s = malloc(size);
 		memcpy(&s->value[0], value, length);
 		s->length = length;
-	}
-	else
-	{
-		s = calloc(1, size);
-		s->length = 0;
 	}
 	return s;
 }
@@ -23,6 +20,9 @@ String_init(const char *value, size_t length)
 StringBuffer*
 StringBuffer_new(size_t length)
 {
+	if (length > STRING_MAX_LENGTH)
+		return NULL;
+
 	StringBuffer *buf = malloc(sizeof(StringBuffer));
 
 	buf->length = length;
@@ -30,51 +30,63 @@ StringBuffer_new(size_t length)
 	return buf;
 }
 
+void
+StringBuffer_free(StringBuffer *buffer)
+{
+	if (buffer)
+	{
+		S_free(buffer->string);
+		free(buffer);
+	}
+}
+
 /*
  * @return 0 if room is available -1 else
  */
 int
-StringBuffer_make_room(StringBuffer *buffer, size_t nchars)
+StringBuffer_make_room(StringBuffer *buffer, size_t offset, size_t nlength_requested)
 {
-	size_t nunused = SBuf_unused(buffer);
-
-	/* more unused bytes available than requested */
-	if (nunused >= nchars)
-		return 0;
-
-	/* allocate missing bytes */
-	size_t nalloc = nchars - nunused;
-	if (nunused + nalloc > SIZE_MAX)
+	// index must be within range
+	if (offset > buffer->string->length)
 		return -1;
 
-	String *new_string = S_realloc(buffer->string, nalloc);
+	size_t new_length = offset + nlength_requested;
+
+	/* enough unused bytes available */
+	if (new_length <= buffer->length)
+		return 0;
+
+	if (new_length > STRING_MAX_LENGTH)
+		return -1;
+
+	String *new_string = S_realloc(buffer->string, new_length);
 	if (new_string == NULL)
 		return -1;
 
 	buffer->string = new_string;
-	buffer->length += nalloc;
+	buffer->length = new_length;
 	return 0;
 }
 
 ssize_t
-StringBuffer_ncopy(StringBuffer *buffer, ssize_t index, const char* source, size_t nchars)
+StringBuffer_ncopy(StringBuffer *buffer, size_t offset, const char* source, size_t nchars)
 {
-	if (StringBuffer_make_room(buffer, nchars) != 0)
+	if (StringBuffer_make_room(buffer, offset, nchars) != 0)
 		return -1;
 
-	memcpy(&S_at(buffer->string, index), source, nchars);
-	buffer->string->length += nchars;
+	memcpy(&S_get(buffer->string, offset), source, nchars);
+	buffer->string->length = offset + nchars;
 	return (ssize_t)nchars;
 }
 
 ssize_t
-StringBuffer_nread(StringBuffer *buffer, int index, int fd, size_t nchars)
+StringBuffer_nread(StringBuffer *buffer, size_t offset, int fd, size_t nchars)
 {
-	if (StringBuffer_make_room(buffer, nchars) != 0)
+	if (StringBuffer_make_room(buffer, offset, nchars) != 0)
 		return -1;
 
-	ssize_t nread = read(fd, &S_at(buffer->string, index), nchars);
+	ssize_t nread = read(fd, &S_get(buffer->string, offset), nchars);
 	if (nread > 0)
-		buffer->string->length += (size_t)nread;
+		buffer->string->length = offset + (size_t)nread;
 	return nread;
 }
