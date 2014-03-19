@@ -10,13 +10,27 @@ CFLAGS += -Weverything \
 
 LDFLAGS += -L/usr/local/lib/llvm-3.4/usr/lib
 
-MODULES := libcx-base libcx-sandbox libcx-list libcx-socket-unix \
-	libcx-workqueue libcx-string libcx-umtp
+MODULES := libcx-base libcx-sandbox \
+	libcx-string #libcx-list libcx-umtp #libcx-socket-unix libcx-workqueue 
 
-CFLAGS += -I$(BASE_DIR) -DTRACE \
-	-Werror -Wall -pedantic -coverage \
-	-Wno-error=unused-parameter -Wno-error=unused-function \
-	-Wno-error=unused-variable -Wno-error=padded \
+CFLAGS += -I$(BASE_DIR) \
+	-Werror -Wall -pedantic \
+	-Wno-error=unused-parameter \
+	-Wno-error=unused-function \
+	-Wno-error=unused-variable \
+	-Wno-error=unused-value \
+	-Wno-error=padded \
+
+# ignore unity errors
+CFLAGS += \
 	-Wno-error=unused-macros \
-	-gdwarf-2 -g -O0 -fno-inline  -DPROFILE \
-	-Wno-error=sign-conversion -Wno-error=cast-align -Wno-error=float-equal# unity only
+	-Wno-error=sign-conversion \
+	-Wno-error=cast-align \
+	-Wno-error=float-equal
+
+
+# profile release
+#CFLAGS += -Os -DNDEBUG
+
+# profile development
+CFLAGS += -gdwarf-2 -g -O0 -fno-inline -DTRACE -DPROFILE --coverage
