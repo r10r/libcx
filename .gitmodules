@@ -4,12 +4,6 @@
 [submodule "libcx-list"]
 	path = libcx-list
 	url = git@github.com:r10r/libcx-list.git
-[submodule "libcx-workqueue"]
-	path = libcx-workqueue
-	url = git@github.com:r10r/libcx-workqueue.git
-[submodule "libcx-ragel"]
-	path = libcx-ragel
-	url = git@github.com:r10r/libcx-ragel.git
 [submodule "libcx-sandbox"]
 	path = libcx-sandbox
 	url = git@github.com:r10r/libcx-sandbox.git
