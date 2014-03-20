@@ -1,5 +1,7 @@
 #include "string.h"
 
+// use snprintf to wrap value ?
+
 String*
 String_init(const char *value, size_t length)
 {
@@ -14,6 +16,15 @@ String_init(const char *value, size_t length)
 		memcpy(&s->value[0], value, length);
 		s->length = length;
 	}
+	return s;
+}
+
+String*
+String_ninit(const char *value, size_t length)
+{
+	String *s = String_init(value, length + 1);
+
+	s->value[length] = '\0';
 	return s;
 }
 
@@ -90,3 +101,6 @@ StringBuffer_nread(StringBuffer *buffer, size_t offset, int fd, size_t nchars)
 		buffer->string->length = offset + (size_t)nread;
 	return nread;
 }
+
+// concatenate multiple strings (using a string buffer) ?
+// create a null terminated string !!!

@@ -33,18 +33,26 @@ typedef struct string_buffer_t
 
 #define S_free(s) (free(s))
 
-#define S_last(s) \
-	(s->length == 0) ? NULL : (s->value[s->length - 1])
-
+// FIXME doesn't work when string length = 0 !!!
 /* access array (with negative indexes), no bounds checking */
 #define S_get(s, index) \
 	(s->value[((index >= 0) ? (long)index : (long)index + (long)s->length)])
+
+#define S_last(s) \
+	S_get(s, -1)
 
 #define S_size(length) \
 	(sizeof(String) + sizeof(char) * length)
 
 #define S_dup(value) \
 	value == NULL ? NULL : String_init(value, strlen(value))
+
+#define S_dupn(value) \
+	value == NULL ? NULL : String_ninit(value, strlen(value))
+
+/* duplicate string and add null terminator */
+#define S_ndupn(s) \
+	s == NULL ? NULL : String_ninit(s->value, s->length)
 
 #define S_alloc(length) \
 	malloc(S_size(length))
@@ -56,8 +64,41 @@ typedef struct string_buffer_t
 #define S_comp(a, b) \
 	((a->length == b->length) ? strncmp(a->value, b->value, a->length) : ((long)a->length - (long)b->length))
 
+/* compare string a with char* nc of length nc_len */
+#define S_ncomp(a, nc) \
+	((a->length == strlen(nc) ? strncmp(a->value, nc, a->length) : ((long)a->length - strlen(nc)))
+
+#define S_nwrite(string, start, count, fd) \
+	write(fd, &string->value[start], count)
+
+#define S_fnwrite(string, start, count, stream) \
+	S_nwrite(string, start, count, fileno(stream))
+
+#define S_write(string, fd) \
+	write(fd, &string->value[0], string->length)
+
+#define S_fwrite(string, stream) \
+	S_write(string, fileno(stream))
+
+/* write string + newline to file descriptor */
+#define S_puts(string, fd) \
+	(S_nwrite(string, 0, string->length, fd) + write(fd, "\n", sizeof(char)))
+
+/* write string + newline to stream */
+#define S_fputs(string, stream) \
+	S_puts(string, fileno(stream))
+
+#define S_ncopy(string, start, count, dst) \
+	(strncpy(dst, &string->value[start], count))
+
+#define S_copy(string, dst) \
+	S_ncopy(string, 0, string->length, dst)
+
 String*
 String_init(const char *value, size_t length);
+
+String*
+String_ninit(const char *value, size_t length);
 
 StringBuffer*
 StringBuffer_new(size_t length);
