@@ -2,6 +2,8 @@
 #define _REQUEST_H
 
 #include <stdio.h>
+#include <sys/time.h> // gettimeofday
+
 #include "libcx-base/debug.h"
 #include "libcx-umtp/message.h"
 
@@ -22,24 +24,18 @@ struct request_t
 	unsigned long id;
 	int error;
 	RequestStatus status;
-	struct timeval started_at;
-	struct timeval finished_at;
+	struct timeval *started_at;
+	struct timeval *finished_at;
 	int priority; /* scheduling priority */
 
 	// FIXME payload should be dynamic
 	Message *message;
 };
 
-Worker*
-Worker_new(unsigned long id);
+Request*
+Request_new(unsigned long id);
 
 void
-Worker_free(Worker *worker);
-
-int
-Worker_start(Worker *worker);
-
-void
-Worker_stop(Worker *worker);
+Request_free(Request *request);
 
 #endif

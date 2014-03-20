@@ -3,6 +3,7 @@ L := $(LOCAL_DIR)
 
 #OBJS += $(L)/
 PROGRAMS += $(L)/echo-client \
+	$(L)/test-server \
 	$(L)/echo-server \
 	$(L)/echo-client-threaded
 	
@@ -28,7 +29,7 @@ $(L)/echo-client-threaded_OBJS := $(L)/echo-client-threaded.o $(L)/client.o
 #$(L)/echo-client-threaded_FLAGS := 
 
 $(L)/test-server_OBJS := $(L)/test-server.o \
-	$(L)/test-server.o \
+	$(L)/server.o \
 	$(L)/worker.o \
 	$(L)/request.o \
 	$(L)/connection.o \

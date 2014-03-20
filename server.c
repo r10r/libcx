@@ -12,12 +12,10 @@ free_worker(void *data)
 #define PROCESSOR_COUNT 4
 
 Server*
-Server_new(char *socket_path)
+Server_new()
 {
 	Server *s = malloc(sizeof(Server));
 
-	s->socket_path = socket_path;
-	s->fd = -1;
 	s->worker_count = PROCESSOR_COUNT;      // TODO (default to processor count)
 	s->backlog = 0;                         // TODO set reasonable default (currently unused)
 	s->loop = EV_DEFAULT;
@@ -30,15 +28,14 @@ Server_new(char *socket_path)
 int
 Server_start(Server *server)
 {
-	// connect socket
-	server->fd = unix_socket_connect(server->socket_path);
-
 	// start workers
 	int i;
+
 	for (i = 0; i < server->worker_count; i++)
 	{
 		Worker *worker = Worker_new((unsigned long)i);
 		worker->f_handler = server->f_worker_handler;
+		worker->f_connection_handler = server->f_connection_handler;
 		List_push(server->workers, worker);
 		Worker_start(worker);
 		pthread_join(*worker->thread, NULL);
