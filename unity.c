@@ -1005,8 +1005,10 @@ void UnityAssertEqualMemory( UNITY_PTR_ATTRIBUTE const void* expected,
 				UnityPrintNumberByStyle((length - bytes - 1), UNITY_DISPLAY_STYLE_UINT);
 				UnityPrint(UnityStrExpected);
 				UnityPrintNumberByStyle(*ptr_exp, UNITY_DISPLAY_STYLE_HEX8);
+				printf(" (%c) ", (char)*ptr_exp);
 				UnityPrint(UnityStrWas);
 				UnityPrintNumberByStyle(*ptr_act, UNITY_DISPLAY_STYLE_HEX8);
+				printf(" (%c) ", (char)*ptr_act);
 				UnityAddMsgIfSpecified(msg);
 				UNITY_FAIL_AND_BAIL;
 			}
