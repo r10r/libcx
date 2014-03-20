@@ -9,15 +9,22 @@ void *
 d_xmalloc(size_t size, const char *func, const char *file, int line);
 
 void *
+d_xcalloc(size_t count, size_t size, const char *func, const char *file, int line);
+
+void *
 d_xrealloc(void *ptr, size_t size, const char *func, const char *file, int line);
 
 void
 d_xfree(void *ptr, const char *func, const char *file, int line);
 
+
 #ifndef _XMALLOC_DISABLED
 
 #define malloc(size) \
 	d_xmalloc(size, __func__, __FILE__, __LINE__)
+
+#define calloc(count, size) \
+	d_xcalloc(count, size, __func__, __FILE__, __LINE__)
 
 #define realloc(ptr, size) \
 	d_xrealloc(ptr, size, __func__, __FILE__, __LINE__)
