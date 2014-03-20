@@ -1,4 +1,3 @@
-/* called on start/stop ... */
 #ifndef _WORKER_H
 #define _WORKER_H
 
@@ -18,7 +17,7 @@ typedef enum worker_event_t
 } WorkerEvent;
 
 typedef struct worker_t Worker;
-typedef void F_WorkerHandler (Worker *worker, WorkerEvent event, void *data);
+typedef void F_WorkerHandler (Worker *worker, WorkerEvent event);
 
 struct worker_t
 {
@@ -33,9 +32,9 @@ struct worker_t
 
 typedef struct unix_worker_t
 {
-	Worker *worker;
+	Worker worker;
 	int server_fd;
-	ev_io *connection_watcher;
+	ev_io connection_watcher;
 	List *requests;                 /* pending requests */
 
 } UnixWorker;

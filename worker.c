@@ -11,10 +11,10 @@ _worker_init(void *data)
 	Worker *worker = (Worker*)data;
 
 	worker->loop = ev_loop_new(0);
-	ev_set_userdata(worker->loop, worker);
+	printf("worker init %p %p\n", worker, worker->loop);
 
 	/* call event handler to handle custom initialization */
-	worker->f_handler(worker, WORKER_EVENT_START, NULL);
+	worker->f_handler(worker, WORKER_EVENT_START);
 	printf("Worker[%lu] started\n", worker->id);
 
 	ev_run(worker->loop, 0);
@@ -24,7 +24,9 @@ _worker_init(void *data)
 Worker*
 Worker_new(unsigned long id)
 {
-	Worker *worker = malloc(sizeof(Worker));
+//	 FIXME pass worker reference to constructor to allow inheritance
+//	Worker *worker = malloc(sizeof(Worker));
+	Worker *worker = malloc(sizeof(UnixWorker));
 
 	worker->id = id;
 	worker->thread = malloc(sizeof(pthread_t));
@@ -42,6 +44,7 @@ Worker_free(Worker *worker)
 int
 Worker_start(Worker *worker)
 {
+//	worker->f_handler(worker, WORKER_EVENT_START);
 	worker->thread = malloc(sizeof(pthread_t));
 	int rc = pthread_create(worker->thread, NULL, _worker_init, worker);
 	if ( rc != 0 )
@@ -55,7 +58,7 @@ Worker_start(Worker *worker)
 void
 Worker_stop(Worker *worker)
 {
-	worker->f_handler(worker, WORKER_EVENT_STOP, NULL);
+	worker->f_handler(worker, WORKER_EVENT_STOP);
 //	XASSERT("Task list should be empty", worker->tasks->length == 0)
 //	XASSERT("No tasks should be in progress")
 	// TODO wait for all tasks to cancel, ....
