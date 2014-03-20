@@ -215,6 +215,38 @@ test_limits()
 	StringBuffer_free(b);
 }
 
+static void
+test_S_dupn()
+{
+	String *s = S_dupn("foobar");
+
+	TEST_ASSERT_EQUAL_STRING("foobar", s->value);
+	S_free(s);
+}
+
+static void
+test_S_write()
+{
+	String *s = S_dup("foobar");
+
+	TEST_ASSERT_EQUAL_INT(6, S_fwrite(s, stdout));
+	TEST_ASSERT_EQUAL_INT(7, S_fputs(s, stdout));
+
+	free(s);
+}
+
+static void
+test_S_copy()
+{
+	String *s = S_dupn("foobar");
+	char dest[7];
+
+	S_copy(s, dest);
+	TEST_ASSERT_EQUAL_STRING("foobar", dest);
+	free(s);
+}
+
+
 int main()
 {
 	TEST_BEGIN
@@ -228,6 +260,8 @@ int main()
 	RUN(test_String_Buffer_fread_append);
 	RUN(test_String_Buffer_ncopy_grow_index);
 	RUN(test_limits);
-
+	RUN(test_S_dupn);
+	RUN(test_S_write);
+	RUN(test_S_copy);
 	TEST_END
 }
