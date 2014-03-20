@@ -80,4 +80,11 @@
 		exit(XEXIT_CODE); \
 	}
 
+#define XFASSERT(condition, format, ...) \
+	if (!(condition)) { \
+		fprintf(stderr, "XASSERT:(%s):%s:%d - " format, \
+			__func__, __FILE__, __LINE__, __VA_ARGS__); \
+		exit(XEXIT_CODE); \
+	}
+
 #endif
