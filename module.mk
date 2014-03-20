@@ -12,6 +12,7 @@ $(L)/message-parser_OBJS := $(L)/message-parser.o \
 	$(BASE_DIR)/libcx-string/string.o \
 	$(BASE_DIR)/libcx-string/pair.o \
 	$(BASE_DIR)/libcx-list/list.o
+	
 #$(L)/message-parser_FLAGS := $(L)/
 
 # -- tests -- 

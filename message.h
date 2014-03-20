@@ -81,7 +81,13 @@ Message_parse(Message *message);
 ParseEvent
 Message_parse_finish(Message *message);
 
-void
+ssize_t
 Message_buffer_append(Message *message, const char *buf, size_t count);
+
+ssize_t
+Message_buffer_read(Message *message, int fd, size_t count);
+
+int
+Message_parse_file(Message *message, const char *file_path, size_t read_len);
 
 #endif

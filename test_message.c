@@ -59,7 +59,8 @@ test_Message_parse_single_pass()
 	Message_free(message);
 }
 
-static void test_Message_parse_multi_pass()
+static void
+test_Message_parse_multi_pass()
 {
 	Message *message = Message_new(0);
 	unsigned int i;
@@ -79,6 +80,19 @@ static void test_Message_parse_multi_pass()
 	Message_free(message);
 }
 
+static void
+test_Message_read_file()
+{
+	Message *message = Message_new(0);
+	int ret = Message_parse_file(message, "libcx-umtp/testmessages/hello_world.txt", 64);
+
+	TEST_ASSERT_EQUAL_INT_MESSAGE(0, ret, "message should have been parsed");
+	test_assert_message(message);
+	Message_free(message);
+}
+
+
+
 int main()
 {
 	TEST_BEGIN
@@ -86,6 +100,7 @@ int main()
 	RUN(test_Message_new);
 	RUN(test_Message_parse_single_pass);
 	RUN(test_Message_parse_multi_pass);
+	RUN(test_Message_read_file);
 
 	TEST_END
 }
