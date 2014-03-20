@@ -7,6 +7,7 @@
 #include <stdbool.h>    /* true, false */
 #include "libcx-list/list.h"
 #include "libcx-string/string.h"
+#include "libcx-string/pair.h"
 
 typedef struct message_t Message;
 extern void ragel_parse_message(Message *message);
@@ -26,41 +27,36 @@ typedef void F_MessageEventHandler (Message *message);
 
 struct ragel_parser_state_t
 {
+	F_MessageEventHandler *f_event_handler;
+	StringBuffer *buffer;  /* message buffer */
 	char *buffer_position;
 	char *buffer_end;
-	unsigned int buffer_offset;
 	char *eof;
+
 	int res;
 	int cs;
-	char *marker;
-	unsigned int marker_offset;
+
+	size_t buffer_offset;   /* offset from start of buffer */
+	size_t marker_start;    /* offset from start of buffer */
+	size_t marker_length;   /* marker length */
+
+	/* statistics */
+	unsigned int iterations; /* the parser iteration */
+
 	ParseEvent event;
-	F_MessageEventHandler *f_event_handler;
-	unsigned int iterations;        /* the parser iteration */
-	char *buffer;                   /* message buffer */
+
 };
 
 struct message_t
 {
 	List *protocol_values;  /* list of strings */
 	List *headers;          /* list of string pairs */
-	String body;
+	StringBuffer *body;
 	RagelParserState *parser_state;
 };
 
-static inline size_t Message_size(Message *message)
-{
-	return 0;
-}
-
-// mark begin of body to track envelope  and header size
-static inline size_t Message_body_size(Message *message)
-{
-	return 0;
-}
-
 RagelParserState*
-RagelParserState_new(void);
+RagelParserState_new(unsigned int buffer_length);
 
 void
 RagelParserState_free(RagelParserState *state);
@@ -71,7 +67,7 @@ Message_new(unsigned int body_length);
 void
 Message_free(Message *message);
 
-String
+String*
 Message_envelope(Message *message);
 
 void
@@ -86,6 +82,6 @@ ParseEvent
 Message_parse_finish(Message *message);
 
 void
-Message_buffer_append(Message *message, const char *buf, unsigned int count);
+Message_buffer_append(Message *message, const char *buf, size_t count);
 
 #endif
