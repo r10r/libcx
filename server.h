@@ -12,7 +12,6 @@
 #include <pthread.h>
 
 #include "libcx-base/ev.h"
-#include "libcx-base/base.h" /* container_of */
 #include "libcx-base/debug.h"
 #include "worker.h"
 
@@ -37,23 +36,22 @@
 typedef enum server_event_t
 {
 	SERVER_START,
-	SERVER_STOP
+	SERVER_STOP,
+	WORKER_START
 } ServerEvent;
 
 
 typedef struct server_t Server;
-typedef void F_ServerHandler (Server *server, ServerEvent event);
+// FIXME data argument is only for passing the  worker
+typedef void F_ServerHandler (Server *server, ServerEvent event, void *data);
 typedef void F_RequestHandler (Request *request);
 
 
-/* notify workers using ev_async (shutdown, restart, ...) */
 struct server_t
 {
 	int worker_count;
 	int backlog; /* maximum pending connections */
 	ev_loop *loop;
-//	ev_timer *worker_health_watcher;        /* monitor workers health using ev async, move to worker pool ? */
-	/* watcher to manage the worker pool ? */
 	List *workers;
 
 	F_ServerHandler *f_server_handler;
@@ -64,18 +62,11 @@ struct server_t
 
 typedef struct unix_server_t
 {
-	Server *server;
+	Server server;
 	char *socket_path;
 	int fd;
 } UnixServer;
 
-/* helper functions */
-
-int
-unix_socket_connect(const char *sock_path);
-
-void
-enable_so_opt(int fd, int option);
 
 Server*
 Server_new(void);
@@ -89,6 +80,14 @@ Server_start(Server *server);
 void
 Server_stop(Server *server);
 
+
+/* helper functions */
+
+int
+unix_socket_connect(const char *sock_path);
+
+void
+enable_so_opt(int fd, int option);
 
 #endif
 

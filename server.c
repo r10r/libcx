@@ -5,18 +5,20 @@ free_worker(void *data)
 {
 	Worker *worker = (Worker*)data;
 
-	Worker_stop(worker); // must signal worker to close all connections
+	Worker_stop(worker); // FIXME must signal worker to close all connections
 	Worker_free(worker);
 }
 
+// TODO default to processor count (varies from machine to machine)
 #define PROCESSOR_COUNT 4
 
 Server*
 Server_new()
 {
-	Server *s = malloc(sizeof(Server));
+	// FIXME pass server reference to constructor to allow inheritance
+	Server *s = malloc(sizeof(UnixServer));
 
-	s->worker_count = PROCESSOR_COUNT;      // TODO (default to processor count)
+	s->worker_count = PROCESSOR_COUNT;
 	s->backlog = 0;                         // TODO set reasonable default (currently unused)
 	s->loop = EV_DEFAULT;
 	s->workers = List_new();
@@ -28,19 +30,24 @@ Server_new()
 int
 Server_start(Server *server)
 {
+	server->f_server_handler(server, SERVER_START, NULL);
+
 	// start workers
 	int i;
-
 	for (i = 0; i < server->worker_count; i++)
 	{
 		Worker *worker = Worker_new((unsigned long)i);
 		worker->f_handler = server->f_worker_handler;
 		worker->f_connection_handler = server->f_connection_handler;
 		List_push(server->workers, worker);
+
+		// callback allows custom initialization of worker
+		server->f_server_handler(server, WORKER_START, worker);
+
 		Worker_start(worker);
-		pthread_join(*worker->thread, NULL);
 	}
-	// TODO (add propper error handling)
+	ev_run(server->loop, 0);
+	// TODO error handling
 	return 0;
 }
 
@@ -114,6 +121,8 @@ unix_socket_connect(const char *sock_path)
 		XERR("Failed to listen to socket");
 		return SOCKET_CONNECT_FAILED;
 	}
+	XFLOG("Connected to: fd:%d [%s]\n", fd, sock_path);
+
 	// both server and client socket must be protected against SIGPIPE
 	enable_so_opt(fd, SO_NOSIGPIPE); /* do not send SIGIPIPE on EPIPE */
 	return fd;

@@ -12,32 +12,32 @@
 static void
 receive_data_callback(ev_loop *loop, ev_io *w, int revents)
 {
-	Connection *connection = container_of(&loop, Connection, loop);
+	Connection *connection = container_of(w, Connection, receive_data_watcher);
 
-	XFLOG("Connection[%d] - revents:%d\n", w->fd, revents);
+	XFLOG("Connection[%d] - revents:%d\n", connection->connection_fd, revents);
 	ssize_t chars_read = Message_buffer_read(connection->request->message, w->fd, DATA_RECEIVE_MAX);
 
 	if (chars_read > 0)
 	{
 		Message_parse(connection->request->message);
-		connection->f_handler(connection, CONNECTION_EVENT_RECEIVE_DATA, NULL);
+		connection->f_handler(connection, CONNECTION_EVENT_RECEIVE_DATA);
 	}
 	else if (chars_read == 0)
 	{
 		ev_io_stop(loop, w); /* stop reading from socket */
-		connection->f_handler(connection, CONNECTION_EVENT_CLOSE_READ, NULL);
+		connection->f_handler(connection, CONNECTION_EVENT_CLOSE_READ);
 	}
 	else if (chars_read < 0)
 	{
 		ev_io_stop(loop, w);
-		connection->f_handler(connection, CONNECTION_EVENT_ERRNO, NULL);
+		connection->f_handler(connection, CONNECTION_EVENT_ERRNO);
 	}
 }
 
 static void
 send_data_callback(ev_loop *loop, ev_io *w, int revents)
 {
-	Connection *connection = container_of(&loop, Connection, loop);
+	Connection *connection = container_of(w, Connection, send_data_watcher);
 
 	XFLOG("Connection[%d] - sending response\n", w->fd);
 
@@ -67,20 +67,19 @@ Connection_new(ev_loop *loop, int fd, int read_count)
 	c->read_count = read_count;
 	c->request = NULL;
 
-	c->receive_data_watcher = malloc(sizeof(ev_io));
-	ev_io_init(c->receive_data_watcher, receive_data_callback, fd, EV_READ);
-	ev_io_start(c->loop, c->receive_data_watcher);
-
-	c->send_data_watcher = NULL;
-
 	return c;
+}
+
+void
+Connection_start(Connection *c)
+{
+	ev_io_init(&c->receive_data_watcher, receive_data_callback, c->connection_fd, EV_READ);
+	ev_io_start(c->loop, &c->receive_data_watcher);
 }
 
 void
 Connection_free(Connection *c)
 {
-	free(c->receive_data_watcher);
-	free(c->send_data_watcher);
 	free(c);
 }
 
@@ -89,15 +88,14 @@ void
 Connection_close(Connection *c)
 {
 	// shut down the connection
-	ev_io_stop(c->loop, c->receive_data_watcher);
-	ev_io_stop(c->loop, c->send_data_watcher);
+	ev_io_stop(c->loop, &c->receive_data_watcher);
+	ev_io_stop(c->loop, &c->send_data_watcher);
 	close(c->connection_fd);
 }
 
 void
 Connection_send(Connection *c, String s)
 {
-	c->send_data_watcher = malloc(sizeof(ev_io));
-	ev_io_init(c->send_data_watcher, send_data_callback, c->connection_fd, EV_WRITE);
-	ev_io_start(c->loop, c->send_data_watcher);
+	ev_io_init(&c->send_data_watcher, send_data_callback, c->connection_fd, EV_WRITE);
+	ev_io_start(c->loop, &c->send_data_watcher);
 }

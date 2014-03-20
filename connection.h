@@ -16,19 +16,19 @@
 
 typedef enum connection_event_t
 {
-	CONNECTION_EVENT_NEW,           /* new connection */
+	CONNECTION_EVENT_ACCEPTED,					/* new connection */
 	CONNECTION_EVENT_RECEIVE_DATA,
-	CONNECTION_EVENT_CLOSE_READ,    /* client closed the writing end, there is no more data to read */
-	CONNECTION_EVENT_NEW_MESSAGE,   /* a new message begins (for pipelining) */
+	CONNECTION_EVENT_CLOSE_READ,	/* client closed the writing end, there is no more data to read */
+	CONNECTION_EVENT_NEW_MESSAGE, /* a new message begins (for pipelining) */
 //	CONNECTION_EVENT_CLOSE_WRITE, /* server closed writing end */
-	CONNECTION_EVENT_END,           /* flushes send_buffer and close connection */
+	CONNECTION_EVENT_END,				/* flushes send_buffer and close connection */
 	CONNECTION_EVENT_RECEIVE_TIMEOUT,
 	CONNECTION_EVENT_ERRNO,
 	CONNECTION_EVENT_ERROR_WRITE
 } ConnectionEvent;
 
 typedef struct connection_t Connection;
-typedef void F_ConnectionHandler (Connection *connection, ConnectionEvent event, void *data);
+typedef void F_ConnectionHandler(Connection *connection, ConnectionEvent event);
 
 /* created by the connection watcher */
 struct connection_t
@@ -43,9 +43,9 @@ struct connection_t
 //	List *send_buffer; /* FIFO (push | shift) */
 
 	/* watch for incomming data*/
-	ev_io *receive_data_watcher;
+	ev_io receive_data_watcher;
 	/* watch for socket becoming writable */
-	ev_io *send_data_watcher;
+	ev_io send_data_watcher;
 
 	// set the buffer to receive the data (function ?)
 
@@ -55,14 +55,15 @@ struct connection_t
 	/* something that has a buffer (that can be casted to a string buffer ?) */
 	Request *request;
 
-	int read_count;
-
-	void *data; // FIXME for the worker (including worker.h causes a cyclic include dependency)
+	int read_count; /* buffer read count */
 };
 
 
 Connection*
 Connection_new(ev_loop *loop, int fd, int buffer_length);
+
+void
+Connection_start(Connection *c);
 
 void
 Connection_free(Connection *c);
