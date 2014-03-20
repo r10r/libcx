@@ -6,6 +6,7 @@
 
 #include "libcx-list/list.h"
 #include "libcx-base/ev.h"
+#include "connection.h"
 
 typedef enum worker_event_t
 {
@@ -17,15 +18,17 @@ typedef enum worker_event_t
 } WorkerEvent;
 
 typedef struct worker_t Worker;
-typedef void F_WorkerEventHandler (Worker *worker, WorkerEvent event, void *data);
+typedef void F_WorkerHandler (Worker *worker, WorkerEvent event, void *data);
 
 struct worker_t
 {
 	/* statistics ? */
-	unsigned long id;                       /* the worker id */
-	pthread_t *thread;                      /* the worker thread */
-	ev_loop *loop;                          /* the workers event loop */
-	F_WorkerEventHandler *f_handler;        /* generic worker event handler */
+	unsigned long id;               /* the worker id */
+	pthread_t *thread;              /* the worker thread */
+	ev_loop *loop;                  /* the workers event loop */
+
+	F_WorkerHandler *f_handler;     /* generic worker event handler */
+	F_ConnectionHandler *f_connection_handler;
 };
 
 typedef struct unix_worker_t
@@ -48,7 +51,5 @@ Worker_start(Worker *worker);
 
 void
 Worker_stop(Worker *worker);
-
-
 
 #endif

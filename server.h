@@ -3,7 +3,6 @@
 
 #include <stdio.h>      /* puts ... */
 #include <unistd.h>     /* STDIN_FILENO */
-#include <fcntl.h>      /* fcntl, to make socket non-blocking */
 
 #include <sys/socket.h> /* guess what ;) */
 #include <sys/un.h>
@@ -16,9 +15,6 @@
 #include "libcx-base/base.h" /* container_of */
 #include "libcx-base/debug.h"
 #include "worker.h"
-#include "request.h"
-#include "connection.h"
-
 
 #define UNIX_PATH_MAX 108
 #define SOCK_BACKLOG 128
@@ -46,19 +42,13 @@ typedef enum server_event_t
 
 
 typedef struct server_t Server;
-typedef void F_ServerEventHandler (Server *server, ServerEvent event);
-typedef void F_RequestEventHandler (Request *request);
+typedef void F_ServerHandler (Server *server, ServerEvent event);
+typedef void F_RequestHandler (Request *request);
 
-
-/* set given file descriptor as non-blocking */
-#define unblock(fd) \
-	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK)
 
 /* notify workers using ev_async (shutdown, restart, ...) */
 struct server_t
 {
-	char *socket_path;
-	int fd;
 	int worker_count;
 	int backlog; /* maximum pending connections */
 	ev_loop *loop;
@@ -66,12 +56,18 @@ struct server_t
 	/* watcher to manage the worker pool ? */
 	List *workers;
 
-	F_ServerEventHandler *f_server_handler;
-	F_ConnectionEventHandler *f_connection_handler;
-	F_WorkerEventHandler *f_worker_handler;
-	F_RequestEventHandler *f_request_handler;
-
+	F_ServerHandler *f_server_handler;
+	F_ConnectionHandler *f_connection_handler;
+	F_WorkerHandler *f_worker_handler;
+	F_RequestHandler *f_request_handler;
 };
+
+typedef struct unix_server_t
+{
+	Server *server;
+	char *socket_path;
+	int fd;
+} UnixServer;
 
 /* helper functions */
 
@@ -82,7 +78,7 @@ void
 enable_so_opt(int fd, int option);
 
 Server*
-Server_new(char *socket_path);
+Server_new(void);
 
 void
 Server_free(Server *server);

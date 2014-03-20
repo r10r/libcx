@@ -5,6 +5,14 @@
 #include <sys/socket.h>
 
 #include "libcx-base/ev.h"
+#include "libcx-base/base.h"
+#include "libcx-string/string.h"
+#include "request.h"
+
+#include <fcntl.h>      /* fcntl, to make socket non-blocking */
+/* set given file descriptor as non-blocking */
+#define unblock(fd) \
+	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK)
 
 typedef enum connection_event_t
 {
@@ -20,8 +28,7 @@ typedef enum connection_event_t
 } ConnectionEvent;
 
 typedef struct connection_t Connection;
-typedef void F_ConnectionEventHandler (Connection *connection, ConnectionEvent event, void *data);
-
+typedef void F_ConnectionHandler (Connection *connection, ConnectionEvent event, void *data);
 
 /* created by the connection watcher */
 struct connection_t
@@ -43,16 +50,19 @@ struct connection_t
 	// set the buffer to receive the data (function ?)
 
 	// callback to
-	F_ConnectionEventHandler *f_event_handler;
+	F_ConnectionHandler *f_handler;
 
 	/* something that has a buffer (that can be casted to a string buffer ?) */
 	Request *request;
 
+	int read_count;
+
+	void *data; // FIXME for the worker (including worker.h causes a cyclic include dependency)
 };
 
 
 Connection*
-Connection_new(ev_loop loop, int fd, int buffer_length);
+Connection_new(ev_loop *loop, int fd, int buffer_length);
 
 void
 Connection_free(Connection *c);

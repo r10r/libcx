@@ -31,7 +31,6 @@ Worker_new(unsigned long id)
 	return worker;
 }
 
-
 void
 Worker_free(Worker *worker)
 {

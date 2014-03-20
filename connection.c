@@ -13,23 +13,24 @@ static void
 receive_data_callback(ev_loop *loop, ev_io *w, int revents)
 {
 	Connection *connection = container_of(&loop, Connection, loop);
+
 	XFLOG("Connection[%d] - revents:%d\n", w->fd, revents);
-	ssize_t chars_read = Message_buffer_append(connection->request->message, w->fd, DATA_RECEIVE_MAX);
+	ssize_t chars_read = Message_buffer_read(connection->request->message, w->fd, DATA_RECEIVE_MAX);
 
 	if (chars_read > 0)
 	{
 		Message_parse(connection->request->message);
-		connection->f_event_handler(connection, CONNECTION_EVENT_RECEIVE_DATA);
+		connection->f_handler(connection, CONNECTION_EVENT_RECEIVE_DATA, NULL);
 	}
 	else if (chars_read == 0)
 	{
 		ev_io_stop(loop, w); /* stop reading from socket */
-		connection->f_event_handler(connection, CONNECTION_EVENT_CLOSE_READ);
+		connection->f_handler(connection, CONNECTION_EVENT_CLOSE_READ, NULL);
 	}
 	else if (chars_read < 0)
 	{
 		ev_io_stop(loop, w);
-		connection->f_event_handler(connection, CONNECTION_EVENT_ERRNO);
+		connection->f_handler(connection, CONNECTION_EVENT_ERRNO, NULL);
 	}
 }
 
@@ -42,28 +43,29 @@ send_data_callback(ev_loop *loop, ev_io *w, int revents)
 
 	// iterate over list and remove elements after iteration
 	String s;
-	while ((s = (String) List_shift()) != NULL)
-	{
-//		connection->f_event_handler(connection, CONNECTION_EVENT_WRITE);
-		unsigned int length = String_length(s);
-		ssize_t bytes = send(w->fd, s, length, 0);
-		XFLOG("Connection[%d] write:%zu\n", bytes);
-		// FIXME handle write error
+//	while ((s = (String) List_shift()) != NULL)
+//	{
+////		connection->f_event_handler(connection, CONNECTION_EVENT_WRITE);
+//		unsigned int length = String_length(s);
+//		ssize_t bytes = send(w->fd, s, length, 0);
+//		XFLOG("Connection[%d] write:%zu\n", bytes);
+	// FIXME handle write error
 //		if (bytes != EWOULDBLOCK)
 //		if (bytes < 0 || (unsigned int) bytes < length)
 //			connection->f_event_handler(connection, CONNECTION_EVENT_RECEIVE_EOF);
-	}
+//	}
 }
 
 Connection*
-Connection_new(ev_loop *loop, int fd, int buffer_length)
+Connection_new(ev_loop *loop, int fd, int read_count)
 {
 	unblock(fd);
 
 	Connection *c = malloc(sizeof(Connection));
 	c->connection_fd = fd;
 	c->loop = loop;
-	c->request = String_init(NULL, buffer_length);
+	c->read_count = read_count;
+	c->request = NULL;
 
 	c->receive_data_watcher = malloc(sizeof(ev_io));
 	ev_io_init(c->receive_data_watcher, receive_data_callback, fd, EV_READ);
@@ -96,6 +98,6 @@ void
 Connection_send(Connection *c, String s)
 {
 	c->send_data_watcher = malloc(sizeof(ev_io));
-	ev_io_init(c->send_data_watcher , send_data_callback, c->connection_fd, EV_WRITE);
+	ev_io_init(c->send_data_watcher, send_data_callback, c->connection_fd, EV_WRITE);
 	ev_io_start(c->loop, c->send_data_watcher);
 }
