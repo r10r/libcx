@@ -5,20 +5,20 @@
 	machine message_fsm;
 	
 	action PrintToken {
-		XFLOG("Token[%u] %c -> %p\n", 
+		XFLOG("Token[%zu] %c -> %p\n", 
 			state->buffer_offset, *(state->buffer_position), state->buffer_position);
 	}
 	
 	action SetMarker {
-		XFLOG("Mark[%u] %c -> %p\n", 
+		XFLOG("Mark[%zu] %c -> %p\n", 
 			state->buffer_offset, *(state->buffer_position), state->buffer_position);
-		state->marker = state->buffer_position;
-		state->marker_offset = 0;
+		state->marker_start = state->buffer_offset;
+		state->marker_length = 0;
 	}
 	
 	action CountToken {
 		state->buffer_offset++;
-		state->marker_offset++;
+		state->marker_length++;
 	}
 	
 	action EventProtocolValue { _event(message, P_PROTOCOL_VALUE); }
