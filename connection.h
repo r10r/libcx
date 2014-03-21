@@ -19,8 +19,6 @@ typedef enum connection_event_t
 	CONNECTION_EVENT_ACCEPTED,      /* new connection */
 	CONNECTION_EVENT_RECEIVE_DATA,
 	CONNECTION_EVENT_CLOSE_READ,    /* client closed the writing end, there is no more data to read */
-	CONNECTION_EVENT_NEW_MESSAGE,   /* a new message begins (for pipelining) */
-//	CONNECTION_EVENT_CLOSE_WRITE, /* server closed writing end */
 	CONNECTION_EVENT_END,           /* flushes send_buffer and close connection */
 	CONNECTION_EVENT_RECEIVE_TIMEOUT,
 	CONNECTION_EVENT_ERRNO,
@@ -29,6 +27,7 @@ typedef enum connection_event_t
 
 typedef struct connection_t Connection;
 typedef Connection* F_ConnectionHandler (Connection *connection, ConnectionEvent event);
+typedef ssize_t F_ConnectionDataHandler (Connection *connection);
 
 /* created by the connection watcher */
 struct connection_t
@@ -48,19 +47,15 @@ struct connection_t
 	ev_io send_data_watcher;
 
 	// set the buffer to receive the data (function ?)
-
-	// callback to
+	F_ConnectionDataHandler *f_data_handler;
 	F_ConnectionHandler *f_handler;
 
-	/* something that has a buffer (that can be casted to a string buffer ?) */
-	Request *request;
-
-	int read_count; /* buffer read count */
+	void *data;
 };
 
 
 Connection*
-Connection_new(ev_loop *loop, int fd, int buffer_length);
+Connection_new(ev_loop *loop, int fd);
 
 void
 Connection_start(Connection *c);

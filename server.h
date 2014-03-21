@@ -38,9 +38,10 @@ typedef enum server_event_t
 } ServerEvent;
 
 typedef struct server_t Server;
-// FIXME data argument is only for passing the  worker
+// FIXME data argument is only for passing the
+// worker to assign the server fd to the worker
 typedef Server* F_ServerHandler (Server *server, ServerEvent event, void *data);
-typedef Request* F_RequestHandler (Request *request);
+typedef Request* F_RequestHandler (Connection* connection, Request *request);
 
 struct server_t
 {
@@ -51,6 +52,7 @@ struct server_t
 
 	F_ServerHandler *f_server_handler;
 	F_ConnectionHandler *f_connection_handler;
+	F_ConnectionDataHandler *f_connection_data_handler;
 	F_WorkerHandler *f_worker_handler;
 	F_RequestHandler *f_request_handler;
 };

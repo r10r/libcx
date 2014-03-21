@@ -9,9 +9,9 @@
 
 typedef enum request_status_t
 {
-	REQ_STARTED,
-	REQ_FINISHED,
-	REQ_ERROR
+	REQUEST_STARTED,
+	REQUEST_FINISHED,
+	REQUEST_ERROR
 } RequestStatus;
 
 typedef struct request_t Request;
