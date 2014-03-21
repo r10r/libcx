@@ -35,6 +35,10 @@ static void test_container_of()
 	container = UC_container_of(&bar->foo, struct bar, foo);
 	TEST_ASSERT_EQUAL_PTR(bar, container);
 
+	const char ** bla = &bar->xxx;
+	container = container_of(bla, struct bar, xxx);
+	TEST_ASSERT_EQUAL_PTR(bar, container);
+
 	free(bar->foo);
 	free(bar);
 }
