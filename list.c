@@ -1,5 +1,4 @@
 #include "list.h"
-/* NOTICE: list modification/access is not thread safe */
 
 Node *
 Node_new()
@@ -29,10 +28,6 @@ List_new()
 	list->length = 0;
 	list->f_node_data_free = NULL;
 	list->userdata = NULL;
-#ifndef _LIST_DISABLE_LOCKING
-	list->f_lock = NULL;
-	list->f_unlock = NULL;
-#endif
 	return list;
 }
 
@@ -41,7 +36,6 @@ List_free(List *list)
 {
 	if (list)
 	{
-		_LIST_LOCK_WRITE(list);
 		// FIXME use iterator to free nodes instead ?
 		Node *next = list->first;
 		while (next)
@@ -56,7 +50,6 @@ List_free(List *list)
 		 * How does other thread behave when the list is gone
 		 * when the lock is released ?
 		 */
-		_LIST_UNLOCK_WRITE(list);
 		free(list);
 	}
 }
@@ -64,8 +57,8 @@ List_free(List *list)
 static inline unsigned long
 _List_push(List *list, void *data)
 {
-	_LIST_LOCK_WRITE(list);
 	Node *new = Node_new();
+
 	new->data = data;
 
 	Node *parent = list->last;
@@ -81,7 +74,6 @@ _List_push(List *list, void *data)
 		list->last = new;
 	}
 	unsigned long length = list->length++;
-	_LIST_UNLOCK_WRITE(list);
 	return length;
 }
 
@@ -102,7 +94,6 @@ List_match(List *list, void *key, F_NodeMatch *f_node_match)
 {
 	if (list->length == 0)
 		return NULL;
-	_LIST_LOCK_READ(list);
 	Node *node = list->first;
 
 	while (node)
@@ -111,7 +102,6 @@ List_match(List *list, void *key, F_NodeMatch *f_node_match)
 			break;
 		node = node->next;
 	}
-	_LIST_UNLOCK_READ(list);
 	return node;
 }
 
@@ -120,7 +110,6 @@ List_each(List *list, F_NodeIterator *f_node_iterator)
 {
 	if (list->length == 0)
 		return;
-	_LIST_LOCK_READ(list);
 	Node *node = list->first;
 
 	int index = 0;
@@ -130,7 +119,6 @@ List_each(List *list, F_NodeIterator *f_node_iterator)
 		node = node->next;
 		index++;
 	}
-	_LIST_UNLOCK_READ(list);
 }
 
 void *
@@ -138,7 +126,6 @@ List_shift(List *list)
 {
 	if (list->length == 0)
 		return NULL;
-	_LIST_LOCK_WRITE(list);
 	Node *node = list->first;
 	void *data = NULL;
 
@@ -155,7 +142,6 @@ List_shift(List *list)
 		data = node->data;
 		Node_free(node, NULL);
 	}
-	_LIST_UNLOCK_WRITE(list);
 	return data;
 }
 
@@ -164,7 +150,6 @@ List_pop(List *list)
 {
 	if (list->length == 0)
 		return NULL;
-	_LIST_LOCK_WRITE(list);
 	Node *node = list->last;
 	void *data = NULL;
 	if (node)
@@ -180,15 +165,14 @@ List_pop(List *list)
 		data = node->data;
 		Node_free(node, NULL);
 	}
-	_LIST_UNLOCK_WRITE(list);
 	return data;
 }
 
 static inline void
 _List_prepend(List *list, void *data)
 {
-	_LIST_LOCK_WRITE(list);
 	Node *new = Node_new();
+
 	new->data = data;
 
 	Node *child = list->first;
@@ -204,7 +188,6 @@ _List_prepend(List *list, void *data)
 		list->last = new;
 	}
 	list->length++;
-	_LIST_UNLOCK_WRITE(list);
 }
 
 void
@@ -240,10 +223,8 @@ List_get(List *list, unsigned int index)
 	unsigned int i;
 	void *data = NULL;
 	Node *node = list->first;
-	_LIST_LOCK_READ(list);
 	for (i = 0; i < index; i++)
 		node = node->next;
 	data = node->data;
-	_LIST_UNLOCK_READ(list);
 	return data;
 }

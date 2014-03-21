@@ -12,26 +12,6 @@
 // access is simply a[index]
 // shrink shifts elements to index 0 and removes NULL elements
 
-/* multiple readers, one writer locking */
-#ifdef _ARRAY_DISABLE_LOCKING
-/* locking support is disabled */
-#define _ARRAY_LOCK_READ(hdr)
-#define _ARRAY_LOCK_WRITE(hdr)
-#define _ARRAY_UNLOCK_READ(hdr)
-#define _ARRAY_UNLOCK_WRITE(hdr)
-#else
-/* locking support is enabled */
-#define _ARRAY_LOCK_READ(hdr) \
-	if (hdr->f_lock) { XDBG("lock READ"); hdr->f_lock(hdr, 0); }
-#define _ARRAY_LOCK_WRITE(hdr) \
-	if (hdr->f_lock) { XDBG("lock WRITE"); hdr->f_lock(hdr, 1); }
-#define _ARRAY_UNLOCK_READ(hdr) \
-	if (hdr->f_unlock) { XDBG("unlock READ"); hdr->f_unlock(hdr, 0); }
-#define _ARRAY_UNLOCK_WRITE(hdr) \
-	if (hdr->f_unlock) { XDBG("unlock WRITE"); hdr->f_unlock(hdr, 1); }
-#endif
-
-
 /* simple dynamic array implementation */
 typedef char** Array;
 typedef void F_ArrayIterator (int index, void *data);
@@ -39,16 +19,10 @@ typedef void F_ArrayIterator (int index, void *data);
 typedef int F_ArrayMatch (void *data, void *key);
 struct array_header_t;
 
-typedef void F_ArrayLock (struct array_header_t *hdr, int rw);
-
 struct array_header_t
 {
 	unsigned long length;
 	unsigned long unused;
-#ifndef _ARRAY_DISABLE_LOCKING
-	F_ArrayLock *f_lock;
-	F_ArrayLock *f_unlock;
-#endif
 	char *buf[];
 };
 

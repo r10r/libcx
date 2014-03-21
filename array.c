@@ -28,11 +28,6 @@ Array_init(const void *value, unsigned long length)
 	if (length > 0 && value)
 		memcpy(hdr->buf, value, length);
 
-#ifndef _ARRAY_DISABLE_LOCKING
-	hdr->f_lock = NULL;
-	hdr->f_unlock = NULL;
-#endif
-
 	return hdr->buf;
 }
 
@@ -57,10 +52,8 @@ Array_each(Array a, F_ArrayIterator f_array_iterator)
 	struct array_header_t *hdr = Array_header(a);
 	unsigned int i;
 
-	_ARRAY_LOCK_READ(hdr);
 	for (i = 0; i < hdr->length; i++)
 		f_array_iterator(i, a[i]);
-	_ARRAY_UNLOCK_READ(hdr);
 }
 
 int
@@ -73,7 +66,6 @@ Array_match(Array a, void *key, F_ArrayMatch f_array_match)
 
 	struct array_header_t *hdr = Array_header(a);
 	unsigned int i;
-	_ARRAY_LOCK_READ(hdr);
 	for (i = 0; i < hdr->length; i++)
 	{
 		if (f_array_match(a[i], key) == 0)
@@ -82,7 +74,6 @@ Array_match(Array a, void *key, F_ArrayMatch f_array_match)
 			break;
 		}
 	}
-	_ARRAY_UNLOCK_READ(hdr);
 
 	return i_matched;
 }
@@ -133,7 +124,6 @@ _Array_append(Array a, void *data)
 
 	struct array_header_t *a_hdr = Array_header(a);
 
-	_ARRAY_LOCK_WRITE(a_hdr);
 	unsigned long next_index = Array_next(a);
 
 	Array c = a;
@@ -149,7 +139,6 @@ _Array_append(Array a, void *data)
 
 	c[Array_next(c)] = data;
 	a_hdr->unused--;
-	_ARRAY_UNLOCK_WRITE(a_hdr);
 
 	return c;
 }
@@ -171,7 +160,6 @@ Array_pop(Array arr)
 {
 	struct array_header_t *hdr = Array_header(arr);
 
-	_ARRAY_LOCK_WRITE(hdr);
 	unsigned long index = Array_next(arr);
 
 	if (index == 0)
@@ -180,7 +168,6 @@ Array_pop(Array arr)
 	void *data = arr[Array_next(arr) - 1];
 	arr[Array_next(arr) - 1] = NULL;
 	hdr->unused++;
-	_ARRAY_UNLOCK_WRITE(hdr);
 
 	return data;
 }
