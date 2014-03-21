@@ -33,6 +33,8 @@ echo_connection_handler(Connection *connection, ConnectionEvent event)
 		XDBG("close read");
 		const char *byebye = "bye bye\n";
 		Connection_send(connection, byebye, strlen(byebye));
+		StringBuffer_free((StringBuffer*)connection->data);
+		Connection_close(connection);
 		break;
 	}
 	case CONNECTION_EVENT_RECEIVE_TIMEOUT:
