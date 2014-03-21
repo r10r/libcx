@@ -15,13 +15,10 @@ receive_data_callback(ev_loop *loop, ev_io *w, int revents)
 	Connection *connection = container_of(w, Connection, receive_data_watcher);
 
 	XFLOG("Connection[%d] - revents:%d\n", connection->connection_fd, revents);
-	ssize_t chars_read = Message_buffer_read(connection->request->message, w->fd, DATA_RECEIVE_MAX);
+	ssize_t chars_read = connection->f_data_handler(connection);
 
 	if (chars_read > 0)
-	{
-		Message_parse(connection->request->message);
 		connection->f_handler(connection, CONNECTION_EVENT_RECEIVE_DATA);
-	}
 	else if (chars_read == 0)
 	{
 		ev_io_stop(loop, w); /* stop reading from socket */
@@ -57,16 +54,17 @@ send_data_callback(ev_loop *loop, ev_io *w, int revents)
 }
 
 Connection*
-Connection_new(ev_loop *loop, int fd, int read_count)
+Connection_new(ev_loop *loop, int fd)
 {
 	unblock(fd);
 
 	Connection *c = malloc(sizeof(Connection));
-	c->connection_fd = fd;
 	c->loop = loop;
-	c->read_count = read_count;
-	c->request = NULL;
+	c->data = NULL;
+	c->f_data_handler = NULL;
+	c->f_handler = NULL;
 
+	c->connection_fd = fd;
 	return c;
 }
 

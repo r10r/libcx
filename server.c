@@ -37,6 +37,7 @@ Server_start(Server *server)
 		worker->id = i;
 		worker->f_handler = server->f_worker_handler;
 		worker->f_connection_handler = server->f_connection_handler;
+		worker->f_connection_data_handler = server->f_connection_data_handler;
 		List_push(server->workers, worker);
 
 		// callback allows custom initialization of worker
@@ -44,7 +45,11 @@ Server_start(Server *server)
 
 		Worker_start(worker);
 	}
+
+	// TODO start SIGINT handler to handle server shutdown
 	ev_run(server->loop, 0);
+
+	server->f_server_handler(server, SERVER_STOP, NULL);
 	// TODO error handling
 	return 0;
 }

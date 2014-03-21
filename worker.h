@@ -27,8 +27,9 @@ struct worker_t
 	pthread_t *thread;              /* the worker thread */
 	ev_loop *loop;                  /* the workers event loop */
 
-	F_WorkerHandler *f_handler;     /* generic worker event handler */
+	F_WorkerHandler *f_handler;
 	F_ConnectionHandler *f_connection_handler;
+	F_ConnectionDataHandler *f_connection_data_handler;
 };
 
 void

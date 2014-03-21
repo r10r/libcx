@@ -6,7 +6,7 @@ Request_new(unsigned long id)
 	Request *request = malloc(sizeof(Request));
 
 	request->id = id;
-	request->status = REQ_STARTED;
+	request->status = REQUEST_STARTED;
 	request->started_at = malloc(sizeof(struct timeval));
 	request->finished_at = malloc(sizeof(struct timeval));
 

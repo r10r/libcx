@@ -16,8 +16,8 @@ _worker_init(void *data)
 	/* call event handler to handle custom initialization */
 	worker->f_handler(worker, WORKER_EVENT_START);
 	printf("Worker[%lu] started\n", worker->id);
-
 	ev_run(worker->loop, 0);
+	worker->f_handler(worker, WORKER_EVENT_STOP);
 	return NULL;
 }
 
