@@ -3,6 +3,7 @@
 
 #include <pthread.h>
 
+#include "libcx-base/debug.h"
 #include "libcx-list/list.h"
 #include "libcx-base/ev.h"
 #include "connection.h"

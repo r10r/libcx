@@ -1,9 +1,4 @@
-#include "libcx-base/debug.h"
 #include "worker.h"
-
-// ev_timer *manage_tasks_watcher;	/* expire tasks, handover tasks ... */
-
-// TODO howto block list until work is available ?
 
 static void*
 _worker_init(void *data)
@@ -11,7 +6,7 @@ _worker_init(void *data)
 	Worker *worker = (Worker*)data;
 
 	worker->loop = ev_loop_new(0);
-	printf("worker init %p %p\n", worker, worker->loop);
+	XFDBG("worker init %p %p\n", worker, worker->loop);
 
 	/* call event handler to handle custom initialization */
 	worker->f_handler(worker, WORKER_EVENT_START);

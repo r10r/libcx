@@ -50,7 +50,7 @@ main(int argc, char** argv)
 {
 	Server *server = (Server*)UnixServer_new("/tmp/echo.sock");
 
-	server->worker_count = 4;
+	server->worker_count = (argc == 2) ? atoi(argv[1]) : 4;
 	server->f_connection_handler = echo_connection_handler;
 	server->f_connection_data_handler = echo_connection_data_handler;
 	int ret = Server_start(server); // blocks
