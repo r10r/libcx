@@ -15,16 +15,16 @@ receive_data_callback(ev_loop *loop, ev_io *w, int revents)
 	Connection *connection = container_of(w, Connection, receive_data_watcher);
 
 	XFLOG("Connection[%d] - revents:%d\n", connection->connection_fd, revents);
-	ssize_t chars_read = connection->f_data_handler(connection);
+	ssize_t nread = connection->f_data_handler(connection);
 
-	if (chars_read > 0)
-		connection->f_handler(connection, CONNECTION_EVENT_RECEIVE_DATA);
-	else if (chars_read == 0)
+	if (nread > 0)
+		connection->f_handler(connection, CONNECTION_EVENT_DATA);
+	else if (nread == 0)
 	{
 		ev_io_stop(loop, w); /* stop reading from socket */
 		connection->f_handler(connection, CONNECTION_EVENT_CLOSE_READ);
 	}
-	else if (chars_read < 0)
+	else if (nread < 0)
 	{
 		ev_io_stop(loop, w);
 		connection->f_handler(connection, CONNECTION_EVENT_ERRNO);
@@ -91,9 +91,21 @@ Connection_close(Connection *c)
 	close(c->connection_fd);
 }
 
+/* sends data immediately */
 void
-Connection_send(Connection *c, String s)
+Connection_send(Connection *c, char *data, size_t length)
 {
-	ev_io_init(&c->send_data_watcher, send_data_callback, c->connection_fd, EV_WRITE);
-	ev_io_start(c->loop, &c->send_data_watcher);
+	ssize_t nsend = send(c->connection_fd, data, length, 0);
+
+// @from write function documentation
+//	This function returns the number of bytes transmitted, or -1 on failure. If the socket is nonblocking, then
+//	 send (like write) can return after sending just part of the data. , for information about nonblocking mode.
+//
+//	Note, however, that a successful return value merely indicates that the message has been sent without
+//	 error, not necessarily that it has been received without error.
+	if (nsend == -1)
+		c->f_handler(c, CONNECTION_EVENT_ERROR_WRITE);
+
+//	ev_io_init(&c->send_data_watcher, send_data_callback, c->connection_fd, EV_WRITE);
+//	ev_io_start(c->loop, &c->send_data_watcher);
 }

@@ -17,9 +17,8 @@
 typedef enum connection_event_t
 {
 	CONNECTION_EVENT_ACCEPTED,      /* new connection */
-	CONNECTION_EVENT_RECEIVE_DATA,
+	CONNECTION_EVENT_DATA,
 	CONNECTION_EVENT_CLOSE_READ,    /* client closed the writing end, there is no more data to read */
-	CONNECTION_EVENT_END,           /* flushes send_buffer and close connection */
 	CONNECTION_EVENT_RECEIVE_TIMEOUT,
 	CONNECTION_EVENT_ERRNO,
 	CONNECTION_EVENT_ERROR_WRITE
@@ -67,6 +66,6 @@ void
 Connection_close(Connection *c);
 
 void
-Connection_send(Connection *c, String s);
+Connection_send(Connection *c, char *data, size_t length);
 
 #endif

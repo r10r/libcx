@@ -214,7 +214,7 @@ unix_connection_handler(Connection *connection, ConnectionEvent event)
 		request->message = Message_new(2048);
 		connection->data = request;
 		break;
-	case CONNECTION_EVENT_RECEIVE_DATA:
+	case CONNECTION_EVENT_DATA:
 	{
 		request = (Request*)connection->data;
 		Message_parse(request->message);
@@ -225,7 +225,6 @@ unix_connection_handler(Connection *connection, ConnectionEvent event)
 		XDBG("close read");
 		request = (Request*)connection->data;
 		Message_parse_finish(request->message);
-		ev_io_stop(connection->loop, &connection->receive_data_watcher);
 		break;
 	}
 	case CONNECTION_EVENT_RECEIVE_TIMEOUT:
@@ -237,11 +236,7 @@ unix_connection_handler(Connection *connection, ConnectionEvent event)
 	case CONNECTION_EVENT_ERROR_WRITE:
 		XDBG("connection error write");
 		break;
-	case CONNECTION_EVENT_END:
-		XDBG("connection end");
-		break;
 	}
-
 	return connection;
 }
 
