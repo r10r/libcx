@@ -11,7 +11,7 @@ CFLAGS += -Weverything \
 LDFLAGS += -L/usr/local/lib/llvm-3.4/usr/lib
 
 MODULES := libcx-base libcx-sandbox \
-	libcx-string #libcx-list libcx-umtp #libcx-socket-unix libcx-workqueue 
+	libcx-string libcx-list libcx-umtp libcx-socket-unix
 
 CFLAGS += -I$(BASE_DIR) \
 	-Werror -Wall -pedantic \
@@ -30,7 +30,10 @@ CFLAGS += \
 
 
 # profile release
-#CFLAGS += -Os -DNDEBUG
+#CFLAGS += -Os
+
+# disable debug statements
+#CFLAGS +=  -DNDEBUG
 
 # profile development
 CFLAGS += -gdwarf-2 -g -O0 -fno-inline -DTRACE -DPROFILE --coverage
