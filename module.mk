@@ -17,8 +17,15 @@ $(L)/echo-client_FLAGS := -lev
 
 $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/server.o \
+	$(L)/unix_server.o \
+	$(L)/connection.o \
+	$(L)/worker.o \
+	$(L)/request.o \
 	$(BASE_DIR)/libcx-list/list.o \
-	$(L)/worker.o
+	$(BASE_DIR)/libcx-umtp/message.o \
+	$(BASE_DIR)/libcx-umtp/message_fsm.o \
+	$(BASE_DIR)/libcx-string/string.o \
+	$(BASE_DIR)/libcx-string/pair.o
 $(L)/echo-server_FLAGS := -lev 
 
 #$(L)/echo-server-threaded_OBJS := $(L)/echo-server-threaded.o \
@@ -30,6 +37,7 @@ $(L)/echo-client-threaded_OBJS := $(L)/echo-client-threaded.o $(L)/client.o
 
 $(L)/test-server_OBJS := $(L)/test-server.o \
 	$(L)/server.o \
+	$(L)/unix_server.o \
 	$(L)/worker.o \
 	$(L)/request.o \
 	$(L)/connection.o \

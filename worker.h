@@ -9,6 +9,7 @@
 
 typedef enum worker_event_t
 {
+	WORKER_EVENT_NEW,               /* create a new worker */
 	WORKER_EVENT_START,
 	/* stop connection watcher ... */
 	WORKER_EVENT_STOP,
@@ -17,7 +18,7 @@ typedef enum worker_event_t
 } WorkerEvent;
 
 typedef struct worker_t Worker;
-typedef void F_WorkerHandler (Worker *worker, WorkerEvent event);
+typedef Worker* F_WorkerHandler (Worker *worker, WorkerEvent event);
 
 struct worker_t
 {
@@ -30,17 +31,8 @@ struct worker_t
 	F_ConnectionHandler *f_connection_handler;
 };
 
-typedef struct unix_worker_t
-{
-	Worker worker;
-	int server_fd;
-	ev_io connection_watcher;
-	List *requests;                 /* pending requests */
-
-} UnixWorker;
-
-Worker*
-Worker_new(unsigned long id);
+void
+Worker_new(Worker *worker);
 
 void
 Worker_free(Worker *worker);
