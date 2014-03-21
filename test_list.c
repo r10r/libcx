@@ -16,23 +16,11 @@ void node_free(void *data)
 	free(data);
 }
 
-static inline
-void lock(List *list, int rw)
-{
-}
-
-static inline
-void unlock(List *list, int rw)
-{
-}
-
 static void
 test_List_append()
 {
 	List *list = List_new();
 
-	list->f_lock = lock;
-	list->f_unlock = unlock;
 	list->f_node_data_free = node_free;
 
 	TEST_ASSERT_EQUAL_INT(0, List_append(list, strdup("node 1")));
