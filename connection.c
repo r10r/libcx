@@ -87,7 +87,8 @@ Connection_close(Connection *c)
 {
 	// shut down the connection
 	ev_io_stop(c->loop, &c->receive_data_watcher);
-	ev_io_stop(c->loop, &c->send_data_watcher);
+	// send watcher is currently unused
+//	ev_io_stop(c->loop, &c->send_data_watcher);
 	close(c->connection_fd);
 	Connection_free(c);
 }

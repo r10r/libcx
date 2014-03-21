@@ -5,7 +5,7 @@
 
 void send_data(int fd, const char *data)
 {
-	printf("Sending data: %s\n", data);
+	XFDBG("Sending data: %s\n", data);
 	send(fd, data, strlen(data), 0);
 }
 
@@ -21,7 +21,7 @@ client_connect(const char *sock_path)
 		exit(1);
 	}
 
-	printf("Trying to connect...\n");
+	XDBG("Trying to connect...");
 
 	address.sun_family = PF_LOCAL;
 	strcpy(address.sun_path, sock_path);
@@ -31,7 +31,7 @@ client_connect(const char *sock_path)
 		exit(1);
 	}
 
-	printf("Connected.\n");
+	XDBG("Connected.");
 	return sock;
 }
 
@@ -42,13 +42,13 @@ receive_response(int sock)
 	ssize_t receive_count;
 
 	receive_count = recv(sock, receive_buffer, 100, 0);
-	printf("Received %zu\n", receive_count);
+	XFDBG("Received %zu\n", receive_count);
 
 	if (receive_count > 0)
 	{
 		receive_buffer[receive_count] = '\0';
-		printf("Response : %s\n", receive_buffer);
+		XFDBG("Response : %s\n", receive_buffer);
 	}
 	else
-		printf("Do not received nothing\n");
+		XDBG("Do not received nothing");
 }
