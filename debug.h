@@ -15,6 +15,7 @@
 
 #ifdef NDEBUG
 #define XDBG(message)
+#define XFDBG(format, ...)
 #define XFLOG(fmt, ...)
 #define XLOG(message)
 #else
