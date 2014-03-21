@@ -16,19 +16,19 @@
 
 typedef enum connection_event_t
 {
-	CONNECTION_EVENT_ACCEPTED,					/* new connection */
+	CONNECTION_EVENT_ACCEPTED,      /* new connection */
 	CONNECTION_EVENT_RECEIVE_DATA,
-	CONNECTION_EVENT_CLOSE_READ,	/* client closed the writing end, there is no more data to read */
-	CONNECTION_EVENT_NEW_MESSAGE, /* a new message begins (for pipelining) */
+	CONNECTION_EVENT_CLOSE_READ,    /* client closed the writing end, there is no more data to read */
+	CONNECTION_EVENT_NEW_MESSAGE,   /* a new message begins (for pipelining) */
 //	CONNECTION_EVENT_CLOSE_WRITE, /* server closed writing end */
-	CONNECTION_EVENT_END,				/* flushes send_buffer and close connection */
+	CONNECTION_EVENT_END,           /* flushes send_buffer and close connection */
 	CONNECTION_EVENT_RECEIVE_TIMEOUT,
 	CONNECTION_EVENT_ERRNO,
 	CONNECTION_EVENT_ERROR_WRITE
 } ConnectionEvent;
 
 typedef struct connection_t Connection;
-typedef void F_ConnectionHandler(Connection *connection, ConnectionEvent event);
+typedef Connection* F_ConnectionHandler (Connection *connection, ConnectionEvent event);
 
 /* created by the connection watcher */
 struct connection_t

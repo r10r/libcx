@@ -4,8 +4,6 @@
 #include <stdio.h>      /* puts ... */
 #include <unistd.h>     /* STDIN_FILENO */
 
-#include <sys/socket.h> /* guess what ;) */
-#include <sys/un.h>
 #include <stdlib.h>     /* exit */
 #include <string.h>     /* strlen */
 
@@ -15,7 +13,6 @@
 #include "libcx-base/debug.h"
 #include "worker.h"
 
-#define UNIX_PATH_MAX 108
 #define SOCK_BACKLOG 128
 /*
  * gee all these function either define the error response
@@ -40,12 +37,10 @@ typedef enum server_event_t
 	WORKER_START
 } ServerEvent;
 
-
 typedef struct server_t Server;
 // FIXME data argument is only for passing the  worker
-typedef void F_ServerHandler (Server *server, ServerEvent event, void *data);
-typedef void F_RequestHandler (Request *request);
-
+typedef Server* F_ServerHandler (Server *server, ServerEvent event, void *data);
+typedef Request* F_RequestHandler (Request *request);
 
 struct server_t
 {
@@ -60,16 +55,9 @@ struct server_t
 	F_RequestHandler *f_request_handler;
 };
 
-typedef struct unix_server_t
-{
-	Server server;
-	char *socket_path;
-	int fd;
-} UnixServer;
 
-
-Server*
-Server_new(void);
+void
+Server_new(Server *server);
 
 void
 Server_free(Server *server);
@@ -82,9 +70,6 @@ Server_stop(Server *server);
 
 
 /* helper functions */
-
-int
-unix_socket_connect(const char *sock_path);
 
 void
 enable_so_opt(int fd, int option);

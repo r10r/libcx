@@ -21,16 +21,10 @@ _worker_init(void *data)
 	return NULL;
 }
 
-Worker*
-Worker_new(unsigned long id)
+void
+Worker_new(Worker *worker)
 {
-//	 FIXME pass worker reference to constructor to allow inheritance
-//	Worker *worker = malloc(sizeof(Worker));
-	Worker *worker = malloc(sizeof(UnixWorker));
-
-	worker->id = id;
 	worker->thread = malloc(sizeof(pthread_t));
-	return worker;
 }
 
 void
@@ -40,11 +34,10 @@ Worker_free(Worker *worker)
 	free(worker);
 }
 
-/* 0 when worker was started sucessfully */
+/* @return 0 when worker was started sucessfully */
 int
 Worker_start(Worker *worker)
 {
-//	worker->f_handler(worker, WORKER_EVENT_START);
 	worker->thread = malloc(sizeof(pthread_t));
 	int rc = pthread_create(worker->thread, NULL, _worker_init, worker);
 	if ( rc != 0 )
