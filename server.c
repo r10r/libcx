@@ -1,6 +1,12 @@
 #include "server.h"
 
 static void
+shutdown_watcher(ev_loop *loop, ev_timer *w, int revents);
+
+static void
+sigint_watcher(ev_loop *loop, ev_signal *w, int revents);
+
+static void
 free_worker(void *data)
 {
 	Worker *worker = (Worker*)data;
@@ -41,15 +47,18 @@ Server_start(Server *server)
 		List_push(server->workers, worker);
 
 		// callback allows custom initialization of worker
-		server->f_server_handler(server, WORKER_START, worker);
+		server->f_server_handler(server, SERVER_START_WORKER, worker);
 
 		Worker_start(worker);
 	}
 
-	// TODO start SIGINT handler to handle server shutdown
+	/* shutdown server on SIGINT */
+	signal(SIGINT, SIG_IGN); /* SIGINT is handled by a callback */
+	ev_signal_init(&server->sigint_watcher, sigint_watcher, SIGINT);
+	ev_signal_start(server->loop, &server->sigint_watcher);
+
 	ev_run(server->loop, 0);
 
-	server->f_server_handler(server, SERVER_STOP, NULL);
 	// TODO error handling
 	return 0;
 }
@@ -73,4 +82,31 @@ enable_so_opt(int fd, int option)
 	int enable = 1;
 
 	setsockopt(fd, SOL_SOCKET, option, (void*)&enable, sizeof(enable));
+}
+
+static void
+shutdown_watcher(ev_loop *loop, ev_timer *w, int revents)
+{
+	Server *server = container_of(w, Server, shutdown_watcher);
+
+	XDBG("Waiting for workers to shut down");
+	// TODO wait here for workers to shutdown
+
+	ev_timer_stop(loop, w);
+	ev_break(loop, EVBREAK_ALL);
+}
+
+/* handle SIGINT callback (starts the shutdown timer) */
+static void
+sigint_watcher(ev_loop *loop, ev_signal *w, int revents)
+{
+	Server *server = container_of(w, Server, sigint_watcher);
+
+	XDBG("Received SIGINT. Starting shutdown timer.");
+	// TODO send async to workers to shutdown
+
+	server->f_server_handler(server, SERVER_STOP, NULL);
+
+	ev_timer_init(&server->shutdown_watcher, shutdown_watcher, 0., 1.);
+	ev_timer_again(loop, &server->shutdown_watcher);
 }

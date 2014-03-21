@@ -6,7 +6,6 @@ _worker_init(void *data)
 	Worker *worker = (Worker*)data;
 
 	worker->loop = ev_loop_new(0);
-	XFDBG("worker init %p %p\n", worker, worker->loop);
 
 	/* call event handler to handle custom initialization */
 	worker->f_handler(worker, WORKER_EVENT_START);

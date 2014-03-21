@@ -106,6 +106,7 @@ unix_server_handler(Server *server, ServerEvent event, void *data)
 	{
 	case SERVER_START:
 	{
+		XDBG("server event start");
 		// connect to socket
 		unix_server->fd = unix_socket_connect(unix_server->socket_path);
 		// TODO start worker supervisor
@@ -115,9 +116,11 @@ unix_server_handler(Server *server, ServerEvent event, void *data)
 		break;
 	}
 	case SERVER_STOP:
+		XDBG("server event stop");
 		break;
-	case WORKER_START:
+	case SERVER_START_WORKER:
 	{
+		XDBG("server event start worker");
 		// pass server socket from server to worker
 		UnixWorker *worker = (UnixWorker*)data;
 		worker->server_fd = unix_server->fd;

@@ -34,7 +34,7 @@ typedef enum server_event_t
 {
 	SERVER_START,
 	SERVER_STOP,
-	WORKER_START
+	SERVER_START_WORKER
 } ServerEvent;
 
 typedef struct server_t Server;
@@ -48,6 +48,8 @@ struct server_t
 	int worker_count;
 	int backlog; /* maximum pending connections */
 	ev_loop *loop;
+	ev_timer shutdown_watcher;
+	ev_signal sigint_watcher;
 	List *workers;
 
 	F_ServerHandler *f_server_handler;
