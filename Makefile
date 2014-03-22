@@ -86,7 +86,7 @@ all: format $(OBJS) $(PROGRAMS) test decover
 # ==========
 # Keeps your code nice and shiny ;)
 %.unc-backup~: %
-	uncrustify --mtime -c $(UNCRUSTIFY_CONFIG) --replace $*
+	uncrustify -c $(UNCRUSTIFY_CONFIG) --replace $*
 	
 format: $(SRC:=.unc-backup~);
 
