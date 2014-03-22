@@ -13,6 +13,9 @@ LDFLAGS += -L/usr/local/lib/llvm-3.4/usr/lib
 MODULES := libcx-base libcx-sandbox \
 	libcx-string libcx-list libcx-umtp libcx-socket-unix
 
+# to explicitly ignore unused parameters use a macro
+# #define UNUSED(x) (void)(x)
+
 CFLAGS += -I$(BASE_DIR) \
 	-Werror -Wall -pedantic \
 	-Wno-error=unused-parameter \
