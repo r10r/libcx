@@ -24,7 +24,7 @@ TESTS :=
 
 # Include module makefiles module.mk.
 # FIXME running 'clean' triggers module makefile creation
--include $(BASE_DIR)/module.mk
+-include $(BASE_DIR)/project.mk
 include $(patsubst %,%/module.mk,$(MODULES))
 
 $(info Using dependency script: $(OBJECT_DEPENDENCY_SCRIPT))
