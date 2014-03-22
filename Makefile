@@ -23,6 +23,7 @@ PROGRAMS :=
 TESTS :=
 
 # Include module makefiles module.mk.
+# FIXME running 'clean' triggers module makefile creation
 -include $(BASE_DIR)/module.mk
 include $(patsubst %,%/module.mk,$(MODULES))
 
@@ -83,13 +84,11 @@ all: format $(OBJS) $(PROGRAMS) test decover
 
 # [ format ]
 # ==========
-# Keep your code nice and shiny ;)
-# TODO run uncrustify automatically when source changes ?
-.uncrustify: $(SRC)
-	uncrustify --mtime -c $(UNCRUSTIFY_CONFIG) --replace $? &&\
-	touch .uncrustify
+# Keeps your code nice and shiny ;)
+%.unc-backup~: %
+	uncrustify --mtime -c $(UNCRUSTIFY_CONFIG) --replace $*
 	
-format: .uncrustify;
+format: $(SRC:=.unc-backup~);
 
 
 # [ tests ]
