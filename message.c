@@ -1,10 +1,5 @@
 #include "message.h"
 
-#define HEADER_LINE_FORMAT "%s: %s\n"
-#define HEADER_LINE_FORMAT_NOV "%s:\n"
-#define HEADER_LINE_FORMAT_LENGTH 3
-#define ENVELOPE_SEPARATOR "\n"
-
 static F_MessageEventHandler _parser_event_handler;
 
 RagelParserState*
