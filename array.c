@@ -50,9 +50,9 @@ void
 Array_each(Array a, F_ArrayIterator f_array_iterator)
 {
 	struct array_header_t *hdr = Array_header(a);
-	unsigned int i;
+	int i;
 
-	for (i = 0; i < hdr->length; i++)
+	for (i = 0; i < (long)hdr->length; i++)
 		f_array_iterator(i, a[i]);
 }
 
@@ -65,8 +65,8 @@ Array_match(Array a, void *key, F_ArrayMatch f_array_match)
 		return i_matched;
 
 	struct array_header_t *hdr = Array_header(a);
-	unsigned int i;
-	for (i = 0; i < hdr->length; i++)
+	int i;
+	for (i = 0; i < (long)hdr->length; i++)
 	{
 		if (f_array_match(a[i], key) == 0)
 		{
