@@ -1,6 +1,8 @@
 #!/bin/sh
 OBJ=$1
-OBJ_NAME=`basename -s .o ${OBJ}`
+# BSD version of basename is different to GNU version
+# awk simulating basename (with suffix removal)
+OBJ_NAME=`echo ${OBJ} | awk -F/ '{print $NF}' | cut -d. -f1`
 OBJ_DIR=`dirname ${OBJ}`
 
 GCNO_FILE=${OBJ_DIR}/${OBJ_NAME}.gcno
