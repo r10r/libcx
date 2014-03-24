@@ -3,8 +3,8 @@
  * Include and define TRACE to enable.
  * @notice Not Thread Safe
  */
-#ifndef _PROFILE_H
-#define _PROFILE_H
+#ifndef _CX_PROFILE_H
+#define _CX_PROFILE_H
 
 #ifndef PROFILE
 

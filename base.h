@@ -1,5 +1,5 @@
-#ifndef _BASE_H
-#define _BASE_H
+#ifndef _CX_BASE_H
+#define _CX_BASE_H
 
 #include <stddef.h>     /* offsetoff */
 /* see http://www.kroah.com/log/linux/container_of.html */
