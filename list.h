@@ -1,5 +1,5 @@
-#ifndef _LIST_H
-#define _LIST_H
+#ifndef _CX_LIST_H
+#define _CX_LIST_H
 
 #include <stdio.h>
 #include <stdlib.h> /* malloc */

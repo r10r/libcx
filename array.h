@@ -1,5 +1,5 @@
-#ifndef _ARRAY_H
-#define _ARRAY_H
+#ifndef _CX_ARRAY_H
+#define _CX_ARRAY_H
 
 #include <stdlib.h>
 #include "libcx-base/debug.h"
