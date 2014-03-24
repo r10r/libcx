@@ -1,5 +1,5 @@
-#ifndef _CONNECTION_H
-#define _CONNECTION_H
+#ifndef _CX_CONNECTION_H
+#define _CX_CONNECTION_H
 
 #include <stdlib.h>
 #include <sys/socket.h>

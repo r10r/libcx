@@ -1,5 +1,5 @@
-#ifndef _REQUEST_H
-#define _REQUEST_H
+#ifndef _CX_REQUEST_H
+#define _CX_REQUEST_H
 
 #include <stdio.h>
 #include <sys/time.h> // gettimeofday

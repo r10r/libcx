@@ -1,3 +1,6 @@
+#ifndef _CX_CLIENT_H
+#define _CX_CLIENT_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -18,3 +21,5 @@ client_connect(const char *sock_path);
 
 void
 receive_response(int sock);
+
+#endif

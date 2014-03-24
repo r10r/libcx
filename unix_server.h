@@ -1,5 +1,5 @@
-#ifndef _UNIX_SERVER_H
-#define _UNIX_SERVER_H
+#ifndef _CX_UNIX_SERVER_H
+#define _CX_UNIX_SERVER_H
 
 #include "server.h"
 

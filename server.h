@@ -1,5 +1,5 @@
-#ifndef _SERVER_H
-#define _SERVER_H
+#ifndef _CX_SERVER_H
+#define _CX_SERVER_H
 
 #include <stdio.h>      /* puts ... */
 #include <unistd.h>     /* STDIN_FILENO */

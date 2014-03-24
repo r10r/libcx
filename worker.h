@@ -1,5 +1,5 @@
-#ifndef _WORKER_H
-#define _WORKER_H
+#ifndef _CX_WORKER_H
+#define _CX_WORKER_H
 
 #include <pthread.h>
 
