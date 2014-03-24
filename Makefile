@@ -4,10 +4,9 @@ default: all
 # ============
 # Variables that might be overwritten by commandline or module.mk
 BASE_DIR := $(realpath $(PWD))
-UNCRUSTIFY_CONFIG := $(BASE_DIR)/uncrustify.cfg
+LIBCX_DIR := $(BASE_DIR)
 MODULES := 
 OS := $(shell uname -s)
-OBJECT_DEPENDENCY_SCRIPT := $(BASE_DIR)/depend.sh
 
 # A macro that evaluates to the local directory path of an included Makefile.
 LOCAL_DIR = $(realpath $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST)))))
@@ -22,12 +21,26 @@ PROGRAMS :=
 # Generated test executables
 TESTS :=
 
+
+# include project makefile
+-include $(BASE_DIR)/project.mk
+
+$(info Using libcx dir: $(LIBCX_DIR))
+OBJECT_DEPENDENCY_SCRIPT ?= $(LIBCX_DIR)/bin/depend.sh
+$(info Using dependency script: $(OBJECT_DEPENDENCY_SCRIPT))
+COVERAGE_TOOL ?= $(LIBCX_DIR)/bin/coverage.sh
+$(info Using coverage script: $(COVERAGE_TOOL))
+COVERAGE_REPORT_TOOL ?= $(LIBCX_DIR)/bin/decover.sh
+$(info Using coverage report script: $(COVERAGE_REPORT_TOOL))
+TEST_RUNNER ?= $(LIBCX_DIR)/bin/valgrind-testrunner.sh
+$(info Using test runner script: $(TEST_RUNNER))
+UNCRUSTIFY_CONFIG ?= $(LIBCX_DIR)/uncrustify.cfg
+$(info Using uncrustify config: $(UNCRUSTIFY_CONFIG))
+
 # Include module makefiles module.mk.
 # FIXME running 'clean' triggers module makefile creation
--include $(BASE_DIR)/project.mk
 include $(patsubst %,%/module.mk,$(MODULES))
 
-$(info Using dependency script: $(OBJECT_DEPENDENCY_SCRIPT))
 
 # look for include files in each of the modules
 # use -isystem ?
