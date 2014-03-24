@@ -1,18 +1,18 @@
 [submodule "libcx-socket-unix"]
 	path = libcx-socket-unix
-	url = git@github.com:r10r/libcx-socket-unix.git
+	url = https://github.com/r10r/libcx-socket-unix.git
 [submodule "libcx-list"]
 	path = libcx-list
-	url = git@github.com:r10r/libcx-list.git
+	url = https://github.com/r10r/libcx-list.git
 [submodule "libcx-sandbox"]
 	path = libcx-sandbox
-	url = git@github.com:r10r/libcx-sandbox.git
+	url = https://github.com/r10r/libcx-sandbox.git
 [submodule "libcx-base"]
 	path = libcx-base
-	url = git@github.com:r10r/libcx-base.git
+	url = https://github.com/r10r/libcx-base.git
 [submodule "libcx-umtp"]
 	path = libcx-umtp
-	url = git@github.com:r10r/libcx-umtp.git
+	url = https://github.com/r10r/libcx-umtp.git
 [submodule "libcx-string"]
 	path = libcx-string
-	url = git@github.com:r10r/libcx-string.git
+	url = https://github.com/r10r/libcx-string.git
