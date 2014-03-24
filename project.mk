@@ -2,7 +2,7 @@
 
 LIBCX_DIR := $(LOCAL_DIR)
 
-CC := clang-3.4
+CC := clang
 CFLAGS += -Weverything -Werror -Wall -pedantic \
 	-Wno-error=incompatible-pointer-types-discards-qualifiers # requires downcasting to void * pointer
 
