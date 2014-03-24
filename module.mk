@@ -8,9 +8,6 @@ TESTS += $(L)/test_debug $(L)/test_base
 #_FLAGS := 
 
 # -- tests -- 
-TEST_FLAGS := -Wall -w -g -I$(BASE_DIR)
-TEST_OBJS := $(BASE_DIR)/libcx-base/unity.o
-
 $(L)/test_debug_OBJS := $(TEST_OBJS) $(L)/test_debug.o
 $(L)/test_debug_FLAGS := $(TEST_FLAGS)
 
