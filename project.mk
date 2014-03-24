@@ -38,8 +38,8 @@ CFLAGS += -I$(LIBCX_DIR) \
 	-Wno-error=padded \
 	-Wno-error=cast-align
 
-TEST_OBJS := $(BASE_DIR)/libcx-base/unity.o \
-	$(BASE_DIR)/libcx-base/xmalloc.o 
+TEST_OBJS := $(LIBCX_DIR)/libcx-base/unity.o \
+	$(LIBCX_DIR)/libcx-base/xmalloc.o 
 
 # ignore unity errors
 UNITY_FLAGS += \
