@@ -9,6 +9,11 @@
 #include "libcx-string/string.h"
 #include "libcx-string/pair.h"
 
+//#define HEADER_LINE_FORMAT "%s: %s\n"
+//#define HEADER_LINE_FORMAT_NOV "%s:\n"
+//#define HEADER_LINE_FORMAT_LENGTH 3
+//#define ENVELOPE_SEPARATOR "\n"
+
 typedef struct message_t Message;
 extern void ragel_parse_message(Message *message);
 
