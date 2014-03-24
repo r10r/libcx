@@ -33,8 +33,8 @@ CFLAGS += -Wno-error=unused-parameter \
 # don't fail on curl recursive macro expansion magic
 CFLAGS += -Wno-error=disabled-macro-expansion  
 
-TEST_OBJS := $(BASE_DIR)/libcx-base/unity.o \
-	$(BASE_DIR)/libcx-base/xmalloc.o 
+TEST_OBJS := $(LIBCX_DIR)/libcx-base/unity.o \
+	$(LIBCX_DIR)/libcx-base/xmalloc.o 
 
 # ignore unity errors
 UNITY_FLAGS += \
