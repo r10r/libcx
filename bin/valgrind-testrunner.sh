@@ -1,4 +1,4 @@
-#!/bin/sh --posix
+#!/bin/sh
 # On success the test launcher creates the $TESTRESULT_FILE
 # This is required for make to detect test failures.
 
