@@ -91,9 +91,7 @@ include $(OBJS:=.mk)
 OBJS := $(sort $(OBJS))
 SRC := $(sort $(SRC))
 
-
-all: format $(OBJS) $(PROGRAMS) test decover
-
+all: format $(PROGRAMS) test decover;
 
 # [ format ]
 # ==========
@@ -106,6 +104,8 @@ format: $(SRC:=.unc-backup~);
 
 # [ tests ]
 # =========
+# Note: piping the test runner output into
+# a file using tee will return the exit code of tee (0)
 %.testresult: % 
 	$(TEST_RUNNER) $*
 
