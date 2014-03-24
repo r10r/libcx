@@ -1,5 +1,5 @@
-#ifndef _QUEUE_H
-#define _QUEUE_H
+#ifndef _CX_QUEUE_H
+#define _CX_QUEUE_H
 
 #include <stdio.h>
 #include <pthread.h>
