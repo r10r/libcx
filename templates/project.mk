@@ -1,7 +1,7 @@
 LIBCX_DIR := $(LOCAL_DIR)/libcx
 
 CC := clang-3.4
-CFLAGS += -Weverything \
+CFLAGS += -Weverything -Werror -Wall -pedantic \
 	-I$(LIBCX_DIR) \
 	-I$(BASE_DIR)
 
@@ -21,19 +21,20 @@ MODULES := src
 
 # to explicitly ignore unused parameters use a macro
 # #define UNUSED(x) (void)(x)
-CFLAGS +=  -Werror -Wall -pedantic \
-	-Wno-error=unused-parameter \
+CFLAGS += -Wno-error=unused-parameter \
 	-Wno-error=unused-function \
 	-Wno-error=unused-variable \
 	-Wno-error=unused-value \
 	-Wno-error=padded \
 	-Wno-error=incompatible-pointer-types-discards-qualifiers
 	
+# unity errors on ubuntu (Ubuntu clang version 3.4-1~exp1 (branches/release_34) (based on LLVM 3.4))
++CFLAGS += -Wno-missing-field-initializers
+	
 CFLAGS += -Wno-error=disabled-macro-expansion # curl recursive macro expansion magic 
 	
 # ignore unity errors
-CFLAGS += \
-	-Wno-error=unused-macros \
+CFLAGS += -Wno-error=unused-macros \
 	-Wno-error=sign-conversion \
 	-Wno-error=cast-align \
 	-Wno-error=float-equal
