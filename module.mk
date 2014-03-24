@@ -48,8 +48,5 @@ $(L)/test-server_OBJS := $(L)/test-server.o \
 
 
 # -- tests -- 
-TEST_FLAGS := -Wall -w -g -I$(BASE_DIR)
-TEST_OBJS := $(BASE_DIR)/libcx-base/unity.o
-
 #_OBJS := $(TEST_OBJS)
 #_FLAGS := $(TEST_FLAGS)
