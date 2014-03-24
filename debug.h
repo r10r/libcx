@@ -1,5 +1,5 @@
-#ifndef _DEBUG_H
-#define _DEBUG_H
+#ifndef _CX_DEBUG_H
+#define _CX_DEBUG_H
 
 #include <string.h>     /* strerror */
 #include <errno.h>

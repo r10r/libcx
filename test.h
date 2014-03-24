@@ -1,5 +1,5 @@
-#ifndef _TEST_H
-#define _TEST_H
+#ifndef _CX_TEST_H
+#define _CX_TEST_H
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -1,5 +1,5 @@
-#ifndef _XMALLOC_H
-#define _XMALLOC_H
+#ifndef _CX_XMALLOC_H
+#define _CX_XMALLOC_H
 
 #include "stddef.h"     /* size_t */
 #include <stdlib.h>     /* malloc / free */
