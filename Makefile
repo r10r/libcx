@@ -140,7 +140,6 @@ decover: cov
 ARTIFACTS := $(OBJS) $(OBJS:=.mk) \
 	$(PROGRAMS) \
 	$(wildcard $(MODULES:=/*.testresult)) \
-	$(wildcard $(MODULES:=/*.testlog)) \
 	$(wildcard $(MODULES:=/*.gcda)) \
 	$(wildcard $(MODULES:=/*.gcno)) \
 	$(wildcard $(MODULES:=/*.o.mk)) \
