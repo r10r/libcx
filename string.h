@@ -1,5 +1,5 @@
-#ifndef _STRING_H
-#define _STRING_H
+#ifndef _CX_STRING_H
+#define _CX_STRING_H
 
 #include "stddef.h"     /* size_t */
 #include <stdlib.h>     /* free */
@@ -115,8 +115,8 @@ StringBuffer_make_room(StringBuffer *buffer, size_t index, size_t nchars);
 ssize_t
 StringBuffer_ncopy(StringBuffer *buffer, size_t index, const char* source, size_t nchars);
 
-#define StringBuffer_nappend(buffer, s, len) \
-	StringBuffer_ncopy(buffer, buffer->string->length, s, len)
+#define StringBuffer_nappend(buffer, chars, len) \
+	StringBuffer_ncopy(buffer, buffer->string->length, chars, len)
 
 #define StringBuffer_ncat(buffer, offset, s) \
 	StringBuffer_ncopy(buffer, offset, s->value, s->length)
