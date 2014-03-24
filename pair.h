@@ -1,5 +1,5 @@
-#ifndef _STRING_PAIR_H
-#define _STRING_PAIR_H
+#ifndef _CX_STRING_PAIR_H
+#define _CX_STRING_PAIR_H
 
 #include "string.h"
 
