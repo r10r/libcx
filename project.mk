@@ -3,7 +3,7 @@
 LIBCX_DIR := $(LOCAL_DIR)
 
 CC := clang-3.4
-CFLAGS += -Weverything \
+CFLAGS += -Weverything -Werror -Wall -pedantic \
 	-Wno-error=incompatible-pointer-types-discards-qualifiers # requires downcasting to void * pointer
 
 # profile release
@@ -28,7 +28,6 @@ MODULES := libcx-base \
 # #define UNUSED(x) (void)(x)
 
 CFLAGS += -I$(LIBCX_DIR) \
-	-Werror -Wall -pedantic \
 	-Wno-error=unused-parameter \
 	-Wno-error=unused-function \
 	-Wno-error=unused-variable \
