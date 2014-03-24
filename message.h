@@ -1,5 +1,5 @@
-#ifndef _MESSAGE_H
-#define _MESSAGE_H
+#ifndef _CX_MESSAGE_H
+#define _CX_MESSAGE_H
 
 #include <string.h>     /* memcpy, strerror, */
 #include <stdio.h>      /* fprintf, feof, fopen, FILE */
