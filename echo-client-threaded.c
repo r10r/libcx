@@ -33,7 +33,7 @@ thread_send_data(void *data)
 int main(int argc, char** argv)
 {
 	XASSERT(argc == 4,
-			"usage: $0 THREADS CONNECTIONS DATA");
+		"usage: $0 THREADS CONNECTIONS DATA");
 
 	int thread_count = atoi(argv[1]);
 	int connections = atoi(argv[2]);
@@ -43,8 +43,8 @@ int main(int argc, char** argv)
 
 	struct client_data_t d =
 	{ .socket_path			= "/tmp/echo.sock",
-	  .connections	= connections,
-	  .data		= data };
+	  .connections			= connections,
+	  .data				= data };
 
 	PROFILE_BEGIN_FMT("threads:%d requests/thread:%d\n", thread_count, connections);
 

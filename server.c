@@ -40,7 +40,7 @@ Server_start(Server *server)
 		// create a custom worker instance
 		Worker *worker = server->f_worker_handler(NULL, WORKER_EVENT_NEW);
 
-		worker->id = i;
+		worker->id = (unsigned long)i;
 		worker->f_handler = server->f_worker_handler;
 		worker->f_connection_handler = server->f_connection_handler;
 		worker->f_connection_data_handler = server->f_connection_data_handler;

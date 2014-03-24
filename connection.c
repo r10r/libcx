@@ -1,6 +1,6 @@
 #include "connection.h"
 
-#define DATA_RECEIVE_MAX 1024
+//#define DATA_RECEIVE_MAX 1024
 
 /*
  * @see man 1 read
