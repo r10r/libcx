@@ -1,6 +1,6 @@
 LIBCX_DIR := $(LOCAL_DIR)/libcx
 
-CC := clang-3.4
+CC := clang
 CFLAGS += -Weverything -Werror -Wall -pedantic \
 	-I$(LIBCX_DIR) \
 	-I$(BASE_DIR)
@@ -14,8 +14,10 @@ CFLAGS += -Weverything -Werror -Wall -pedantic \
 # profile development
 CFLAGS += -gdwarf-2 -g -O0 -fno-inline -DTRACE -DPROFILE --coverage
 
-LDFLAGS += -L/usr/local/lib/llvm-3.4/usr/lib \
-	-lpcap
+ifeq ($(OS),Darwin)
+# only when clang is installed through homebrew
+LDFLAGS += -L/usr/local/lib/llvm-3.4/usr/lib
+endif
 
 MODULES := src
 
@@ -28,13 +30,17 @@ CFLAGS += -Wno-error=unused-parameter \
 	-Wno-error=padded \
 	-Wno-error=incompatible-pointer-types-discards-qualifiers
 	
-# unity errors on ubuntu (Ubuntu clang version 3.4-1~exp1 (branches/release_34) (based on LLVM 3.4))
-+CFLAGS += -Wno-missing-field-initializers
-	
-CFLAGS += -Wno-error=disabled-macro-expansion # curl recursive macro expansion magic 
-	
+# don't fail on curl recursive macro expansion magic
+CFLAGS += -Wno-error=disabled-macro-expansion  
+
+TEST_OBJS := $(BASE_DIR)/libcx-base/unity.o \
+	$(BASE_DIR)/libcx-base/xmalloc.o 
+
 # ignore unity errors
-CFLAGS += -Wno-error=unused-macros \
-	-Wno-error=sign-conversion \
-	-Wno-error=cast-align \
-	-Wno-error=float-equal
+UNITY_FLAGS += \
+ 	-Wno-unused-macros \
+	-Wno-sign-conversion \
+	-Wno-float-equal \
+	-Wno-missing-field-initializers
+
+$(BASE_DIR)/libcx-base/unity.o: CFLAGS += $(UNITY_FLAGS)
