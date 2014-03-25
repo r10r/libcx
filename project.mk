@@ -48,4 +48,4 @@ UNITY_FLAGS += \
 	-Wno-float-equal \
 	-Wno-missing-field-initializers
 
-$(BASE_DIR)/libcx-base/unity.o: CFLAGS += $(UNITY_FLAGS)
+$(LIBCX_DIR)/libcx-base/unity.o: CFLAGS += $(UNITY_FLAGS)
