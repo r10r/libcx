@@ -92,6 +92,7 @@ OBJS := $(sort $(OBJS))
 SRC := $(sort $(SRC))
 
 all: format $(PROGRAMS) test decover;
+build: format $(PROGRAMS);
 
 # [ format ]
 # ==========
