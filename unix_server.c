@@ -86,8 +86,13 @@ unix_socket_connect(const char *sock_path)
 	}
 	XFLOG("Connected to: fd:%d [%s]\n", fd, sock_path);
 
+#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
+	// http://stackoverflow.com/questions/108183/how-to-prevent-sigpipes-or-handle-them-properly
+	// http://nadeausoftware.com/articles/2012/01/c_c_tip_how_use_compiler_predefined_macros_detect_operating_system
 	// both server and client socket must be protected against SIGPIPE
 	enable_so_opt(fd, SO_NOSIGPIPE); /* do not send SIGIPIPE on EPIPE */
+#endif
+
 	return fd;
 }
 
@@ -107,6 +112,12 @@ unix_server_handler(Server *server, ServerEvent event, void *data)
 	case SERVER_START:
 	{
 		XDBG("server event start");
+		// ignore SIGPIPE if on linux
+		// TODO check if required because libev already blocks signals
+		// TODO check if workers are protected from SIGPIPE signals
+#ifdef __linux__
+		signal(SIGPIPE, SIG_IGN);
+#endif
 		// connect to socket
 		unix_server->fd = unix_socket_connect(unix_server->socket_path);
 		// TODO start worker supervisor
@@ -189,8 +200,12 @@ unix_connection_watcher(ev_loop *loop, ev_io *w, int revents)
 		XFLOG("Worker[%lu] - failed to accept\n", worker->id);
 	else
 	{
+
+#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
 		/* do not send SIGIPIPE on EPIPE */
 		enable_so_opt(client_fd, SO_NOSIGPIPE);
+#endif
+
 		XFLOG("Worker[%lu] - accepted connection on fd:%d\n", worker->id, client_fd);
 
 		Connection *connection = Connection_new(loop, client_fd);
