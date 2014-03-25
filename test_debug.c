@@ -32,10 +32,12 @@ static void test_XERR()
 	char *err = strerror(errno);
 	XERR(err);
 
-//	reported by valgrind:
+//	reported by valgrind: (on OSX)
 //	String allocated by strerror must be freed,
 //	although manpage says it should be 'const'.
+#if (! defined(__linux))
 	free(err);
+#endif
 }
 
 static void test_XDBG()
