@@ -9,9 +9,9 @@ TESTS += $(L)/test_message
 $(L)/message-parser_OBJS := $(L)/message-parser.o \
 	$(L)/message.o \
 	$(L)/message_fsm.o \
-	$(BASE_DIR)/libcx-string/string.o \
-	$(BASE_DIR)/libcx-string/pair.o \
-	$(BASE_DIR)/libcx-list/list.o
+	$(LIBCX_DIR)/libcx-string/string.o \
+	$(LIBCX_DIR)/libcx-string/pair.o \
+	$(LIBCX_DIR)/libcx-list/list.o
 	
 #$(L)/message-parser_FLAGS := $(L)/
 
@@ -21,7 +21,7 @@ $(L)/test_message_OBJS := $(TEST_OBJS) \
 	$(L)/test_message.o \
 	$(L)/message.o \
 	$(L)/message_fsm.o \
-	$(BASE_DIR)/libcx-string/string.o \
-	$(BASE_DIR)/libcx-string/pair.o \
-	$(BASE_DIR)/libcx-list/list.o
+	$(LIBCX_DIR)/libcx-string/string.o \
+	$(LIBCX_DIR)/libcx-string/pair.o \
+	$(LIBCX_DIR)/libcx-list/list.o
 $(L)/test_message_FLAGS := $(TEST_FLAGS)
