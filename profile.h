@@ -38,13 +38,13 @@
 #define PROFILE_BEGIN_FMT(fmt, ...) \
 	gettimeofday(&_PROFILE_TIME_START, NULL); \
 	_PROFILE_CLOCK_START = clock(); \
-	puts("~~> TRACE BEGIN"); \
+	puts("~~> PROFILE BEGIN"); \
 	printf("~~? " fmt, __VA_ARGS__);
 
 #define PROFILE_BEGIN(message) \
 	gettimeofday(&_PROFILE_TIME_START, NULL); \
 	_PROFILE_CLOCK_START = clock(); \
-	puts("~~> TRACE BEGIN"); \
+	puts("~~> PROFILE BEGIN"); \
 	puts("~~? " message);
 
 #define PROFILE_END \
@@ -53,7 +53,7 @@
 	_PROFILE_TIME_DIFF += (_PROFILE_TIME_END.tv_usec - _PROFILE_TIME_START.tv_usec) / 1000.0; \
 	_PROFILE_CLOCK_END = clock(); \
 	_PROFILE_CLOCK_DIFF = (double)(_PROFILE_CLOCK_END - _PROFILE_CLOCK_START) / CLOCKS_PER_SEC * 1000.0; \
-	printf("<~~ TRACE END (real: %.4f ms, cpu: %.4f ms)\n", _PROFILE_TIME_DIFF, _PROFILE_CLOCK_DIFF);
+	printf("<~~ PROFILE END (real: %.4f ms, cpu: %.4f ms)\n", _PROFILE_TIME_DIFF, _PROFILE_CLOCK_DIFF);
 
 
 #endif
