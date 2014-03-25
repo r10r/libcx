@@ -31,7 +31,8 @@ CFLAGS += -Wno-error=unused-parameter \
 	-Wno-error=cast-align \
 	-Wno-error=incompatible-pointer-types-discards-qualifiers
 	
-# don't fail on curl recursive macro expansion magic
+# curl uses recursive macro expansion magic to match parameters
+# linux declares stdout/stdin/stderr recursive
 CFLAGS += -Wno-error=disabled-macro-expansion  
 
 TEST_OBJS := $(LIBCX_DIR)/libcx-base/unity.o \
@@ -42,6 +43,7 @@ UNITY_FLAGS += \
  	-Wno-unused-macros \
 	-Wno-sign-conversion \
 	-Wno-float-equal \
-	-Wno-missing-field-initializers
+	-Wno-missing-field-initializers \
+	-Wno-missing-braces
 
 $(LIBCX_DIR)/libcx-base/unity.o: CFLAGS += $(UNITY_FLAGS)
