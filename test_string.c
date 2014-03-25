@@ -7,11 +7,8 @@ NOSETUP
 static void
 test_String_dup()
 {
-	String *s = S_dup(NULL);
+	String *s = S_dup("bar");
 
-	TEST_ASSERT_NULL(s);
-
-	s = S_dup("bar");
 	TEST_ASSERT_EQUAL_INT(s->length, 3);
 
 	TEST_ASSERT_EQUAL_INT('b', S_get(s, 0));

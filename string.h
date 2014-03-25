@@ -45,14 +45,14 @@ typedef struct string_buffer_t
 	(sizeof(String) + sizeof(char) * length)
 
 #define S_dup(value) \
-	value == NULL ? NULL : String_init(value, strlen(value))
+	String_init(value, strlen(value))
 
 #define S_dupn(value) \
-	value == NULL ? NULL : String_ninit(value, strlen(value))
+	String_ninit(value, strlen(value))
 
 /* duplicate string and add null terminator */
 #define S_ndupn(s) \
-	s == NULL ? NULL : String_ninit(s->value, s->length)
+	String_ninit(s->value, s->length)
 
 #define S_alloc(length) \
 	malloc(S_size(length))
