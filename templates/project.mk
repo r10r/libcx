@@ -28,6 +28,7 @@ CFLAGS += -Wno-error=unused-parameter \
 	-Wno-error=unused-variable \
 	-Wno-error=unused-value \
 	-Wno-error=padded \
+	-Wno-error=cast-align \
 	-Wno-error=incompatible-pointer-types-discards-qualifiers
 	
 # don't fail on curl recursive macro expansion magic
