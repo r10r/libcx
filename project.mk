@@ -3,8 +3,7 @@
 LIBCX_DIR := $(LOCAL_DIR)
 
 CC := clang
-CFLAGS += -Weverything -Werror -Wall -pedantic \
-	-Wno-error=incompatible-pointer-types-discards-qualifiers # requires downcasting to void * pointer
+CFLAGS += -Weverything -Werror -Wall -pedantic
 
 # profile release
 #CFLAGS += -Os
@@ -36,7 +35,12 @@ CFLAGS += -I$(LIBCX_DIR) \
 	-Wno-error=unused-variable \
 	-Wno-error=unused-value \
 	-Wno-error=padded \
-	-Wno-error=cast-align
+	-Wno-error=cast-align \
+	-Wno-error=incompatible-pointer-types-discards-qualifiers
+	
+# curl uses recursive macro expansion magic to match parameters
+# linux declares stdout/stdin/stderr recursive
+CFLAGS += -Wno-error=disabled-macro-expansion 
 
 TEST_OBJS := $(LIBCX_DIR)/libcx-base/unity.o \
 	$(LIBCX_DIR)/libcx-base/xmalloc.o 
@@ -46,6 +50,7 @@ UNITY_FLAGS += \
  	-Wno-unused-macros \
 	-Wno-sign-conversion \
 	-Wno-float-equal \
-	-Wno-missing-field-initializers
+	-Wno-missing-field-initializers \
+	-Wno-missing-braces
 
 $(LIBCX_DIR)/libcx-base/unity.o: CFLAGS += $(UNITY_FLAGS)
