@@ -121,7 +121,7 @@ Message_buffer_read(Message *message, int fd, size_t count)
 	RagelParserState *state = message->parser_state;
 
 	// see explanation in #Message_buffer_append
-	ssize_t nread = StringBuffer_read_append(state->buffer, fd, count);
+	ssize_t nread = StringBuffer_fdcat(state->buffer, fd, count);
 
 	state->buffer_position = &S_get(state->buffer->string, state->buffer_offset);
 	state->buffer_end = &S_last(state->buffer->string);
@@ -141,7 +141,7 @@ Message_buffer_append(Message *message, const char *buf, size_t count)
 	 * Test whether shifting the buffer or double buffering (start a new
 	 * buffer for each marker) is better.
 	 */
-	ssize_t nappended = StringBuffer_nappend(state->buffer, buf, count);
+	ssize_t nappended = StringBuffer_ncat(state->buffer, buf, count);
 
 	/*
 	 * string referenced by buffer might have been reallocated
@@ -194,7 +194,7 @@ _parser_event_handler(Message *message)
 	}
 	case P_BODY:
 		state->marker_length++;
-		StringBuffer_nappend(message->body, Marker_get(state), state->marker_length);
+		StringBuffer_ncat(message->body, Marker_get(state), state->marker_length);
 		break;
 	}
 }
