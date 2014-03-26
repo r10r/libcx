@@ -14,7 +14,8 @@ struct bar
 	struct foo *foo;
 };
 
-static void test_container_of()
+static void
+test_container_of()
 {
 	struct bar *bar = malloc(sizeof(struct bar));
 
@@ -41,11 +42,38 @@ static void test_container_of()
 	free(bar);
 }
 
+static void
+test_clone()
+{
+	struct foo* foo = malloc(sizeof(struct foo));
+
+	foo->x = 99;
+
+	struct bar *bar = malloc(sizeof(struct bar));
+	bar->x = 66;
+	bar->y = 33;
+	bar->xxx = "fooobar";
+	bar->foo = foo;
+
+	struct bar *cloned = clone(struct bar, bar);
+
+	TEST_ASSERT_NOT_EQUAL(bar, cloned);
+	TEST_ASSERT_EQUAL_INT(bar->x, cloned->x);
+	TEST_ASSERT_EQUAL_INT(bar->y, cloned->y);
+	TEST_ASSERT_EQUAL_STRING(bar->xxx, cloned->xxx);
+	TEST_ASSERT_EQUAL_PTR(bar->foo, cloned->foo);
+
+	free(foo);
+	free(bar);
+	free(cloned);
+}
+
 int main()
 {
 	TEST_BEGIN
 
 	RUN(test_container_of);
+	RUN(test_clone);
 
 	TEST_END
 }
