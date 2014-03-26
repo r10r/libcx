@@ -2,8 +2,6 @@
 //#include "libcx-base/xmalloc.h"
 #include "string.h"
 
-NOSETUP
-
 static void
 test_String_dup()
 {

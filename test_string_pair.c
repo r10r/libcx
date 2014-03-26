@@ -1,8 +1,6 @@
 #include "libcx-base/test.h"
 #include "pair.h"
 
-NOSETUP
-
 static void
 test_StringPair_new()
 {
