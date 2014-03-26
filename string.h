@@ -20,7 +20,7 @@ typedef struct string_t
 typedef struct string_pointer_t
 {
 	size_t length;
-	const char *data;
+	const char *value;
 } StringPointer;
 
 
@@ -120,6 +120,9 @@ StringBuffer_make_room(StringBuffer *buffer, size_t offset, size_t nchars);
 ssize_t
 StringBuffer_append(StringBuffer *buffer, size_t offset, const char* source, size_t nchars);
 
+ssize_t
+StringBuffer_fload(StringBuffer *buffer, FILE *file, size_t chunk_size);
+
 #define StringBuffer_cat(buffer, chars) \
 	StringBuffer_append(buffer, buffer->string->length, chars, strlen(chars))
 
@@ -143,5 +146,12 @@ StringBuffer_read(StringBuffer *buffer, size_t offset, int fd, size_t nchars);
 
 #define StringBuffer_shift(buf, count) \
 	String_shift(buf->string, count)
+
+/* StringPointer methods */
+StringPointer*
+StringPointer_new(const char* data, size_t length);
+
+void
+StringPointer_free(StringPointer *pointer);
 
 #endif
