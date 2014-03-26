@@ -183,9 +183,9 @@ static ssize_t
 unix_connection_data_handler(Connection *connection)
 {
 	Request *request = (Request*)connection->data;
+	RagelParser *parser = (RagelParser*)request->userdata;
 
-	return Message_buffer_read(request->message, connection->connection_fd, DATA_RECEIVE_MAX);
-
+	return StringBuffer_fdcat(parser->buffer, connection->connection_fd, DATA_RECEIVE_MAX);
 }
 
 static void
@@ -220,7 +220,17 @@ unix_connection_watcher(ev_loop *loop, ev_io *w, int revents)
 static Connection*
 unix_connection_handler(Connection *connection, ConnectionEvent event)
 {
-	Request *request;
+	Request *request = NULL;
+	RagelParser *parser = NULL;
+	Message *message = NULL;
+
+	if (connection->data)
+	{
+		request = (Request*)connection->data;
+		parser = (RagelParser*)request->userdata;
+		if (parser)
+			message = (Message*)parser->userdata;
+	}
 
 	switch (event)
 	{
@@ -229,20 +239,21 @@ unix_connection_handler(Connection *connection, ConnectionEvent event)
 		// FIXME generate unique request id
 		// FIXME make initial message buffer read size configurable
 		request = Request_new(666);
-		request->message = Message_new(2048);
+		request->userdata = MessageParser_new(DATA_RECEIVE_MAX);
 		connection->data = request;
 		break;
 	case CONNECTION_EVENT_DATA:
 	{
-		request = (Request*)connection->data;
-		Message_parse(request->message);
+		RagelParser_parse(parser);
 		break;
 	}
 	case CONNECTION_EVENT_CLOSE_READ:
 	{
 		XDBG("close read");
-		request = (Request*)connection->data;
-		Message_parse_finish(request->message);
+		RagelParser_finish(parser);
+		RagelParser_free(parser);
+		// FIXME make something useful with the message
+		Message_free(message);
 		break;
 	}
 	case CONNECTION_EVENT_RECEIVE_TIMEOUT:
