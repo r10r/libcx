@@ -1,8 +1,6 @@
 #include "libcx-base/test.h"
 #include "base.h"
 
-NOSETUP
-
 struct foo
 {
 	int x;

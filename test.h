@@ -7,15 +7,17 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "unity.h"
-#include "profile.h"
 #include "debug.h"
 
 extern void setUp(void);
 extern void tearDown(void);
 
-#define NOSETUP \
-	void setUp(){} \
-	void tearDown(){}
+void setUp()
+{
+}
+void tearDown()
+{
+}
 
 #define RUN(func) \
 	RUN_TEST(func, __LINE__);
