@@ -46,7 +46,8 @@ $(L)/tcp-echo-server_OBJS := $(L)/tcp-echo-server.o \
 	$(LIBCX_DIR)/libcx-string/pair.o
 
 # -- tests -- 
-$(L)/test_queue_OBJS := $(TEST_OBJS) $(L)/test_queue.o \
+$(L)/test_queue_FLAGS := -lpthread
+$(L)/test_queue_OBJS := $(TEST_OBJS) \
+	$(L)/test_queue.o \
 	$(L)/queue.o \
 	$(LIBCX_DIR)/libcx-list/list.o
-$(L)/test_queue_FLAGS := -lpthread
