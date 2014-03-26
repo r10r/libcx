@@ -2,8 +2,6 @@
 #include "list.h"
 #include <unistd.h> /* sleep */
 
-NOSETUP
-
 static
 int data_strcmp(Node *node, void *data)
 {

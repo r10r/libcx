@@ -1,8 +1,6 @@
 #include "libcx-base/test.h"
 #include "array.h"
 
-NOSETUP
-
 static void test_Array_new_empty()
 {
 	Array a = Array_new(0);
