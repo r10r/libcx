@@ -6,9 +6,9 @@ L := $(LOCAL_DIR)
 
 # -- programs --
 #$(L)/_FLAGS := $(L)/
-#$(L)/_OBJS := $(L)/
+#$(L)/_OBJS := $(L)/ \
 
 # -- tests -- 
 
 #$(L)/_FLAGS := $(TEST_FLAGS)
-#$(L)/_OBJS := $(TEST_OBJS)
+#$(L)/_OBJS := $(TEST_OBJS) \
