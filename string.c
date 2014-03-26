@@ -118,3 +118,39 @@ StringBuffer_read(StringBuffer *buffer, size_t offset, int fd, size_t nchars)
 		buffer->string->length = offset + (size_t)nread;
 	return nread;
 }
+
+ssize_t
+StringBuffer_fload(StringBuffer *buffer, FILE *file, size_t chunk_size)
+{
+	ssize_t total_read = 0;
+
+	while (1)
+	{
+		ssize_t nread = StringBuffer_fcat(buffer, file, chunk_size);
+		total_read += nread;
+
+		if (nread == 0)
+			break;
+		if (nread < 0)
+			return nread;
+	}
+	return total_read;
+}
+
+/* string pointer methods */
+
+StringPointer*
+StringPointer_new(const char* data, size_t length)
+{
+	StringPointer* pointer = malloc(sizeof(StringPointer));
+
+	pointer->value = data;
+	pointer->length = length;
+	return pointer;
+}
+
+void
+StringPointer_free(StringPointer *pointer)
+{
+	free(pointer);
+}
