@@ -1,38 +1,5 @@
 #include "message.h"
 
-static F_MessageEventHandler _parser_event_handler;
-
-RagelParserState*
-RagelParserState_new(unsigned int buffer_length)
-{
-	RagelParserState *state = malloc(sizeof(RagelParserState));
-
-	state->res = 0;
-	state->cs = 0;
-
-	state->buffer = StringBuffer_new(buffer_length);
-	state->buffer_position = NULL;
-	state->buffer_end = NULL;
-	state->eof = NULL;
-
-	state->buffer_offset = 0;
-	state->marker_start = 0;
-	state->marker_length = 0;
-
-	state->event = P_NONE;
-	state->f_event_handler = _parser_event_handler;
-	state->iterations = 0;
-
-	return state;
-}
-
-void
-RagelParserState_free(RagelParserState *state)
-{
-	StringBuffer_free(state->buffer);
-	free(state);
-}
-
 static void
 free_protocol_value(void *value)
 {
@@ -46,7 +13,7 @@ free_header(void *value)
 }
 
 Message *
-Message_new(unsigned int buffer_length)
+Message_new()
 {
 	Message *message = malloc(sizeof(Message));
 
@@ -56,9 +23,9 @@ Message_new(unsigned int buffer_length)
 	message->headers = List_new();
 	message->headers->f_node_data_free = free_header;
 
-	// FIXME using the same buffer length for body and parser
-	message->body = StringBuffer_new(buffer_length);
-	message->parser_state = RagelParserState_new(buffer_length);
+	message->body = NULL;
+	message->buffer = NULL;
+
 	return message;
 }
 
@@ -67,8 +34,8 @@ Message_free(Message *message)
 {
 	List_free(message->protocol_values);
 	List_free(message->headers);
-	StringBuffer_free(message->body);
-	RagelParserState_free(message->parser_state);
+	StringBuffer_free(message->buffer);
+	free(message->body);
 	free(message);
 }
 
@@ -96,79 +63,35 @@ Message_envelope(Message *message)
 	return envelope;
 }
 
-ParseEvent
-Message_parse_finish(Message *message)
+static void
+event_handler(RagelParser *parser, int event);
+
+RagelParser *
+MessageParser_new(size_t buffer_size)
 {
-	RagelParserState *state = message->parser_state;
+	RagelParser *parser = RagelParser_new();
+	Message *message = Message_new();
 
-	state->eof = state->buffer_end;
-	ragel_parse_message(message);
-	return state->event;
+	message->buffer = StringBuffer_new(buffer_size);
+
+	parser->userdata = message;
+	parser->f_event_handler = event_handler;
+	parser->buffer = message->buffer;
+
+	return parser;
 }
-
-ParseEvent
-Message_parse(Message *message)
-{
-	RagelParserState *state = message->parser_state;
-
-	ragel_parse_message(message);
-	return state->event;
-}
-
-ssize_t
-Message_buffer_read(Message *message, int fd, size_t count)
-{
-	RagelParserState *state = message->parser_state;
-
-	// see explanation in #Message_buffer_append
-	ssize_t nread = StringBuffer_fdcat(state->buffer, fd, count);
-
-	state->buffer_position = &S_get(state->buffer->string, state->buffer_offset);
-	state->buffer_end = &S_last(state->buffer->string);
-	return nread;
-}
-
-ssize_t
-Message_buffer_append(Message *message, const char *buf, size_t count)
-{
-	RagelParserState *state = message->parser_state;
-
-	/*
-	 * @optimize
-	 * Buffer might be shifted up to last marker position or buffer offset
-	 * (the one which is larger). both marker offset and position must be
-	 * recalculated. Don't know whether this makes sense.
-	 * Test whether shifting the buffer or double buffering (start a new
-	 * buffer for each marker) is better.
-	 */
-	ssize_t nappended = StringBuffer_ncat(state->buffer, buf, count);
-
-	/*
-	 * string referenced by buffer might have been reallocated
-	 * restore the buffer position
-	 */
-	state->buffer_position = &S_get(state->buffer->string, state->buffer_offset);
-	state->buffer_end = &S_last(state->buffer->string);
-	return nappended;
-}
-
-#define Marker_get(state) \
-	& S_get(state->buffer->string, state->marker_start)
-
-#define Marker_toS(state) \
-	String_init(Marker_get(state), state->marker_length)
 
 static void
-_parser_event_handler(Message *message)
+event_handler(RagelParser *parser, int event)
 {
-	RagelParserState *state = message->parser_state;
-
 	XFLOG("Event %d, at index %zu [%c] \n",
-	      state->event,
-	      state->buffer_offset,
-	      *state->buffer_position);
+	      event,
+	      parser->buffer_offset,
+	      *parser->buffer_position);
 
-	switch (message->parser_state->event)
+	Message *message = (Message*)parser->userdata;
+
+	switch (event)
 	{
 	case P_NONE:
 		// should not happen
@@ -177,11 +100,11 @@ _parser_event_handler(Message *message)
 		// do error handling here
 		break;
 	case P_PROTOCOL_VALUE:
-		List_push(message->protocol_values, Marker_toS(state));
+		List_push(message->protocol_values, Marker_toS(parser));
 		break;
 	case P_HEADER_NAME:
 	{
-		String *header_name = Marker_toS(state);
+		String *header_name = Marker_toS(parser);
 		StringPair *header = StringPair_init(header_name, NULL);
 		List_push(message->headers, header);
 		break;
@@ -189,44 +112,25 @@ _parser_event_handler(Message *message)
 	case P_HEADER_VALUE:
 	{
 		StringPair *header = (StringPair*)message->headers->last->data;
-		header->value = Marker_toS(state);
+		header->value = Marker_toS(parser);
 		break;
 	}
 	case P_BODY:
-		state->marker_length++;
-		StringBuffer_ncat(message->body, Marker_get(state), state->marker_length);
+		parser->marker_length++;
+		message->body = StringPointer_new(Marker_get(parser), parser->marker_length);
 		break;
 	}
 }
 
-int
-Message_parse_file(Message *message, const char *file_path, size_t read_len)
+#define CHUNK_SIZE 1024
+
+Message *
+Message_fread(const char *path)
 {
-	FILE *file = fopen(file_path, "r");
+	RagelParser *parser = MessageParser_new(CHUNK_SIZE);
+	Message *message = (Message*)RagelParser_parse_file(parser, path, CHUNK_SIZE);
 
-	XFASSERT(file, "file %s should exist\n", file_path);
-
-	while (1)
-	{
-		ssize_t nread = Message_buffer_read(message, fileno(file), read_len);
-
-		if (nread > 0)
-		{
-			Message_parse(message);
-			continue;
-		}
-		else if (nread == 0)
-		{
-			Message_parse_finish(message);
-			break;
-		}
-		else
-		{
-			XFLOG("error while reading file : %s : %s", file_path, strerror(errno));
-			fclose(file);
-			return -1;
-		}
-	}
-	fclose(file);
-	return 0;
+	// do something useful with the message
+	RagelParser_free(parser);
+	return message;
 }

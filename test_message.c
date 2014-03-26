@@ -3,12 +3,13 @@
 
 static void test_Message_new()
 {
-	Message *message = Message_new(1024);
+	Message *message = Message_new();
 
-	TEST_ASSERT_EQUAL_INT(1024, message->parser_state->buffer->length);
-	TEST_ASSERT_EQUAL_INT(0, message->parser_state->buffer->string->length);
 	TEST_ASSERT_EQUAL_INT(0, message->protocol_values->length);
 	TEST_ASSERT_EQUAL_INT(0, message->headers->length);
+	TEST_ASSERT_NULL(message->body);
+	TEST_ASSERT_NULL(message->buffer);
+
 	Message_free(message);
 }
 
@@ -28,7 +29,7 @@ static const char data[] =
 static void
 test_assert_message(Message *message)
 {
-	TEST_ASSERT_EQUAL_S(data, message->parser_state->buffer->string);
+	TEST_ASSERT_EQUAL_S(data, message->buffer->string);
 
 	TEST_ASSERT_EQUAL_INT(2, message->protocol_values->length);
 	TEST_ASSERT_EQUAL_S("VERIFY", List_S(message->protocol_values, 0));
@@ -43,52 +44,55 @@ test_assert_message(Message *message)
 	TEST_ASSERT_EQUAL_S("Header2",  header2->key);
 	TEST_ASSERT_EQUAL_S("value2",  header2->value);
 
-	TEST_ASSERT_EQUAL_S("Hello World", message->body->string);
+	TEST_ASSERT_EQUAL_S("Hello World", message->body);
 }
 
 static void
 test_Message_parse_single_pass()
 {
-	Message *message =  Message_new(1024);
+	RagelParser *parser = MessageParser_new(strlen(data));
 
-	Message_buffer_append(message, data, strlen(data));
-	Message_parse_finish(message);
+	StringBuffer_ncat(parser->buffer, data, strlen(data));
+	RagelParser_finish(parser);
+	Message *message = (Message*)parser->userdata;
 	test_assert_message(message);
+
+	RagelParser_free(parser);
 	Message_free(message);
 }
 
 static void
 test_Message_parse_multi_pass()
 {
-	Message *message = Message_new(0);
+	RagelParser *parser = MessageParser_new(1);
 	unsigned int i;
 
 	for (i = 0; i < strlen(data) - 1; i++)
 	{
-		Message_buffer_append(message, &data[i], 1);
-		Message_parse(message);
+		StringBuffer_ncat(parser->buffer, &data[i], 1);
+		RagelParser_parse(parser);
 	}
 	// last run (i is already incremented by loop header)
-	Message_buffer_append(message, &data[i], 1);
-	Message_parse_finish(message);
+	StringBuffer_ncat(parser->buffer, &data[i], 1);
+	RagelParser_finish(parser);
 
-	TEST_ASSERT_EQUAL_INT(strlen(data), message->parser_state->iterations);
+	TEST_ASSERT_EQUAL_INT(strlen(data), parser->iterations);
 
+	Message *message = (Message*)parser->userdata;
 	test_assert_message(message);
+
 	Message_free(message);
+	RagelParser_free(parser);
 }
 
 static void
 test_Message_read_file()
 {
-	Message *message = Message_new(0);
-	int ret = Message_parse_file(message, "libcx-umtp/testmessages/hello_world.txt", 64);
+	Message *message = Message_fread("libcx-umtp/testmessages/hello_world.txt");
 
-	TEST_ASSERT_EQUAL_INT_MESSAGE(0, ret, "message should have been parsed");
 	test_assert_message(message);
 	Message_free(message);
 }
-
 
 
 int main()
