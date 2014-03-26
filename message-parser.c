@@ -4,10 +4,9 @@
 int
 main(int argc, char **argv)
 {
-	Message *message = Message_new(0);
-
-	Message_buffer_read(message, fileno(stdin), (size_t)atoi(argv[1]));
-	Message_parse_finish(message);
-	// do something with the message
+	XASSERT(argc == 2, "Usage: $0 <message>");
+	Message *message = Message_fread(argv[1]);
+	// do something useful with the message
+	Message_free(message);
 	return 0;
 }
