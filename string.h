@@ -100,40 +100,48 @@ String_init(const char *value, size_t length);
 String*
 String_ninit(const char *value, size_t length);
 
+int
+String_shift(String *s, size_t count);
+
+/* StringBuffer methods */
+
 StringBuffer*
 StringBuffer_new(size_t length);
 
 void
 StringBuffer_free(StringBuffer *buffer);
 
-#define SBuf_unused(buf) \
+#define StringBuffer_unused(buf) \
 	(buf->length - buf->string->length)
 
 int
-StringBuffer_make_room(StringBuffer *buffer, size_t index, size_t nchars);
+StringBuffer_make_room(StringBuffer *buffer, size_t offset, size_t nchars);
 
 ssize_t
-StringBuffer_ncopy(StringBuffer *buffer, size_t index, const char* source, size_t nchars);
+StringBuffer_append(StringBuffer *buffer, size_t offset, const char* source, size_t nchars);
 
-#define StringBuffer_nappend(buffer, chars, len) \
-	StringBuffer_ncopy(buffer, buffer->string->length, chars, len)
+#define StringBuffer_cat(buffer, chars) \
+	StringBuffer_append(buffer, buffer->string->length, chars, strlen(chars))
 
-#define StringBuffer_ncat(buffer, offset, s) \
-	StringBuffer_ncopy(buffer, offset, s->value, s->length)
+#define StringBuffer_catn(buffer, chars) \
+	StringBuffer_append(buffer, buffer->string->length, chars, strlen(chars) + 1)
 
-#define StringBuffer_cat(buffer, s) \
-	StringBuffer_ncopy(buffer, buffer->string->length, s->value, s->length)
+#define StringBuffer_ncat(buffer, chars, nchars) \
+	StringBuffer_append(buffer, buffer->string->length, chars, nchars)
+
+#define StringBuffer_scat(buffer, s) \
+	StringBuffer_append(buffer, buffer->string->length, s->value, s->length)
 
 ssize_t
-StringBuffer_nread(StringBuffer *buffer, size_t index, int fd, size_t nchars);
+StringBuffer_read(StringBuffer *buffer, size_t offset, int fd, size_t nchars);
 
-#define StringBuffer_fread(buffer, index, file, nchars) \
-	StringBuffer_nread(buffer, index, fileno(file), nchars)
+#define StringBuffer_fdcat(buffer, fd, nchars) \
+	StringBuffer_read(buffer, buffer->string->length, fd, nchars)
 
-#define StringBuffer_read_append(buffer, fd, nchars) \
-	StringBuffer_nread(buffer, buffer->string->length, fd, nchars)
+#define StringBuffer_fcat(buffer, file, nchars) \
+	StringBuffer_read(buffer, buffer->string->length, fileno(file), nchars)
 
-#define StringBuffer_fread_append(buffer, file, nchars) \
-	StringBuffer_nread(buffer, buffer->string->length, fileno(file), nchars)
+#define StringBuffer_shift(buf, count) \
+	String_shift(buf->string, count)
 
 #endif
