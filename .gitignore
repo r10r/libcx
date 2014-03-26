@@ -4,3 +4,4 @@ echo-server-threaded
 echo-client-threaded
 test-server
 test_queue
+tcp-echo-server

@@ -4,6 +4,7 @@ L := $(LOCAL_DIR)
 #OBJS += $(L)/
 PROGRAMS += $(L)/echo-client \
 	$(L)/echo-server \
+	$(L)/tcp-echo-server \
 	$(L)/echo-client-threaded
 	
 # $(L)/echo-server-threaded \
@@ -22,6 +23,19 @@ $(L)/echo-server_FLAGS := -lev  -lpthread
 $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/server.o \
 	$(L)/unix_server.o \
+	$(L)/connection.o \
+	$(L)/worker.o \
+	$(L)/request.o \
+	$(LIBCX_DIR)/libcx-list/list.o \
+	$(LIBCX_DIR)/libcx-umtp/message.o \
+	$(LIBCX_DIR)/libcx-umtp/message_fsm.o \
+	$(LIBCX_DIR)/libcx-string/string.o \
+	$(LIBCX_DIR)/libcx-string/pair.o
+	
+$(L)/tcp-echo-server_FLAGS := -lev  -lpthread
+$(L)/tcp-echo-server_OBJS := $(L)/tcp-echo-server.o \
+	$(L)/server.o \
+	$(L)/tcp_server.o \
 	$(L)/connection.o \
 	$(L)/worker.o \
 	$(L)/request.o \
