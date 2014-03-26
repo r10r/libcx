@@ -3,8 +3,6 @@
 #include "libcx-base/debug.h"
 #include "libcx-base/profile.h"
 
-PROFILE_INIT
-
 struct client_data_t
 {
 	const char *socket_path;

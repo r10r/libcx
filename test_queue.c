@@ -1,4 +1,5 @@
 #include "libcx-base/test.h"
+#include "libcx-base/profile.h"
 #include "queue.h"
 #include <unistd.h>
 #ifdef __linux__
@@ -11,8 +12,6 @@
  * as well as signaling / waiting for the condition
  *
  */
-NOSETUP
-PROFILE_INIT
 
 #define NTHREADS 4
 #define NITERATATIONS 100000
