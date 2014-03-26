@@ -1,4 +1,4 @@
-#include "message.h"
+#include "message_parser.h"
 
 %%{
 	machine message_fsm;
@@ -34,7 +34,7 @@
 %% write data;
 
 void
-RagelParser_parse(RagelParser* parser)
+message_fsm_parse(RagelParser* parser)
 {
 	if (parser->iterations == 0)
 		%% write init;

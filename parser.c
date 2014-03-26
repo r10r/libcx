@@ -13,11 +13,9 @@
  * restore the buffer position
  */
 
-RagelParser*
-RagelParser_new()
+void
+RagelParser_init(RagelParser *parser)
 {
-	RagelParser *parser = malloc(sizeof(RagelParser));
-
 	/* non-ragel state */
 	parser->buffer = NULL;
 	parser->buffer_offset = 0;
@@ -26,7 +24,6 @@ RagelParser_new()
 	parser->f_event_handler = NULL;
 	parser->iterations = 0;
 	parser->finished = 0;
-	parser->userdata = NULL;
 
 	/* ragel state */
 	parser->res = 0;
@@ -34,7 +31,15 @@ RagelParser_new()
 	parser->buffer_position = NULL;
 	parser->buffer_end = NULL;
 	parser->eof = NULL;
+	parser->f_parse = NULL;
+}
 
+RagelParser*
+RagelParser_new()
+{
+	RagelParser *parser = malloc(sizeof(RagelParser));
+
+	RagelParser_init(parser);
 	return parser;
 }
 
@@ -44,10 +49,9 @@ RagelParser_free(RagelParser *parser)
 	free(parser);
 }
 
-void *
+void
 RagelParser_parse_file(RagelParser *parser, const char *file_path, size_t chunk_size)
 {
-	void *data = parser->userdata;
 	FILE *file = fopen(file_path, "r");
 
 	XFASSERT(file, "file %s should exist\n", file_path);
@@ -58,5 +62,10 @@ RagelParser_parse_file(RagelParser *parser, const char *file_path, size_t chunk_
 		XFLOG("error while reading from file : %s : %s", file_path, strerror(errno));
 
 	RagelParser_finish(parser);
-	return data;
+}
+
+void
+RagelParser_parse(RagelParser *parser)
+{
+	parser->f_parse(parser);
 }
