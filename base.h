@@ -25,5 +25,9 @@
 #define UC_container_of(ptr, type, member)      \
 	(type*)( (char*)(ptr) - offsetof(type, member))
 
+/* flat object cloning */
+#define clone(type, obj) \
+	(type*)memcpy(malloc(sizeof(type)), obj, sizeof(type))
+
 #endif
 
