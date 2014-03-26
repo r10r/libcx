@@ -12,8 +12,10 @@ TESTS += $(L)/test_list \
 #_FLAGS := 
 
 # -- tests -- 
-$(L)/test_list_OBJS := $(TEST_OBJS) $(L)/test_list.o \
+$(L)/test_list_OBJS := $(TEST_OBJS) \
+	$(L)/test_list.o \
 	$(L)/list.o
 
-$(L)/test_array_OBJS := $(TEST_OBJS) $(L)/test_array.o \
+$(L)/test_array_OBJS := $(TEST_OBJS) \
+	$(L)/test_array.o \
 	$(L)/array.o
