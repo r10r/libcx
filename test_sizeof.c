@@ -1,7 +1,5 @@
 #include "libcx-base/test.h"
 
-NOSETUP
-
 static void
 test_sizeof_void_ptr()
 {
