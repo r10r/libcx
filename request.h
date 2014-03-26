@@ -28,8 +28,7 @@ struct request_t
 	struct timeval *finished_at;
 	int priority; /* scheduling priority */
 
-	// FIXME payload should be dynamic
-	Message *message;
+	void *userdata;
 };
 
 Request*

@@ -1,10 +1,11 @@
 # cache evaluation of path
 L := $(LOCAL_DIR)
 
+# 	$(L)/tcp-echo-server \
+
 #OBJS += $(L)/
 PROGRAMS += $(L)/echo-client \
 	$(L)/echo-server \
-	$(L)/tcp-echo-server \
 	$(L)/echo-client-threaded
 	
 # $(L)/echo-server-threaded \
@@ -28,6 +29,7 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/request.o \
 	$(LIBCX_DIR)/libcx-list/list.o \
 	$(LIBCX_DIR)/libcx-umtp/message.o \
+	$(LIBCX_DIR)/libcx-umtp/parser.o \
 	$(LIBCX_DIR)/libcx-umtp/message_fsm.o \
 	$(LIBCX_DIR)/libcx-string/string.o \
 	$(LIBCX_DIR)/libcx-string/pair.o
@@ -41,6 +43,7 @@ $(L)/tcp-echo-server_OBJS := $(L)/tcp-echo-server.o \
 	$(L)/request.o \
 	$(LIBCX_DIR)/libcx-list/list.o \
 	$(LIBCX_DIR)/libcx-umtp/message.o \
+	$(LIBCX_DIR)/libcx-umtp/parser.o \
 	$(LIBCX_DIR)/libcx-umtp/message_fsm.o \
 	$(LIBCX_DIR)/libcx-string/string.o \
 	$(LIBCX_DIR)/libcx-string/pair.o
