@@ -12,8 +12,6 @@ $(L)/message-parser_OBJS := $(L)/message-parser.o \
 	$(LIBCX_DIR)/libcx-string/string.o \
 	$(LIBCX_DIR)/libcx-string/pair.o \
 	$(LIBCX_DIR)/libcx-list/list.o
-	
-#$(L)/message-parser_FLAGS := $(L)/
 
 # -- tests -- 
 
@@ -24,4 +22,3 @@ $(L)/test_message_OBJS := $(TEST_OBJS) \
 	$(LIBCX_DIR)/libcx-string/string.o \
 	$(LIBCX_DIR)/libcx-string/pair.o \
 	$(LIBCX_DIR)/libcx-list/list.o
-$(L)/test_message_FLAGS := $(TEST_FLAGS)
