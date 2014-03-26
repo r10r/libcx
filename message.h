@@ -17,16 +17,6 @@
 
 typedef struct message_t Message;
 
-typedef enum parse_event_t
-{
-	P_NONE,
-	P_PROTOCOL_VALUE,
-	P_HEADER_NAME,
-	P_HEADER_VALUE,
-	P_BODY,
-	P_ERROR_MESSAGE_MALFORMED
-} ParseEvent;
-
 struct message_t
 {
 	List *protocol_values;  /* list of strings */
@@ -47,13 +37,7 @@ Message_envelope(Message *message);
 void
 Message_print_stats(Message *message, FILE *file);
 
-RagelParser *
-MessageParser_new(size_t buffer_size);
-
 ssize_t
 Message_read(Message *message, FILE *file, size_t chunk_size);
-
-Message *
-Message_fread(const char *file_path);
 
 #endif

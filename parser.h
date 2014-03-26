@@ -37,18 +37,19 @@
 
 typedef struct ragel_parser_t RagelParser;
 typedef void F_EventHandler (RagelParser *parser, int event);
+typedef void F_ParseHandler (RagelParser *parser);
 
 struct ragel_parser_t
 {
 	/* non-ragel state */
-	F_EventHandler *f_event_handler;
-	StringBuffer *buffer;           /* input buffer */
-	size_t buffer_offset;           /* offset from start of buffer */
-	size_t marker_start;            /* offset from start of buffer */
-	size_t marker_length;           /* marker length */
-	int finished;                   /* indicate eof */
-	unsigned int iterations;        /* the parser iteration */
-	void *userdata;
+	F_EventHandler *f_event_handler;        /* handles parsing events */
+	F_ParseHandler *f_parse;                /* the parse function defined in the *.rl file */
+	StringBuffer *buffer;                   /* input buffer */
+	size_t buffer_offset;                   /* offset from start of buffer */
+	size_t marker_start;                    /* offset from start of buffer */
+	size_t marker_length;                   /* marker length */
+	int finished;                           /* indicate eof */
+	unsigned int iterations;                /* the parser iteration */
 
 	/* ragel state */
 	char *buffer_position;
@@ -58,8 +59,12 @@ struct ragel_parser_t
 	int cs;
 };
 
-/* implemented in the machine */
-extern void RagelParser_parse(RagelParser *parser);
+
+void
+RagelParser_parse(RagelParser *parser);
+
+void
+RagelParser_init(RagelParser *parser);
 
 RagelParser*
 RagelParser_new(void);
@@ -67,7 +72,7 @@ RagelParser_new(void);
 void
 RagelParser_free(RagelParser *parser);
 
-void *
+void
 RagelParser_parse_file(RagelParser *parser, const char *file_path, size_t chunk_size);
 
 #endif

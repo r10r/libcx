@@ -1,5 +1,5 @@
 #include "libcx-base/test.h"
-#include "message.h"
+#include "message_parser.h"
 
 static void test_Message_new()
 {
@@ -50,45 +50,46 @@ test_assert_message(Message *message)
 static void
 test_Message_parse_single_pass()
 {
-	RagelParser *parser = MessageParser_new(strlen(data));
+	MessageParser *parser = MessageParser_new(strlen(data));
+	RagelParser *ragel_parser = (RagelParser*)parser;
 
-	StringBuffer_ncat(parser->buffer, data, strlen(data));
-	RagelParser_finish(parser);
-	Message *message = (Message*)parser->userdata;
-	test_assert_message(message);
+	StringBuffer_ncat(ragel_parser->buffer, data, strlen(data));
+	RagelParser_finish(ragel_parser);
+	test_assert_message(parser->message);
 
-	RagelParser_free(parser);
-	Message_free(message);
+	Message_free(parser->message);
+	MessageParser_free(parser);
 }
 
 static void
 test_Message_parse_multi_pass()
 {
-	RagelParser *parser = MessageParser_new(1);
+	MessageParser *parser = MessageParser_new(1);
+	RagelParser *ragel_parser = (RagelParser*)parser;
 	unsigned int i;
 
 	for (i = 0; i < strlen(data) - 1; i++)
 	{
-		StringBuffer_ncat(parser->buffer, &data[i], 1);
-		RagelParser_parse(parser);
+		StringBuffer_ncat(ragel_parser->buffer, &data[i], 1);
+		RagelParser_parse(ragel_parser);
 	}
 	// last run (i is already incremented by loop header)
-	StringBuffer_ncat(parser->buffer, &data[i], 1);
-	RagelParser_finish(parser);
+	StringBuffer_ncat(ragel_parser->buffer, &data[i], 1);
+	RagelParser_finish(ragel_parser);
 
-	TEST_ASSERT_EQUAL_INT(strlen(data), parser->iterations);
+	TEST_ASSERT_EQUAL_INT(strlen(data), ragel_parser->iterations);
 
-	Message *message = (Message*)parser->userdata;
+	Message *message = parser->message;
 	test_assert_message(message);
 
 	Message_free(message);
-	RagelParser_free(parser);
+	MessageParser_free(parser);
 }
 
 static void
 test_Message_read_file()
 {
-	Message *message = Message_fread("libcx-umtp/testmessages/hello_world.txt");
+	Message *message = MessageParser_fread("libcx-umtp/testmessages/hello_world.txt");
 
 	test_assert_message(message);
 	Message_free(message);
