@@ -1,7 +1,5 @@
 #include "string.h"
 
-// use snprintf to wrap value ?
-
 String*
 String_init(const char *value, size_t length)
 {
@@ -26,6 +24,25 @@ String_ninit(const char *value, size_t length)
 
 	s->value[length] = '\0';
 	return s;
+}
+
+int
+String_shift(String *s, size_t count)
+{
+	if (count == 0)
+		return 0;
+	if (count > s->length)
+		return -1;
+
+	if (count == s->length)
+		s->length = 0;
+	else
+	{
+		size_t remaining = s->length - count;
+		memcpy(&s->value[0], &s->value[count], remaining);
+		s->length = remaining;
+	}
+	return 1;
 }
 
 StringBuffer*
@@ -80,7 +97,7 @@ StringBuffer_make_room(StringBuffer *buffer, size_t offset, size_t nlength_reque
 }
 
 ssize_t
-StringBuffer_ncopy(StringBuffer *buffer, size_t offset, const char* source, size_t nchars)
+StringBuffer_append(StringBuffer *buffer, size_t offset, const char* source, size_t nchars)
 {
 	if (StringBuffer_make_room(buffer, offset, nchars) != 0)
 		return -1;
@@ -91,7 +108,7 @@ StringBuffer_ncopy(StringBuffer *buffer, size_t offset, const char* source, size
 }
 
 ssize_t
-StringBuffer_nread(StringBuffer *buffer, size_t offset, int fd, size_t nchars)
+StringBuffer_read(StringBuffer *buffer, size_t offset, int fd, size_t nchars)
 {
 	if (StringBuffer_make_room(buffer, offset, nchars) != 0)
 		return -1;
@@ -101,6 +118,3 @@ StringBuffer_nread(StringBuffer *buffer, size_t offset, int fd, size_t nchars)
 		buffer->string->length = offset + (size_t)nread;
 	return nread;
 }
-
-// concatenate multiple strings (using a string buffer) ?
-// create a null terminated string !!!
