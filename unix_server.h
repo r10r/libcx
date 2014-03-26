@@ -2,6 +2,7 @@
 #define _CX_UNIX_SERVER_H
 
 #include "server.h"
+#include "libcx-umtp/message_parser.h"
 
 #include <sys/socket.h> /* guess what ;) */
 #include <sys/un.h>
