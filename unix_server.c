@@ -221,15 +221,17 @@ static Connection*
 unix_connection_handler(Connection *connection, ConnectionEvent event)
 {
 	Request *request = NULL;
-	RagelParser *parser = NULL;
+	MessageParser *parser = NULL;
+	RagelParser *ragel_parser = NULL;
 	Message *message = NULL;
 
 	if (connection->data)
 	{
 		request = (Request*)connection->data;
-		parser = (RagelParser*)request->userdata;
+		parser = (MessageParser*)request->userdata;
+		ragel_parser = (RagelParser*)request->userdata;
 		if (parser)
-			message = (Message*)parser->userdata;
+			message = parser->message;
 	}
 
 	switch (event)
@@ -244,14 +246,14 @@ unix_connection_handler(Connection *connection, ConnectionEvent event)
 		break;
 	case CONNECTION_EVENT_DATA:
 	{
-		RagelParser_parse(parser);
+		RagelParser_parse(ragel_parser);
 		break;
 	}
 	case CONNECTION_EVENT_CLOSE_READ:
 	{
 		XDBG("close read");
-		RagelParser_finish(parser);
-		RagelParser_free(parser);
+		RagelParser_finish(ragel_parser);
+		RagelParser_free(ragel_parser);
 		// FIXME make something useful with the message
 		Message_free(message);
 		break;

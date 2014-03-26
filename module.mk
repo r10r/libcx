@@ -29,6 +29,7 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/request.o \
 	$(LIBCX_DIR)/libcx-list/list.o \
 	$(LIBCX_DIR)/libcx-umtp/message.o \
+	$(LIBCX_DIR)/libcx-umtp/message_parser.o \
 	$(LIBCX_DIR)/libcx-umtp/parser.o \
 	$(LIBCX_DIR)/libcx-umtp/message_fsm.o \
 	$(LIBCX_DIR)/libcx-string/string.o \
@@ -43,6 +44,7 @@ $(L)/tcp-echo-server_OBJS := $(L)/tcp-echo-server.o \
 	$(L)/request.o \
 	$(LIBCX_DIR)/libcx-list/list.o \
 	$(LIBCX_DIR)/libcx-umtp/message.o \
+	$(LIBCX_DIR)/libcx-umtp/message_parser.o \
 	$(LIBCX_DIR)/libcx-umtp/parser.o \
 	$(LIBCX_DIR)/libcx-umtp/message_fsm.o \
 	$(LIBCX_DIR)/libcx-string/string.o \
