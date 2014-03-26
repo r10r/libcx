@@ -10,5 +10,5 @@ TESTS += $(L)/test_sizeof
 #_FLAGS := 
 
 # -- tests -- 
-$(L)/test_sizeof_OBJS := $(TEST_OBJS) $(L)/test_sizeof.o
-$(L)/test_sizeof_FLAGS := $(TEST_FLAGS)
+$(L)/test_sizeof_OBJS := $(TEST_OBJS) \
+	$(L)/test_sizeof.o
