@@ -6,3 +6,4 @@ coverage.info
 src/server
 test/unit/test_list
 
+.format

@@ -34,8 +34,8 @@ COVERAGE_REPORT_TOOL ?= $(LIBCX_DIR)/bin/decover.sh
 $(info Using coverage report script: $(COVERAGE_REPORT_TOOL))
 TEST_RUNNER ?= $(LIBCX_DIR)/bin/valgrind-testrunner.sh
 $(info Using test runner script: $(TEST_RUNNER))
-UNCRUSTIFY_CONFIG ?= $(LIBCX_DIR)/uncrustify.cfg
-$(info Using uncrustify config: $(UNCRUSTIFY_CONFIG))
+FORMATTER_TOOL ?= $(LIBCX_DIR)/bin/uncrustify.sh
+$(info Using formatter script: $(FORMATTER_TOOL))
 
 # Include module makefiles module.mk.
 # FIXME running 'clean' triggers module makefile creation
@@ -97,10 +97,12 @@ build: format $(PROGRAMS);
 # [ format ]
 # ==========
 # Keeps your code nice and shiny ;)
-%.unc-backup~: %
-	uncrustify -c $(UNCRUSTIFY_CONFIG) --replace $*
-	
-format: $(SRC:=.unc-backup~);
+export LIBCX_DIR
+export BASE_DIR
+.format: $(SRC)
+	$(FORMATTER_TOOL) $?
+
+format: .format;
 
 
 # [ tests ]
