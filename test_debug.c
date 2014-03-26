@@ -1,7 +1,5 @@
 #include "libcx-base/test.h"
 
-NOSETUP
-
 static void
 test_XASSERT()
 {
@@ -35,7 +33,7 @@ static void test_XERR()
 //	reported by valgrind: (on OSX)
 //	String allocated by strerror must be freed,
 //	although manpage says it should be 'const'.
-#if (! defined(__linux))
+#if (!defined(__linux))
 	free(err);
 #endif
 }

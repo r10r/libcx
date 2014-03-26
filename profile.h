@@ -6,7 +6,7 @@
 #ifndef _CX_PROFILE_H
 #define _CX_PROFILE_H
 
-#ifndef PROFILE
+#ifdef NPROFILE
 
 #define PROFILE_INIT
 #define PROFILE_BEGIN
@@ -23,13 +23,13 @@
 #define CLOCKS_PER_SEC 1000000
 #endif
 
-#define PROFILE_INIT \
-	static struct timeval _PROFILE_TIME_START; \
-	static struct timeval _PROFILE_TIME_END; \
-	static double _PROFILE_TIME_DIFF; \
-	static clock_t _PROFILE_CLOCK_START; \
-	static clock_t _PROFILE_CLOCK_END; \
-	static double _PROFILE_CLOCK_DIFF;
+static struct timeval _PROFILE_TIME_START;
+static struct timeval _PROFILE_TIME_END;
+static double _PROFILE_TIME_DIFF;
+static clock_t _PROFILE_CLOCK_START;
+static clock_t _PROFILE_CLOCK_END;
+static double _PROFILE_CLOCK_DIFF;
+
 /*
  * Leaving the variadic args off only works with LLVM/GCC
  * see http://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
@@ -54,7 +54,6 @@
 	_PROFILE_CLOCK_END = clock(); \
 	_PROFILE_CLOCK_DIFF = (double)(_PROFILE_CLOCK_END - _PROFILE_CLOCK_START) / CLOCKS_PER_SEC * 1000.0; \
 	printf("<~~ PROFILE END (real: %.4f ms, cpu: %.4f ms)\n", _PROFILE_TIME_DIFF, _PROFILE_CLOCK_DIFF);
-
 
 #endif
 
