@@ -1,8 +1,6 @@
 #include "libcx-base/test.h"
 #include "message.h"
 
-NOSETUP
-
 static void test_Message_new()
 {
 	Message *message = Message_new(1024);
