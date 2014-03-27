@@ -43,7 +43,6 @@ test_assert_message(Message *message)
 	StringPair *header2 = (StringPair*)List_get(message->headers, 1);
 	TEST_ASSERT_EQUAL_S("Header2",  header2->key);
 	TEST_ASSERT_EQUAL_S("value2",  header2->value);
-
 	TEST_ASSERT_EQUAL_S("Hello World", message->body);
 }
 
@@ -66,18 +65,19 @@ test_Message_parse_multi_pass()
 {
 	MessageParser *parser = MessageParser_new(1);
 	RagelParser *ragel_parser = (RagelParser*)parser;
+
 	unsigned int i;
 
-	for (i = 0; i < strlen(data) - 1; i++)
+	for (i = 0; i < strlen(data); i++)
 	{
 		StringBuffer_ncat(ragel_parser->buffer, &data[i], 1);
-		RagelParser_parse(ragel_parser);
-	}
-	// last run (i is already incremented by loop header)
-	StringBuffer_ncat(ragel_parser->buffer, &data[i], 1);
-	RagelParser_finish(ragel_parser);
 
-	TEST_ASSERT_EQUAL_INT(strlen(data), ragel_parser->iterations);
+		if (i == (strlen(data) - 1))
+			RagelParser_finish(ragel_parser)
+			else
+				RagelParser_parse(ragel_parser);
+	}
+	TEST_ASSERT_EQUAL_INT(strlen(data) + 1, ragel_parser->iterations);
 
 	Message *message = parser->message;
 	test_assert_message(message);

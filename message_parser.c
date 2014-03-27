@@ -3,6 +3,9 @@
 static void
 event_handler(RagelParser *parser, int event);
 
+static void
+simple_body_parser(RagelParser *parser);
+
 MessageParser *
 MessageParser_new(size_t buffer_size)
 {
@@ -18,9 +21,10 @@ MessageParser_new(size_t buffer_size)
 	ragel_parser->buffer = buffer;
 
 	/* setup event handlers */
-	ragel_parser->f_event_handler = event_handler;
+	ragel_parser->f_event = event_handler;
 	ragel_parser->f_parse = message_fsm_parse;
-	parser->f_parse_body = NULL;
+	parser->f_body_parse = simple_body_parser;
+	parser->f_body_event = NULL;
 	return parser;
 }
 
@@ -31,6 +35,46 @@ MessageParser_free(MessageParser *parser)
 
 	free(parser);
 	return message;
+}
+
+/*  keep buffer, reset machine state and replace the machine and event handler */
+void
+MessageParser_parse_body(MessageParser *message_parser)
+{
+	// replace parser and event handler
+	RagelParser *parser = (RagelParser*)message_parser;
+
+	parser->f_parse = message_parser->f_body_parse;
+	parser->f_event = message_parser->f_body_event;
+
+	// reset machine state
+	parser->res = 0;
+	parser->cs = 0;
+
+	// process any remaining tokens
+	size_t nunparsed =  RagelParser_unparsed(parser);
+	if (nunparsed > 0)
+	{
+		printf("%zu unparsed tokens. calling body parser\n", nunparsed);
+		RagelParser_parse(parser);
+	}
+}
+
+static void
+simple_body_parser(RagelParser *parser)
+{
+	RagelParser_update(parser); // update position
+
+	// @optimize shift buffer up to body start
+	if (RagelParser_eof(parser))
+	{
+		printf("EOF simple body parser\n");
+		// marker length is not set since we do not count tokens in a FSM
+		size_t marker_length = parser->buffer->string->length - parser->marker_start;
+		StringPointer *body_pointer = StringPointer_new(Marker_get(parser), marker_length);
+		((MessageParser*)parser)->message->body = body_pointer;
+	}
+	parser->iterations++;
 }
 
 static void
@@ -46,9 +90,6 @@ event_handler(RagelParser *parser, int event)
 
 	switch (event)
 	{
-	case P_NONE:
-		// should not happen
-		break;
 	case P_ERROR_MESSAGE_MALFORMED:
 		// do error handling here
 		break;
@@ -69,17 +110,8 @@ event_handler(RagelParser *parser, int event)
 		break;
 	}
 	case P_BODY_START:
-		if (message_parser->f_parse_body)
-		{
-			// FIXME jump to body parser machine here
-			message_parser->body_parser = clone(RagelParser, parser);
-			message_parser->f_parse_body(message_parser->body_parser);
-		}
-		break;
-	case P_BODY:
-		parser->marker_length++;
-		message->body = StringPointer_new(Marker_get(parser), parser->marker_length);
-		break;
+		MessageParser_parse_body(message_parser);
+		return;
 	}
 }
 
