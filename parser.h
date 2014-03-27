@@ -3,6 +3,11 @@
 
 #include "libcx-string/string.h"
 
+#define ParserDebug(parser) \
+	printf("eof:%p buffer_end:%p buffer_position:%p\n", \
+			parser->eof, parser->buffer_end, parser->buffer_position); \
+			printf("buffer length: %zu\n", parser->buffer->string->length); \
+
 #define Marker_get(parser) \
 	& S_get(parser->buffer->string, parser->marker_start)
 
