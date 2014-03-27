@@ -157,6 +157,9 @@ clean:
 # [ ragel ]
 # ===========
 # object generation rules
+# sources generated with -G2 are large
+# but compiler shrinks them massively 
+# (if debugging/profiling is not enabled)
 .PRECIOUS: %.c
 %.c: %.rl
 	ragel -L -G2 -o $@ $<	
