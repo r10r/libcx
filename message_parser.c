@@ -50,6 +50,7 @@ MessageParser_parse_body(MessageParser *message_parser)
 	// reset machine state
 	parser->res = 0;
 	parser->cs = 0;
+	parser->iterations = 0; // must be reset else initialization is skipped
 
 	// process any remaining tokens
 	size_t nunparsed =  RagelParser_unparsed(parser);
