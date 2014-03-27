@@ -8,11 +8,6 @@
  * buffer for each marker) is better.
  */
 
-/*
- * string referenced by buffer might have been reallocated
- * restore the buffer position
- */
-
 void
 RagelParser_init(RagelParser *parser)
 {
@@ -21,13 +16,15 @@ RagelParser_init(RagelParser *parser)
 	parser->buffer_offset = 0;
 	parser->marker_start = 0;
 	parser->marker_length = 0;
-	parser->f_event_handler = NULL;
+	parser->f_event = NULL;
 	parser->iterations = 0;
 	parser->finished = 0;
 
-	/* ragel state */
+	/* ragel machine state */
 	parser->res = 0;
 	parser->cs = 0;
+
+	/* ragel buffer state */
 	parser->buffer_position = NULL;
 	parser->buffer_end = NULL;
 	parser->eof = NULL;

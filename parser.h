@@ -24,7 +24,7 @@
 	parser->marker_length++;
 
 #define EmitEvent(parser, e) \
-	parser->f_event_handler(parser, e);
+	parser->f_event(parser, e);
 
 #define RagelParser_update(parser) \
 	parser->buffer_position = &S_get(parser->buffer->string, parser->buffer_offset); \
@@ -32,8 +32,14 @@
 	if (parser->finished == 1) parser->eof = parser->buffer_end; \
 
 #define RagelParser_finish(parser) \
-	parser->finished = 1; \
-	RagelParser_parse(parser);
+	{ parser->finished = 1; RagelParser_parse(parser); }
+
+#define RagelParser_eof(parser) \
+	(parser->eof == parser->buffer_end)
+
+/* number of unparsed tokens */
+#define RagelParser_unparsed(parser) \
+	(parser->buffer->string->length - parser->buffer_offset)
 
 typedef struct ragel_parser_t RagelParser;
 typedef void F_EventHandler (RagelParser *parser, int event);
@@ -42,14 +48,14 @@ typedef void F_ParseHandler (RagelParser *parser);
 struct ragel_parser_t
 {
 	/* non-ragel state */
-	F_EventHandler *f_event_handler;        /* handles parsing events */
-	F_ParseHandler *f_parse;                /* the parse function defined in the *.rl file */
-	StringBuffer *buffer;                   /* input buffer */
-	size_t buffer_offset;                   /* offset from start of buffer */
-	size_t marker_start;                    /* offset from start of buffer */
-	size_t marker_length;                   /* marker length */
-	int finished;                           /* indicate eof */
-	unsigned int iterations;                /* the parser iteration */
+	F_EventHandler *f_event;        /* handles parsing events */
+	F_ParseHandler *f_parse;        /* the parse function defined in the *.rl file */
+	StringBuffer *buffer;           /* input buffer */
+	size_t buffer_offset;           /* offset from start of buffer */
+	size_t marker_start;            /* offset from start of buffer */
+	size_t marker_length;           /* marker length */
+	int finished;                   /* indicate eof */
+	unsigned int iterations;        /* the parser iteration */
 
 	/* ragel state */
 	char *buffer_position;
@@ -58,7 +64,6 @@ struct ragel_parser_t
 	int res;
 	int cs;
 };
-
 
 void
 RagelParser_parse(RagelParser *parser);
