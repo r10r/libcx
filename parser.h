@@ -9,9 +9,10 @@
 #define Marker_toS(parser) \
 	String_init(Marker_get(parser), parser->marker_length)
 
+// TODO make unprintable tokens printable (for easier debugging)
 #define PrintToken(parser) \
-	XFLOG("Token[%zu] %c -> %p\n", \
-	      parser->buffer_offset, *(parser->buffer_position), parser->buffer_position);
+	XFLOG("Token[%zu] %p (%d)'%c'\n", \
+	      parser->buffer_offset, parser->buffer_position, *(parser->buffer_position), *(parser->buffer_position));
 
 #define SetMarker(parser) \
 	XFLOG("Mark[%zu] %c -> %p\n", \
@@ -28,7 +29,7 @@
 
 #define RagelParser_update(parser) \
 	parser->buffer_position = &S_get(parser->buffer->string, parser->buffer_offset); \
-	parser->buffer_end = &S_last(parser->buffer->string); \
+	parser->buffer_end = &S_get(parser->buffer->string, parser->buffer->string->length); \
 	if (parser->finished == 1) parser->eof = parser->buffer_end; \
 
 #define RagelParser_finish(parser) \
