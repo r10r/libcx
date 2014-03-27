@@ -77,7 +77,6 @@ test_Message_parse_multi_pass()
 			else
 				RagelParser_parse(ragel_parser);
 	}
-	TEST_ASSERT_EQUAL_INT(strlen(data) + 1, ragel_parser->iterations);
 
 	Message *message = parser->message;
 	test_assert_message(message);
