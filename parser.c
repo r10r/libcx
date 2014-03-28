@@ -19,6 +19,7 @@ RagelParser_init(RagelParser *parser)
 	parser->f_event = NULL;
 	parser->iterations = 0;
 	parser->finished = 0;
+	parser->initialized = 0;
 
 	/* ragel machine state */
 	parser->res = 0;
@@ -46,6 +47,19 @@ RagelParser_free(RagelParser *parser)
 	free(parser);
 }
 
+int
+RagelParser_firstrun(RagelParser *parser)
+{
+	if (parser->initialized)
+		return 0;
+	else
+	{
+		parser->initialized = 1;
+		parser->iterations = 0;
+		return 1;
+	}
+}
+
 void
 RagelParser_parse_file(RagelParser *parser, const char *file_path, size_t chunk_size)
 {
@@ -64,5 +78,21 @@ RagelParser_parse_file(RagelParser *parser, const char *file_path, size_t chunk_
 void
 RagelParser_parse(RagelParser *parser)
 {
+	F_ParseHandler *current_handler = parser->f_parse;
+
 	parser->f_parse(parser);
+	F_ParseHandler *next_handler = parser->f_parse;
+
+	// check if parser has changed and if we have any remaining tokens
+	if (next_handler != current_handler)
+	{
+		printf("Parser has changed\n");
+		parser->initialized = 0;        // triggers RagelParser_firstrun
+		size_t nunparsed =  RagelParser_unparsed(parser);
+		if (nunparsed > 0)
+		{
+			printf("%zu unparsed tokens. calling body parser\n", nunparsed);
+			RagelParser_parse(parser);
+		}
+	}
 }
