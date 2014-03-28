@@ -17,8 +17,13 @@ MessageParser_new(size_t buffer_size)
 
 	/* setup parser buffer */
 	StringBuffer *buffer = StringBuffer_new(buffer_size);
+
 	parser->message->buffer = buffer;
 	ragel_parser->buffer = buffer;
+
+	// set buffer pointer
+	ragel_parser->buffer_position = buffer->string->value;
+	ragel_parser->buffer_end = ragel_parser->buffer_position;
 
 	/* setup event handlers */
 	ragel_parser->f_event = event_handler;
@@ -46,19 +51,6 @@ MessageParser_parse_body(MessageParser *message_parser)
 
 	parser->f_parse = message_parser->f_body_parse;
 	parser->f_event = message_parser->f_body_event;
-
-	// reset machine state
-	parser->res = 0;
-	parser->cs = 0;
-	parser->iterations = 0; // must be reset else initialization is skipped
-
-	// process any remaining tokens
-	size_t nunparsed =  RagelParser_unparsed(parser);
-	if (nunparsed > 0)
-	{
-		printf("%zu unparsed tokens. calling body parser\n", nunparsed);
-		RagelParser_parse(parser);
-	}
 }
 
 static void
@@ -84,10 +76,12 @@ event_handler(RagelParser *parser, int event)
 	MessageParser *message_parser = (MessageParser*)parser;
 	Message *message = message_parser->message;
 
+
 	XFLOG("Event %d, at index %zu [%c] \n",
 	      event,
-	      parser->buffer_offset,
-	      *parser->buffer_position);
+	      /* buffer already position points to next token */
+	      parser->buffer_offset - 1,
+	      *(parser->buffer_position - 1));
 
 	switch (event)
 	{

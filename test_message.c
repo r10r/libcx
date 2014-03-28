@@ -94,7 +94,6 @@ test_Message_read_file()
 	Message_free(message);
 }
 
-
 int main()
 {
 	TEST_BEGIN

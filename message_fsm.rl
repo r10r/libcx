@@ -42,7 +42,7 @@
 void
 message_fsm_parse(RagelParser* parser)
 {
-	if (parser->iterations == 0)
+	if (RagelParser_firstrun(parser))
 		%% write init;
 
 	RagelParser_update(parser);

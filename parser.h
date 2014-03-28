@@ -43,9 +43,9 @@
 	parser->f_event(parser, e);
 
 #define RagelParser_update(parser) \
-	parser->buffer_position = &S_get(parser->buffer->string, parser->buffer_offset); \
-	parser->buffer_end = &S_get(parser->buffer->string, parser->buffer->string->length); \
-	if (parser->finished == 1) parser->eof = parser->buffer_end; \
+	parser->buffer_position = S_get(parser->buffer->string, parser->buffer_offset); \
+	parser->buffer_end = S_last(parser->buffer->string); \
+	if (parser->finished == 1) parser->eof = parser->buffer_end;
 
 #define RagelParser_finish(parser) \
 	{ parser->finished = 1; RagelParser_parse(parser); }
@@ -72,12 +72,13 @@ struct ragel_parser_t
 	size_t marker_length;           /* marker length */
 	int finished;                   /* indicate eof */
 	unsigned int iterations;        /* the parser iteration */
+	int initialized;
 
 	/* ragel state */
 	char *buffer_position;
 	char *buffer_end;
 	char *eof;
-	int res;
+	int res;        /* FIXME unused ?) */
 	int cs;
 };
 
@@ -89,6 +90,9 @@ RagelParser_init(RagelParser *parser);
 
 RagelParser*
 RagelParser_new(void);
+
+int
+RagelParser_firstrun(RagelParser *parser);
 
 void
 RagelParser_free(RagelParser *parser);
