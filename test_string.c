@@ -9,13 +9,15 @@ test_String_dup()
 
 	TEST_ASSERT_EQUAL_INT(s->length, 3);
 
-	TEST_ASSERT_EQUAL_INT('b', S_get(s, 0));
-	TEST_ASSERT_EQUAL_INT('a', S_get(s, 1));
-	TEST_ASSERT_EQUAL_INT('r', S_get(s, 2));
+	printf("%p %p %c\n", s->value, &s->value[0], *s->value);
 
-	TEST_ASSERT_EQUAL_INT('b', S_get(s, -3));
-	TEST_ASSERT_EQUAL_INT('a', S_get(s, -2));
-	TEST_ASSERT_EQUAL_INT('r', S_get(s, -1));
+	TEST_ASSERT_EQUAL_INT('b', *S_get(s, 0));
+	TEST_ASSERT_EQUAL_INT('a', *S_get(s, 1));
+	TEST_ASSERT_EQUAL_INT('r', *S_get(s, 2));
+
+	TEST_ASSERT_EQUAL_INT('b', *S_get(s, -3));
+	TEST_ASSERT_EQUAL_INT('a', *S_get(s, -2));
+	TEST_ASSERT_EQUAL_INT('r', *S_get(s, -1));
 
 	free(s);
 }

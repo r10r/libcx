@@ -33,10 +33,9 @@ typedef struct string_buffer_t
 
 #define S_free(s) (free(s))
 
-// FIXME doesn't work when string length = 0 !!!
 /* access array (with negative indexes), no bounds checking */
 #define S_get(s, index) \
-	(s->value[((index >= 0) ? (long)index : (long)index + (long)s->length)])
+	((index < 0) ? (s->value + s->length - (size_t)-index) : (s->value + index))
 
 #define S_last(s) \
 	S_get(s, -1)
@@ -69,13 +68,13 @@ typedef struct string_buffer_t
 	((a->length == strlen(nc) ? strncmp(a->value, nc, a->length) : ((long)a->length - strlen(nc)))
 
 #define S_nwrite(string, start, count, fd) \
-	write(fd, &string->value[start], count)
+	write(fd, S_get(string, start), count)
 
 #define S_fnwrite(string, start, count, stream) \
 	S_nwrite(string, start, count, fileno(stream))
 
 #define S_write(string, fd) \
-	write(fd, &string->value[0], string->length)
+	write(fd, string->value, string->length)
 
 #define S_fwrite(string, stream) \
 	S_write(string, fileno(stream))
@@ -89,7 +88,7 @@ typedef struct string_buffer_t
 	S_puts(string, fileno(stream))
 
 #define S_ncopy(string, start, count, dst) \
-	(strncpy(dst, &string->value[start], count))
+	(strncpy(dst, S_get(string, start), count))
 
 #define S_copy(string, dst) \
 	S_ncopy(string, 0, string->length, dst)
