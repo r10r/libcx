@@ -3,13 +3,18 @@
 
 #include "libcx-string/string.h"
 
-#define ParserDebug(parser) \
-	printf("eof:%p buffer_end:%p buffer_position:%p\n", \
-			parser->eof, parser->buffer_end, parser->buffer_position); \
-			printf("buffer length: %zu\n", parser->buffer->string->length); \
+#define ParserDebug(parser, msg) \
+	printf("-- parser state [%s] --\n", msg); \
+	printf("state - cs:%d iterations:%d\n", parser->cs, parser->iterations); \
+	printf("token - current:%p end:%p eof:%p\n", \
+	       parser->buffer_position, parser->buffer_end, parser->eof); \
+	printf("buffer - offset:%zu length:%zu size:%zu unused:%zu\n", \
+	       parser->buffer_offset, parser->buffer->string->length, parser->buffer->length, StringBuffer_unused(parser->buffer)); \
+	printf("marker - start:%zu length:%zu\n", parser->marker_start, parser->marker_length); \
+	printf("-------------------------------\n");
 
 #define Marker_get(parser) \
-	& S_get(parser->buffer->string, parser->marker_start)
+	S_get(parser->buffer->string, parser->marker_start)
 
 #define Marker_toS(parser) \
 	String_init(Marker_get(parser), parser->marker_length)
@@ -18,6 +23,11 @@
 #define PrintToken(parser) \
 	XFLOG("Token[%zu] %p (%d)'%c'\n", \
 	      parser->buffer_offset, parser->buffer_position, *(parser->buffer_position), *(parser->buffer_position));
+
+#define PrintLastToken(parser) \
+	XFLOG("Last Token[%zu] %p (%d)'%c'\n", \
+	      parser->buffer->string->length, S_last(parser->buffer->string), \
+	      *S_last(parser->buffer->string), *S_last(parser->buffer->string));
 
 #define SetMarker(parser) \
 	XFLOG("Mark[%zu] %c -> %p\n", \
