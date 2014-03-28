@@ -14,8 +14,9 @@ receive_data_callback(ev_loop *loop, ev_io *w, int revents)
 {
 	Connection *connection = container_of(w, Connection, receive_data_watcher);
 
-	XFLOG("Connection[%d] - revents:%d\n", connection->connection_fd, revents);
 	ssize_t nread = connection->f_data_handler(connection);
+
+	XFLOG("Connection[%d] - received data:%zu\n", connection->connection_fd, nread);
 
 	if (nread > 0)
 		connection->f_handler(connection, CONNECTION_EVENT_DATA);
