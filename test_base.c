@@ -68,12 +68,22 @@ test_clone()
 	free(cloned);
 }
 
+static void
+test_unsigned_minus_signed()
+{
+	size_t s = 1024;
+	int m = -24;
+
+	TEST_ASSERT_EQUAL_INT(1000, (s - ((size_t)-m)));
+}
+
 int main()
 {
 	TEST_BEGIN
 
 	RUN(test_container_of);
 	RUN(test_clone);
+	RUN(test_unsigned_minus_signed);
 
 	TEST_END
 }
