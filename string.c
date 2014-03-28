@@ -11,7 +11,7 @@ String_init(const char *value, size_t length)
 
 	if (value)
 	{
-		memcpy(&s->value[0], value, length);
+		memcpy(s->value, value, length);
 		s->length = length;
 	}
 	return s;
@@ -39,7 +39,7 @@ String_shift(String *s, size_t count)
 	else
 	{
 		size_t remaining = s->length - count;
-		memcpy(&s->value[0], &s->value[count], remaining);
+		memcpy(s->value, s->value + count, remaining);
 		s->length = remaining;
 	}
 	return 1;
@@ -91,6 +91,8 @@ StringBuffer_make_room(StringBuffer *buffer, size_t offset, size_t nlength_reque
 	if (new_string == NULL)
 		return -1;
 
+	XFLOG("Incremented buffer size %zu -> %zu\n", buffer->length, new_length);
+
 	buffer->string = new_string;
 	buffer->length = new_length;
 	return 0;
@@ -102,7 +104,7 @@ StringBuffer_append(StringBuffer *buffer, size_t offset, const char* source, siz
 	if (StringBuffer_make_room(buffer, offset, nchars) != 0)
 		return -1;
 
-	memcpy(&S_get(buffer->string, offset), source, nchars);
+	memcpy(S_get(buffer->string, offset), source, nchars);
 	buffer->string->length = offset + nchars;
 	return (ssize_t)nchars;
 }
@@ -113,7 +115,8 @@ StringBuffer_read(StringBuffer *buffer, size_t offset, int fd, size_t nchars)
 	if (StringBuffer_make_room(buffer, offset, nchars) != 0)
 		return -1;
 
-	ssize_t nread = read(fd, &S_get(buffer->string, offset), nchars);
+	ssize_t nread = read(fd, S_get(buffer->string, offset), nchars);
+	XFLOG("Read %zu (read size %zu) chars into buffer\n", nread, nchars);
 	if (nread > 0)
 		buffer->string->length = offset + (size_t)nread;
 	return nread;

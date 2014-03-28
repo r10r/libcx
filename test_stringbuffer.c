@@ -19,12 +19,12 @@ test_StringBuffer_append()
 	TEST_ASSERT_EQUAL_INT(6, buf->string->length);
 	TEST_ASSERT_EQUAL_INT(1024 - 6, StringBuffer_unused(buf));
 
-	TEST_ASSERT_EQUAL_INT('f', S_get(buf->string, 0));
-	TEST_ASSERT_EQUAL_INT('o', S_get(buf->string, 1));
-	TEST_ASSERT_EQUAL_INT('o', S_get(buf->string, 2));
-	TEST_ASSERT_EQUAL_INT('b', S_get(buf->string, 3));
-	TEST_ASSERT_EQUAL_INT('a', S_get(buf->string, 4));
-	TEST_ASSERT_EQUAL_INT('r', S_get(buf->string, 5));
+	TEST_ASSERT_EQUAL_INT('f', *S_get(buf->string, 0));
+	TEST_ASSERT_EQUAL_INT('o', *S_get(buf->string, 1));
+	TEST_ASSERT_EQUAL_INT('o', *S_get(buf->string, 2));
+	TEST_ASSERT_EQUAL_INT('b', *S_get(buf->string, 3));
+	TEST_ASSERT_EQUAL_INT('a', *S_get(buf->string, 4));
+	TEST_ASSERT_EQUAL_INT('r', *S_get(buf->string, 5));
 
 	StringBuffer_free(buf);
 }
