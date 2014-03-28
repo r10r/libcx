@@ -2,3 +2,6 @@ test_message
 message-parser
 message_fsm.png
 message_fsm.c
+body_fsm.c
+body_fsm.png
+test_body_parser
