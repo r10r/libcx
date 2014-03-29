@@ -12,7 +12,6 @@ Request_new(unsigned long id)
 
 	int ret = gettimeofday(request->started_at, NULL);
 	XASSERT(ret == 0, "gettimeofday should return 0");
-	request->finished_at = NULL;
 	request->priority = 0; // currently unused
 	request->userdata = NULL;
 	return request;
