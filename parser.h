@@ -70,9 +70,6 @@ struct ragel_parser_t
 	size_t buffer_offset;           /* offset from start of buffer */
 	size_t marker_start;            /* offset from start of buffer */
 	size_t marker_length;           /* marker length */
-	int finished;                   /* indicate eof */
-	unsigned int iterations;        /* the parser iteration */
-	int initialized;
 
 	/* ragel state */
 	char *buffer_position;
@@ -80,6 +77,10 @@ struct ragel_parser_t
 	char *eof;
 	int res;        /* FIXME unused ?) */
 	int cs;
+
+	int finished;                   /* indicate eof */
+	unsigned int iterations;        /* the parser iteration */
+	int initialized;
 };
 
 void
@@ -99,5 +100,8 @@ RagelParser_free(RagelParser *parser);
 
 void
 RagelParser_parse_file(RagelParser *parser, const char *file_path, size_t chunk_size);
+
+void
+RagelParser_shift_buffer(RagelParser *parser);
 
 #endif

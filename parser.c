@@ -96,3 +96,20 @@ RagelParser_parse(RagelParser *parser)
 		}
 	}
 }
+
+void
+RagelParser_shift_buffer(RagelParser *parser)
+{
+	int ret = StringBuffer_shift(parser->buffer, parser->buffer_offset);
+
+	if (ret == 1)
+	{
+		XFDBG("Shifted buffer by %zu tokens\n", parser->buffer_offset);
+		parser->buffer_offset = 0;
+		parser->marker_length = 0;
+		parser->marker_start = 0;
+		RagelParser_update(parser);
+	}
+	else
+		XDBG("Failed to shift buffer\n");
+}
