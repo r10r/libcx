@@ -190,6 +190,26 @@ test_StringBuffer_shift()
 }
 
 
+static void
+test_StringBuffer_clear()
+{
+	StringBuffer *buf = StringBuffer_new(12);
+
+	StringBuffer_catn(buf, "foo");
+	TEST_ASSERT_EQUAL_INT(4, StringBuffer_used(buf));
+	TEST_ASSERT_EQUAL_INT(8, StringBuffer_unused(buf));
+
+	StringBuffer_clear(buf);
+	TEST_ASSERT_EQUAL_INT(0, StringBuffer_used(buf));
+	TEST_ASSERT_EQUAL_INT(12, StringBuffer_unused(buf));
+
+	StringBuffer_catn(buf, "bar");
+	TEST_ASSERT_EQUAL_STRING("bar", StringBuffer_value(buf));
+	TEST_ASSERT_EQUAL_INT(8, StringBuffer_unused(buf));
+
+	StringBuffer_free(buf);
+}
+
 int main()
 {
 	TEST_BEGIN
@@ -202,5 +222,6 @@ int main()
 	RUN(test_StringBuffer_append_grow_offset);
 	RUN(test_limits);
 	RUN(test_StringBuffer_shift);
+	RUN(test_StringBuffer_clear);
 	TEST_END
 }
