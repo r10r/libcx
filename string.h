@@ -113,6 +113,12 @@ StringBuffer_free(StringBuffer *buffer);
 #define StringBuffer_unused(buf) \
 	(buf->length - buf->string->length)
 
+#define StringBuffer_used(buf) \
+	(buf->string->length)
+
+#define StringBuffer_value(buf) \
+	(buf->string->value)
+
 int
 StringBuffer_make_room(StringBuffer *buffer, size_t offset, size_t nchars);
 
@@ -145,6 +151,9 @@ StringBuffer_read(StringBuffer *buffer, size_t offset, int fd, size_t nchars);
 
 #define StringBuffer_shift(buf, count) \
 	String_shift(buf->string, count)
+
+#define StringBuffer_clear(buf) \
+	buf->string->length = 0;
 
 /* StringPointer methods */
 StringPointer*
