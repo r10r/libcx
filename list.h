@@ -51,6 +51,11 @@ List_push(List *list, void *data);
 Node *
 List_match(List *list, void *key, F_NodeMatch *f_node_match);
 
+#define LIST_EACH(head, type, el) \
+	Node * __head = head; \
+	type *el = NULL; \
+	for (el = (type*)__head->data; __head && (el = (type*)__head->data); __head = __head->next)
+
 void
 List_each(List *list, F_NodeIterator *f_node_iterator);
 
