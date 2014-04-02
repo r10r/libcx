@@ -1,11 +1,8 @@
 #include "request.h"
 
-Request*
-Request_new(unsigned long id)
+void
+Request_init(Request *request)
 {
-	Request *request = malloc(sizeof(Request));
-
-	request->id = id;
 	request->status = REQUEST_STARTED;
 	request->started_at = malloc(sizeof(struct timeval));
 	request->finished_at = malloc(sizeof(struct timeval));
@@ -14,13 +11,29 @@ Request_new(unsigned long id)
 	XASSERT(ret == 0, "gettimeofday should return 0");
 	request->priority = 0; // currently unused
 	request->userdata = NULL;
+}
+
+Request*
+Request_new(unsigned long id)
+{
+	Request *request = malloc(sizeof(Request));
+
+	request->id = id;
+
+	Request_init(request);
 	return request;
+}
+
+void
+Request_free_members(Request *request)
+{
+	free(request->started_at);
+	free(request->finished_at);
 }
 
 void
 Request_free(Request *request)
 {
-	free(request->started_at);
-	free(request->finished_at);
+	Request_free_members(request);
 	free(request);
 }

@@ -1,24 +1,25 @@
+/* FIXME circular inclusion */
+#include "server.h"
 #include "worker.h"
 
 static void*
-_worker_init(void *data)
+_Worker_run(void *data);
+
+Worker*
+Worker_new()
 {
-	Worker *worker = (Worker*)data;
+	Worker *worker = malloc(sizeof(Worker));
 
-	worker->loop = ev_loop_new(0);
-
-	/* call event handler to handle custom initialization */
-	worker->f_handler(worker, WORKER_EVENT_START);
-	printf("Worker[%lu] started\n", worker->id);
-	ev_run(worker->loop, 0);
-	worker->f_handler(worker, WORKER_EVENT_STOP);
-	return NULL;
+	Worker_init(worker);
+	return worker;
 }
 
 void
-Worker_new(Worker *worker)
+Worker_init(Worker *worker)
 {
 	worker->thread = malloc(sizeof(pthread_t));
+	worker->loop = ev_loop_new(0);
+	worker->f_handler = NULL;
 }
 
 void
@@ -32,8 +33,8 @@ Worker_free(Worker *worker)
 int
 Worker_start(Worker *worker)
 {
-	worker->thread = malloc(sizeof(pthread_t));
-	int rc = pthread_create(worker->thread, NULL, _worker_init, worker);
+	int rc = pthread_create(worker->thread, NULL, _Worker_run, worker);
+
 	if ( rc != 0 )
 	{
 		fprintf(stderr, "Failed to start worker[%lu]: Error %d\n", worker->id, rc);
@@ -42,10 +43,24 @@ Worker_start(Worker *worker)
 	return 0;
 }
 
+static void*
+_Worker_run(void *data)
+{
+	Worker *worker = (Worker*)data;
+
+	printf("Worker[%lu] started\n", worker->id);
+	if (worker->f_handler)
+		worker->f_handler(worker);
+	else
+		printf("Worker[%lu] exiting no handler\n", worker->id);
+	return NULL;
+}
+
 void
 Worker_stop(Worker *worker)
 {
-	worker->f_handler(worker, WORKER_EVENT_STOP);
+	XDBG("Not implemented\n");
+	// FIXME must signal worker to close all connections (using async_send ?)
 //	XASSERT("Task list should be empty", worker->tasks->length == 0)
 //	XASSERT("No tasks should be in progress")
 	// TODO wait for all tasks to cancel, ....
