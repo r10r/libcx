@@ -41,6 +41,15 @@
 
 #define XEXIT_CODE -1
 
+#ifdef NASSERT
+#define XERR(message)
+#define XCHECK(condition, message)
+#define XCHECK_EQUALS_INT(expected, actual, message)
+#define XFCHECK(condition, format, ...)
+#define XASSERT(condition, message)
+#define XFASSERT(condition, format, ...)
+#else
+
 /*
  * Prints the given message to stderr with debug information if errno is not 0.
  */
@@ -87,5 +96,7 @@
 			__func__, __FILE__, __LINE__, __VA_ARGS__); \
 		exit(XEXIT_CODE); \
 	}
+
+#endif
 
 #endif
