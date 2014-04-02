@@ -125,10 +125,10 @@ tcp_server_handler(Server *server, ServerEvent event, void *data)
 		ev_timer_again(EV_DEFAULT, timer);
 		break;
 	}
-	case SERVER_STOP:
+	case SERVER_SHUTDOWN:
 		XDBG("server event stop");
 		break;
-	case SERVER_START_WORKER:
+	case SERVER_WORKER_START:
 	{
 		XDBG("server event start worker");
 		// pass server socket from server to worker
@@ -148,10 +148,10 @@ tcp_worker_handler(Worker *worker, WorkerEvent event)
 
 	switch (event)
 	{
-	case WORKER_EVENT_NEW:
+	case SERVER_WORKER_NEW:
 		// called in main process
 		tcp_worker = malloc(sizeof(TCPWorker));
-		Worker_new((Worker*)tcp_worker);
+		Worker_init((Worker*)tcp_worker);
 		tcp_worker->requests = List_new();
 		break;
 	case WORKER_EVENT_START:
@@ -183,7 +183,7 @@ tcp_connection_data_handler(Connection *connection)
 {
 	Request *request = (Request*)connection->data;
 
-	return Message_buffer_read(request->message, connection->connection_fd, DATA_RECEIVE_MAX);
+	return Message_buffer_read(request->message, connection->fd, DATA_RECEIVE_MAX);
 
 }
 

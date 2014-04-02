@@ -6,20 +6,10 @@
 #include "libcx-base/debug.h"
 #include "libcx-list/list.h"
 #include "libcx-base/ev.h"
-#include "connection.h"
-
-typedef enum worker_event_t
-{
-	WORKER_EVENT_NEW,               /* create a new worker */
-	WORKER_EVENT_START,
-	/* stop connection watcher ... */
-	WORKER_EVENT_STOP,
-	/* worker has left the event loop  - resources can be released */
-	WORKER_EVENT_RELEASE,
-} WorkerEvent;
 
 typedef struct worker_t Worker;
-typedef Worker* F_WorkerHandler (Worker *worker, WorkerEvent event);
+
+typedef void F_WorkerHandler (Worker *worker);
 
 struct worker_t
 {
@@ -27,14 +17,16 @@ struct worker_t
 	unsigned long id;               /* the worker id */
 	pthread_t *thread;              /* the worker thread */
 	ev_loop *loop;                  /* the workers event loop */
+	Server *server;
 
 	F_WorkerHandler *f_handler;
-	F_ConnectionHandler *f_connection_handler;
-	F_ConnectionDataHandler *f_connection_data_handler;
 };
 
-void
+Worker*
 Worker_new(Worker *worker);
+
+void
+Worker_init(Worker *worker);
 
 void
 Worker_free(Worker *worker);

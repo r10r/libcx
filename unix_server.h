@@ -7,6 +7,8 @@
 #include <sys/socket.h> /* guess what ;) */
 #include <sys/un.h>
 
+#include "unix_worker.h"
+
 #define UNIX_PATH_MAX 108
 
 typedef struct unix_server_t
@@ -16,18 +18,14 @@ typedef struct unix_server_t
 	int fd;
 } UnixServer;
 
-
-typedef struct unix_worker_t
-{
-	Worker worker;
-	int server_fd;
-	ev_io connection_watcher;
-	List *requests;                 /* pending requests */
-
-} UnixWorker;
-
 UnixServer*
 UnixServer_new(const char *sock_path);
+
+void
+UnixServer_init(UnixServer *unix_server, const char *sock_path);
+
+void
+UnixServer_free(UnixServer *server);
 
 /*
  * @return the file descriptor for the server socket
@@ -38,7 +36,7 @@ UnixServer_new(const char *sock_path);
 int
 unix_socket_connect(const char *sock_path);
 
-static void
+void
 unix_connection_watcher(ev_loop *loop, ev_io *w, int revents);
 
 #endif

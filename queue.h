@@ -4,7 +4,9 @@
 #include <stdio.h>
 #include <pthread.h>
 #include "libcx-list/list.h"
+#include "server.h" /* FIXME circular inclusion */
 #include "worker.h"
+#include <stdbool.h>
 
 typedef struct queue_t
 {

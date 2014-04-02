@@ -1,38 +1,72 @@
 #include "unix_server.h"
+#include "unix_worker.h" /* FIXME circular inclusion */
 
 static void
-unix_connection_watcher(ev_loop *loop, ev_io *w, int revents);
-
-static Server*
-unix_server_handler(Server *server, ServerEvent event, void *data);
-
-static Worker*
-unix_worker_handler(Worker *worker, WorkerEvent event);
-
-static Connection*
-unix_connection_handler(Connection *connection, ConnectionEvent event);
-
-static ssize_t
-unix_connection_data_handler(Connection *connection);
+unix_server_handler(Server *server, ServerEvent event);
 
 UnixServer*
 UnixServer_new(const char *sock_path)
 {
-	UnixServer *unix_server = malloc(sizeof(UnixServer));
+	UnixServer *server = malloc(sizeof(UnixServer));
 
-	unix_server->socket_path = sock_path;
-
-	Server *server = (Server*)unix_server;
-	Server_new(server);
-
-	server->f_server_handler = unix_server_handler;
-	server->f_worker_handler = unix_worker_handler;
-	server->f_connection_handler = unix_connection_handler;
-	server->f_connection_data_handler = unix_connection_data_handler;
-
-	return unix_server;
+	UnixServer_init(server, sock_path);
+	return server;
 }
 
+void
+UnixServer_init(UnixServer *unix_server, const char *sock_path)
+{
+	unix_server->socket_path = sock_path;
+	Server *server = (Server*)unix_server;
+	Server_init(server);
+
+	server->f_server_handler = unix_server_handler;
+}
+
+void
+UnixServer_free(UnixServer *server)
+{
+	free(server);
+}
+
+static void
+supervisor_watcher_cb(ev_loop *loop, ev_timer *timer, int revents)
+{
+	printf("Hello from the supervisor\n");
+}
+
+/* can be replaced by the server */
+static void
+unix_server_handler(Server *server, ServerEvent event)
+{
+	UnixServer *unix_server = (UnixServer*)server;
+
+	switch (event)
+	{
+	case SERVER_START:
+	{
+		XDBG("server event start");
+		// ignore SIGPIPE if on linux
+		// TODO check if required because libev already blocks signals
+		// TODO check if workers are protected from SIGPIPE signals
+#if defined(__linux__)
+		signal(SIGPIPE, SIG_IGN);
+#endif
+		// connect to socket
+		unix_server->fd = unix_socket_connect(unix_server->socket_path);
+		// TODO start worker supervisor
+		ev_timer *supervisor_watcher = malloc(sizeof(ev_timer));
+		ev_timer_init(supervisor_watcher, supervisor_watcher_cb, 0., 15.);
+		ev_timer_again(EV_DEFAULT, supervisor_watcher);
+		break;
+	}
+	case SERVER_SHUTDOWN:
+		XDBG("server event stop");
+		break;
+	}
+}
+
+/* FIXME merge with TCP socket connect in socket.c */
 int
 unix_socket_connect(const char *sock_path)
 {
@@ -96,179 +130,10 @@ unix_socket_connect(const char *sock_path)
 	return fd;
 }
 
-static void
-timer_cb(ev_loop *loop, ev_timer *timer, int revents)
+void
+enable_so_opt(int fd, int option)
 {
-	printf("Hello from the manager\n");
+	int enable = 1;
+
+	setsockopt(fd, SOL_SOCKET, option, (void*)&enable, sizeof(enable));
 }
-
-static Server*
-unix_server_handler(Server *server, ServerEvent event, void *data)
-{
-	UnixServer *unix_server = (UnixServer*)server;
-
-	switch (event)
-	{
-	case SERVER_START:
-	{
-		XDBG("server event start");
-		// ignore SIGPIPE if on linux
-		// TODO check if required because libev already blocks signals
-		// TODO check if workers are protected from SIGPIPE signals
-#if defined(__linux__)
-		signal(SIGPIPE, SIG_IGN);
-#endif
-		// connect to socket
-		unix_server->fd = unix_socket_connect(unix_server->socket_path);
-		// TODO start worker supervisor
-		ev_timer *timer = malloc(sizeof(ev_timer));
-		ev_timer_init(timer, timer_cb, 0., 15.);
-		ev_timer_again(EV_DEFAULT, timer);
-		break;
-	}
-	case SERVER_STOP:
-		XDBG("server event stop");
-		break;
-	case SERVER_START_WORKER:
-	{
-		XDBG("server event start worker");
-		// pass server socket from server to worker
-		UnixWorker *worker = (UnixWorker*)data;
-		worker->server_fd = unix_server->fd;
-	}
-	break;
-	}
-
-	return server;
-}
-
-static Worker*
-unix_worker_handler(Worker *worker, WorkerEvent event)
-{
-	UnixWorker *unix_worker = (UnixWorker*)worker;
-
-	switch (event)
-	{
-	case WORKER_EVENT_NEW:
-		// called in main process
-		unix_worker = malloc(sizeof(UnixWorker));
-		Worker_new((Worker*)unix_worker);
-		unix_worker->requests = List_new();
-		break;
-	case WORKER_EVENT_START:
-		XDBG("worker start");
-		/* called from within the worker thread */
-		/* start connection watcher */
-		ev_io_init(&unix_worker->connection_watcher, unix_connection_watcher, unix_worker->server_fd, EV_READ);
-		ev_io_start(worker->loop, &unix_worker->connection_watcher);
-		break;
-	case WORKER_EVENT_STOP:
-		XDBG("worker event stop");
-		/* start shutdown watcher */
-		// worker should exit the event loop
-		// when all connections are handled (emitting the WORKER_EVENT_RELEASE in the server thread)
-		ev_io_stop(worker->loop, &unix_worker->connection_watcher);
-		break;
-	case WORKER_EVENT_RELEASE:
-		// FIXME server must know when worker exits (e.g monitor status in the monitor thread )
-		List_free(unix_worker->requests);
-		break;
-	}
-	return (Worker*)unix_worker;
-}
-
-#define DATA_RECEIVE_MAX 1024
-
-static ssize_t
-unix_connection_data_handler(Connection *connection)
-{
-	Request *request = (Request*)connection->data;
-	RagelParser *parser = (RagelParser*)request->userdata;
-
-	return StringBuffer_fdcat(parser->buffer, connection->connection_fd, DATA_RECEIVE_MAX);
-}
-
-static void
-unix_connection_watcher(ev_loop *loop, ev_io *w, int revents)
-{
-	UnixWorker *unix_worker = container_of(w, UnixWorker, connection_watcher);
-	Worker *worker = (Worker*)unix_worker;
-
-	int client_fd = accept(unix_worker->server_fd, NULL, NULL);
-
-	if (client_fd == -1)
-		XFLOG("Worker[%lu] - failed to accept\n", worker->id);
-	else
-	{
-
-#if (!defined (__linux__) && defined(__unix__)) || (defined(__APPLE__) && defined(__MACH__))
-		/* do not send SIGIPIPE on EPIPE */
-		enable_so_opt(client_fd, SO_NOSIGPIPE);
-#endif
-
-		XFLOG("Worker[%lu] - accepted connection on fd:%d\n", worker->id, client_fd);
-
-		Connection *connection = Connection_new(loop, client_fd);
-		connection->f_handler = worker->f_connection_handler;
-		// FIXME set connection data handler from worker / server
-		connection->f_data_handler = worker->f_connection_data_handler;
-		connection->f_handler(connection, CONNECTION_EVENT_ACCEPTED);
-		Connection_start(connection);
-	}
-}
-
-static Connection*
-unix_connection_handler(Connection *connection, ConnectionEvent event)
-{
-	Request *request = NULL;
-	MessageParser *parser = NULL;
-	RagelParser *ragel_parser = NULL;
-	Message *message = NULL;
-
-	if (connection->data)
-	{
-		request = (Request*)connection->data;
-		parser = (MessageParser*)request->userdata;
-		ragel_parser = (RagelParser*)request->userdata;
-		if (parser)
-			message = parser->message;
-	}
-
-	switch (event)
-	{
-	case CONNECTION_EVENT_ACCEPTED:
-		XDBG("connection accepted");
-		// FIXME generate unique request id
-		// FIXME make initial message buffer read size configurable
-		request = Request_new(666);
-		request->userdata = MessageParser_new(DATA_RECEIVE_MAX);
-		connection->data = request;
-		break;
-	case CONNECTION_EVENT_DATA:
-	{
-		RagelParser_parse(ragel_parser);
-		break;
-	}
-	case CONNECTION_EVENT_CLOSE_READ:
-	{
-		XDBG("close read");
-		RagelParser_finish(ragel_parser);
-		RagelParser_free(ragel_parser);
-		// FIXME make something useful with the message
-		Message_free(message);
-		break;
-	}
-	case CONNECTION_EVENT_RECEIVE_TIMEOUT:
-		XDBG("connection timeout");
-		break;
-	case CONNECTION_EVENT_ERRNO:
-		XDBG("connection error");
-		break;
-	case CONNECTION_EVENT_ERROR_WRITE:
-		XDBG("connection error write");
-		break;
-	}
-	return connection;
-}
-
-

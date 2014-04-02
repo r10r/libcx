@@ -31,8 +31,14 @@ struct request_t
 	void *userdata;
 };
 
+void
+Request_init(Request *request);
+
 Request*
 Request_new(unsigned long id);
+
+void
+Request_free_members(Request *request);
 
 void
 Request_free(Request *request);
