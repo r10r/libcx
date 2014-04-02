@@ -208,17 +208,54 @@ List_userdata_get(List *list)
 	return list->userdata;
 }
 
-void *
-List_get(List *list, unsigned int index)
+Node*
+List_at(List *list, unsigned int index)
 {
 	if (index >= list->length)
 		return NULL;
 
 	unsigned int i;
-	void *data = NULL;
 	Node *node = list->first;
 	for (i = 0; i < index; i++)
 		node = node->next;
-	data = node->data;
-	return data;
+
+	return node;
 }
+
+void *
+List_get(List *list, unsigned int index)
+{
+	Node *node = List_at(list, index);
+
+	if (node)
+		return node->data;
+	else
+		return NULL;
+}
+
+/* remove element at index from list */
+Node*
+List_detach(List *list, unsigned int index)
+{
+	Node *node = List_at(list, index);
+
+	if (node)
+	{
+		if (node->previous)
+			node->previous->next = node->next;
+		if (node->next)
+			node->next->previous = node->previous;
+	}
+	return node;
+}
+
+void
+List_delete(List *list, unsigned int index)
+{
+	Node *node = List_detach(list, index);
+
+	if (node)
+		Node_free(node, list->f_node_data_free);
+}
+
+// add functions: filter,reduce,map actions (like ruby)
