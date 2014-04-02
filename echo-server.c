@@ -8,6 +8,7 @@ static ssize_t
 echo_connection_data_handler(Connection *connection)
 {
 	StringBuffer *buffer = (StringBuffer*)connection->data;
+
 	return StringBuffer_read(buffer, 0, connection->fd, buffer->length);
 }
 
@@ -38,7 +39,7 @@ echo_connection_handler(Connection *connection, ConnectionEvent event)
 	return connection;
 }
 
-Connection*
+static Connection*
 EchoConnection_new()
 {
 	Connection *connection = Connection_new(NULL, -1);
@@ -49,10 +50,11 @@ EchoConnection_new()
 	return connection;
 }
 
-UnixWorker*
+static UnixWorker*
 EchoWorker_new()
 {
 	UnixWorker *worker = UnixWorker_new();
+
 	worker->f_create_connection = EchoConnection_new;
 	return worker;
 }
@@ -65,8 +67,9 @@ main(int argc, char** argv)
 	Server *server = (Server*)UnixServer_new("/tmp/echo.sock");
 
 	int i;
-	for(i = 0; i < worker_count; i++)
-		List_add(server->workers, EchoWorker_new());
 
-		int ret = Server_start(server); // blocks
+	for (i = 0; i < worker_count; i++)
+		List_push(server->workers, EchoWorker_new());
+
+	int ret = Server_start(server);         // blocks
 }

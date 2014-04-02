@@ -26,6 +26,7 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/unix_server.o \
 	$(L)/connection.o \
 	$(L)/worker.o \
+	$(L)/unix_worker.o \
 	$(L)/request.o \
 	$(LIBCX_DIR)/libcx-list/list.o \
 	$(LIBCX_DIR)/libcx-umtp/message.o \
