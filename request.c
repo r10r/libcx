@@ -1,4 +1,5 @@
 #include "request.h"
+#include "libcx-base/profile.h"
 
 void
 Request_init(Request *request)
@@ -36,4 +37,18 @@ Request_free(Request *request)
 {
 	Request_free_members(request);
 	free(request);
+}
+
+void
+Request_stop(Request *request)
+{
+	int ret = gettimeofday(request->finished_at, NULL);
+
+	XASSERT(ret == 0, "gettimeofday should return 0");
+}
+
+void
+Request_log(Request *request)
+{
+	printf("Request[%p] duration:%f msec\n", request, timeval_diff(request->started_at, request->finished_at));
 }

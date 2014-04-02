@@ -43,4 +43,10 @@ Request_free_members(Request *request);
 void
 Request_free(Request *request);
 
+void
+Request_stop(Request *request);
+
+void
+Request_log(Request *request);
+
 #endif
