@@ -26,7 +26,7 @@ List_new()
 	list->first = NULL;
 	list->last = NULL;
 	list->length = 0;
-	list->f_node_data_free = NULL;
+	list->f_node_data_free = free;
 	list->userdata = NULL;
 	return list;
 }
