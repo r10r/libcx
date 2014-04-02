@@ -6,6 +6,9 @@
 #ifndef _CX_PROFILE_H
 #define _CX_PROFILE_H
 
+#define timeval_diff(t_start, t_end) \
+	((double)(((t_end)->tv_sec - (t_start)->tv_sec) * 1000.0 + ((t_end)->tv_usec - (t_start)->tv_usec) / 1000.0))
+
 #ifdef NPROFILE
 
 #define PROFILE_INIT
@@ -49,8 +52,7 @@ static double _PROFILE_CLOCK_DIFF;
 
 #define PROFILE_END \
 	gettimeofday(&_PROFILE_TIME_END, NULL); \
-	_PROFILE_TIME_DIFF = (_PROFILE_TIME_END.tv_sec - _PROFILE_TIME_START.tv_sec) * 1000.0; \
-	_PROFILE_TIME_DIFF += (_PROFILE_TIME_END.tv_usec - _PROFILE_TIME_START.tv_usec) / 1000.0; \
+	_PROFILE_TIME_DIFF = timeval_diff(&_PROFILE_TIME_START, &_PROFILE_TIME_END); \
 	_PROFILE_CLOCK_END = clock(); \
 	_PROFILE_CLOCK_DIFF = (double)(_PROFILE_CLOCK_END - _PROFILE_CLOCK_START) / CLOCKS_PER_SEC * 1000.0; \
 	printf("<~~ PROFILE END (real: %.4f ms, cpu: %.4f ms)\n", _PROFILE_TIME_DIFF, _PROFILE_CLOCK_DIFF);
