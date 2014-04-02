@@ -44,12 +44,6 @@ List_free(List *list)
 			next = cur->next;
 			Node_free(cur, list->f_node_data_free);
 		}
-		/* we must release the lock before we can free the list,
-		 * (invalid read reported by valgrind)
-		 * FIXME this is a candidate for a race condition.
-		 * How does other thread behave when the list is gone
-		 * when the lock is released ?
-		 */
 		free(list);
 	}
 }
