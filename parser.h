@@ -4,7 +4,7 @@
 #include "libcx-string/string.h"
 
 #define ParserDebug(parser, msg) \
-	printf("-- parser state [%s] --\n", msg); \
+	printf("-- parse event [%s] --\n", msg); \
 	printf("state - cs:%d iterations:%d\n", parser->cs, parser->iterations); \
 	printf("token - current:%p end:%p eof:%p\n", \
 	       parser->buffer_position, parser->buffer_end, parser->eof); \
@@ -48,7 +48,10 @@
 	if (parser->finished == 1) parser->eof = parser->buffer_end;
 
 #define RagelParser_finish(parser) \
-	{ parser->finished = 1; RagelParser_parse(parser); }
+	{ \
+		(parser)->finished = 1; \
+		RagelParser_parse(parser); \
+	}
 
 #define RagelParser_eof(parser) \
 	(parser->eof == parser->buffer_end)
@@ -81,6 +84,8 @@ struct ragel_parser_t
 	int finished;                   /* indicate eof */
 	unsigned int iterations;        /* the parser iteration */
 	int initialized;
+
+	void *userdata;
 };
 
 void
