@@ -30,6 +30,8 @@ RagelParser_init(RagelParser *parser)
 	parser->buffer_end = NULL;
 	parser->eof = NULL;
 	parser->f_parse = NULL;
+
+	parser->userdata = NULL;
 }
 
 RagelParser*
