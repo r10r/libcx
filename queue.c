@@ -81,7 +81,7 @@ Queue_add(Queue *queue, void *data)
 
 	List_unshift(queue->items, data);
 	// wake up a single thread that is waiting for the condition
-	int ret = pthread_cond_signal(queue->mutex_cond_add_item);
+	rc = pthread_cond_signal(queue->mutex_cond_add_item);
 	XFCHECK(rc == 0,
 		"pthread_cond_signal should exit with 0 (was %d)", rc);
 
