@@ -230,6 +230,9 @@ test_List_get()
 {
 	List *list = List_new();
 
+	/* no need to free data, we are using constants */
+	list->f_node_data_free = NULL;
+
 	List_push(list, "node 1");
 	List_push(list, "node 2");
 	List_push(list, "node 3");
