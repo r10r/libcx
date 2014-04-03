@@ -12,10 +12,13 @@ TESTS += $(L)/test_list \
 #_FLAGS := 
 
 # -- tests -- 
+# disable warnings for passing 'const char[x]' to 'void*' parameter
+$(L)/test_list_FLAGS := -Wno-incompatible-pointer-types-discards-qualifiers
 $(L)/test_list_OBJS := $(TEST_OBJS) \
 	$(L)/test_list.o \
 	$(L)/list.o
 
+$(L)/test_array_FLAGS := -Wno-incompatible-pointer-types-discards-qualifiers
 $(L)/test_array_OBJS := $(TEST_OBJS) \
 	$(L)/test_array.o \
 	$(L)/array.o

@@ -127,7 +127,6 @@ _Array_append(Array a, void *data)
 	unsigned long next_index = Array_next(a);
 
 	Array c = a;
-	struct array_header_t *c_hdr = a_hdr;
 	if (next_index == Array_length(a))
 	{
 		c = Array_grow(c, ARRAY_GROW_LENGTH);

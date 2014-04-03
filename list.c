@@ -3,10 +3,8 @@
 Node *
 Node_new()
 {
-	Node * node = malloc(sizeof(Node));
+	Node * node = calloc(1, sizeof(Node));
 
-	node->next = NULL;
-	node->previous = NULL;
 	return node;
 }
 
@@ -21,13 +19,9 @@ Node_free(Node *node, F_NodeDataFree *f_node_data_free)
 List *
 List_new()
 {
-	List *list = malloc(sizeof(List));
+	List *list = calloc(1, sizeof(List));
 
-	list->first = NULL;
-	list->last = NULL;
-	list->length = 0;
 	list->f_node_data_free = free;
-	list->userdata = NULL;
 	return list;
 }
 
