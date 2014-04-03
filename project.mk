@@ -29,8 +29,7 @@ MODULES := libcx-base \
 # to explicitly ignore unused parameters use a macro
 # #define UNUSED(x) (void)(x)
 
-CFLAGS += -I$(LIBCX_DIR) \
-	-Wno-error=unused-parameter \
+CFLAGS += -Wno-error=unused-parameter \
 	-Wno-error=unused-function \
 	-Wno-error=unused-variable \
 	-Wno-error=unused-value \

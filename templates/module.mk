@@ -4,6 +4,9 @@ L := $(LOCAL_DIR)
 #PROGRAMS += $(L)/
 #TESTS += $(L)/
 
+# overwrite CFLAGS per object
+#$(L)/.o : CFLAGS += ...
+
 # -- programs --
 #$(L)/_FLAGS := $(L)/
 #$(L)/_OBJS := $(L)/ \

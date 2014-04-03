@@ -46,7 +46,8 @@ include $(patsubst %,%/module.mk,$(MODULES))
 # look for include files in each of the modules
 # use -isystem ?
 #CFLAGS += $(patsubst %,-I%,$(MODULES))
-
+CFLAGS += -I$(LIBCX_DIR) -I$(BASE_DIR)
+INCLUDES := $(filter -I%,$(CFLAGS))
 
 # [ os ]
 # ======
@@ -81,7 +82,7 @@ $(foreach prog,$(PROGRAMS),$(eval $(call PROGRAM_template,$(prog))))
 # Calculate dependencies for object.
 # Regenerate dependency makefile when object is updated.
 %.o.mk:
-	$(OBJECT_DEPENDENCY_SCRIPT) $*.c $(CFLAGS) $*.c > $@
+	$(OBJECT_DEPENDENCY_SCRIPT) $*.c $(INCLUDES) $*.c > $@
 	
 # Include a dependency file per object.
 # The dependency file is created automatically by the rule above.

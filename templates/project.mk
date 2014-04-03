@@ -1,9 +1,7 @@
 LIBCX_DIR := $(LOCAL_DIR)/libcx
 
 CC := clang
-CFLAGS += -Weverything -Werror -Wall -pedantic \
-	-I$(LIBCX_DIR) \
-	-I$(BASE_DIR)
+CFLAGS += -Weverything -Werror -Wall -pedantic
 
 # profile release
 #CFLAGS += -Os
