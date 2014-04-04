@@ -67,7 +67,7 @@ RagelParser_parse_file(RagelParser *parser, const char *file_path, size_t chunk_
 {
 	FILE *file = fopen(file_path, "r");
 
-	XFASSERT(file, "file %s should exist\n", file_path);
+	XFASSERT(file, "file %s should exist", file_path);
 	ssize_t nread = StringBuffer_fload(parser->buffer, file, chunk_size);
 	fclose(file);
 
@@ -117,12 +117,12 @@ RagelParser_parse(RagelParser *parser)
 	// check if parser has changed and if we have any remaining tokens
 	if (next_handler != current_handler)
 	{
-		printf("Parser has changed\n");
+		XDBG("Parser has changed");
 		parser->initialized = 0;        // triggers RagelParser_firstrun
 		size_t nunparsed =  RagelParser_unparsed(parser);
 		if (nunparsed > 0)
 		{
-			printf("%zu unparsed tokens. calling body parser\n", nunparsed);
+			XFDBG("%zu unparsed tokens. calling body parser", nunparsed);
 			RagelParser_parse(parser);
 		}
 	}
@@ -135,12 +135,12 @@ RagelParser_shift_buffer(RagelParser *parser)
 
 	if (ret == 1)
 	{
-		XFDBG("Shifted buffer by %zu tokens\n", parser->buffer_offset);
+		XFDBG("Shifted buffer by %zu tokens", parser->buffer_offset);
 		parser->buffer_offset = 0;
 		parser->marker_length = 0;
 		parser->marker_start = 0;
 		RagelParser_update(parser);
 	}
 	else
-		XDBG("Failed to shift buffer\n");
+		XDBG("Failed to shift buffer");
 }

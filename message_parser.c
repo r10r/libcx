@@ -61,7 +61,7 @@ simple_body_parser(RagelParser *parser)
 	// @optimize shift buffer up to body start
 	if (RagelParser_eof(parser))
 	{
-		printf("EOF simple body parser\n");
+		XDBG("EOF simple body parser");
 		// marker length is not set since we do not count tokens in a FSM
 		size_t marker_length = parser->buffer->string->length - parser->marker_start;
 		StringPointer *body_pointer = StringPointer_new(Marker_get(parser), marker_length);
@@ -77,7 +77,7 @@ event_handler(RagelParser *parser, int event)
 	Message *message = message_parser->message;
 
 
-	XFLOG("Event %d, at index %zu [%c] \n",
+	XFDBG("Event %d, at index %zu [%c]",
 	      event,
 	      /* buffer already position points to next token */
 	      parser->buffer_offset - 1,
