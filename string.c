@@ -123,13 +123,13 @@ StringBuffer_read(StringBuffer *buffer, size_t offset, int fd, size_t nchars)
 }
 
 ssize_t
-StringBuffer_fload(StringBuffer *buffer, FILE *file, size_t chunk_size)
+StringBuffer_fdload(StringBuffer *buffer, int fd, size_t chunk_size)
 {
 	ssize_t total_read = 0;
 
 	while (1)
 	{
-		ssize_t nread = StringBuffer_fcat(buffer, file, chunk_size);
+		ssize_t nread = StringBuffer_fdcat(buffer, fd, chunk_size);
 		total_read += nread;
 
 		if (nread == 0)

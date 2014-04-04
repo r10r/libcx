@@ -125,8 +125,11 @@ StringBuffer_make_room(StringBuffer *buffer, size_t offset, size_t nchars);
 ssize_t
 StringBuffer_append(StringBuffer *buffer, size_t offset, const char* source, size_t nchars);
 
+#define StringBuffer_fload(buffer, file,  chunk_size) \
+	StringBuffer_fdload(buffer, fileno(file), chunk_size)
+
 ssize_t
-StringBuffer_fload(StringBuffer *buffer, FILE *file, size_t chunk_size);
+StringBuffer_fdload(StringBuffer *buffer, int fd, size_t chunk_size);
 
 #define StringBuffer_cat(buffer, chars) \
 	StringBuffer_append(buffer, buffer->string->length, chars, strlen(chars))
