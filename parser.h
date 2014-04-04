@@ -109,4 +109,11 @@ RagelParser_parse_file(RagelParser *parser, const char *file_path, size_t chunk_
 void
 RagelParser_shift_buffer(RagelParser *parser);
 
+/*
+ * Read chunk_size length data from fd and calls parser after each read
+ * @return number of bytes read or < 0 on error
+ */
+ssize_t
+RagelParser_fdparse(RagelParser *parser, int fd, size_t chunk_size);
+
 #endif

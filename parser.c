@@ -77,6 +77,35 @@ RagelParser_parse_file(RagelParser *parser, const char *file_path, size_t chunk_
 	RagelParser_finish(parser);
 }
 
+ssize_t
+RagelParser_fdparse(RagelParser *parser, int fd, size_t chunk_size)
+{
+	ssize_t total_read = 0;
+	StringBuffer *buffer = StringBuffer_new(chunk_size);
+
+	parser->buffer = buffer;
+
+	while (1)
+	{
+		ssize_t nread = StringBuffer_fdcat(buffer, fd, chunk_size);
+		total_read += nread;
+
+		if (nread == 0)
+		{
+			RagelParser_finish(parser);
+			break;
+		}
+		if (nread < 0)
+		{
+			total_read = nread;
+			break;
+		}
+		RagelParser_parse(parser);
+	}
+	StringBuffer_free(buffer);
+	return total_read;
+}
+
 void
 RagelParser_parse(RagelParser *parser)
 {
