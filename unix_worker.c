@@ -20,7 +20,7 @@ UnixWorker_new()
 void
 UnixWorker_run(Worker *worker)
 {
-	printf("Running unix worker\n");
+	XDBG("Running unix worker");
 	UnixWorker *unix_worker = (UnixWorker*)worker;
 	UnixServer *server = (UnixServer*)worker->server;
 
@@ -41,7 +41,7 @@ unix_connection_watcher(ev_loop *loop, ev_io *w, int revents)
 	int client_fd = accept(unix_worker->server_fd, NULL, NULL);
 
 	if (client_fd == -1)
-		XFLOG("Worker[%lu] - failed to accept\n", worker->id);
+		XFLOG("Worker[%lu] - failed to accept", worker->id);
 	else
 	{
 
@@ -50,7 +50,7 @@ unix_connection_watcher(ev_loop *loop, ev_io *w, int revents)
 		enable_so_opt(client_fd, SO_NOSIGPIPE);
 #endif
 
-		XFLOG("Worker[%lu] - accepted connection on fd:%d\n", worker->id, client_fd);
+		XFLOG("Worker[%lu] - accepted connection on fd:%d", worker->id, client_fd);
 		Connection *connection = unix_worker->f_create_connection();
 		connection->worker = worker;
 		connection->fd = client_fd;

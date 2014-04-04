@@ -5,7 +5,7 @@
 
 void send_data(int fd, const char *data)
 {
-	XFDBG("Sending data: %s\n", data);
+	XFDBG("Sending data: %s", data);
 	send(fd, data, strlen(data), 0);
 }
 
@@ -42,12 +42,12 @@ receive_response(int sock)
 	ssize_t receive_count;
 
 	receive_count = recv(sock, receive_buffer, 100, 0);
-	XFDBG("Received %zu\n", receive_count);
+	XFDBG("Received %zu", receive_count);
 
 	if (receive_count > 0)
 	{
 		receive_buffer[receive_count] = '\0';
-		XFDBG("Response : %s\n", receive_buffer);
+		XFDBG("Response : %s", receive_buffer);
 	}
 	else
 		XDBG("Do not received nothing");

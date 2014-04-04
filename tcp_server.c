@@ -59,7 +59,7 @@ tcp_socket_connect(const char *ip, uint16_t port)
 
 	ret = inet_pton(AF_INET, ip, &(address.sin_addr));
 	if (ret == 0)
-		XFDBG("Unparsable IPv4 address : %s\n", ip);
+		XFDBG("Unparsable IPv4 address : %s", ip);
 	else if (ret == -1)
 		XERR("Failed to convert IPv4 address");
 
@@ -83,7 +83,7 @@ tcp_socket_connect(const char *ip, uint16_t port)
 		XERR("Failed to listen to socket");
 		return SOCKET_CONNECT_FAILED;
 	}
-	XFLOG("Connected to: fd:%d [%s:%d]\n", fd, ip, port);
+	XFLOG("Connected to: fd:%d [%s:%d]", fd, ip, port);
 
 #if (!defined (__linux__) && defined(__unix__)) || (defined(__APPLE__) && defined(__MACH__))
 	// http://stackoverflow.com/questions/108183/how-to-prevent-sigpipes-or-handle-them-properly
@@ -98,7 +98,7 @@ tcp_socket_connect(const char *ip, uint16_t port)
 static void
 timer_cb(ev_loop *loop, ev_timer *timer, int revents)
 {
-	printf("Hello from the manager\n");
+	XLOG("Hello from the manager");
 }
 
 static Server*
@@ -197,7 +197,7 @@ tcp_connection_watcher(ev_loop *loop, ev_io *w, int revents)
 	int client_fd = accept(tcp_worker->server_fd, NULL, NULL);
 
 	if (client_fd == -1)
-		XFLOG("Worker[%lu] - failed to accept\n", worker->id);
+		XFLOG("Worker[%lu] - failed to accept", worker->id);
 	else
 	{
 
@@ -206,7 +206,7 @@ tcp_connection_watcher(ev_loop *loop, ev_io *w, int revents)
 		enable_so_opt(client_fd, SO_NOSIGPIPE);
 #endif
 
-		XFLOG("Worker[%lu] - accepted connection on fd:%d\n", worker->id, client_fd);
+		XFLOG("Worker[%lu] - accepted connection on fd:%d", worker->id, client_fd);
 
 		Connection *connection = Connection_new(loop, client_fd);
 		connection->f_handler = worker->f_connection_handler;
