@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h> /* malloc */
+#include <libcx-base/base.h>
 #include <libcx-base/debug.h>
 
 typedef struct node_t Node;
@@ -28,6 +29,9 @@ struct list_t
 	void *userdata;
 };
 
+#define LIST_EACH(list, node) \
+	EACH(list, node, next)
+
 Node *
 Node_new(void);
 
@@ -50,11 +54,6 @@ List_push(List *list, void *data);
 
 Node *
 List_match(List *list, void *key, F_NodeMatch *f_node_match);
-
-#define LIST_EACH(head, type, el) \
-	Node * __head = head; \
-	type *el = NULL; \
-	for (el = (type*)__head->data; __head && (el = (type*)__head->data); __head = __head->next)
 
 void
 List_each(List *list, F_NodeIterator *f_node_iterator);
