@@ -24,18 +24,18 @@
  * Prints the given message to stderr with debug information if errno is not 0.
  */
 #define XDBG(message) \
-	fprintf(stderr, "XDBG:[%s] - (%s):%s:%d\n", \
-		message, __func__, __FILE__, __LINE__)
+	fprintf(stderr, "XDBG:(%s):%s:%d - " message "\n", \
+		__func__, __FILE__, __LINE__)
 
 #define XFDBG(format, ...) \
-	fprintf(stderr, "(%s):%s:%d " format, \
+	fprintf(stderr, "(%s):%s:%d " format "\n", \
 		__func__, __FILE__, __LINE__, __VA_ARGS__)
 
 #define XFLOG(format, ...) \
-	fprintf(stdout, format, __VA_ARGS__)
+	fprintf(stdout, format "\n", __VA_ARGS__)
 
 #define XLOG(message) \
-	fprintf(stdout, message)
+	fprintf(stdout, message "\n")
 
 #endif
 
@@ -85,14 +85,14 @@
  */
 #define XASSERT(condition, message) \
 	if (!(condition)) { \
-		fprintf(stderr, "XASSERT:[%s] - (%s):%s:%d\n", \
-			message, __func__, __FILE__, __LINE__); \
+		fprintf(stderr, "XASSERT:(%s):%s:%d - " message "\n", \
+			__func__, __FILE__, __LINE__); \
 		exit(XEXIT_CODE); \
 	}
 
 #define XFASSERT(condition, format, ...) \
 	if (!(condition)) { \
-		fprintf(stderr, "XASSERT:(%s):%s:%d - " format, \
+		fprintf(stderr, "XASSERT:(%s):%s:%d - " format "\n", \
 			__func__, __FILE__, __LINE__, __VA_ARGS__); \
 		exit(XEXIT_CODE); \
 	}
