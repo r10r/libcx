@@ -77,6 +77,38 @@ test_unsigned_minus_signed()
 	TEST_ASSERT_EQUAL_INT(1000, (s - ((size_t)-m)));
 }
 
+struct node_t
+{
+	struct node_t *next;
+	int num;
+};
+
+static void
+test_EACH()
+{
+	struct node_t second = { .next = NULL, 2 };
+	struct node_t first = { .next = &second, 1 };
+
+	struct node_t *iterator = NULL;
+	struct node_t *element = NULL;
+
+	EACH(iterator, element, next)
+	{
+		; // noop
+	}
+
+	iterator = &first;
+	element = NULL;
+	int sum = 0;
+	EACH(iterator, element, next)
+	{
+		sum += element->num;
+	}
+
+	TEST_ASSERT_EQUAL_INT(3, sum);
+	TEST_ASSERT_EQUAL_INT(2, element->num);
+}
+
 int main()
 {
 	TEST_BEGIN
@@ -84,6 +116,7 @@ int main()
 	RUN(test_container_of);
 	RUN(test_clone);
 	RUN(test_unsigned_minus_signed);
+	RUN(test_EACH);
 
 	TEST_END
 }

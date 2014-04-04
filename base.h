@@ -29,5 +29,8 @@
 #define clone(type, obj) \
 	(type*)memcpy(malloc(sizeof(type)), obj, sizeof(type))
 
+#define EACH(__iter, __elem, __next) \
+	for (; __iter && (__elem = __iter); __iter = __iter->__next)
+
 #endif
 
