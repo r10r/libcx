@@ -15,7 +15,7 @@ Array_init(const void *value, unsigned long length)
 	else
 		hdr =  calloc(Array_size(length), 1);
 
-//	XFDBG("header:%p\n", hdr);
+//	XFDBG("header:%p", hdr);
 
 	if (hdr == NULL)
 		return NULL;         // OOM
@@ -23,7 +23,7 @@ Array_init(const void *value, unsigned long length)
 	hdr->length = length;
 	hdr->unused = length;
 
-//	XFDBG("buf:%p\n", &hdr->buf);
+//	XFDBG("buf:%p", &hdr->buf);
 
 	if (length > 0 && value)
 		memcpy(hdr->buf, value, length);
@@ -40,7 +40,7 @@ Array_new(unsigned long length)
 void
 Array_free(Array a)
 {
-//	XFDBG("free:%p\n", a);
+//	XFDBG("free:%p", a);
 	if (a == NULL)
 		return;
 	free(Array_header(a));
