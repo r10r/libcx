@@ -48,18 +48,18 @@ _Worker_run(void *data)
 {
 	Worker *worker = (Worker*)data;
 
-	printf("Worker[%lu] started\n", worker->id);
+	XFDBG("Worker[%lu] started", worker->id);
 	if (worker->f_handler)
 		worker->f_handler(worker);
 	else
-		printf("Worker[%lu] exiting no handler\n", worker->id);
+		XFDBG("Worker[%lu] exiting no handler", worker->id);
 	return NULL;
 }
 
 void
 Worker_stop(Worker *worker)
 {
-	XDBG("Not implemented\n");
+	XDBG("Not implemented");
 	// FIXME must signal worker to close all connections (using async_send ?)
 //	XASSERT("Task list should be empty", worker->tasks->length == 0)
 //	XASSERT("No tasks should be in progress")

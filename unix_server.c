@@ -78,7 +78,7 @@ unix_socket_connect(const char *sock_path)
 
 	sock_path_len = strlen(sock_path);
 	address_size = sizeof(address);
-	XFLOG("Starting on socket : [%s]\n", sock_path);
+	XFLOG("Starting on socket : [%s]", sock_path);
 
 	/* check preconditions */
 	if (sock_path_len > UNIX_PATH_MAX)
@@ -118,7 +118,7 @@ unix_socket_connect(const char *sock_path)
 		XERR("Failed to listen to socket");
 		return SOCKET_CONNECT_FAILED;
 	}
-	XFLOG("Connected to: fd:%d [%s]\n", fd, sock_path);
+	XFLOG("Connected to: fd:%d [%s]", fd, sock_path);
 
 #if (!defined (__linux__) && defined(__unix__)) || (defined(__APPLE__) && defined(__MACH__))
 	// http://stackoverflow.com/questions/108183/how-to-prevent-sigpipes-or-handle-them-properly
