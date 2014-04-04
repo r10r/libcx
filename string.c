@@ -91,7 +91,7 @@ StringBuffer_make_room(StringBuffer *buffer, size_t offset, size_t nlength_reque
 	if (new_string == NULL)
 		return -1;
 
-	XFLOG("Incremented buffer size %zu -> %zu\n", buffer->length, new_length);
+	XFLOG("Incremented buffer size %zu -> %zu", buffer->length, new_length);
 
 	buffer->string = new_string;
 	buffer->length = new_length;
@@ -116,7 +116,7 @@ StringBuffer_read(StringBuffer *buffer, size_t offset, int fd, size_t nchars)
 		return -1;
 
 	ssize_t nread = read(fd, S_get(buffer->string, offset), nchars);
-	XFLOG("Read %zu (read size %zu) chars into buffer\n", nread, nchars);
+	XFLOG("Read %zu (read size %zu) chars into buffer", nread, nchars);
 	if (nread > 0)
 		buffer->string->length = offset + (size_t)nread;
 	return nread;
