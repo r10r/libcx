@@ -18,8 +18,8 @@ static pthread_key_t TLC_foobar;
 
 typedef struct foo_bar_t
 {
-	const char *foo;
-	const char *bar;
+	const char* foo;
+	const char* bar;
 } FooBar;
 
 
@@ -27,9 +27,9 @@ typedef struct foo_bar_t
 #define SAFE_NULL(ptr) (ptr ? ptr : (char*)0x0)
 
 static void
-mylog(const char *message)
+mylog(const char* message)
 {
-	FooBar *foobar = TLC_get(foobar, FooBar);
+	FooBar* foobar = TLC_get(foobar, FooBar);
 
 	if (foobar)
 		LOG("bar:%p bar:%s - %s\n", SAFE_NULL(foobar->bar), SAFE_NULL(foobar->bar), message);
@@ -38,7 +38,7 @@ mylog(const char *message)
 }
 
 static void*
-pthread_foo_run(void *arg)
+pthread_foo_run(void* arg)
 {
 	int i;
 
@@ -51,7 +51,7 @@ pthread_foo_run(void *arg)
 }
 
 static void*
-pthread_bar_run(void *arg)
+pthread_bar_run(void* arg)
 {
 	mylog("without foobar");
 	return NULL;

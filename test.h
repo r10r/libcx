@@ -9,13 +9,18 @@
 #include "unity.h"
 #include "debug.h"
 
-extern void setUp(void);
-extern void tearDown(void);
+extern void
+setUp(void);
+extern void
+tearDown(void);
 
-void setUp()
+void
+setUp()
 {
 }
-void tearDown()
+
+void
+tearDown()
 {
 }
 

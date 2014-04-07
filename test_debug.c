@@ -23,11 +23,12 @@ test_XFCHECK()
 		"%d equals %d", 1, 3);
 }
 
-static void test_XERR()
+static void
+test_XERR()
 {
 	XERR("You should not see this");
 	errno = EPERM;
-	char *err = strerror(errno);
+	char* err = strerror(errno);
 	XERR(err);
 
 //	reported by valgrind: (on OSX)
@@ -38,13 +39,14 @@ static void test_XERR()
 #endif
 }
 
-static void test_XDBG()
+static void
+test_XDBG()
 {
 	XDBG("You should see this");
 }
 
-
-int main()
+int
+main()
 {
 	TEST_BEGIN
 

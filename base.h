@@ -33,4 +33,3 @@
 	for (; __iter && (__elem = __iter); __iter = __iter->__next)
 
 #endif
-
