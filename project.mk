@@ -5,14 +5,11 @@ LIBCX_DIR := $(LOCAL_DIR)
 CC := clang
 CFLAGS += -Weverything -Werror -Wall -pedantic
 
-# profile release
-#CFLAGS += -Os
-
-# disable debug statements
-#CFLAGS +=  -DNDEBUG
-
-# profile development
-CFLAGS += -gdwarf-2 -g -O0 -fno-inline -DTRACE -DPROFILE --coverage
+ifeq ($(profile),release)
+CFLAGS += -Os -DNDEBUG -DNTRACE
+else
+CFLAGS += -gdwarf-2 -g -O0 -fno-inline --coverage
+endif
 
 ifeq ($(OS),Darwin)
 # only when clang is installed through homebrew
