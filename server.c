@@ -2,15 +2,15 @@
 #include "worker.h"
 
 static void
-shutdown_watcher(ev_loop *loop, ev_timer *w, int revents);
+shutdown_watcher(ev_loop* loop, ev_timer* w, int revents);
 
 static void
-sigint_watcher(ev_loop *loop, ev_signal *w, int revents);
+sigint_watcher(ev_loop* loop, ev_signal* w, int revents);
 
 static void
-free_worker(void *data)
+free_worker(void* data)
 {
-	Worker *worker = (Worker*)data;
+	Worker* worker = (Worker*)data;
 
 	Worker_stop(worker);
 }
@@ -18,14 +18,14 @@ free_worker(void *data)
 Server*
 Server_new()
 {
-	Server *server = malloc(sizeof(Server));
+	Server* server = malloc(sizeof(Server));
 
 	Server_init(server);
 	return server;
 }
 
 void
-Server_init(Server *server)
+Server_init(Server* server)
 {
 	server->backlog = 0;    // TODO set reasonable default (currently unused)
 	server->loop = EV_DEFAULT;
@@ -34,14 +34,14 @@ Server_init(Server *server)
 }
 
 void
-Server_free(Server *server)
+Server_free(Server* server)
 {
 	List_free(server->workers);
 	free(server);
 }
 
 int
-Server_start(Server *server)
+Server_start(Server* server)
 {
 	server->f_server_handler(server, SERVER_START);
 
@@ -49,7 +49,7 @@ Server_start(Server *server)
 	unsigned int i;
 	for (i = 0; i < (unsigned int)server->workers->length; i++)
 	{
-		Worker *worker = (Worker*)List_get(server->workers, i);
+		Worker* worker = (Worker*)List_get(server->workers, i);
 		worker->id = i;
 		worker->server = server;
 		Worker_start(worker);
@@ -69,7 +69,7 @@ Server_start(Server *server)
 }
 
 void
-Server_shutdown(Server *server)
+Server_shutdown(Server* server)
 {
 	// shutdown callback
 	server->f_server_handler(server, SERVER_SHUTDOWN);
@@ -80,9 +80,9 @@ Server_shutdown(Server *server)
 }
 
 static void
-shutdown_watcher(ev_loop *loop, ev_timer *w, int revents)
+shutdown_watcher(ev_loop* loop, ev_timer* w, int revents)
 {
-	Server *server = container_of(w, Server, shutdown_watcher);
+	Server* server = container_of(w, Server, shutdown_watcher);
 
 	XDBG("Waiting for workers to shut down");
 	// TODO wait here for workers to shutdown
@@ -93,9 +93,9 @@ shutdown_watcher(ev_loop *loop, ev_timer *w, int revents)
 
 /* handle SIGINT callback (starts the shutdown timer) */
 static void
-sigint_watcher(ev_loop *loop, ev_signal *w, int revents)
+sigint_watcher(ev_loop* loop, ev_signal* w, int revents)
 {
-	Server *server = container_of(w, Server, sigint_watcher);
+	Server* server = container_of(w, Server, sigint_watcher);
 
 	XDBG("Received SIGINT.");
 	Server_shutdown(server);

@@ -2,7 +2,7 @@
 #include "libcx-base/profile.h"
 
 void
-Request_init(Request *request)
+Request_init(Request* request)
 {
 	request->status = REQUEST_STARTED;
 	request->started_at = malloc(sizeof(struct timeval));
@@ -17,7 +17,7 @@ Request_init(Request *request)
 Request*
 Request_new(unsigned long id)
 {
-	Request *request = malloc(sizeof(Request));
+	Request* request = malloc(sizeof(Request));
 
 	request->id = id;
 
@@ -26,21 +26,21 @@ Request_new(unsigned long id)
 }
 
 void
-Request_free_members(Request *request)
+Request_free_members(Request* request)
 {
 	free(request->started_at);
 	free(request->finished_at);
 }
 
 void
-Request_free(Request *request)
+Request_free(Request* request)
 {
 	Request_free_members(request);
 	free(request);
 }
 
 void
-Request_stop(Request *request)
+Request_stop(Request* request)
 {
 	int ret = gettimeofday(request->finished_at, NULL);
 
@@ -48,7 +48,7 @@ Request_stop(Request *request)
 }
 
 void
-Request_log(Request *request)
+Request_log(Request* request)
 {
 	printf("Request[%p] duration:%f msec\n", request, timeval_diff(request->started_at, request->finished_at));
 }
