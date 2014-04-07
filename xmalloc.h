@@ -5,17 +5,17 @@
 #include <stdlib.h>     /* malloc / free */
 #include <stdio.h>      /* printf */
 
-void *
-d_xmalloc(size_t size, const char *func, const char *file, int line);
+void*
+d_xmalloc(size_t size, const char* func, const char* file, int line);
 
-void *
-d_xcalloc(size_t count, size_t size, const char *func, const char *file, int line);
+void*
+d_xcalloc(size_t count, size_t size, const char* func, const char* file, int line);
 
-void *
-d_xrealloc(void *ptr, size_t size, const char *func, const char *file, int line);
+void*
+d_xrealloc(void* ptr, size_t size, const char* func, const char* file, int line);
 
 void
-d_xfree(void *ptr, const char *func, const char *file, int line);
+d_xfree(void* ptr, const char* func, const char* file, int line);
 
 
 #ifndef _XMALLOC_DISABLED

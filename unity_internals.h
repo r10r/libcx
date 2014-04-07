@@ -241,7 +241,8 @@ typedef UNITY_DOUBLE_TYPE _UD;
 #define UNITY_OUTPUT_CHAR(a) putchar(a)
 #else
 //If defined as something else, make sure we declare it here so it's ready for use
-extern int UNITY_OUTPUT_CHAR(int);
+extern int
+UNITY_OUTPUT_CHAR(int);
 #endif
 
 //-------------------------------------------------------
@@ -260,7 +261,7 @@ extern int UNITY_OUTPUT_CHAR(int);
 // Internal Structs Needed
 //-------------------------------------------------------
 
-typedef void (*UnityTestFunction)(void);
+typedef void (* UnityTestFunction)(void);
 
 #define UNITY_DISPLAY_RANGE_INT  (0x10)
 #define UNITY_DISPLAY_RANGE_UINT (0x20)
@@ -324,24 +325,35 @@ extern struct _Unity Unity;
 // Test Suite Management
 //-------------------------------------------------------
 
-void UnityBegin(void);
-_U_UINT  UnityEnd(void);
-void UnityConcludeTest(void);
-void UnityDefaultTestRun(UnityTestFunction Func, const char* FuncName, const int FuncLineNum);
+void
+UnityBegin(void);
+_U_UINT
+UnityEnd(void);
+void
+UnityConcludeTest(void);
+void
+UnityDefaultTestRun(UnityTestFunction Func, const char* FuncName, const int FuncLineNum);
 
 //-------------------------------------------------------
 // Test Output
 //-------------------------------------------------------
 
-void UnityPrint(const char* string);
-void UnityPrintMask(const _U_UINT mask, const _U_UINT number);
-void UnityPrintNumberByStyle(const _U_SINT number, const UNITY_DISPLAY_STYLE_T style);
-void UnityPrintNumber(const _U_SINT number);
-void UnityPrintNumberUnsigned(const _U_UINT number);
-void UnityPrintNumberHex(const _U_UINT number, const char nibbles);
+void
+UnityPrint(const char* string);
+void
+UnityPrintMask(const _U_UINT mask, const _U_UINT number);
+void
+UnityPrintNumberByStyle(const _U_SINT number, const UNITY_DISPLAY_STYLE_T style);
+void
+UnityPrintNumber(const _U_SINT number);
+void
+UnityPrintNumberUnsigned(const _U_UINT number);
+void
+UnityPrintNumberHex(const _U_UINT number, const char nibbles);
 
 #ifdef UNITY_FLOAT_VERBOSE
-void UnityPrintFloat(const _UF number);
+void
+UnityPrintFloat(const _UF number);
 #endif
 
 //-------------------------------------------------------
@@ -352,104 +364,123 @@ void UnityPrintFloat(const _UF number);
 //  convention and will pull in file and line information
 //  for you.
 
-void UnityAssertEqualNumber(const _U_SINT expected,
-			    const _U_SINT actual,
-			    const char* msg,
-			    const UNITY_LINE_TYPE lineNumber,
-			    const UNITY_DISPLAY_STYLE_T style);
+void
+UnityAssertEqualNumber(const _U_SINT expected,
+		       const _U_SINT actual,
+		       const char* msg,
+		       const UNITY_LINE_TYPE lineNumber,
+		       const UNITY_DISPLAY_STYLE_T style);
 
-void UnityAssertEqualIntArray(UNITY_PTR_ATTRIBUTE const void* expected,
-			      UNITY_PTR_ATTRIBUTE const void* actual,
-			      const _UU32 num_elements,
-			      const char* msg,
-			      const UNITY_LINE_TYPE lineNumber,
-			      const UNITY_DISPLAY_STYLE_T style);
+void
+UnityAssertEqualIntArray(UNITY_PTR_ATTRIBUTE const void* expected,
+			 UNITY_PTR_ATTRIBUTE const void* actual,
+			 const _UU32 num_elements,
+			 const char* msg,
+			 const UNITY_LINE_TYPE lineNumber,
+			 const UNITY_DISPLAY_STYLE_T style);
 
-void UnityAssertBits(const _U_SINT mask,
-		     const _U_SINT expected,
-		     const _U_SINT actual,
-		     const char* msg,
-		     const UNITY_LINE_TYPE lineNumber);
+void
+UnityAssertBits(const _U_SINT mask,
+		const _U_SINT expected,
+		const _U_SINT actual,
+		const char* msg,
+		const UNITY_LINE_TYPE lineNumber);
 
-void UnityAssertEqualString(const char* expected,
-			    const char* actual,
-			    const char* msg,
-			    const UNITY_LINE_TYPE lineNumber);
+void
+UnityAssertEqualString(const char* expected,
+		       const char* actual,
+		       const char* msg,
+		       const UNITY_LINE_TYPE lineNumber);
 
-void UnityAssertEqualStringArray( const char** expected,
-				  const char** actual,
-				  const _UU32 num_elements,
-				  const char* msg,
-				  const UNITY_LINE_TYPE lineNumber);
-
-void UnityAssertEqualMemory( UNITY_PTR_ATTRIBUTE const void* expected,
-			     UNITY_PTR_ATTRIBUTE const void* actual,
-			     const _UU32 length,
+void
+UnityAssertEqualStringArray( const char** expected,
+			     const char** actual,
 			     const _UU32 num_elements,
 			     const char* msg,
 			     const UNITY_LINE_TYPE lineNumber);
 
-void UnityAssertNumbersWithin(const _U_SINT delta,
-			      const _U_SINT expected,
-			      const _U_SINT actual,
-			      const char* msg,
-			      const UNITY_LINE_TYPE lineNumber,
-			      const UNITY_DISPLAY_STYLE_T style);
+void
+UnityAssertEqualMemory( UNITY_PTR_ATTRIBUTE const void* expected,
+			UNITY_PTR_ATTRIBUTE const void* actual,
+			const _UU32 length,
+			const _UU32 num_elements,
+			const char* msg,
+			const UNITY_LINE_TYPE lineNumber);
 
-void UnityFail(const char* message, const UNITY_LINE_TYPE line);
+void
+UnityAssertNumbersWithin(const _U_SINT delta,
+			 const _U_SINT expected,
+			 const _U_SINT actual,
+			 const char* msg,
+			 const UNITY_LINE_TYPE lineNumber,
+			 const UNITY_DISPLAY_STYLE_T style);
 
-void UnityIgnore(const char* message, const UNITY_LINE_TYPE line);
+void
+UnityFail(const char* message, const UNITY_LINE_TYPE line);
+
+void
+UnityIgnore(const char* message, const UNITY_LINE_TYPE line);
 
 #ifndef UNITY_EXCLUDE_FLOAT
-void UnityAssertFloatsWithin(const _UF delta,
-			     const _UF expected,
-			     const _UF actual,
-			     const char* msg,
-			     const UNITY_LINE_TYPE lineNumber);
+void
+UnityAssertFloatsWithin(const _UF delta,
+			const _UF expected,
+			const _UF actual,
+			const char* msg,
+			const UNITY_LINE_TYPE lineNumber);
 
-void UnityAssertEqualFloatArray(UNITY_PTR_ATTRIBUTE const _UF* expected,
-				UNITY_PTR_ATTRIBUTE const _UF* actual,
-				const _UU32 num_elements,
-				const char* msg,
-				const UNITY_LINE_TYPE lineNumber);
-
-void UnityAssertFloatIsInf(const _UF actual,
+void
+UnityAssertEqualFloatArray(UNITY_PTR_ATTRIBUTE const _UF* expected,
+			   UNITY_PTR_ATTRIBUTE const _UF* actual,
+			   const _UU32 num_elements,
 			   const char* msg,
 			   const UNITY_LINE_TYPE lineNumber);
 
-void UnityAssertFloatIsNegInf(const _UF actual,
-			      const char* msg,
-			      const UNITY_LINE_TYPE lineNumber);
+void
+UnityAssertFloatIsInf(const _UF actual,
+		      const char* msg,
+		      const UNITY_LINE_TYPE lineNumber);
 
-void UnityAssertFloatIsNaN(const _UF actual,
-			   const char* msg,
-			   const UNITY_LINE_TYPE lineNumber);
+void
+UnityAssertFloatIsNegInf(const _UF actual,
+			 const char* msg,
+			 const UNITY_LINE_TYPE lineNumber);
+
+void
+UnityAssertFloatIsNaN(const _UF actual,
+		      const char* msg,
+		      const UNITY_LINE_TYPE lineNumber);
 #endif
 
 #ifndef UNITY_EXCLUDE_DOUBLE
-void UnityAssertDoublesWithin(const _UD delta,
-			      const _UD expected,
-			      const _UD actual,
-			      const char* msg,
-			      const UNITY_LINE_TYPE lineNumber);
+void
+UnityAssertDoublesWithin(const _UD delta,
+			 const _UD expected,
+			 const _UD actual,
+			 const char* msg,
+			 const UNITY_LINE_TYPE lineNumber);
 
-void UnityAssertEqualDoubleArray(UNITY_PTR_ATTRIBUTE const _UD* expected,
-				 UNITY_PTR_ATTRIBUTE const _UD* actual,
-				 const _UU32 num_elements,
-				 const char* msg,
-				 const UNITY_LINE_TYPE lineNumber);
-
-void UnityAssertDoubleIsInf(const _UD actual,
+void
+UnityAssertEqualDoubleArray(UNITY_PTR_ATTRIBUTE const _UD* expected,
+			    UNITY_PTR_ATTRIBUTE const _UD* actual,
+			    const _UU32 num_elements,
 			    const char* msg,
 			    const UNITY_LINE_TYPE lineNumber);
 
-void UnityAssertDoubleIsNegInf(const _UD actual,
-			       const char* msg,
-			       const UNITY_LINE_TYPE lineNumber);
+void
+UnityAssertDoubleIsInf(const _UD actual,
+		       const char* msg,
+		       const UNITY_LINE_TYPE lineNumber);
 
-void UnityAssertDoubleIsNaN(const _UD actual,
-			    const char* msg,
-			    const UNITY_LINE_TYPE lineNumber);
+void
+UnityAssertDoubleIsNegInf(const _UD actual,
+			  const char* msg,
+			  const UNITY_LINE_TYPE lineNumber);
+
+void
+UnityAssertDoubleIsNaN(const _UD actual,
+		       const char* msg,
+		       const UNITY_LINE_TYPE lineNumber);
 #endif
 
 //-------------------------------------------------------
@@ -463,7 +494,8 @@ void UnityAssertDoubleIsNaN(const _UD actual,
 // Test Asserts
 //-------------------------------------------------------
 
-#define UNITY_TEST_ASSERT(condition, line, message)                                              if (condition) {} else { UNITY_TEST_FAIL((UNITY_LINE_TYPE)line, message); }
+#define UNITY_TEST_ASSERT(condition, line, message)                                              if (condition) {} \
+	else { UNITY_TEST_FAIL((UNITY_LINE_TYPE)line, message); }
 #define UNITY_TEST_ASSERT_NULL(pointer, line, message)                                           UNITY_TEST_ASSERT(((pointer) == NULL),  (UNITY_LINE_TYPE)line, message)
 #define UNITY_TEST_ASSERT_NOT_NULL(pointer, line, message)                                       UNITY_TEST_ASSERT(((pointer) != NULL),  (UNITY_LINE_TYPE)line, message)
 
