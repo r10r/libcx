@@ -12,9 +12,9 @@ $(L)/message-parser_OBJS := $(L)/message-parser.o \
 	$(L)/message_parser.o \
 	$(L)/message_fsm.o \
 	$(L)/parser.o \
-	$(LIBCX_DIR)/libcx-string/string.o \
-	$(LIBCX_DIR)/libcx-string/pair.o \
-	$(LIBCX_DIR)/libcx-list/list.o
+	$(LIBCX_DIR)/string/string.o \
+	$(LIBCX_DIR)/string/pair.o \
+	$(LIBCX_DIR)/list/list.o
 
 # -- tests -- 
 
@@ -24,9 +24,9 @@ $(L)/test_message_OBJS := $(TEST_OBJS) \
 	$(L)/message_parser.o \
 	$(L)/message_fsm.o \
 	$(L)/message.o \
-	$(LIBCX_DIR)/libcx-string/string.o \
-	$(LIBCX_DIR)/libcx-string/pair.o \
-	$(LIBCX_DIR)/libcx-list/list.o
+	$(LIBCX_DIR)/string/string.o \
+	$(LIBCX_DIR)/string/pair.o \
+	$(LIBCX_DIR)/list/list.o
 
 $(L)/test_body_parser_OBJS := $(TEST_OBJS) \
 	$(L)/test_body_parser.o \
@@ -35,6 +35,6 @@ $(L)/test_body_parser_OBJS := $(TEST_OBJS) \
 	$(L)/message_parser.o \
 	$(L)/message_fsm.o \
 	$(L)/message.o \
-	$(LIBCX_DIR)/libcx-string/string.o \
-	$(LIBCX_DIR)/libcx-string/pair.o \
-	$(LIBCX_DIR)/libcx-list/list.o
+	$(LIBCX_DIR)/string/string.o \
+	$(LIBCX_DIR)/string/pair.o \
+	$(LIBCX_DIR)/list/list.o

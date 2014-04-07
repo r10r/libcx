@@ -28,17 +28,17 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/worker.o \
 	$(L)/worker_unix.o \
 	$(L)/request.o \
-	$(LIBCX_DIR)/libcx-list/list.o \
-	$(LIBCX_DIR)/libcx-umtp/message.o \
-	$(LIBCX_DIR)/libcx-umtp/message_parser.o \
-	$(LIBCX_DIR)/libcx-umtp/parser.o \
-	$(LIBCX_DIR)/libcx-umtp/message_fsm.o \
-	$(LIBCX_DIR)/libcx-string/string.o \
-	$(LIBCX_DIR)/libcx-string/pair.o
+	$(LIBCX_DIR)/list/list.o \
+	$(LIBCX_DIR)/umtp/message.o \
+	$(LIBCX_DIR)/umtp/message_parser.o \
+	$(LIBCX_DIR)/umtp/parser.o \
+	$(LIBCX_DIR)/umtp/message_fsm.o \
+	$(LIBCX_DIR)/string/string.o \
+	$(LIBCX_DIR)/string/pair.o
 
 # -- tests -- 
 $(L)/test_queue_FLAGS := -lpthread
 $(L)/test_queue_OBJS := $(TEST_OBJS) \
 	$(L)/test_queue.o \
 	$(L)/queue.o \
-	$(LIBCX_DIR)/libcx-list/list.o
+	$(LIBCX_DIR)/list/list.o

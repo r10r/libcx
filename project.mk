@@ -38,8 +38,8 @@ CFLAGS += -Wno-error=unused-parameter \
 # linux declares stdout/stdin/stderr recursive
 CFLAGS += -Wno-error=disabled-macro-expansion 
 
-TEST_OBJS := $(LIBCX_DIR)/libcx-base/unity.o \
-	$(LIBCX_DIR)/libcx-base/xmalloc.o 
+TEST_OBJS := $(LIBCX_DIR)/base/unity.o \
+	$(LIBCX_DIR)/base/xmalloc.o 
 
 # ignore unity errors
 UNITY_FLAGS += \
@@ -49,4 +49,4 @@ UNITY_FLAGS += \
 	-Wno-missing-field-initializers \
 	-Wno-missing-braces
 
-$(LIBCX_DIR)/libcx-base/unity.o: CFLAGS += $(UNITY_FLAGS)
+$(LIBCX_DIR)/base/unity.o: CFLAGS += $(UNITY_FLAGS)
