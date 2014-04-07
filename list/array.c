@@ -1,5 +1,5 @@
 #include "array.h"
-#include "libcx-base/debug.h"
+#include "base/debug.h"
 /* NOTICE: list modification/access is not thread safe */
 
 Array

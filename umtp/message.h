@@ -5,9 +5,9 @@
 #include <stdio.h>      /* fprintf, feof, fopen, FILE */
 #include <stdlib.h>     /* free, exit, malloc */
 #include <stdbool.h>    /* true, false */
-#include "libcx-list/list.h"
-#include "libcx-string/string.h"
-#include "libcx-string/pair.h"
+#include "list/list.h"
+#include "string/string.h"
+#include "string/pair.h"
 #include "parser.h"
 
 //#define HEADER_LINE_FORMAT "%s: %s\n"

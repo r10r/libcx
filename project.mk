@@ -16,12 +16,12 @@ ifeq ($(OS),Darwin)
 LDFLAGS += -L/usr/local/lib/llvm-3.4/usr/lib
 endif
 
-MODULES := libcx-base \
-	libcx-sandbox \
-	libcx-string \
-	libcx-list \
-	libcx-umtp \
-	libcx-socket-unix
+MODULES := base \
+	sandbox \
+	string \
+	list \
+	umtp \
+	socket
 
 # to explicitly ignore unused parameters use a macro
 # #define UNUSED(x) (void)(x)

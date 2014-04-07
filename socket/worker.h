@@ -3,9 +3,9 @@
 
 #include <pthread.h>
 
-#include "libcx-base/debug.h"
-#include "libcx-list/list.h"
-#include "libcx-base/ev.h"
+#include "base/debug.h"
+#include "list/list.h"
+#include "base/ev.h"
 
 typedef struct worker_t Worker;
 

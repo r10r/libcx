@@ -11,7 +11,7 @@
 #include <assert.h>
 #include <unistd.h> /* close */
 
-#include "libcx-base/debug.h"
+#include "base/debug.h"
 
 void
 send_data(int fd, const char* data);

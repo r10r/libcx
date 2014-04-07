@@ -1,4 +1,4 @@
-#include "libcx-base/test.h"
+#include "base/test.h"
 #include "message_parser.h"
 
 static void
@@ -89,7 +89,7 @@ test_Message_parse_multi_pass()
 static void
 test_Message_read_file()
 {
-	Message* message = MessageParser_fread("libcx-umtp/testmessages/hello_world.txt");
+	Message* message = MessageParser_fread("umtp/testmessages/hello_world.txt");
 
 	test_assert_message(message);
 	Message_free(message);

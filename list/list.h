@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 #include <stdlib.h> /* malloc */
-#include <libcx-base/base.h>
-#include <libcx-base/debug.h>
+#include <base/base.h>
+#include <base/debug.h>
 
 typedef struct node_t Node;
 typedef struct list_t List;

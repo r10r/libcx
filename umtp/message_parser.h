@@ -2,7 +2,7 @@
 #define _CX_MESSAGE_PARSER_H
 
 #include "message.h"
-#include "libcx-base/base.h"
+#include "base/base.h"
 
 typedef enum parse_event_t
 {

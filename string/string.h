@@ -5,8 +5,8 @@
 #include <stdlib.h>     /* free */
 #include <string.h>     /* memcpy */
 #include <unistd.h>     /* write */
-#include "libcx-base/debug.h"
-//#include "libcx-base/xmalloc.h"
+#include "base/debug.h"
+//#include "base/xmalloc.h"
 
 // 1 GiB = 2^30
 #define STRING_MAX_LENGTH (1024 * 1024 * 1024)
