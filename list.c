@@ -1,40 +1,40 @@
 #include "list.h"
 
-Node *
+Node*
 Node_new()
 {
-	Node * node = calloc(1, sizeof(Node));
+	Node* node = calloc(1, sizeof(Node));
 
 	return node;
 }
 
 void
-Node_free(Node *node, F_NodeDataFree *f_node_data_free)
+Node_free(Node* node, F_NodeDataFree* f_node_data_free)
 {
 	if (f_node_data_free)
 		f_node_data_free(node->data);
 	free(node);
 }
 
-List *
+List*
 List_new()
 {
-	List *list = calloc(1, sizeof(List));
+	List* list = calloc(1, sizeof(List));
 
 	list->f_node_data_free = free;
 	return list;
 }
 
 void
-List_free(List *list)
+List_free(List* list)
 {
 	if (list)
 	{
 		// FIXME use iterator to free nodes instead ?
-		Node *next = list->first;
+		Node* next = list->first;
 		while (next)
 		{
-			Node *cur = next;
+			Node* cur = next;
 			next = cur->next;
 			Node_free(cur, list->f_node_data_free);
 		}
@@ -43,13 +43,13 @@ List_free(List *list)
 }
 
 static inline unsigned long
-_List_push(List *list, void *data)
+_List_push(List* list, void* data)
 {
-	Node *new = Node_new();
+	Node* new = Node_new();
 
 	new->data = data;
 
-	Node *parent = list->last;
+	Node* parent = list->last;
 	if (parent)
 	{
 		parent->next = new;
@@ -66,23 +66,23 @@ _List_push(List *list, void *data)
 }
 
 unsigned long
-List_append(List *list, void *data)
+List_append(List* list, void* data)
 {
 	return _List_push(list, data);
 }
 
 unsigned long
-List_push(List *list, void *data)
+List_push(List* list, void* data)
 {
 	return _List_push(list, data);
 }
 
-Node *
-List_match(List *list, void *key, F_NodeMatch *f_node_match)
+Node*
+List_match(List* list, void* key, F_NodeMatch* f_node_match)
 {
 	if (list->length == 0)
 		return NULL;
-	Node *node = list->first;
+	Node* node = list->first;
 
 	while (node)
 	{
@@ -94,11 +94,11 @@ List_match(List *list, void *key, F_NodeMatch *f_node_match)
 }
 
 void
-List_each(List *list, F_NodeIterator *f_node_iterator)
+List_each(List* list, F_NodeIterator* f_node_iterator)
 {
 	if (list->length == 0)
 		return;
-	Node *node = list->first;
+	Node* node = list->first;
 
 	int index = 0;
 	while (node)
@@ -109,13 +109,13 @@ List_each(List *list, F_NodeIterator *f_node_iterator)
 	}
 }
 
-void *
-List_shift(List *list)
+void*
+List_shift(List* list)
 {
 	if (list->length == 0)
 		return NULL;
-	Node *node = list->first;
-	void *data = NULL;
+	Node* node = list->first;
+	void* data = NULL;
 
 	if (node)
 	{
@@ -133,13 +133,13 @@ List_shift(List *list)
 	return data;
 }
 
-void *
-List_pop(List *list)
+void*
+List_pop(List* list)
 {
 	if (list->length == 0)
 		return NULL;
-	Node *node = list->last;
-	void *data = NULL;
+	Node* node = list->last;
+	void* data = NULL;
 	if (node)
 	{
 		list->last = node->previous;
@@ -157,13 +157,13 @@ List_pop(List *list)
 }
 
 static inline void
-_List_prepend(List *list, void *data)
+_List_prepend(List* list, void* data)
 {
-	Node *new = Node_new();
+	Node* new = Node_new();
 
 	new->data = data;
 
-	Node *child = list->first;
+	Node* child = list->first;
 	if (child)
 	{
 		child->previous = new;
@@ -179,47 +179,47 @@ _List_prepend(List *list, void *data)
 }
 
 void
-List_prepend(List *list, void *data)
+List_prepend(List* list, void* data)
 {
 	_List_prepend(list, data);
 }
 
 void
-List_unshift(List *list, void *data)
+List_unshift(List* list, void* data)
 {
 	_List_prepend(list, data);
 }
 
 void
-List_userdata_set(List *list, void *userdata)
+List_userdata_set(List* list, void* userdata)
 {
 	list->userdata = userdata;
 }
 
-void *
-List_userdata_get(List *list)
+void*
+List_userdata_get(List* list)
 {
 	return list->userdata;
 }
 
 Node*
-List_at(List *list, unsigned int index)
+List_at(List* list, unsigned int index)
 {
 	if (index >= list->length)
 		return NULL;
 
 	unsigned int i;
-	Node *node = list->first;
+	Node* node = list->first;
 	for (i = 0; i < index; i++)
 		node = node->next;
 
 	return node;
 }
 
-void *
-List_get(List *list, unsigned int index)
+void*
+List_get(List* list, unsigned int index)
 {
-	Node *node = List_at(list, index);
+	Node* node = List_at(list, index);
 
 	if (node)
 		return node->data;
@@ -229,9 +229,9 @@ List_get(List *list, unsigned int index)
 
 /* remove element at index from list */
 Node*
-List_detach(List *list, unsigned int index)
+List_detach(List* list, unsigned int index)
 {
-	Node *node = List_at(list, index);
+	Node* node = List_at(list, index);
 
 	if (node)
 	{
@@ -244,9 +244,9 @@ List_detach(List *list, unsigned int index)
 }
 
 void
-List_delete(List *list, unsigned int index)
+List_delete(List* list, unsigned int index)
 {
-	Node *node = List_detach(list, index);
+	Node* node = List_detach(list, index);
 
 	if (node)
 		Node_free(node, list->f_node_data_free);

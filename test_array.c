@@ -1,7 +1,8 @@
 #include "libcx-base/test.h"
 #include "array.h"
 
-static void test_Array_new_empty()
+static void
+test_Array_new_empty()
 {
 	Array a = Array_new(0);
 
@@ -11,7 +12,8 @@ static void test_Array_new_empty()
 	Array_free(a);
 }
 
-static void test_Array_new()
+static void
+test_Array_new()
 {
 	Array a = Array_new(2);
 
@@ -22,7 +24,8 @@ static void test_Array_new()
 	Array_free(a);
 }
 
-static void test_Array_grow()
+static void
+test_Array_grow()
 {
 	Array a = Array_new(0);
 
@@ -34,11 +37,12 @@ static void test_Array_grow()
 	Array_free(a);
 }
 
-static void test_Array_push()
+static void
+test_Array_push()
 {
-	const char *first = "foo";
-	const char *second = "bar";
-	const char *third = "third";
+	const char* first = "foo";
+	const char* second = "bar";
+	const char* third = "third";
 
 	Array a = Array_new(2);
 
@@ -69,11 +73,12 @@ static void test_Array_push()
 	Array_free(a);
 }
 
-static void test_Array_pop()
+static void
+test_Array_pop()
 {
-	const char *first = "foo";
-	const char *second = "bar";
-	const char *third = "third";
+	const char* first = "foo";
+	const char* second = "bar";
+	const char* third = "third";
 
 	Array a = Array_new(0);
 
@@ -95,16 +100,17 @@ static void test_Array_pop()
 }
 
 static int
-match_element(void *data, void *key)
+match_element(void* data, void* key)
 {
 	return strcmp((char*)data, (char*)key);
 }
 
-static void test_Array_match()
+static void
+test_Array_match()
 {
-	const char *first = "foo";
-	const char *second = "bar";
-	const char *third = "third";
+	const char* first = "foo";
+	const char* second = "bar";
+	const char* third = "third";
 
 	Array a = Array_new(0);
 
@@ -120,7 +126,7 @@ static void test_Array_match()
 }
 
 static void
-element_iterator(int index, void *data)
+element_iterator(int index, void* data)
 {
 	if (index == 0)
 		TEST_ASSERT_EQUAL_STRING("foo", (char*)data);
@@ -130,11 +136,12 @@ element_iterator(int index, void *data)
 		TEST_ASSERT_EQUAL_STRING("third", (char*)data);
 }
 
-static void test_Array_each()
+static void
+test_Array_each()
 {
-	const char *first = "foo";
-	const char *second = "bar";
-	const char *third = "third";
+	const char* first = "foo";
+	const char* second = "bar";
+	const char* third = "third";
 
 	Array a = Array_new(0);
 

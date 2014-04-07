@@ -3,13 +3,15 @@
 #include <unistd.h> /* sleep */
 
 static
-int data_strcmp(Node *node, void *data)
+int
+data_strcmp(Node* node, void* data)
 {
 	return strcmp(node->data, (char*)data);
 }
 
 static
-void node_free(void *data)
+void
+node_free(void* data)
 {
 	free(data);
 }
@@ -17,7 +19,7 @@ void node_free(void *data)
 static void
 test_List_append()
 {
-	List *list = List_new();
+	List* list = List_new();
 
 	list->f_node_data_free = node_free;
 
@@ -41,7 +43,7 @@ test_List_append()
 static void
 test_List_push()
 {
-	List *list = List_new();
+	List* list = List_new();
 
 	list->f_node_data_free = node_free;
 
@@ -65,7 +67,7 @@ test_List_push()
 static void
 test_List_match()
 {
-	List *list = List_new();
+	List* list = List_new();
 
 	list->f_node_data_free = node_free;
 
@@ -83,7 +85,7 @@ test_List_match()
 }
 
 static void
-test_iterator(int index, Node *node)
+test_iterator(int index, Node* node)
 {
 	char buf[16];
 
@@ -94,7 +96,7 @@ test_iterator(int index, Node *node)
 static void
 test_List_each()
 {
-	List *list = List_new();
+	List* list = List_new();
 
 	list->f_node_data_free = node_free;
 
@@ -112,7 +114,7 @@ test_List_each()
 static void
 test_List_shift()
 {
-	List *list = List_new();
+	List* list = List_new();
 
 	List_push(list, "node 1");
 	List_push(list, "node 2");
@@ -142,7 +144,7 @@ test_List_shift()
 static void
 test_List_pop()
 {
-	List *list = List_new();
+	List* list = List_new();
 
 	List_push(list, "node 1");
 	List_push(list, "node 2");
@@ -172,7 +174,7 @@ test_List_pop()
 static void
 test_List_prepend()
 {
-	List *list = List_new();
+	List* list = List_new();
 
 	List_prepend(list, "node 1");
 	List_prepend(list, "node 2");
@@ -194,7 +196,7 @@ test_List_prepend()
 static void
 test_List_unshift()
 {
-	List *list = List_new();
+	List* list = List_new();
 
 	List_unshift(list, "node 1");
 	List_unshift(list, "node 2");
@@ -216,7 +218,7 @@ test_List_unshift()
 static void
 test_List_userdata_()
 {
-	List *list = List_new();
+	List* list = List_new();
 
 	TEST_ASSERT_NULL(List_userdata_get(list));
 	List_userdata_set(list, "foobar");
@@ -228,7 +230,7 @@ test_List_userdata_()
 static void
 test_List_get()
 {
-	List *list = List_new();
+	List* list = List_new();
 
 	/* no need to free data, we are using constants */
 	list->f_node_data_free = NULL;
@@ -245,7 +247,8 @@ test_List_get()
 	List_free(list);
 }
 
-int main()
+int
+main()
 {
 	TEST_BEGIN
 	RUN(test_List_append);
