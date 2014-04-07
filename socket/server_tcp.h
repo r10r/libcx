@@ -4,7 +4,7 @@
 #include "server.h"
 #include "socket_tcp.h"
 #include "worker_unix.h"
-#include "libcx-umtp/message_parser.h"
+#include "umtp/message_parser.h"
 
 Server*
 TCPServer_new(const char* ip, uint16_t port);

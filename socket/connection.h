@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 
-#include "libcx-base/ev.h"
-#include "libcx-base/base.h"
-#include "libcx-string/string.h"
+#include "base/ev.h"
+#include "base/base.h"
+#include "string/string.h"
 #include "request.h"
 #include "server.h" /* FIXME circular inclusion */
 #include "worker.h"

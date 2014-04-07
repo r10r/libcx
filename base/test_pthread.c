@@ -1,6 +1,6 @@
-#include "libcx-base/test.h"
-#include "libcx-base/profile.h"
-#include "libcx-base/base.h"
+#include "base/test.h"
+#include "base/profile.h"
+#include "base/base.h"
 #include <pthread.h>
 
 #define TLC_PREFIX TLC_

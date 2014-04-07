@@ -2,7 +2,7 @@
 #define _CX_ARRAY_H
 
 #include <stdlib.h>
-#include "libcx-base/debug.h"
+#include "base/debug.h"
 
 #ifndef ARRAY_GROW_LENGTH
 #define ARRAY_GROW_LENGTH (16)

@@ -1,7 +1,7 @@
 #include "client.h"
 #include <pthread.h>
-#include "libcx-base/debug.h"
-#include "libcx-base/profile.h"
+#include "base/debug.h"
+#include "base/profile.h"
 
 struct client_data_t
 {

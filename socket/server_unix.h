@@ -4,7 +4,7 @@
 #include "server.h"
 #include "socket_unix.h"
 #include "worker_unix.h"
-#include "libcx-umtp/message_parser.h"
+#include "umtp/message_parser.h"
 
 Server*
 UnixServer_new(const char* sock_path);
