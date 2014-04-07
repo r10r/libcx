@@ -61,23 +61,23 @@
 	(parser->buffer->string->length - parser->buffer_offset)
 
 typedef struct ragel_parser_t RagelParser;
-typedef void F_EventHandler (RagelParser *parser, int event);
-typedef void F_ParseHandler (RagelParser *parser);
+typedef void F_EventHandler (RagelParser* parser, int event);
+typedef void F_ParseHandler (RagelParser* parser);
 
 struct ragel_parser_t
 {
 	/* non-ragel state */
-	F_EventHandler *f_event;        /* handles parsing events */
-	F_ParseHandler *f_parse;        /* the parse function defined in the *.rl file */
-	StringBuffer *buffer;           /* input buffer */
+	F_EventHandler* f_event;        /* handles parsing events */
+	F_ParseHandler* f_parse;        /* the parse function defined in the *.rl file */
+	StringBuffer* buffer;           /* input buffer */
 	size_t buffer_offset;           /* offset from start of buffer */
 	size_t marker_start;            /* offset from start of buffer */
 	size_t marker_length;           /* marker length */
 
 	/* ragel state */
-	char *buffer_position;
-	char *buffer_end;
-	char *eof;
+	char* buffer_position;
+	char* buffer_end;
+	char* eof;
 	int res;        /* FIXME unused ?) */
 	int cs;
 
@@ -85,35 +85,35 @@ struct ragel_parser_t
 	unsigned int iterations;        /* the parser iteration */
 	int initialized;
 
-	void *userdata;
+	void* userdata;
 };
 
 void
-RagelParser_parse(RagelParser *parser);
+RagelParser_parse(RagelParser* parser);
 
 void
-RagelParser_init(RagelParser *parser);
+RagelParser_init(RagelParser* parser);
 
 RagelParser*
 RagelParser_new(void);
 
 int
-RagelParser_firstrun(RagelParser *parser);
+RagelParser_firstrun(RagelParser* parser);
 
 void
-RagelParser_free(RagelParser *parser);
+RagelParser_free(RagelParser* parser);
 
 void
-RagelParser_parse_file(RagelParser *parser, const char *file_path, size_t chunk_size);
+RagelParser_parse_file(RagelParser* parser, const char* file_path, size_t chunk_size);
 
 void
-RagelParser_shift_buffer(RagelParser *parser);
+RagelParser_shift_buffer(RagelParser* parser);
 
 /*
  * Read chunk_size length data from fd and calls parser after each read
  * @return number of bytes read or < 0 on error
  */
 ssize_t
-RagelParser_fdparse(RagelParser *parser, int fd, size_t chunk_size);
+RagelParser_fdparse(RagelParser* parser, int fd, size_t chunk_size);
 
 #endif

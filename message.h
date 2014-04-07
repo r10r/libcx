@@ -19,25 +19,25 @@ typedef struct message_t Message;
 
 struct message_t
 {
-	List *protocol_values;  /* list of strings */
-	List *headers;          /* list of string pairs */
-	StringPointer *body;
-	StringBuffer *buffer;
+	List* protocol_values;  /* list of strings */
+	List* headers;          /* list of string pairs */
+	StringPointer* body;
+	StringBuffer* buffer;
 };
 
-Message *
+Message*
 Message_new(void);
 
 void
-Message_free(Message *message);
+Message_free(Message* message);
 
 String*
-Message_envelope(Message *message);
+Message_envelope(Message* message);
 
 void
-Message_print_stats(Message *message, FILE *file);
+Message_print_stats(Message* message, FILE* file);
 
 ssize_t
-Message_read(Message *message, FILE *file, size_t chunk_size);
+Message_read(Message* message, FILE* file, size_t chunk_size);
 
 #endif

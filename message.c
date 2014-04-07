@@ -1,21 +1,21 @@
 #include "message.h"
 
 static void
-free_protocol_value(void *value)
+free_protocol_value(void* value)
 {
 	S_free((String*)value);
 }
 
 static void
-free_header(void *value)
+free_header(void* value)
 {
 	StringPair_free((StringPair*)value);
 }
 
-Message *
+Message*
 Message_new()
 {
-	Message *message = malloc(sizeof(Message));
+	Message* message = malloc(sizeof(Message));
 
 	message->protocol_values = List_new();
 	message->protocol_values->f_node_data_free = free_protocol_value;
@@ -30,7 +30,7 @@ Message_new()
 }
 
 void
-Message_free(Message *message)
+Message_free(Message* message)
 {
 	List_free(message->protocol_values);
 	List_free(message->headers);
@@ -40,13 +40,13 @@ Message_free(Message *message)
 }
 
 void
-Message_print_stats(Message *message, FILE *file)
+Message_print_stats(Message* message, FILE* file)
 {
 	fprintf(file, "Message: %p\n", message);
 	fprintf(file, "Counters: Protocol values [%ld], headers [%ld]\n",
 		message->protocol_values->length, message->headers->length);
 	fprintf(file, "----------- begin message\n");
-	String *envelope = Message_envelope(message);
+	String* envelope = Message_envelope(message);
 //	String_write(envelope, file);
 	fprintf(file, "----------- end message\n");
 }
@@ -54,9 +54,9 @@ Message_print_stats(Message *message, FILE *file)
 #define ENVELOPE_DEFAULT_SIZE 1024
 
 String*
-Message_envelope(Message *message)
+Message_envelope(Message* message)
 {
-	String *envelope = String_init(NULL, ENVELOPE_DEFAULT_SIZE);
+	String* envelope = String_init(NULL, ENVELOPE_DEFAULT_SIZE);
 
 	// TODO append protocol line
 	// TODO append headers
