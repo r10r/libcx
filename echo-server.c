@@ -1,32 +1,33 @@
 #include "libcx-base/test.h"
 #include "libcx-base/base.h"
-#include "unix_server.h"
+#include "server_unix.h"
+#include "server_tcp.h"
 
 #define CONNECTION_BUFFER_LENGTH 1024
 
 static ssize_t
-echo_connection_data_handler(Connection *connection)
+echo_connection_data_handler(Connection* connection)
 {
-	StringBuffer *buffer = (StringBuffer*)connection->data;
+	StringBuffer* buffer = (StringBuffer*)connection->data;
 
 	return StringBuffer_read(buffer, 0, connection->fd, buffer->length);
 }
 
 static Connection*
-echo_connection_handler(Connection *connection, ConnectionEvent event)
+echo_connection_handler(Connection* connection, ConnectionEvent event)
 {
 	switch (event)
 	{
 	case CONNECTION_EVENT_DATA:
 	{
-		StringBuffer *buffer = (StringBuffer*)connection->data;
+		StringBuffer* buffer = (StringBuffer*)connection->data;
 		Connection_send(connection, buffer->string->value, buffer->string->length);
 		break;
 	}
 	case CONNECTION_EVENT_CLOSE_READ:
 	{
 		XDBG("close read");
-		const char *byebye = "bye bye\n";
+		const char* byebye = "bye bye\n";
 		Connection_send(connection, byebye, strlen(byebye));
 		StringBuffer_free((StringBuffer*)connection->data);
 		Connection_close(connection);
@@ -42,7 +43,7 @@ echo_connection_handler(Connection *connection, ConnectionEvent event)
 static Connection*
 EchoConnection_new()
 {
-	Connection *connection = Connection_new(NULL, -1);
+	Connection* connection = Connection_new(NULL, -1);
 
 	connection->f_data_handler = echo_connection_data_handler;
 	connection->f_handler = echo_connection_handler;
@@ -53,23 +54,43 @@ EchoConnection_new()
 static UnixWorker*
 EchoWorker_new()
 {
-	UnixWorker *worker = UnixWorker_new();
+	UnixWorker* worker = UnixWorker_new();
 
 	worker->f_create_connection = EchoConnection_new;
 	return worker;
 }
 
+static void
+print_usage(const char* message) __attribute__((noreturn));
+
+static void
+print_usage(const char* message)
+{
+	fprintf(stderr, "Error: %s\n", message);
+	fprintf(stderr, "Usage: $0 <unix|tcp> <worker count>\n");
+	exit(1);
+}
+
 int
 main(int argc, char** argv)
 {
-	int worker_count = (argc == 2) ? atoi(argv[1]) : 4;
+	if (argc != 3)
+		print_usage("Invalid parameter count");
 
-	Server *server = (Server*)UnixServer_new("/tmp/echo.sock");
+	Server* server = NULL;
+
+	if (strcmp(argv[1], "unix") == 0)
+		server = (Server*)UnixServer_new("/tmp/echo.sock");
+	else if (strcmp(argv[1], "tcp") == 0)
+		server = (Server*)TCPServer_new("127.0.0.1", 6666);
+	else
+		print_usage("Invalid server type");
+
+	int worker_count = atoi(argv[2]);
 
 	int i;
-
 	for (i = 0; i < worker_count; i++)
 		List_push(server->workers, EchoWorker_new());
 
-	int ret = Server_start(server);         // blocks
+	Server_start(server);         // blocks
 }
