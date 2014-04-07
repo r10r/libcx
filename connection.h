@@ -21,6 +21,7 @@
 typedef enum connection_event_t
 {
 	CONNECTION_EVENT_DATA,
+
 	/*
 	 * client closed the writing end, there is no more data to read
 	 * TODO CLOSE reading end on EOF ? (to signal client that we do not accept any data ?)
@@ -31,8 +32,8 @@ typedef enum connection_event_t
 } ConnectionEvent;
 
 typedef struct connection_t Connection;
-typedef Connection* F_ConnectionHandler (Connection *connection, ConnectionEvent event);
-typedef ssize_t F_ConnectionDataHandler (Connection *connection);
+typedef Connection* F_ConnectionHandler (Connection* connection, ConnectionEvent event);
+typedef ssize_t F_ConnectionDataHandler (Connection* connection);
 
 /* created by the connection watcher */
 struct connection_t
@@ -44,33 +45,33 @@ struct connection_t
 	ev_io receive_data_watcher;
 
 	// set the buffer to receive the data (function ?)
-	F_ConnectionDataHandler *f_data_handler;
-	F_ConnectionHandler *f_handler;
+	F_ConnectionDataHandler* f_data_handler;
+	F_ConnectionHandler* f_handler;
 
-	Worker *worker;
+	Worker* worker;
 
-	void *data;
+	void* data;
 };
 
 void
-receive_data_callback(ev_loop *loop, ev_io *w, int revents);
+receive_data_callback(ev_loop* loop, ev_io* w, int revents);
 
 Connection*
-Connection_new(Worker *worker, int fd);
+Connection_new(Worker* worker, int fd);
 
 void
-Connection_init(Connection *connection, Worker* worker, int fd);
+Connection_init(Connection* connection, Worker* worker, int fd);
 
 void
-Connection_free(Connection *c);
+Connection_free(Connection* c);
 
 void
-Connection_start(Connection *c);
+Connection_start(Connection* c);
 
 void
-Connection_close(Connection *c);
+Connection_close(Connection* c);
 
 void
-Connection_send(Connection *c, char *data, size_t length);
+Connection_send(Connection* c, char* data, size_t length);
 
 #endif

@@ -3,19 +3,19 @@
 #include "worker.h"
 
 static void*
-_Worker_run(void *data);
+_Worker_run(void* data);
 
 Worker*
 Worker_new()
 {
-	Worker *worker = malloc(sizeof(Worker));
+	Worker* worker = malloc(sizeof(Worker));
 
 	Worker_init(worker);
 	return worker;
 }
 
 void
-Worker_init(Worker *worker)
+Worker_init(Worker* worker)
 {
 	worker->thread = malloc(sizeof(pthread_t));
 	worker->loop = ev_loop_new(0);
@@ -23,7 +23,7 @@ Worker_init(Worker *worker)
 }
 
 void
-Worker_free(Worker *worker)
+Worker_free(Worker* worker)
 {
 	free(worker->thread);
 	free(worker);
@@ -31,7 +31,7 @@ Worker_free(Worker *worker)
 
 /* @return 0 when worker was started sucessfully */
 int
-Worker_start(Worker *worker)
+Worker_start(Worker* worker)
 {
 	int rc = pthread_create(worker->thread, NULL, _Worker_run, worker);
 
@@ -44,9 +44,9 @@ Worker_start(Worker *worker)
 }
 
 static void*
-_Worker_run(void *data)
+_Worker_run(void* data)
 {
-	Worker *worker = (Worker*)data;
+	Worker* worker = (Worker*)data;
 
 	XFDBG("Worker[%lu] started", worker->id);
 	if (worker->f_handler)
@@ -57,7 +57,7 @@ _Worker_run(void *data)
 }
 
 void
-Worker_stop(Worker *worker)
+Worker_stop(Worker* worker)
 {
 	XDBG("Not implemented");
 	// FIXME must signal worker to close all connections (using async_send ?)
@@ -69,4 +69,3 @@ Worker_stop(Worker *worker)
 //			http://stackoverflow.com/questions/18826853/how-to-stop-a-running-pthread-thread
 //	pthread_cancel(worker->thread);
 }
-

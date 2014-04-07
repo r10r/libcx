@@ -1,16 +1,16 @@
 #include "connection.h"
 
 Connection*
-Connection_new(Worker *worker, int fd)
+Connection_new(Worker* worker, int fd)
 {
-	Connection *connection = malloc(sizeof(Connection));
+	Connection* connection = malloc(sizeof(Connection));
 
 	Connection_init(connection, worker, fd);
 	return connection;
 }
 
 void
-Connection_init(Connection *connection, Worker *worker, int fd)
+Connection_init(Connection* connection, Worker* worker, int fd)
 {
 	memset(connection, 0, sizeof(Connection));
 	connection->worker = worker;
@@ -18,13 +18,13 @@ Connection_init(Connection *connection, Worker *worker, int fd)
 }
 
 void
-Connection_free(Connection *connection)
+Connection_free(Connection* connection)
 {
 	free(connection);
 }
 
 void
-Connection_start(Connection *connection)
+Connection_start(Connection* connection)
 {
 	unblock(connection->fd);
 	ev_io_init(&connection->receive_data_watcher, receive_data_callback, connection->fd, EV_READ);
@@ -32,7 +32,7 @@ Connection_start(Connection *connection)
 }
 
 void
-Connection_close(Connection *connection)
+Connection_close(Connection* connection)
 {
 	// shut down the connection
 	ev_io_stop(connection->worker->loop, &connection->receive_data_watcher);
@@ -42,7 +42,7 @@ Connection_close(Connection *connection)
 
 /* sends data immediately */
 void
-Connection_send(Connection *c, char *data, size_t length)
+Connection_send(Connection* c, char* data, size_t length)
 {
 	ssize_t nsend = send(c->fd, data, length, 0);
 
@@ -59,7 +59,6 @@ Connection_send(Connection *c, char *data, size_t length)
 //	ev_io_start(c->loop, &c->send_data_watcher);
 }
 
-
 /*
  * @see man 1 read
  * A value of zero indicates end-of-file
@@ -68,9 +67,9 @@ Connection_send(Connection *c, char *data, size_t length)
  * it will keep returning zero and doing nothing else.
  */
 void
-receive_data_callback(ev_loop *loop, ev_io *w, int revents)
+receive_data_callback(ev_loop* loop, ev_io* w, int revents)
 {
-	Connection *connection = container_of(w, Connection, receive_data_watcher);
+	Connection* connection = container_of(w, Connection, receive_data_watcher);
 
 	ssize_t nread = connection->f_data_handler(connection);
 

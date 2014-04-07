@@ -18,16 +18,16 @@
 
 typedef struct consumer_t
 {
-	Queue *queue;
+	Queue* queue;
 	int id;
-	pthread_t *thread;
+	pthread_t* thread;
 	int processed;
 } Consumer;
 
-static Consumer *
-Consumer_new(Queue *queue, int id)
+static Consumer*
+Consumer_new(Queue* queue, int id)
 {
-	Consumer *consumer = malloc(sizeof(Consumer));
+	Consumer* consumer = malloc(sizeof(Consumer));
 
 	consumer->id = id;
 	consumer->queue = queue;
@@ -37,20 +37,20 @@ Consumer_new(Queue *queue, int id)
 }
 
 static void
-Consumer_free(Consumer *consumer)
+Consumer_free(Consumer* consumer)
 {
 	free(consumer->thread);
 	free(consumer);
 }
 
 static void*
-start_consumer(void *data)
+start_consumer(void* data)
 {
-	Consumer *consumer = (Consumer*)data;
+	Consumer* consumer = (Consumer*)data;
 
 	while (Queue_active(consumer->queue))
 	{
-		int *x = Queue_pop(consumer->queue);
+		int* x = Queue_pop(consumer->queue);
 
 		// last iteration might return NULL
 		if (x)
@@ -71,10 +71,10 @@ start_consumer(void *data)
 	return NULL;
 }
 
-static Consumer *
-Consumer_start(Queue *queue, int id)
+static Consumer*
+Consumer_start(Queue* queue, int id)
 {
-	Consumer *consumer = Consumer_new(queue, id);
+	Consumer* consumer = Consumer_new(queue, id);
 
 	pthread_create(consumer->thread, NULL, start_consumer, consumer);
 	return consumer;
@@ -83,7 +83,7 @@ Consumer_start(Queue *queue, int id)
 static void
 test_Queue()
 {
-	Queue *queue = Queue_new();
+	Queue* queue = Queue_new();
 
 	Consumer* consumers[NTHREADS];
 
@@ -100,7 +100,7 @@ test_Queue()
 	int expected_sum = 0;
 	for (i_item = 0; i_item < NITERATATIONS; i_item++)
 	{
-		int *x = malloc(sizeof(int));
+		int* x = malloc(sizeof(int));
 		*x = i_item;
 		Queue_add(queue, x);
 		expected_sum += i_item;
@@ -110,7 +110,7 @@ test_Queue()
 	int total_processed = 0;
 	for (i_thread = 0; i_thread < NTHREADS; i_thread++)
 	{
-		Consumer *consumer = consumers[i_thread];
+		Consumer* consumer = consumers[i_thread];
 		// see http://stackoverflow.com/questions/5610677/valgrind-memory-leak-errors-when-using-pthread-create
 		//	http://stackoverflow.com/questions/5282099/signal-handling-in-pthreads
 		pthread_join(*consumer->thread, NULL);

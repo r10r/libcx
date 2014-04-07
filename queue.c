@@ -3,7 +3,7 @@
 Queue*
 Queue_new()
 {
-	Queue *queue = malloc(sizeof(Queue));
+	Queue* queue = malloc(sizeof(Queue));
 
 	queue->mutex_add_item = malloc(sizeof(pthread_mutex_t));
 	pthread_mutex_init(queue->mutex_add_item, NULL);
@@ -19,7 +19,7 @@ Queue_new()
 }
 
 void
-Queue_free(Queue *queue)
+Queue_free(Queue* queue)
 {
 	List_free(queue->items);
 
@@ -35,9 +35,9 @@ Queue_free(Queue *queue)
 // POP returns NULL when Queue is not active anymore ?
 // -> check for null in the calling thread
 void*
-Queue_pop(Queue *queue)
+Queue_pop(Queue* queue)
 {
-	void *data = NULL;
+	void* data = NULL;
 	int rc = 0;
 
 	rc = pthread_mutex_lock(queue->mutex_add_item);
@@ -67,7 +67,7 @@ Queue_pop(Queue *queue)
 }
 
 int
-Queue_add(Queue *queue, void *data)
+Queue_add(Queue* queue, void* data)
 {
 	if (!Queue_active(queue))
 		return -1;
@@ -93,7 +93,7 @@ Queue_add(Queue *queue, void *data)
 }
 
 void
-Queue_destroy(Queue *queue)
+Queue_destroy(Queue* queue)
 {
 	int rc = 0;
 
@@ -104,5 +104,3 @@ Queue_destroy(Queue *queue)
 	/* wakeup up all waiting threads */
 	rc = pthread_cond_broadcast(queue->mutex_cond_add_item);
 }
-
-
