@@ -1,4 +1,5 @@
 #include "parser.h"
+
 /*
  * @optimize memory
  * Buffer might be shifted up to last marker position or buffer offset
@@ -9,7 +10,7 @@
  */
 
 void
-RagelParser_init(RagelParser *parser)
+RagelParser_init(RagelParser* parser)
 {
 	/* non-ragel state */
 	parser->buffer = NULL;
@@ -37,20 +38,20 @@ RagelParser_init(RagelParser *parser)
 RagelParser*
 RagelParser_new()
 {
-	RagelParser *parser = malloc(sizeof(RagelParser));
+	RagelParser* parser = malloc(sizeof(RagelParser));
 
 	RagelParser_init(parser);
 	return parser;
 }
 
 void
-RagelParser_free(RagelParser *parser)
+RagelParser_free(RagelParser* parser)
 {
 	free(parser);
 }
 
 int
-RagelParser_firstrun(RagelParser *parser)
+RagelParser_firstrun(RagelParser* parser)
 {
 	if (parser->initialized)
 		return 0;
@@ -63,9 +64,9 @@ RagelParser_firstrun(RagelParser *parser)
 }
 
 void
-RagelParser_parse_file(RagelParser *parser, const char *file_path, size_t chunk_size)
+RagelParser_parse_file(RagelParser* parser, const char* file_path, size_t chunk_size)
 {
-	FILE *file = fopen(file_path, "r");
+	FILE* file = fopen(file_path, "r");
 
 	XFASSERT(file, "file %s should exist", file_path);
 	ssize_t nread = StringBuffer_fload(parser->buffer, file, chunk_size);
@@ -78,10 +79,10 @@ RagelParser_parse_file(RagelParser *parser, const char *file_path, size_t chunk_
 }
 
 ssize_t
-RagelParser_fdparse(RagelParser *parser, int fd, size_t chunk_size)
+RagelParser_fdparse(RagelParser* parser, int fd, size_t chunk_size)
 {
 	ssize_t total_read = 0;
-	StringBuffer *buffer = StringBuffer_new(chunk_size);
+	StringBuffer* buffer = StringBuffer_new(chunk_size);
 
 	parser->buffer = buffer;
 
@@ -107,12 +108,12 @@ RagelParser_fdparse(RagelParser *parser, int fd, size_t chunk_size)
 }
 
 void
-RagelParser_parse(RagelParser *parser)
+RagelParser_parse(RagelParser* parser)
 {
-	F_ParseHandler *current_handler = parser->f_parse;
+	F_ParseHandler* current_handler = parser->f_parse;
 
 	parser->f_parse(parser);
-	F_ParseHandler *next_handler = parser->f_parse;
+	F_ParseHandler* next_handler = parser->f_parse;
 
 	// check if parser has changed and if we have any remaining tokens
 	if (next_handler != current_handler)
@@ -129,7 +130,7 @@ RagelParser_parse(RagelParser *parser)
 }
 
 void
-RagelParser_shift_buffer(RagelParser *parser)
+RagelParser_shift_buffer(RagelParser* parser)
 {
 	int ret = StringBuffer_shift(parser->buffer, parser->buffer_offset);
 

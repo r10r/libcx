@@ -1,22 +1,22 @@
 #include "message_parser.h"
 
 static void
-event_handler(RagelParser *parser, int event);
+event_handler(RagelParser* parser, int event);
 
 static void
-simple_body_parser(RagelParser *parser);
+simple_body_parser(RagelParser* parser);
 
-MessageParser *
+MessageParser*
 MessageParser_new(size_t buffer_size)
 {
-	MessageParser *parser = malloc(sizeof(MessageParser));
-	RagelParser *ragel_parser = (RagelParser*)parser;
+	MessageParser* parser = malloc(sizeof(MessageParser));
+	RagelParser* ragel_parser = (RagelParser*)parser;
 
 	RagelParser_init(ragel_parser);
 	parser->message = Message_new();
 
 	/* setup parser buffer */
-	StringBuffer *buffer = StringBuffer_new(buffer_size);
+	StringBuffer* buffer = StringBuffer_new(buffer_size);
 
 	parser->message->buffer = buffer;
 	ragel_parser->buffer = buffer;
@@ -34,9 +34,9 @@ MessageParser_new(size_t buffer_size)
 }
 
 Message*
-MessageParser_free(MessageParser *parser)
+MessageParser_free(MessageParser* parser)
 {
-	Message *message = parser->message;
+	Message* message = parser->message;
 
 	free(parser);
 	return message;
@@ -44,17 +44,17 @@ MessageParser_free(MessageParser *parser)
 
 /*  keep buffer, reset machine state and replace the machine and event handler */
 void
-MessageParser_parse_body(MessageParser *message_parser)
+MessageParser_parse_body(MessageParser* message_parser)
 {
 	// replace parser and event handler
-	RagelParser *parser = (RagelParser*)message_parser;
+	RagelParser* parser = (RagelParser*)message_parser;
 
 	parser->f_parse = message_parser->f_body_parse;
 	parser->f_event = message_parser->f_body_event;
 }
 
 static void
-simple_body_parser(RagelParser *parser)
+simple_body_parser(RagelParser* parser)
 {
 	RagelParser_update(parser); // update position
 
@@ -64,17 +64,17 @@ simple_body_parser(RagelParser *parser)
 		XDBG("EOF simple body parser");
 		// marker length is not set since we do not count tokens in a FSM
 		size_t marker_length = parser->buffer->string->length - parser->marker_start;
-		StringPointer *body_pointer = StringPointer_new(Marker_get(parser), marker_length);
+		StringPointer* body_pointer = StringPointer_new(Marker_get(parser), marker_length);
 		((MessageParser*)parser)->message->body = body_pointer;
 	}
 	parser->iterations++;
 }
 
 static void
-event_handler(RagelParser *parser, int event)
+event_handler(RagelParser* parser, int event)
 {
-	MessageParser *message_parser = (MessageParser*)parser;
-	Message *message = message_parser->message;
+	MessageParser* message_parser = (MessageParser*)parser;
+	Message* message = message_parser->message;
 
 
 	XFDBG("Event %d, at index %zu [%c]",
@@ -93,14 +93,14 @@ event_handler(RagelParser *parser, int event)
 		break;
 	case P_HEADER_NAME:
 	{
-		String *header_name = Marker_toS(parser);
-		StringPair *header = StringPair_init(header_name, NULL);
+		String* header_name = Marker_toS(parser);
+		StringPair* header = StringPair_init(header_name, NULL);
 		List_push(message->headers, header);
 		break;
 	}
 	case P_HEADER_VALUE:
 	{
-		StringPair *header = (StringPair*)message->headers->last->data;
+		StringPair* header = (StringPair*)message->headers->last->data;
 		header->value = Marker_toS(parser);
 		break;
 	}
@@ -112,15 +112,15 @@ event_handler(RagelParser *parser, int event)
 
 #define CHUNK_SIZE 1024
 
-Message *
-MessageParser_fread(const char *path)
+Message*
+MessageParser_fread(const char* path)
 {
-	MessageParser *parser = MessageParser_new(CHUNK_SIZE);
+	MessageParser* parser = MessageParser_new(CHUNK_SIZE);
 
 	RagelParser_parse_file((RagelParser*)parser, path, CHUNK_SIZE);
 
 	// do something useful with the message
-	Message *message = parser->message;
+	Message* message = parser->message;
 	MessageParser_free(parser);
 	return message;
 }

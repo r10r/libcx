@@ -1,9 +1,10 @@
 #include "libcx-base/test.h"
 #include "message_parser.h"
 
-static void test_Message_new()
+static void
+test_Message_new()
 {
-	Message *message = Message_new();
+	Message* message = Message_new();
 
 	TEST_ASSERT_EQUAL_INT(0, message->protocol_values->length);
 	TEST_ASSERT_EQUAL_INT(0, message->headers->length);
@@ -27,7 +28,7 @@ static const char data[] =
 	"Hello World";
 
 static void
-test_assert_message(Message *message)
+test_assert_message(Message* message)
 {
 	TEST_ASSERT_EQUAL_S(data, message->buffer->string);
 
@@ -36,11 +37,11 @@ test_assert_message(Message *message)
 	TEST_ASSERT_EQUAL_S("/foo/bar", List_S(message->protocol_values, 1));
 
 	TEST_ASSERT_EQUAL_INT(2, message->headers->length);
-	StringPair *header1 = (StringPair*)List_get(message->headers, 0);
+	StringPair* header1 = (StringPair*)List_get(message->headers, 0);
 	TEST_ASSERT_EQUAL_S("Header1",  header1->key);
 	TEST_ASSERT_EQUAL_S("value1",  header1->value);
 
-	StringPair *header2 = (StringPair*)List_get(message->headers, 1);
+	StringPair* header2 = (StringPair*)List_get(message->headers, 1);
 	TEST_ASSERT_EQUAL_S("Header2",  header2->key);
 	TEST_ASSERT_EQUAL_S("value2",  header2->value);
 	TEST_ASSERT_EQUAL_S("Hello World", message->body);
@@ -49,8 +50,8 @@ test_assert_message(Message *message)
 static void
 test_Message_parse_single_pass()
 {
-	MessageParser *parser = MessageParser_new(strlen(data));
-	RagelParser *ragel_parser = (RagelParser*)parser;
+	MessageParser* parser = MessageParser_new(strlen(data));
+	RagelParser* ragel_parser = (RagelParser*)parser;
 
 	StringBuffer_ncat(ragel_parser->buffer, data, strlen(data));
 	RagelParser_finish(ragel_parser);
@@ -63,8 +64,8 @@ test_Message_parse_single_pass()
 static void
 test_Message_parse_multi_pass()
 {
-	MessageParser *parser = MessageParser_new(1);
-	RagelParser *ragel_parser = (RagelParser*)parser;
+	MessageParser* parser = MessageParser_new(1);
+	RagelParser* ragel_parser = (RagelParser*)parser;
 
 	unsigned int i;
 
@@ -78,7 +79,7 @@ test_Message_parse_multi_pass()
 				RagelParser_parse(ragel_parser);
 	}
 
-	Message *message = parser->message;
+	Message* message = parser->message;
 	test_assert_message(message);
 
 	Message_free(message);
@@ -88,13 +89,14 @@ test_Message_parse_multi_pass()
 static void
 test_Message_read_file()
 {
-	Message *message = MessageParser_fread("libcx-umtp/testmessages/hello_world.txt");
+	Message* message = MessageParser_fread("libcx-umtp/testmessages/hello_world.txt");
 
 	test_assert_message(message);
 	Message_free(message);
 }
 
-int main()
+int
+main()
 {
 	TEST_BEGIN
 
