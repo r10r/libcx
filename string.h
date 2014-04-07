@@ -20,7 +20,7 @@ typedef struct string_t
 typedef struct string_pointer_t
 {
 	size_t length;
-	const char *value;
+	const char* value;
 } StringPointer;
 
 
@@ -28,7 +28,7 @@ typedef struct string_pointer_t
 typedef struct string_buffer_t
 {
 	size_t length;                                          /* total buffer length */
-	String *string;                                         /* we can now grow the string data */
+	String* string;                                         /* we can now grow the string data */
 } StringBuffer;
 
 #define S_free(s) (free(s))
@@ -41,7 +41,7 @@ typedef struct string_buffer_t
 	S_get(s, -1)
 
 #define S_size(length) \
-	(sizeof(String) + sizeof(char) * length)
+	(sizeof(String) + sizeof(char)* length)
 
 #define S_dup(value) \
 	String_init(value, strlen(value))
@@ -58,7 +58,7 @@ typedef struct string_buffer_t
 
 // grow or shrink the buffer
 #define S_realloc(string, length) \
-	realloc(string, sizeof(String) + sizeof(char) * length);
+	realloc(string, sizeof(String) + sizeof(char)* length);
 
 #define S_comp(a, b) \
 	((a->length == b->length) ? strncmp(a->value, b->value, a->length) : ((long)a->length - (long)b->length))
@@ -94,13 +94,13 @@ typedef struct string_buffer_t
 	S_ncopy(string, 0, string->length, dst)
 
 String*
-String_init(const char *value, size_t length);
+String_init(const char* value, size_t length);
 
 String*
-String_ninit(const char *value, size_t length);
+String_ninit(const char* value, size_t length);
 
 int
-String_shift(String *s, size_t count);
+String_shift(String* s, size_t count);
 
 /* StringBuffer methods */
 
@@ -108,7 +108,7 @@ StringBuffer*
 StringBuffer_new(size_t length);
 
 void
-StringBuffer_free(StringBuffer *buffer);
+StringBuffer_free(StringBuffer* buffer);
 
 #define StringBuffer_unused(buf) \
 	(buf->length - buf->string->length)
@@ -120,16 +120,16 @@ StringBuffer_free(StringBuffer *buffer);
 	(buf->string->value)
 
 int
-StringBuffer_make_room(StringBuffer *buffer, size_t offset, size_t nchars);
+StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
 
 ssize_t
-StringBuffer_append(StringBuffer *buffer, size_t offset, const char* source, size_t nchars);
+StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars);
 
 #define StringBuffer_fload(buffer, file,  chunk_size) \
 	StringBuffer_fdload(buffer, fileno(file), chunk_size)
 
 ssize_t
-StringBuffer_fdload(StringBuffer *buffer, int fd, size_t chunk_size);
+StringBuffer_fdload(StringBuffer* buffer, int fd, size_t chunk_size);
 
 #define StringBuffer_cat(buffer, chars) \
 	StringBuffer_append(buffer, buffer->string->length, chars, strlen(chars))
@@ -144,7 +144,7 @@ StringBuffer_fdload(StringBuffer *buffer, int fd, size_t chunk_size);
 	StringBuffer_append(buffer, buffer->string->length, s->value, s->length)
 
 ssize_t
-StringBuffer_read(StringBuffer *buffer, size_t offset, int fd, size_t nchars);
+StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars);
 
 #define StringBuffer_fdcat(buffer, fd, nchars) \
 	StringBuffer_read(buffer, buffer->string->length, fd, nchars)
@@ -163,6 +163,6 @@ StringPointer*
 StringPointer_new(const char* data, size_t length);
 
 void
-StringPointer_free(StringPointer *pointer);
+StringPointer_free(StringPointer* pointer);
 
 #endif

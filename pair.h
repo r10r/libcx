@@ -5,17 +5,17 @@
 
 typedef struct string_pair_t
 {
-	String *key;
-	String *value;
+	String* key;
+	String* value;
 } StringPair;
 
-StringPair *
-StringPair_init(String *key, String *value);
+StringPair*
+StringPair_init(String* key, String* value);
 
-StringPair *
-StringPair_new(const char *key, const char *value);
+StringPair*
+StringPair_new(const char* key, const char* value);
 
 void
-StringPair_free(StringPair *pair);
+StringPair_free(StringPair* pair);
 
 #endif
