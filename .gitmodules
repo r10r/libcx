@@ -1,6 +1,6 @@
 [submodule "libcx-socket-unix"]
 	path = libcx-socket-unix
-	url = https://github.com/r10r/libcx-socket-unix.git
+	url = https://github.com/r10r/libcx-socket.git
 [submodule "libcx-list"]
 	path = libcx-list
 	url = https://github.com/r10r/libcx-list.git
