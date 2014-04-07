@@ -5,7 +5,7 @@
 static void
 test_String_dup()
 {
-	String *s = S_dup("bar");
+	String* s = S_dup("bar");
 
 	TEST_ASSERT_EQUAL_INT(s->length, 3);
 
@@ -25,9 +25,9 @@ test_String_dup()
 static void
 test_S_comp()
 {
-	String *a = S_dup("bar");
-	String *b = S_dup("foo");
-	String *c = S_dup("foobar");
+	String* a = S_dup("bar");
+	String* b = S_dup("foo");
+	String* c = S_dup("foobar");
 
 	TEST_ASSERT_TRUE(S_comp(a, a) == 0);
 	TEST_ASSERT_TRUE(S_comp(a, b) < 0);
@@ -43,7 +43,7 @@ test_S_comp()
 static void
 test_S_dupn()
 {
-	String *s = S_dupn("foobar");
+	String* s = S_dupn("foobar");
 
 	TEST_ASSERT_EQUAL_STRING("foobar", s->value);
 	S_free(s);
@@ -52,7 +52,7 @@ test_S_dupn()
 static void
 test_S_write()
 {
-	String *s = S_dup("foobar");
+	String* s = S_dup("foobar");
 
 	TEST_ASSERT_EQUAL_INT(6, S_fwrite(s, stdout));
 	TEST_ASSERT_EQUAL_INT(7, S_fputs(s, stdout));
@@ -63,7 +63,7 @@ test_S_write()
 static void
 test_S_copy()
 {
-	String *s = S_dupn("foobar");
+	String* s = S_dupn("foobar");
 	char dest[7];
 
 	S_copy(s, dest);
@@ -74,7 +74,7 @@ test_S_copy()
 static void
 test_String_shift()
 {
-	String *s = S_dupn("foobar");
+	String* s = S_dupn("foobar");
 
 	TEST_ASSERT_EQUAL_INT(7, s->length);
 	TEST_ASSERT_EQUAL_INT(1, String_shift(s, 3));
@@ -96,7 +96,8 @@ test_String_shift()
 	free(s);
 }
 
-int main()
+int
+main()
 {
 	TEST_BEGIN
 

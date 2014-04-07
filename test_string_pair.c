@@ -4,7 +4,7 @@
 static void
 test_StringPair_new()
 {
-	StringPair *pair = StringPair_new("foo", "bar");
+	StringPair* pair = StringPair_new("foo", "bar");
 
 	StringPair_free(pair);
 }
@@ -12,9 +12,9 @@ test_StringPair_new()
 static void
 test_StringPair_init()
 {
-	String *a = S_dup("aaa");
-	String *b = S_dup("bbb");
-	StringPair *ab  = StringPair_init(a, b);
+	String* a = S_dup("aaa");
+	String* b = S_dup("bbb");
+	StringPair* ab  = StringPair_init(a, b);
 
 	TEST_ASSERT_EQUAL_INT(0, S_comp(ab->key, a));
 	TEST_ASSERT_EQUAL_INT(0, S_comp(ab->value, b));

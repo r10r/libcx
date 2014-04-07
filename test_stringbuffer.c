@@ -5,7 +5,7 @@
 static void
 test_StringBuffer_append()
 {
-	StringBuffer *buf = StringBuffer_new(1024);
+	StringBuffer* buf = StringBuffer_new(1024);
 
 	TEST_ASSERT_EQUAL_INT(1024, buf->length);
 	TEST_ASSERT_EQUAL_INT(0, buf->string->length);
@@ -32,7 +32,7 @@ test_StringBuffer_append()
 static void
 test_StringBuffer_append_grow()
 {
-	StringBuffer *buf = StringBuffer_new(3);
+	StringBuffer* buf = StringBuffer_new(3);
 
 	TEST_ASSERT_EQUAL_INT(3, buf->length);
 	TEST_ASSERT_EQUAL_INT(0, buf->string->length);
@@ -54,12 +54,13 @@ test_StringBuffer_append_grow()
 static void
 test_StringBuffer_append_grow_zero()
 {
-	StringBuffer *buf = StringBuffer_new(0);
+	StringBuffer* buf = StringBuffer_new(0);
 
 	StringBuffer_append(buf, 0, "foo", 3);
 	TEST_ASSERT_EQUAL_INT(3, buf->length);
 	TEST_ASSERT_EQUAL_INT(3, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_unused(buf));;
+	TEST_ASSERT_EQUAL_INT(0, StringBuffer_unused(buf));
+	;
 
 	StringBuffer_free(buf);
 }
@@ -67,8 +68,8 @@ test_StringBuffer_append_grow_zero()
 static void
 test_StringBuffer_scat()
 {
-	StringBuffer *buf = StringBuffer_new(0);
-	String *s = S_dup("foobar");
+	StringBuffer* buf = StringBuffer_new(0);
+	String* s = S_dup("foobar");
 
 	StringBuffer_scat(buf, s);
 	TEST_ASSERT_EQUAL_INT(6, buf->length);
@@ -84,11 +85,11 @@ test_StringBuffer_scat()
 static void
 test_StringBuffer_fcat()
 {
-	StringBuffer *buf = StringBuffer_new(0);
+	StringBuffer* buf = StringBuffer_new(0);
 
 	char template[] = "/tmp/temp.XXXXXX";
 	int fd = mkstemp(template);
-	FILE *tmpfile = fdopen(fd, "w+");
+	FILE* tmpfile = fdopen(fd, "w+");
 
 	fwrite("foo", 1, 4, tmpfile);
 
@@ -127,7 +128,7 @@ test_StringBuffer_fcat()
 static void
 test_StringBuffer_append_grow_offset()
 {
-	StringBuffer *buf = StringBuffer_new(3);
+	StringBuffer* buf = StringBuffer_new(3);
 
 	TEST_ASSERT_EQUAL_INT(3, buf->length);
 	TEST_ASSERT_EQUAL_INT(0, buf->string->length);
@@ -149,11 +150,11 @@ test_StringBuffer_append_grow_offset()
 static void
 test_limits()
 {
-	String *s = String_init(NULL, STRING_MAX_LENGTH + 1);
+	String* s = String_init(NULL, STRING_MAX_LENGTH + 1);
 
 	TEST_ASSERT_NULL(s);
 
-	StringBuffer *b = StringBuffer_new(STRING_MAX_LENGTH + 1);
+	StringBuffer* b = StringBuffer_new(STRING_MAX_LENGTH + 1);
 	TEST_ASSERT_NULL(b);
 
 	b = StringBuffer_new(STRING_MAX_LENGTH);
@@ -161,7 +162,7 @@ test_limits()
 
 	unsigned int i;
 	unsigned int iterations = 500;
-	const char *pattern = "foobar";
+	const char* pattern = "foobar";
 	size_t pattern_length = strlen(pattern) - 1;
 
 	for (i = 0; i < iterations; i++)
@@ -176,7 +177,7 @@ test_limits()
 static void
 test_StringBuffer_shift()
 {
-	StringBuffer *buf = StringBuffer_new(12);
+	StringBuffer* buf = StringBuffer_new(12);
 
 	StringBuffer_catn(buf, "foobar");
 	TEST_ASSERT_EQUAL_INT(7, buf->string->length);
@@ -189,11 +190,10 @@ test_StringBuffer_shift()
 	StringBuffer_free(buf);
 }
 
-
 static void
 test_StringBuffer_clear()
 {
-	StringBuffer *buf = StringBuffer_new(12);
+	StringBuffer* buf = StringBuffer_new(12);
 
 	StringBuffer_catn(buf, "foo");
 	TEST_ASSERT_EQUAL_INT(4, StringBuffer_used(buf));
@@ -210,7 +210,8 @@ test_StringBuffer_clear()
 	StringBuffer_free(buf);
 }
 
-int main()
+int
+main()
 {
 	TEST_BEGIN
 

@@ -1,12 +1,12 @@
 #include "string.h"
 
 String*
-String_init(const char *value, size_t length)
+String_init(const char* value, size_t length)
 {
 	if (length > STRING_MAX_LENGTH)
 		return NULL;
 
-	String *s = S_alloc(length);
+	String* s = S_alloc(length);
 	s->length = 0;
 
 	if (value)
@@ -18,16 +18,16 @@ String_init(const char *value, size_t length)
 }
 
 String*
-String_ninit(const char *value, size_t length)
+String_ninit(const char* value, size_t length)
 {
-	String *s = String_init(value, length + 1);
+	String* s = String_init(value, length + 1);
 
 	s->value[length] = '\0';
 	return s;
 }
 
 int
-String_shift(String *s, size_t count)
+String_shift(String* s, size_t count)
 {
 	if (count == 0)
 		return 0;
@@ -51,7 +51,7 @@ StringBuffer_new(size_t length)
 	if (length > STRING_MAX_LENGTH)
 		return NULL;
 
-	StringBuffer *buf = malloc(sizeof(StringBuffer));
+	StringBuffer* buf = malloc(sizeof(StringBuffer));
 
 	buf->length = length;
 	buf->string = String_init(NULL, length);
@@ -59,7 +59,7 @@ StringBuffer_new(size_t length)
 }
 
 void
-StringBuffer_free(StringBuffer *buffer)
+StringBuffer_free(StringBuffer* buffer)
 {
 	if (buffer)
 	{
@@ -72,7 +72,7 @@ StringBuffer_free(StringBuffer *buffer)
  * @return 0 if room is available -1 else
  */
 int
-StringBuffer_make_room(StringBuffer *buffer, size_t offset, size_t nlength_requested)
+StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nlength_requested)
 {
 	// index must be within range
 	if (offset > buffer->string->length)
@@ -87,7 +87,7 @@ StringBuffer_make_room(StringBuffer *buffer, size_t offset, size_t nlength_reque
 	if (new_length > STRING_MAX_LENGTH)
 		return -1;
 
-	String *new_string = S_realloc(buffer->string, new_length);
+	String* new_string = S_realloc(buffer->string, new_length);
 	if (new_string == NULL)
 		return -1;
 
@@ -99,7 +99,7 @@ StringBuffer_make_room(StringBuffer *buffer, size_t offset, size_t nlength_reque
 }
 
 ssize_t
-StringBuffer_append(StringBuffer *buffer, size_t offset, const char* source, size_t nchars)
+StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars)
 {
 	if (StringBuffer_make_room(buffer, offset, nchars) != 0)
 		return -1;
@@ -110,7 +110,7 @@ StringBuffer_append(StringBuffer *buffer, size_t offset, const char* source, siz
 }
 
 ssize_t
-StringBuffer_read(StringBuffer *buffer, size_t offset, int fd, size_t nchars)
+StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars)
 {
 	if (StringBuffer_make_room(buffer, offset, nchars) != 0)
 		return -1;
@@ -123,7 +123,7 @@ StringBuffer_read(StringBuffer *buffer, size_t offset, int fd, size_t nchars)
 }
 
 ssize_t
-StringBuffer_fdload(StringBuffer *buffer, int fd, size_t chunk_size)
+StringBuffer_fdload(StringBuffer* buffer, int fd, size_t chunk_size)
 {
 	ssize_t total_read = 0;
 
@@ -153,7 +153,7 @@ StringPointer_new(const char* data, size_t length)
 }
 
 void
-StringPointer_free(StringPointer *pointer)
+StringPointer_free(StringPointer* pointer)
 {
 	free(pointer);
 }
