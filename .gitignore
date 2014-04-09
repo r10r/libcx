@@ -7,3 +7,5 @@ src/server
 test/unit/test_list
 
 .format
+rpc/jsrpc-example
+rpc/test_jsonrpc

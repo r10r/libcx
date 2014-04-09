@@ -21,7 +21,8 @@ MODULES := base \
 	string \
 	list \
 	umtp \
-	socket
+	socket \
+	rpc
 
 # to explicitly ignore unused parameters use a macro
 # #define UNUSED(x) (void)(x)
@@ -32,7 +33,8 @@ CFLAGS += -Wno-error=unused-parameter \
 	-Wno-error=unused-value \
 	-Wno-error=padded \
 	-Wno-error=cast-align \
-	-Wno-error=incompatible-pointer-types-discards-qualifiers
+	-Wno-error=incompatible-pointer-types-discards-qualifiers \
+	-Wno-error=switch-enum
 	
 # curl uses recursive macro expansion magic to match parameters
 # linux declares stdout/stdin/stderr recursive
