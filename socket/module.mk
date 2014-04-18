@@ -29,10 +29,6 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/worker_unix.o \
 	$(L)/request.o \
 	$(LIBCX_DIR)/list/list.o \
-	$(LIBCX_DIR)/umtp/message.o \
-	$(LIBCX_DIR)/umtp/message_parser.o \
-	$(LIBCX_DIR)/umtp/parser.o \
-	$(LIBCX_DIR)/umtp/message_fsm.o \
 	$(LIBCX_DIR)/string/string.o \
 	$(LIBCX_DIR)/string/pair.o
 
