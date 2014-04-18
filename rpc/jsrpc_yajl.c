@@ -64,6 +64,7 @@ extract_request_parameters(yajl_val v, RPC_Request* request, RPC_Method* method)
 		if (v || v->type != yajl_t_null)
 			// warn if params are set even if method does not require params
 			fprintf(stderr, "Method [%s] has no parameters. Params ignored\n", method->name);
+		return 1;
 	}
 	else
 	{
