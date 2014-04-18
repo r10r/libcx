@@ -72,6 +72,6 @@ void
 Connection_close(Connection* c);
 
 void
-Connection_send(Connection* c, char* data, size_t length);
+Connection_send(Connection* c, const char* data, size_t length);
 
 #endif
