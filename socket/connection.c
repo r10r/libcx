@@ -42,7 +42,7 @@ Connection_close(Connection* connection)
 
 /* sends data immediately */
 void
-Connection_send(Connection* c, char* data, size_t length)
+Connection_send(Connection* c, const char* data, size_t length)
 {
 	ssize_t nsend = send(c->fd, data, length, 0);
 
