@@ -210,6 +210,20 @@ test_StringBuffer_clear()
 	StringBuffer_free(buf);
 }
 
+static void
+test_StringBuffer_printf()
+{
+	StringBuffer* buf = StringBuffer_new(6);
+
+	StringBuffer_printf(buf, "%s %s", "hello", "world");
+
+	TEST_ASSERT_EQUAL_STRING("hello world", StringBuffer_value(buf));
+	TEST_ASSERT_EQUAL_INT(12, StringBuffer_length(buf));
+	TEST_ASSERT_EQUAL_INT(0, StringBuffer_unused(buf));
+
+	StringBuffer_free(buf);
+}
+
 int
 main()
 {
@@ -224,5 +238,6 @@ main()
 	RUN(test_limits);
 	RUN(test_StringBuffer_shift);
 	RUN(test_StringBuffer_clear);
+	RUN(test_StringBuffer_printf);
 	TEST_END
 }

@@ -69,7 +69,7 @@ StringBuffer_free(StringBuffer* buffer)
 }
 
 /*
- * @return 0 if room is available -1 else
+ * @return 0 if room is available, -1 on error, or > 0 (new length) if buffer was expanded
  */
 int
 StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nlength_requested)
@@ -95,13 +95,13 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nlength_reque
 
 	buffer->string = new_string;
 	buffer->length = new_length;
-	return 0;
+	return (int)new_length;
 }
 
 ssize_t
 StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars)
 {
-	if (StringBuffer_make_room(buffer, offset, nchars) != 0)
+	if (StringBuffer_make_room(buffer, offset, nchars) == -1)
 		return -1;
 
 	memcpy(S_get(buffer->string, offset), source, nchars);
@@ -112,7 +112,7 @@ StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, siz
 ssize_t
 StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars)
 {
-	if (StringBuffer_make_room(buffer, offset, nchars) != 0)
+	if (StringBuffer_make_room(buffer, offset, nchars) == -1)
 		return -1;
 
 	ssize_t nread = read(fd, S_get(buffer->string, offset), nchars);
