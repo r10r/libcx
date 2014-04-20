@@ -24,3 +24,26 @@ TODO handle parameter validation (greater than, lower then, not null, ....)
 
 
 // http://stackoverflow.com/questions/2641473/initialize-static-array-of-structs-in-c
+
+
+
+## Response
+
+* printf/write to a stringbuffer (grow if size is exceeded)
+
+* write / print directly to output stream
+* http://stackoverflow.com/questions/1716296/why-does-printf-not-flush-after-the-call-unless-a-newline-is-in-the-format-strin
+ * http://stackoverflow.com/questions/11529500/setvbuf-for-file-descriptor-created-by-open-in-c
+ * http://stackoverflow.com/questions/12450066/flushing-buffers-in-c
+ * http://stackoverflow.com/questions/2171412/flushing-the-socket-streams-in-c-socket-programming
+ 
+ SO_SNDBUF       set buffer size for output
+ SO_RCVBUF       set buffer size for input
+ 
+ 
+ use memcpy to copy StringBuffer into stdout ?
+ 
+ 
+ * write directly ? 
+ * write to connection buffer ?
+ * write formatted ?

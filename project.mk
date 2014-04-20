@@ -1,9 +1,10 @@
-# TODO split up into a module-dev.mk / module-release.mk
-
 LIBCX_DIR := $(LOCAL_DIR)
 
+# CC := gcc
+# CFLAGS += -Werror -Wall -pedantic
 CC := clang
 CFLAGS += -Weverything -Werror -Wall -pedantic
+
 
 ifeq ($(profile),release)
 CFLAGS += -Os -DNDEBUG -DNTRACE
@@ -22,7 +23,8 @@ MODULES := base \
 	list \
 	umtp \
 	socket \
-	rpc
+	rpc \
+	rpc/mpd
 
 # to explicitly ignore unused parameters use a macro
 # #define UNUSED(x) (void)(x)
