@@ -29,8 +29,8 @@ struct list_t
 	void* userdata;
 };
 
-#define LIST_EACH(list, node) \
-	EACH(list, node, next)
+#define LIST_EACH(head, node) \
+	EACH(head, node, next)
 
 Node*
 Node_new(void);
