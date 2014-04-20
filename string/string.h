@@ -5,6 +5,8 @@
 #include <stdlib.h>     /* free */
 #include <string.h>     /* memcpy */
 #include <unistd.h>     /* write */
+#include <stdarg.h>     /* vsnprintf, va_* */
+
 #include "base/debug.h"
 //#include "base/xmalloc.h"
 
@@ -157,6 +159,16 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars);
 
 #define StringBuffer_clear(buf) \
 	buf->string->length = 0;
+
+#define StringBuffer_length(buf) \
+	buf->string->length
+
+#define StringBuffer_snprintf(buf, format, ...) \
+	(buf->string->length = (size_t)snprintf(buf->string->value, buf->length, format, __VA_ARGS__) + 1)
+
+#define StringBuffer_printf(buf, format, ...) \
+	if (StringBuffer_make_room(buf, 0, StringBuffer_snprintf(buf, format, __VA_ARGS__)) > 0) \
+		StringBuffer_snprintf(buf, format, __VA_ARGS__);
 
 /* StringPointer methods */
 StringPointer*
