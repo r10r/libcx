@@ -3,20 +3,23 @@
 static struct mpd_connection* mpd_connection = NULL;
 
 static int
-connect(struct mpd_connection** conn)
+connect(RPC_Request* request, struct mpd_connection** conn)
 {
 	if (*conn == NULL)
 	{
 		*conn = mpd_connection_new(NULL, 0, 30000);
 		if (*conn == NULL)
 		{
-			fprintf(stderr, "%s\n", "Out of memory");
+			fprintf(stderr, "%s\n", "Out of memory"); // TODO use debug macro
+			StringBuffer_printf(&request->response_buffer, JSONRPC_ERROR, request->id, ERR_OOM, api_strerror(ERR_OOM));
 			return -1;
 		}
 
 		if (mpd_connection_get_error(*conn) != MPD_ERROR_SUCCESS)
 		{
+			// TODO use debug macro
 			fprintf(stderr, "Failed to create connection: %s\n", mpd_connection_get_error_message(*conn));
+			StringBuffer_printf(&request->response_buffer, JSONRPC_ERROR, request->id, jsrpc_ERROR_INTERNAL, mpd_connection_get_error_message(*conn));
 			mpd_connection_free(*conn);
 			*conn = NULL;
 			return -1;
@@ -38,7 +41,7 @@ mpd_clear_error()
 
 RPC(method, play)
 {
-	if (connect(&mpd_connection) == 1)
+	if (connect(request, &mpd_connection) == 1)
 	{
 		bool playing = mpd_send_play(mpd_connection);
 		printf("Play %d\n", playing);
@@ -48,7 +51,7 @@ RPC(method, play)
 
 RPC(method, pause)
 {
-	if (connect(&mpd_connection) == 1)
+	if (connect(request, &mpd_connection) == 1)
 	{
 		bool paused = mpd_send_pause(mpd_connection, 0);
 		printf("Paused %d\n", paused);
@@ -62,7 +65,7 @@ RPC(params, send_message)
 };
 RPC(method, send_message)
 {
-	if (connect(&mpd_connection) == 1)
+	if (connect(request, &mpd_connection) == 1)
 	{
 		bool paused = mpd_run_send_message(mpd_connection, "foo", (const char*)request->params[0]);
 		printf("Message send %d\n", paused);

@@ -14,13 +14,14 @@ main()
 
 	/* we have the whole config file in memory.  let's parse it ... */
 	char request[1024];
+	RPC_Request req;
 
 	snprintf(request, sizeof(request), JSONRPC_REQUEST, "66", "hello", "name", "World");
-	dispatch_request(hello_world_methods, request);
+	dispatch_request(&req, hello_world_methods, request);
 
 	snprintf(request, sizeof(request), JSONRPC_REQUEST_POS, "\"foobar\"", "lonely", "World");
-	dispatch_request(hello_world_methods, request);
+	dispatch_request(&req, hello_world_methods, request);
 
 	snprintf(request, sizeof(request), JSONRPC_NOTIFICATION, "hello", "name", "World");
-	dispatch_request(hello_world_methods, request);
+	dispatch_request(&req, hello_world_methods, request);
 }

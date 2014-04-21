@@ -32,8 +32,6 @@ rpc_connection_handler(Connection* connection, ConnectionEvent event)
 	{
 	case CONNECTION_EVENT_DATA:
 	{
-		StringBuffer* buffer = (StringBuffer*)connection->data;
-		Connection_send(connection, buffer->string->value, buffer->string->length);
 		break;
 	}
 	case CONNECTION_EVENT_CLOSE_READ:
@@ -42,9 +40,11 @@ rpc_connection_handler(Connection* connection, ConnectionEvent event)
 
 		StringBuffer* buffer = (StringBuffer*)connection->data;
 		StringBuffer_catn(buffer, ""); // add \0 terminator to buffer
-//		Connection_send(connection, byebye, strlen(byebye));
-		dispatch_request(((RPC_Server*)connection->worker->server)->method, buffer->string->value);
-		StringBuffer_free(buffer);
+		RPC_Request request;
+		StringBuffer_init(&(request.response_buffer), 1024);
+		dispatch_request(&request, ((RPC_Server*)connection->worker->server)->method, buffer->string->value);
+		Connection_send_buffer(connection, &request.response_buffer);
+		free(buffer->string);
 		Connection_close(connection);
 		break;
 	}

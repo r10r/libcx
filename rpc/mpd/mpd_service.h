@@ -27,4 +27,22 @@ RPC(public, send_message)
 	RPC(public_name, pause), \
 	RPC(public_name, send_message)
 
+
+/* error definitions key,value pairs */
+static const char* const api_errlist[] = {
+	"Unknown error code"
+	"Out of memory",
+};
+
+static int api_nerr = 2;
+
+/* custom RPC errors -32000 to -32099 */
+enum api_error
+{
+	ERR_OOM = -32000,
+};
+
+#define api_strerror(code) \
+	(((code + 32000) < api_nerr) ? api_errlist[code + 32000] : api_errlist[0])
+
 #endif
