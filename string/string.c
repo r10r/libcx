@@ -45,6 +45,13 @@ String_shift(String* s, size_t count)
 	return 1;
 }
 
+inline void
+StringBuffer_init(StringBuffer* buffer, size_t length)
+{
+	buffer->length = length;
+	buffer->string = String_init(NULL, length);
+}
+
 StringBuffer*
 StringBuffer_new(size_t length)
 {
@@ -52,9 +59,7 @@ StringBuffer_new(size_t length)
 		return NULL;
 
 	StringBuffer* buf = malloc(sizeof(StringBuffer));
-
-	buf->length = length;
-	buf->string = String_init(NULL, length);
+	StringBuffer_init(buf, length);
 	return buf;
 }
 
