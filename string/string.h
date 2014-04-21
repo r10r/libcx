@@ -110,6 +110,9 @@ StringBuffer*
 StringBuffer_new(size_t length);
 
 void
+StringBuffer_init(StringBuffer* buffer, size_t length);
+
+void
 StringBuffer_free(StringBuffer* buffer);
 
 #define StringBuffer_unused(buf) \
@@ -164,7 +167,7 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars);
 	buf->string->length
 
 #define StringBuffer_snprintf(buf, format, ...) \
-	(buf->string->length = (size_t)snprintf(buf->string->value, buf->length, format, __VA_ARGS__) + 1)
+	((buf)->string->length = (size_t)snprintf((buf)->string->value, (buf)->length, format, __VA_ARGS__) + 1)
 
 #define StringBuffer_printf(buf, format, ...) \
 	if (StringBuffer_make_room(buf, 0, StringBuffer_snprintf(buf, format, __VA_ARGS__)) > 0) \
