@@ -74,4 +74,7 @@ Connection_close(Connection* c);
 void
 Connection_send(Connection* c, const char* data, size_t length);
 
+#define Connection_send_buffer(c, buffer) \
+	Connection_send(c, (buffer)->string->value, (buffer)->string->length)
+
 #endif
