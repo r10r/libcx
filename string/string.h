@@ -154,16 +154,16 @@ StringBuffer_fdload(StringBuffer* buffer, int fd, size_t chunk_size);
 ssize_t
 StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars);
 
-#define StringBuffer_fdncat(buffer, fd) \
+#define StringBuffer_fdcat(buffer, fd) \
 	StringBuffer_read(buffer, (buffer)->string->length, fd, (buffer)->length)
 
-#define StringBuffer_fncat(buffer, file) \
+#define StringBuffer_fcat(buffer, file) \
 	StringBuffer_read(buffer, (buffer)->string->length, fileno(file), (buffer)->length)
 
-#define StringBuffer_fdcat(buffer, fd, nchars) \
+#define StringBuffer_fdncat(buffer, fd, nchars) \
 	StringBuffer_read(buffer, (buffer)->string->length, fd, nchars)
 
-#define StringBuffer_fcat(buffer, file, nchars) \
+#define StringBuffer_fncat(buffer, file, nchars) \
 	StringBuffer_read(buffer, (buffer)->string->length, fileno(file), nchars)
 
 #define StringBuffer_shift(buffer, count) \

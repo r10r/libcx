@@ -96,26 +96,26 @@ test_StringBuffer_fcat()
 
 	// buffer is extended to maximum read size each time before reading
 	rewind(tmpfile);
-	TEST_ASSERT_EQUAL_INT(4, StringBuffer_fcat(buf, tmpfile, 32));
+	TEST_ASSERT_EQUAL_INT(4, StringBuffer_fncat(buf, tmpfile, 32));
 	TEST_ASSERT_EQUAL_INT(32, buf->length);
 	TEST_ASSERT_EQUAL_INT(4, buf->string->length);
 	TEST_ASSERT_EQUAL_INT(32 - 4, StringBuffer_unused(buf));
 
 	rewind(tmpfile);
-	TEST_ASSERT_EQUAL_INT(4, StringBuffer_fcat(buf, tmpfile, 32));
+	TEST_ASSERT_EQUAL_INT(4, StringBuffer_fncat(buf, tmpfile, 32));
 	TEST_ASSERT_EQUAL_INT(32 + 4, buf->length);
 
 	rewind(tmpfile);
-	TEST_ASSERT_EQUAL_INT(4, StringBuffer_fcat(buf, tmpfile, 32));
+	TEST_ASSERT_EQUAL_INT(4, StringBuffer_fncat(buf, tmpfile, 32));
 	TEST_ASSERT_EQUAL_INT(32 + 8, buf->length);
 
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fcat(buf, tmpfile, 32));
+	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fncat(buf, tmpfile, 32));
 	TEST_ASSERT_EQUAL_INT(32 + 12, buf->length);
 
 	// additional reads do not change anything
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fcat(buf, tmpfile, 32));
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fcat(buf, tmpfile, 32));
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fcat(buf, tmpfile, 32));
+	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fncat(buf, tmpfile, 32));
+	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fncat(buf, tmpfile, 32));
+	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fncat(buf, tmpfile, 32));
 
 	TEST_ASSERT_EQUAL_INT(4 + 4 + 4, buf->string->length);
 	TEST_ASSERT_EQUAL_INT(32, StringBuffer_unused(buf));
