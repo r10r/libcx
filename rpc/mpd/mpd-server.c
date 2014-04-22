@@ -17,7 +17,7 @@ rpc_connection_data_handler(Connection* connection)
 {
 	RPC_Request* request = (RPC_Request*)connection->data;
 
-	return StringBuffer_fdncat(&request->request_buffer, connection->fd);
+	return StringBuffer_fdcat(&request->request_buffer, connection->fd);
 }
 
 static Connection*
