@@ -6,23 +6,18 @@
 #include "rpc/jsrpc.h"
 #include "mpd_service.h"
 
-#define CONNECTION_BUFFER_LENGTH 1024
-
-// {"jsonrpc": "2.0", "id": 66, "method": "foobar"}
-
 typedef struct rpc_server_t
 {
 	Server server;
-	RPC_Method* method;
+	RPC_Method* methods;
 } RPC_Server;
-
 
 static ssize_t
 rpc_connection_data_handler(Connection* connection)
 {
-	StringBuffer* buffer = (StringBuffer*)connection->data;
+	RPC_Request* request = (RPC_Request*)connection->data;
 
-	return StringBuffer_read(buffer, 0, connection->fd, buffer->length);
+	return StringBuffer_fdncat(&request->request_buffer, connection->fd);
 }
 
 static Connection*
@@ -38,13 +33,11 @@ rpc_connection_handler(Connection* connection, ConnectionEvent event)
 	{
 		XDBG("processing request");
 
-		StringBuffer* buffer = (StringBuffer*)connection->data;
-		StringBuffer_catn(buffer, ""); // add \0 terminator to buffer
-		RPC_Request request;
-		StringBuffer_init(&(request.response_buffer), 1024);
-		dispatch_request(&request, ((RPC_Server*)connection->worker->server)->method, buffer->string->value);
-		Connection_send_buffer(connection, &request.response_buffer);
-		free(buffer->string);
+		RPC_Request* request = (RPC_Request*)connection->data;
+		StringBuffer_catn(&request->request_buffer, ""); // add \0 terminator to buffer
+		dispatch_request(request, ((RPC_Server*)connection->worker->server)->methods);
+		Connection_send_buffer(connection, &request->response_buffer);
+		RPC_Request_free((RPC_Request*)connection->data);
 		Connection_close(connection);
 		break;
 	}
@@ -56,22 +49,22 @@ rpc_connection_handler(Connection* connection, ConnectionEvent event)
 }
 
 static Connection*
-EchoConnection_new()
+RPCConnection_new()
 {
 	Connection* connection = Connection_new(NULL, -1);
 
 	connection->f_data_handler = rpc_connection_data_handler;
 	connection->f_handler = rpc_connection_handler;
-	connection->data = StringBuffer_new(CONNECTION_BUFFER_LENGTH);
+	connection->data = RPC_Request_new();
 	return connection;
 }
 
 static UnixWorker*
-EchoWorker_new()
+RPCWorker_new()
 {
 	UnixWorker* worker = UnixWorker_new();
 
-	worker->f_create_connection = EchoConnection_new;
+	worker->f_create_connection = RPCConnection_new;
 	return worker;
 }
 
@@ -102,14 +95,17 @@ main(int argc, char** argv)
 		print_usage("Invalid server type");
 
 	RPC_Method mpd_methods[] = { RPC_methods(MusicPlayerDaemon), RPC_null };
-	server->method = &mpd_methods[0];
+	server->methods = &mpd_methods[0];
 
 	printf("Registered RPC methods:\n");
 	int i;
 	for (i = 0; mpd_methods[i].name != NULL; i++)
 		RPC_Method_log(&mpd_methods[i]);
 
-	List_push(((Server*)server)->workers, EchoWorker_new());
+	List_push(((Server*)server)->workers, RPCWorker_new());
+	List_push(((Server*)server)->workers, RPCWorker_new());
+	List_push(((Server*)server)->workers, RPCWorker_new());
+	List_push(((Server*)server)->workers, RPCWorker_new());
 
 	Server_start((Server*)server);         // blocks
 }

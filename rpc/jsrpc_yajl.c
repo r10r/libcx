@@ -170,11 +170,11 @@ parse_request_method(yajl_val v, RPC_Request* request)
 }
 
 void
-dispatch_request(RPC_Request* request, RPC_Method methods[], const char* json)
+dispatch_request(RPC_Request* request, RPC_Method methods[])
 {
 	char errbuf[1024];
 
-	yajl_val root = yajl_tree_parse(json, errbuf, sizeof(errbuf));
+	yajl_val root = yajl_tree_parse(StringBuffer_value(&request->request_buffer), errbuf, sizeof(errbuf));
 
 	if (!root)
 		fprintf(stderr, "Invalid request. Failed to parse request: \n%s\n", errbuf);

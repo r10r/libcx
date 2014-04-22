@@ -12,6 +12,7 @@ typedef struct rpc_request_t
 {
 	const char* method;
 	const char* id;
+	StringBuffer request_buffer;
 	StringBuffer response_buffer;
 
 	char* params[MAX_PARAMS];
@@ -93,12 +94,18 @@ RPC_Method_log(RPC_Method* method);
 extern void
 register_method(const char* method, F_RPC_Method* fmethod, RPC_Param signature[], int size);
 
+RPC_Request*
+RPC_Request_new(void);
+
+void
+RPC_Request_free(RPC_Request* request);
+
 /* [Plugin API] */
 
 extern void*
 get_param_value_string(RPC_Param* param, int index, void* data);
 
 extern void
-dispatch_request(RPC_Request* request, RPC_Method methods[], const char* json);
+dispatch_request(RPC_Request* request, RPC_Method methods[]);
 
 #endif
