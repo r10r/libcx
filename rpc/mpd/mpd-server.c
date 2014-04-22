@@ -6,6 +6,8 @@
 #include "rpc/jsrpc.h"
 #include "mpd_service.h"
 
+// TODO make this a generic RPC server
+
 typedef struct rpc_server_t
 {
 	Server server;
