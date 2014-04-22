@@ -63,12 +63,18 @@ StringBuffer_new(size_t length)
 	return buf;
 }
 
+inline void
+StringBuffer_free_members(StringBuffer* buffer)
+{
+	S_free(buffer->string);
+}
+
 void
 StringBuffer_free(StringBuffer* buffer)
 {
 	if (buffer)
 	{
-		S_free(buffer->string);
+		StringBuffer_free_members(buffer);
 		free(buffer);
 	}
 }
