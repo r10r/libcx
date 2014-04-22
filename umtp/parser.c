@@ -88,7 +88,7 @@ RagelParser_fdparse(RagelParser* parser, int fd, size_t chunk_size)
 
 	while (1)
 	{
-		ssize_t nread = StringBuffer_fdcat(buffer, fd, chunk_size);
+		ssize_t nread = StringBuffer_fdncat(buffer, fd, chunk_size);
 		total_read += nread;
 
 		if (nread == 0)
