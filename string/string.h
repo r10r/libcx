@@ -175,12 +175,22 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars);
 #define StringBuffer_length(buffer) \
 	(buffer)->string->length
 
-#define StringBuffer_snprintf(buffer, format, ...) \
-	((buffer)->string->length = (size_t)snprintf((buffer)->string->value, (buffer)->length, format, __VA_ARGS__) + 1)
+/*
+ * http://stackoverflow.com/questions/20167124/vsprintf-and-vsnprintf-wformat-nonliteral-warning-on-clang-5-0
+ * http://clang.llvm.org/docs/LanguageExtensions.html#format-string-checking
+ */
+__attribute__((__format__(__printf__, 3, 0)))
+ssize_t
+StringBuffer_vsprintf(StringBuffer* buffer, size_t offset, const char* format, ...);
+
+#define StringBuffer_snprintf(buffer, offset, format, ...) \
+	((buffer)->string->length = (size_t)snprintf(S_get((buffer)->string, offset), (buffer)->length, format, __VA_ARGS__) + 1)
 
 #define StringBuffer_printf(buffer, format, ...) \
-	if (StringBuffer_make_room(buffer, 0, StringBuffer_snprintf(buffer, format, __VA_ARGS__)) > 0) \
-		StringBuffer_snprintf(buffer, format, __VA_ARGS__);
+	StringBuffer_vsprintf(buffer, 0, format, __VA_ARGS__)
+
+#define StringBuffer_aprintf(buffer, format, ...) \
+	StringBuffer_vsprintf(buffer, (buffer)->string->length - 1, format, __VA_ARGS__)
 
 /* StringPointer methods */
 StringPointer*

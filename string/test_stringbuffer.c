@@ -224,6 +224,22 @@ test_StringBuffer_printf()
 	StringBuffer_free(buf);
 }
 
+static void
+test_StringBuffer_aprintf()
+{
+	StringBuffer* buf = StringBuffer_new(2);
+
+	StringBuffer_printf(buf, "%d:%d", 1, 2);
+	StringBuffer_aprintf(buf, ",%d:%d", 3, 4);
+	const char* expected = "1:2,3:4";
+
+	TEST_ASSERT_EQUAL_STRING(expected, StringBuffer_value(buf));
+	TEST_ASSERT_EQUAL_INT(strlen(expected) + 1, StringBuffer_length(buf));
+	TEST_ASSERT_EQUAL_INT(0, StringBuffer_unused(buf));
+
+	StringBuffer_free(buf);
+}
+
 int
 main()
 {
@@ -239,5 +255,6 @@ main()
 	RUN(test_StringBuffer_shift);
 	RUN(test_StringBuffer_clear);
 	RUN(test_StringBuffer_printf);
+	RUN(test_StringBuffer_aprintf);
 	TEST_END
 }
