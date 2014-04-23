@@ -27,19 +27,10 @@ test_parameter_definition()
 {
 	/* must be defined for RPC_get_param macro */
 	RPC_Request* request = NULL;
-	const char* foo;
-	int bar;
 
 	/* get by name */
-	foo = RPC(get_param, foobar, foo);
-	bar = RPC(get_param, foobar, bar);
-
-	TEST_ASSERT_EQUAL(0, strcmp("foo", foo));
-	TEST_ASSERT_EQUAL(666, bar);
-
-	/* get by position */
-	foo = RPC(get_param, foobar, 0);
-	bar = RPC(get_param, foobar, 1);
+	const char* foo = RPC(get_param, foobar, foo);
+	int bar = RPC(get_param, foobar, bar);
 
 	TEST_ASSERT_EQUAL(0, strcmp("foo", foo));
 	TEST_ASSERT_EQUAL(666, bar);

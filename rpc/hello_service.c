@@ -14,7 +14,6 @@ RPC(param_list, hello)
 RPC(method, hello)
 {
 	hello(RPC(get_param, hello, myparam));
-	hello(RPC(get_param, hello, 0));
 }
 
 RPC(set_param, foo, 0, bar, const char*, RPC_Request_get_param_string_value, RPC_String, 0)
@@ -25,7 +24,6 @@ RPC(param_list, foo)
 RPC(method, foo)
 {
 	hello(RPC(get_param, foo, bar));
-	hello(RPC(get_param, foo, 0));
 }
 
 RPC(set_param, blub, 0, blubber, const char*, RPC_Request_get_param_string_value, RPC_String, 0)
@@ -38,9 +36,7 @@ RPC(param_list, blub)
 RPC(method, blub)
 {
 	hello(RPC(get_param, blub, blubber));
-	hello(RPC(get_param, blub, 0));
 	hello(RPC(get_param, blub, fooo));
-	hello(RPC(get_param, blub, 1));
 }
 
 RPC(method, lonely)

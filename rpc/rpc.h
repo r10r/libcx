@@ -97,8 +97,7 @@ struct rpc_method_t
 
 #define RPC_set_param(ns, meth, pos, name, type, func, rpc_type, flags) \
 	RPC_param_define(ns, meth, name, rpc_type, pos, flags) \
-	RPC_param_define_deserialize(ns, meth, name, name, type, func) \
-	RPC_param_define_deserialize(ns, meth, pos, name, type, func)
+	RPC_param_define_deserialize(ns, meth, name, name, type, func)
 
 #define RPC_get_param(ns, meth, name) \
 	RPC_param_deserialize(ns, meth, name) (request)
