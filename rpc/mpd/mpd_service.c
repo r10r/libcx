@@ -2,8 +2,14 @@
 
 static struct mpd_connection* mpd_connection = NULL;
 
-#define jsrpc_write_error(request, code, message) \
-	StringBuffer_printf(&(request)->response_buffer, JSONRPC_ERROR, (request)->id, code, message);
+#define IS_REQUEST(request) \
+	(request->id != NULL)
+
+#define jsrpc_write_error(code, message) \
+	if (IS_REQUEST(request)) StringBuffer_printf(&request->response_buffer, JSONRPC_ERROR, (request)->id, code, message)
+
+#define jsrpc_write_simple_response(format) \
+	if (IS_REQUEST(request)) StringBuffer_printf(&request->response_buffer, format, (request)->id)
 
 static int
 connect(RPC_Request* request, struct mpd_connection** conn)
@@ -14,7 +20,7 @@ connect(RPC_Request* request, struct mpd_connection** conn)
 		if (*conn == NULL)
 		{
 			fprintf(stderr, "%s\n", "Out of memory"); // TODO use debug macro
-			jsrpc_write_error(request, ERR_OOM, api_strerror(ERR_OOM));
+			jsrpc_write_error(ERR_OOM, api_strerror(ERR_OOM));
 			return -1;
 		}
 
@@ -22,7 +28,7 @@ connect(RPC_Request* request, struct mpd_connection** conn)
 		{
 			// TODO use debug macro
 			fprintf(stderr, "Failed to create connection: %s\n", mpd_connection_get_error_message(*conn));
-			jsrpc_write_error(request, jsrpc_ERROR_INTERNAL, mpd_connection_get_error_message(*conn));
+			jsrpc_write_error(jsrpc_ERROR_INTERNAL, mpd_connection_get_error_message(*conn));
 			mpd_connection_free(*conn);
 			*conn = NULL;
 			return -1;
@@ -31,15 +37,25 @@ connect(RPC_Request* request, struct mpd_connection** conn)
 	return 1;
 }
 
-static void
-mpd_clear_error(RPC_Request* request, struct mpd_connection** conn)
+/* true if command was successful, false if error occured */
+static bool
+mpd_response_check_success(RPC_Request* request, struct mpd_connection** conn)
 {
-	mpd_response_finish(mpd_connection);
-	if (mpd_connection_get_error(mpd_connection) != MPD_ERROR_SUCCESS)
+	bool success = mpd_response_finish(mpd_connection);
+
+	// FIXME check response can be successful but connection has an error ?
+
+	if (!success)
 	{
-		jsrpc_write_error(request, jsrpc_ERROR_INTERNAL, mpd_connection_get_error_message(*conn));
-		mpd_connection_clear_error(mpd_connection);
+		if (mpd_connection_get_error(mpd_connection) != MPD_ERROR_SUCCESS)
+		{
+			jsrpc_write_error(jsrpc_ERROR_INTERNAL, mpd_connection_get_error_message(*conn));
+			mpd_connection_clear_error(mpd_connection);
+		}
+		else
+			printf("Unsuccessful response but no error\n");
 	}
+	return success;
 }
 
 RPC(method, play)
@@ -47,8 +63,9 @@ RPC(method, play)
 	if (connect(request, &mpd_connection) == 1)
 	{
 		bool playing = mpd_send_play(mpd_connection);
-		printf("Play %d\n", playing);
-		mpd_clear_error(request, &mpd_connection);
+
+		if (mpd_response_check_success(request, &mpd_connection))
+			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(playing));
 	}
 }
 
@@ -56,20 +73,30 @@ RPC(method, pause)
 {
 	if (connect(request, &mpd_connection) == 1)
 	{
-		bool paused = mpd_send_pause(mpd_connection, 0);
-		printf("Paused %d\n", paused);
-		mpd_clear_error(request, &mpd_connection);
+		bool paused = mpd_send_pause(mpd_connection, 1);
+
+		if (mpd_response_check_success(request, &mpd_connection))
+			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(paused));
 	}
 }
 
-RPC(single_string_param, send_message, 0, message, 0)
+RPC(set_param_string, send_message, 0, channel, 0)
+RPC(set_param_string, send_message, 1, message, 0)
+RPC(param_list, send_message)
+{
+	&RPC(param, send_message, channel),
+	&RPC(param, send_message, message)
+};
 RPC(method, send_message)
 {
 	if (connect(request, &mpd_connection) == 1)
 	{
-		bool paused = mpd_run_send_message(mpd_connection, "foo", RPC(get_param, send_message, message));
-		printf("Message send %d\n", paused);
-		mpd_clear_error(request, &mpd_connection);
+		bool message_send = mpd_run_send_message(mpd_connection,
+							 RPC(get_param, send_message, channel),
+							 RPC(get_param, send_message, message));
+
+		if (mpd_response_check_success(request, &mpd_connection))
+			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(message_send));
 	}
 }
 
