@@ -62,10 +62,10 @@ RPC(method, play)
 {
 	if (connect(request, &mpd_connection) == 1)
 	{
-		bool playing = mpd_send_play(mpd_connection);
+		bool success = mpd_send_play(mpd_connection);
 
 		if (mpd_response_check_success(request, &mpd_connection))
-			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(playing));
+			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(success));
 	}
 }
 
@@ -73,10 +73,10 @@ RPC(method, pause)
 {
 	if (connect(request, &mpd_connection) == 1)
 	{
-		bool paused = mpd_send_pause(mpd_connection, 1);
+		bool success = mpd_send_pause(mpd_connection, 1);
 
 		if (mpd_response_check_success(request, &mpd_connection))
-			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(paused));
+			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(success));
 	}
 }
 
@@ -91,15 +91,40 @@ RPC(method, send_message)
 {
 	if (connect(request, &mpd_connection) == 1)
 	{
-		bool message_send = mpd_run_send_message(mpd_connection,
-							 RPC(get_param, send_message, channel),
-							 RPC(get_param, send_message, message));
+		bool success = mpd_run_send_message(mpd_connection,
+						    RPC(get_param, send_message, channel),
+						    RPC(get_param, send_message, message));
 
 		if (mpd_response_check_success(request, &mpd_connection))
-			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(message_send));
+			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(success));
+	}
+}
+
+RPC(single_string_param, add, 0, uri, 0)
+RPC(method, add)
+{
+	if (connect(request, &mpd_connection) == 1)
+	{
+		bool success = mpd_run_add(mpd_connection, RPC(get_param, add, uri));
+
+		if (mpd_response_check_success(request, &mpd_connection))
+			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(success));
+	}
+}
+
+RPC(method, next)
+{
+	if (connect(request, &mpd_connection) == 1)
+	{
+		bool success = mpd_send_next(mpd_connection);
+
+		if (mpd_response_check_success(request, &mpd_connection))
+			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(success));
 	}
 }
 
 RPC(export_without_params, play);
 RPC(export_without_params, pause);
 RPC(export, send_message);
+RPC(export, add);
+RPC(export_without_params, next);

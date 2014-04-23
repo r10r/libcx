@@ -90,7 +90,7 @@ main(int argc, char** argv)
 	RPC_Server* server = malloc(sizeof(RPC_Server));
 
 	if (strcmp(argv[1], "unix") == 0)
-		UnixServer_init((Server*)server, "/tmp/echo.sock");
+		UnixServer_init((Server*)server, "/tmp/mpd.sock");
 	else if (strcmp(argv[1], "tcp") == 0)
 		TCPServer_init((Server*)server, "127.0.0.1", 6666);
 	else
