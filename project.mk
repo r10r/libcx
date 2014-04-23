@@ -1,10 +1,12 @@
 LIBCX_DIR := $(LOCAL_DIR)
 
-# CC := gcc
-# CFLAGS += -Werror -Wall -pedantic
+ifeq ($(compiler),gcc)
+CC := gcc
+CFLAGS += -Werror -Wall -pedantic
+else
 CC := clang
 CFLAGS += -Weverything -Werror -Wall -pedantic
-
+endif
 
 ifeq ($(profile),release)
 CFLAGS += -Os -DNDEBUG -DNTRACE
