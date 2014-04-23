@@ -62,12 +62,7 @@ RPC(method, pause)
 	}
 }
 
-
-RPC(set_param, send_message, 0, message, const char*, RPC_Request_get_param_string_value, RPC_String, 0)
-RPC(param_list, send_message)
-{
-	&RPC(param, send_message, message)
-};
+RPC(single_string_param, send_message, 0, message, 0)
 RPC(method, send_message)
 {
 	if (connect(request, &mpd_connection) == 1)

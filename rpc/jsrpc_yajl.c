@@ -19,25 +19,32 @@ lookup_method(RPC_Method methods[], RPC_Request* request)
 	return NULL;
 }
 
-const char*
-RPC_Request_get_param_string_value(RPC_Request* request, RPC_Param* param)
+static yajl_val
+get_param_value(RPC_Request* request, RPC_Param* param)
 {
 	yajl_val params = yajl_tree_get((yajl_val)request->userdata, JSONRPC_PARAMS_PATH, yajl_t_any);
-	yajl_val value = NULL;
 
 	if (YAJL_IS_ARRAY(params))
 	{
 		// check bounds
 		if (param->pos < (int)params->u.array.len)
-			value = *(params->u.array.values + param->pos);
+			return *(params->u.array.values + param->pos);
 		else
 			fprintf(stderr, "Param index[%d] out of bounds\n", param->pos);
 	}
 	else if (YAJL_IS_OBJECT(params))
 	{
 		const char* parameter_path[] = { param->name, NULL };
-		value = yajl_tree_get(params, parameter_path, yajl_t_any);
+		return yajl_tree_get(params, parameter_path, yajl_t_any);
 	}
+
+	return NULL;
+}
+
+const char*
+RPC_Request_get_param_string_value(RPC_Request* request, RPC_Param* param)
+{
+	yajl_val value = get_param_value(request, param);
 
 	if (value)
 	{
