@@ -151,6 +151,41 @@ StringBuffer_fdload(StringBuffer* buffer, int fd, size_t chunk_size)
 	return total_read;
 }
 
+/* -1 on error, >= 0 for count of printed characters */
+ssize_t
+StringBuffer_vsprintf(StringBuffer* buffer, size_t offset, const char* format, ...)
+{
+	/* check that offset is within within range */
+	if (offset > buffer->length)
+		return -1;
+
+	char* string_start = S_get(buffer->string, offset);
+	size_t nchars_available = buffer->length - offset;
+	size_t nchars_printed;
+	va_list ap;
+
+	va_start(ap, format);
+	nchars_printed = (size_t)vsnprintf(string_start, nchars_available, format, ap);
+	va_end(ap);
+
+	/* check if buffer was large enough */
+	if (nchars_printed >= nchars_available)
+	{
+		StringBuffer_make_room(buffer, offset, nchars_printed + 1 /* \0 */);
+		va_start(ap, format);
+		string_start = S_get(buffer->string, offset);
+		nchars_available = buffer->length - offset;
+		vsnprintf(string_start, nchars_available, format, ap);
+		va_end(ap);
+	}
+	else
+		return -1;
+
+	buffer->string->length = buffer->length;
+
+	return (ssize_t)nchars_printed;
+}
+
 /* string pointer methods */
 
 StringPointer*
