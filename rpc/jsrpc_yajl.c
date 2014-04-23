@@ -54,18 +54,18 @@ RPC_Request_get_param_value_string(RPC_Request* request, RPC_Param* param)
 			break;
 		case yajl_t_string:
 			fprintf(stderr, "Deserialized parameter[%d] %s --> %s\n",
-					param->pos, param->name, value->u.string);
+				param->pos, param->name, value->u.string);
 			return value->u.string;
 		default:
 			fprintf(stderr, "Parameter [%d:%s] is not a string value.\n",
-					param->pos, param->name);
+				param->pos, param->name);
 			// TODO return invalid request with null id if not notification
 			break;
 		}
 	}
 	else
 		fprintf(stderr, "Missing param[%d] named '%s'\n",
-				param->pos, param->name);
+			param->pos, param->name);
 
 	return NULL;
 }
@@ -85,7 +85,7 @@ RPC_Request_get_param_value_longlong(RPC_Request* request, RPC_Param* param)
 	}
 	else
 		fprintf(stderr, "Missing param[%d] named '%s'\n",
-				param->pos, param->name);
+			param->pos, param->name);
 
 
 	return 0;
