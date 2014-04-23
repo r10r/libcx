@@ -15,7 +15,7 @@
 
 /* namespace  declaration */
 #undef RPC
-#define RPC(action, cmd) RPC_ ## action(MusicPlayerDaemon, cmd)
+#define RPC(action, ...) RPC_ ## action(MusicPlayerDaemon, __VA_ARGS__)
 
 /* export each function + method definition */
 RPC(public, play)

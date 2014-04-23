@@ -13,8 +13,11 @@ RPC_Method_log(RPC_Method* method)
 	printf("* method[%s] params:#%d\n", method->name, method->param_count);
 	int i = 0;
 	for (i = 0; i < method->param_count; i++)
-		printf("  param[%d] name:%s flags:%d\n", i,
-		       method->signature[i].name, method->signature[i].flags);
+	{
+		RPC_Param* param = method->signature[i];
+		printf("  param[%d] name:%s type:%d, flags:%d\n",
+		       param->pos, param->name, param->type, param->flags);
+	}
 }
 
 RPC_Request*

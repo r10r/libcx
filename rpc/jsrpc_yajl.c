@@ -2,6 +2,11 @@
 #include "list/list.h"
 #include "yajl/yajl_tree.h"
 
+static const char* JSONRPC_VERSION_PATH[] = { "jsonrpc", NULL };
+static const char* JSONRPC_ID_PATH[] = { "id", NULL };
+static const char* JSONRPC_METHOD_PATH[] = { "method", NULL };
+static const char* JSONRPC_PARAMS_PATH[] = { "params", NULL };
+
 static RPC_Method*
 lookup_method(RPC_Method methods[], RPC_Request* request)
 {
@@ -14,20 +19,19 @@ lookup_method(RPC_Method methods[], RPC_Request* request)
 	return NULL;
 }
 
-void*
-get_param_value_string(RPC_Param* param, int index, void* data)
+const char*
+RPC_Request_get_param_string_value(RPC_Request* request, RPC_Param* param)
 {
-	yajl_val params = (yajl_val)data;
+	yajl_val params = yajl_tree_get((yajl_val)request->userdata, JSONRPC_PARAMS_PATH, yajl_t_any);
 	yajl_val value = NULL;
-
 
 	if (YAJL_IS_ARRAY(params))
 	{
 		// check bounds
-		if (index < (int)params->u.array.len)
-			value = *(params->u.array.values + index);
+		if (param->pos < (int)params->u.array.len)
+			value = *(params->u.array.values + param->pos);
 		else
-			fprintf(stderr, "Param index[%d] out of bounds\n", index);
+			fprintf(stderr, "Param index[%d] out of bounds\n", param->pos);
 	}
 	else if (YAJL_IS_OBJECT(params))
 	{
@@ -42,7 +46,7 @@ get_param_value_string(RPC_Param* param, int index, void* data)
 		case yajl_t_null:
 			break;
 		case yajl_t_string:
-			fprintf(stderr, "Deserialized parameter[%d] %s --> %s\n", index, param->name, value->u.string);
+			fprintf(stderr, "Deserialized parameter[%d] %s --> %s\n", param->pos, param->name, value->u.string);
 			return value->u.string;
 		default:
 			printf("Invalid type %d for property id\n", value->type);
@@ -51,59 +55,16 @@ get_param_value_string(RPC_Param* param, int index, void* data)
 		}
 	}
 	else
-		fprintf(stderr, "Missing param[%d] named '%s'\n", index, param->name);
+		fprintf(stderr, "Missing param[%d] named '%s'\n", param->pos, param->name);
 
 	return NULL;
 }
 
 static int
-extract_request_parameters(yajl_val v, RPC_Request* request, RPC_Method* method)
+check_jsonrpc_version(RPC_Request* request, yajl_val root)
 {
-	if (method->param_count == 0)
-	{
-		// warn if params are set even if method does not require params
-		if (v && v->type != yajl_t_null)
-			fprintf(stderr, "Method [%s] has no parameters. Params ignored\n", method->name);
+	yajl_val v = yajl_tree_get(root, JSONRPC_VERSION_PATH, yajl_t_any);
 
-		return 1;
-	}
-	else
-	{
-		if (!v)
-			// TODO log missing parameters
-			printf("Missing parameters\n");
-		else
-		{
-			size_t length = 0;
-
-			if (YAJL_IS_ARRAY(v))
-				length = v->u.array.len;
-			else if (YAJL_IS_OBJECT(v))
-				length = v->u.object.len;
-			else
-			{
-				fprintf(stderr, "Invalid type for value 'params' %d\n", v->type);
-				return 0;
-			}
-
-			if (length < (size_t)method->param_count - 1)
-				fprintf(stderr, "Missing parameters. Only %zu of %d parameters provided\n", length, method->param_count);
-			else
-			{
-				// TODO handle optional parameters
-				int i = 0;
-				for (i = 0; i < method->param_count; i++)
-					request->params[i] = (char*)method->signature[i].deserialize(&method->signature[i], i, v);
-				return 1;
-			}
-		}
-	}
-	return 0;
-}
-
-static int
-check_jsonrpc_version(yajl_val v)
-{
 	if (v)
 	{
 		char* jsonrpc_version = YAJL_GET_STRING(v);
@@ -125,8 +86,10 @@ check_jsonrpc_version(yajl_val v)
 }
 
 static int
-parse_request_id(yajl_val v, RPC_Request* request)
+parse_request_id(RPC_Request* request, yajl_val root)
 {
+	yajl_val v = yajl_tree_get(root, JSONRPC_ID_PATH, yajl_t_any);
+
 	if (v)
 	{
 		switch (v->type)
@@ -153,8 +116,10 @@ parse_request_id(yajl_val v, RPC_Request* request)
 }
 
 static int
-parse_request_method(yajl_val v, RPC_Request* request)
+parse_request_method(RPC_Request* request, yajl_val root)
 {
+	yajl_val v = yajl_tree_get(root, JSONRPC_METHOD_PATH, yajl_t_any);
+
 	if (v)
 	{
 		request->method = YAJL_GET_STRING(v);
@@ -170,34 +135,31 @@ parse_request_method(yajl_val v, RPC_Request* request)
 }
 
 void
-dispatch_request(RPC_Request* request, RPC_Method methods[])
+RPC_Request_dispatch(RPC_Request* request, RPC_Method methods[])
 {
 	char errbuf[1024];
 
 	yajl_val root = yajl_tree_parse(StringBuffer_value(&request->request_buffer), errbuf, sizeof(errbuf));
 
+	request->userdata = root;
+
 	if (!root)
 		fprintf(stderr, "Invalid request. Failed to parse request: \n%s\n", errbuf);
-
-	const char* jsonrpc_path[] = { "jsonrpc", NULL };
-	const char* id_path[] = { "id", NULL };
-	const char* method_path[] = { "method", NULL };
-	const char* params_path[] = { "params", NULL };
 
 	yajl_val v;
 	int ret;
 
-	ret = check_jsonrpc_version(yajl_tree_get(root, jsonrpc_path, yajl_t_any));
+	ret = check_jsonrpc_version(request, root);
 	if (!ret)
-		goto error;         // TODO send error
+		goto error;
 
-	ret = parse_request_id(yajl_tree_get(root, id_path, yajl_t_any), request);
+	ret = parse_request_id(request, root);
 	if (!ret)
-		goto error; // TODO send error
+		goto error;
 
-	ret = parse_request_method(yajl_tree_get(root, method_path, yajl_t_any), request);
+	ret = parse_request_method(request, root);
 	if (!ret)
-		goto error; // TODO send error
+		goto error;
 
 	printf("--> Request id:%s method:%s\n", request->id, request->method);
 
@@ -205,17 +167,11 @@ dispatch_request(RPC_Request* request, RPC_Method methods[])
 	if (!method)
 	{
 		fprintf(stderr, "Method [%s] does not exist\n", request->method);
-		goto error; // TODO send error
+		goto error;
 	}
 
-	ret = extract_request_parameters(yajl_tree_get(root, params_path, yajl_t_any), request, method);
-	if (!ret)
-		goto error; // TODO send error
-
-	// if we want to process the request evented we have to do a memcpy the request here
-	// values saved to the request must be duplicated !!!
 	method->method(request);
 
-error:
+error:  // TODO send error
 	yajl_tree_free(root);
 }

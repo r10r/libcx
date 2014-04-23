@@ -6,32 +6,41 @@ hello(const char* name)
 	printf("Hello %s\n", name);
 }
 
-RPC(params, hello)
+RPC(set_param, hello, 0, myparam, const char*, RPC_Request_get_param_string_value, RPC_String, 0)
+RPC(param_list, hello)
 {
-	{ "name", get_param_value_string, 0 }
+	&RPC(param, hello, myparam)
 };
 RPC(method, hello)
 {
-	hello((char*)request->params[0]);
+	hello(RPC(get_param, hello, myparam));
+	hello(RPC(get_param, hello, 0));
 }
 
-RPC(params, foo)
+RPC(set_param, foo, 0, bar, const char*, RPC_Request_get_param_string_value, RPC_String, 0)
+RPC(param_list, foo)
 {
-	{ "bar", get_param_value_string, 0 }
+	&RPC(param, foo, bar)
 };
 RPC(method, foo)
 {
-	hello((char*)request->params[0]);
+	hello(RPC(get_param, foo, bar));
+	hello(RPC(get_param, foo, 0));
 }
 
-RPC(params, blub)
+RPC(set_param, blub, 0, blubber, const char*, RPC_Request_get_param_string_value, RPC_String, 0)
+RPC(set_param, blub, 1, fooo, const char*, RPC_Request_get_param_string_value, RPC_String, 0)
+RPC(param_list, blub)
 {
-	{ "blubber", get_param_value_string, 66 },
-	{ "fooo", get_param_value_string, 33 }
+	&RPC(param, blub, blubber),
+	&RPC(param, blub, fooo)
 };
 RPC(method, blub)
 {
-	hello((char*)request->params[0]);
+	hello(RPC(get_param, blub, blubber));
+	hello(RPC(get_param, blub, 0));
+	hello(RPC(get_param, blub, fooo));
+	hello(RPC(get_param, blub, 1));
 }
 
 RPC(method, lonely)

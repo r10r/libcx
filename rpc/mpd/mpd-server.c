@@ -37,7 +37,7 @@ rpc_connection_handler(Connection* connection, ConnectionEvent event)
 
 		RPC_Request* request = (RPC_Request*)connection->data;
 		StringBuffer_catn(&request->request_buffer, ""); // add \0 terminator to buffer
-		dispatch_request(request, ((RPC_Server*)connection->worker->server)->methods);
+		RPC_Request_dispatch(request, ((RPC_Server*)connection->worker->server)->methods);
 		Connection_send_buffer(connection, &request->response_buffer);
 		RPC_Request_free((RPC_Request*)connection->data);
 		Connection_close(connection);
@@ -96,7 +96,7 @@ main(int argc, char** argv)
 	else
 		print_usage("Invalid server type");
 
-	RPC_Method mpd_methods[] = { RPC_methods(MusicPlayerDaemon), RPC_null };
+	RPC_Method mpd_methods[] = { RPC_methods(MusicPlayerDaemon), RPC_Method_none };
 	server->methods = &mpd_methods[0];
 
 	printf("Registered RPC methods:\n");
