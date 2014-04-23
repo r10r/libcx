@@ -1,6 +1,11 @@
 #include "rpc.h"
 
-const RPC_Method RPC_null =  { NULL, NULL, NULL, 0 };
+const RPC_Method RPC_Method_none =  {
+	.name		= NULL,
+	.method		= NULL,
+	.signature	= NULL,
+	.param_count	= 0
+};
 
 void
 RPC_Method_log(RPC_Method* method)

@@ -10,3 +10,4 @@ test/unit/test_list
 rpc/jsrpc-example
 rpc/test_jsonrpc
 rpc/mpd/mpd-server
+rpc/test_rpc

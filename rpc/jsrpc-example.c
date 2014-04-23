@@ -4,7 +4,7 @@
 int
 main()
 {
-	RPC_Method hello_world_methods[] = { RPC_methods(HelloWorld), RPC_null };
+	RPC_Method hello_world_methods[] = { RPC_methods(HelloWorld), RPC_Method_none };
 
 	printf("Registered RPC methods:\n");
 	int i;
