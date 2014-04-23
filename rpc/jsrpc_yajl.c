@@ -42,7 +42,7 @@ get_param_value(RPC_Request* request, RPC_Param* param)
 }
 
 const char*
-RPC_Request_get_param_string_value(RPC_Request* request, RPC_Param* param)
+RPC_Request_get_param_value_string(RPC_Request* request, RPC_Param* param)
 {
 	yajl_val value = get_param_value(request, param);
 
@@ -53,18 +53,61 @@ RPC_Request_get_param_string_value(RPC_Request* request, RPC_Param* param)
 		case yajl_t_null:
 			break;
 		case yajl_t_string:
-			fprintf(stderr, "Deserialized parameter[%d] %s --> %s\n", param->pos, param->name, value->u.string);
+			fprintf(stderr, "Deserialized parameter[%d] %s --> %s\n",
+					param->pos, param->name, value->u.string);
 			return value->u.string;
 		default:
-			printf("Invalid type %d for property id\n", value->type);
+			fprintf(stderr, "Parameter [%d:%s] is not a string value.\n",
+					param->pos, param->name);
 			// TODO return invalid request with null id if not notification
 			break;
 		}
 	}
 	else
-		fprintf(stderr, "Missing param[%d] named '%s'\n", param->pos, param->name);
+		fprintf(stderr, "Missing param[%d] named '%s'\n",
+				param->pos, param->name);
 
 	return NULL;
+}
+
+long long
+RPC_Request_get_param_value_longlong(RPC_Request* request, RPC_Param* param)
+{
+	yajl_val value = get_param_value(request, param);
+
+	if (value)
+	{
+		if (YAJL_IS_INTEGER(value))
+			return YAJL_GET_INTEGER(value);
+		else
+			fprintf(stderr, "Parameter [%d:%s] is not a longlong value.\n",
+				param->pos, param->name);
+	}
+	else
+		fprintf(stderr, "Missing param[%d] named '%s'\n",
+				param->pos, param->name);
+
+
+	return 0;
+}
+
+double
+RPC_Request_get_param_value_double(RPC_Request* request, RPC_Param* param)
+{
+	yajl_val value = get_param_value(request, param);
+
+	if (value)
+	{
+		if (YAJL_IS_DOUBLE(value))
+			return YAJL_GET_DOUBLE(value);
+		else
+			fprintf(stderr, "Parameter [%d:%s] is not a double value.\n",
+				param->pos, param->name);
+	}
+	else
+		fprintf(stderr, "Missing param[%d] named '%s'\n", param->pos, param->name);
+
+	return 0;
 }
 
 static int
@@ -105,10 +148,10 @@ parse_request_id(RPC_Request* request, yajl_val root)
 			fprintf(stderr, "Using null as id is discouraged!\n");
 			break;
 		case yajl_t_number:
-			request->id = v->u.number.r;
+			request->id = YAJL_GET_NUMBER(v);
 			break;
 		case yajl_t_string:
-			request->id = v->u.string;
+			request->id = YAJL_GET_STRING(v);
 			break;
 		default:
 			printf("Invalid type %d for property id\n", v->type);

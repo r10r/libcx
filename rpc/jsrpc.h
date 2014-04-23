@@ -8,10 +8,14 @@
 #define JSONRPC_RESPONSE_HEADER JSONRPC_VERSION ",\"id\":%s,"
 #define JSONRPC_RESULT_SIMPLE "\"result\":%s}\n"
 #define JSONRPC_RESULT_STRING "\"result\":\"%s\"}\n"
+#define JSONRPC_RESULT_DOUBLE "\"result\":%lf}\n"
+#define JSONRPC_RESULT_LONGLONG "\"result\":%lld}\n"
 #define JSONRPC_ERROR_SIMPLE "\"error\":{\"code\":%d,\"message\":\"%s\"}}\n"
 
 static const char* const JSONRPC_RESPONSE = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_SIMPLE;
 static const char* const JSONRPC_RESPONSE_STRING = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_STRING;
+static const char* const JSONRPC_RESPONSE_DOUBLE = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_DOUBLE;
+static const char* const JSONRPC_RESPONSE_LONGLONG = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_LONGLONG;
 static const char* const JSONRPC_ERROR = JSONRPC_RESPONSE_HEADER JSONRPC_ERROR_SIMPLE;
 static const char* JSONRPC_NULL = "null"; /* for invalid ID or null values*/
 

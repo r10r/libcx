@@ -67,9 +67,6 @@ RPC(method, send_message)
 {
 	if (connect(request, &mpd_connection) == 1)
 	{
-		// TODO better value handling
-		//RPC(value, "message");
-
 		bool paused = mpd_run_send_message(mpd_connection, "foo", RPC(get_param, send_message, message));
 		printf("Message send %d\n", paused);
 		mpd_clear_error(request, &mpd_connection);

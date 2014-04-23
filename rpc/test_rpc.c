@@ -19,8 +19,8 @@ get_bar_value(RPC_Request* request, RPC_Param* param)
 }
 
 /* typesafe parameter definition */
-RPC(set_param, foobar, 0, foo, const char*, get_foo_value, RPC_Number, 0)
-RPC(set_param, foobar, 1, bar, int, get_bar_value, RPC_Number, 0)
+RPC(set_param, foobar, 0, foo, const char*, get_foo_value, RPC_String, 0)
+RPC(set_param, foobar, 1, bar, int, get_bar_value, RPC_LongLong, 0)
 
 static void
 test_parameter_definition()
