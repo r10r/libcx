@@ -11,3 +11,4 @@ rpc/jsrpc-example
 rpc/test_jsonrpc
 rpc/mpd/mpd-server
 rpc/test_rpc
+rpc/echo-server
