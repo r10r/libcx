@@ -31,6 +31,9 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
 #define StringBuffer_unused(buffer) \
 	(StringBuffer_length(buffer) - StringBuffer_used(buffer))
 
+#define StringBuffer_index_append(buffer) \
+	StringBuffer_used(buffer) == 0 ? 0 : (StringBuffer_used(buffer) - 1)
+
 #define StringBuffer_value(buffer) \
 	((buffer)->string->value)
 
@@ -38,7 +41,8 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
 	String_shift((buffer)->string, count)
 
 #define StringBuffer_clear(buffer) \
-	(buffer)->string->length = 0;
+	(buffer)->string->length = 0; \
+	S_nullterm((buffer)->string)
 
 
 /* [ append from char* ] */
@@ -47,13 +51,13 @@ ssize_t
 StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars);
 
 #define StringBuffer_cat(buffer, chars) \
-	StringBuffer_append(buffer, StringBuffer_used(buffer), chars, strlen(chars) + 1)
+	StringBuffer_append(buffer, StringBuffer_index_append(buffer), chars, strnlen(chars))
 
 #define StringBuffer_ncat(buffer, chars, nchars) \
-	StringBuffer_append(buffer, StringBuffer_used(buffer), chars, nchars)
+	StringBuffer_append(buffer, StringBuffer_index_append(buffer), chars, nchars)
 
 #define StringBuffer_scat(buffer, s) \
-	StringBuffer_append(buffer, StringBuffer_used(buffer), (s)->value, (s)->length)
+	StringBuffer_append(buffer, StringBuffer_index_append(buffer), (s)->value, (s)->length)
 
 
 /* [ append from FD or stream ] */
@@ -62,16 +66,16 @@ ssize_t
 StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars);
 
 #define StringBuffer_fdcat(buffer, fd) \
-	StringBuffer_read(buffer, StringBuffer_used(buffer), fd, StringBuffer_length(buffer))
+	StringBuffer_read(buffer, StringBuffer_index_append(buffer), fd, StringBuffer_length(buffer))
 
 #define StringBuffer_fcat(buffer, file) \
-	StringBuffer_read(buffer, StringBuffer_used(buffer), fileno(file), StringBuffer_length(buffer))
+	StringBuffer_read(buffer, StringBuffer_index_append(buffer), fileno(file), StringBuffer_length(buffer))
 
 #define StringBuffer_fdncat(buffer, fd, nchars) \
-	StringBuffer_read(buffer, StringBuffer_used(buffer), fd, nchars)
+	StringBuffer_read(buffer, StringBuffer_index_append(buffer), fd, nchars)
 
 #define StringBuffer_fncat(buffer, file, nchars) \
-	StringBuffer_read(buffer, StringBuffer_used(buffer), fileno(file), nchars)
+	StringBuffer_read(buffer, StringBuffer_index_append(buffer), fileno(file), nchars)
 
 ssize_t
 StringBuffer_fdload(StringBuffer* buffer, int fd, size_t chunk_size);
@@ -94,6 +98,6 @@ StringBuffer_vsprintf(StringBuffer* buffer, size_t offset, const char* format, .
 	StringBuffer_vsprintf(buffer, 0, format, __VA_ARGS__)
 
 #define StringBuffer_aprintf(buffer, format, ...) \
-	StringBuffer_vsprintf(buffer, StringBuffer_used(buffer) - 1, format, __VA_ARGS__)
+	StringBuffer_vsprintf(buffer, StringBuffer_index_append(buffer), format, __VA_ARGS__)
 
 #endif

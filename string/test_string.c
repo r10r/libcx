@@ -19,6 +19,8 @@ test_S_dup()
 	TEST_ASSERT_EQUAL_INT('r', *S_get(s, -2));
 	TEST_ASSERT_EQUAL_INT('\0', *S_get(s, -1));
 
+	TEST_ASSERT_EQUAL_INT('\0', *S_last(s));
+
 	free(s);
 }
 
@@ -38,6 +40,24 @@ test_S_get()
 	TEST_ASSERT_EQUAL_INT('\0', *S_get(s, -1));
 
 	free(s);
+}
+
+static void
+test_empty_string()
+{
+	String* szero = String_init(NULL, 0);
+	String* sempty = String_init(NULL, 1024);
+
+	TEST_ASSERT_EQUAL_STRING("", szero);
+	TEST_ASSERT_EQUAL_INT('\0', *S_last(szero));
+	TEST_ASSERT_EQUAL_INT('\0', *S_get(szero, 0));
+
+	TEST_ASSERT_EQUAL_STRING("", sempty);
+	TEST_ASSERT_EQUAL_INT('\0', *S_last(sempty));
+	TEST_ASSERT_EQUAL_INT('\0', *S_get(sempty, 0));
+
+	free(szero);
+	free(sempty);
 }
 
 static void
@@ -112,6 +132,7 @@ main()
 
 	RUN(test_S_dup);
 	RUN(test_S_get);
+	RUN(test_empty_string);
 	RUN(test_S_comp);
 	RUN(test_S_write);
 	RUN(test_S_copy);

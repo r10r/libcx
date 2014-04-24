@@ -6,24 +6,30 @@ String_init(const char* source, size_t nchars)
 	if (nchars > STRING_MAX_LENGTH)
 		return NULL;
 
-	/* check if last token is not \0 */
-	int terminated = (source[nchars - 1] == '\0') ? 1 : 0;
-
-	if (!terminated)
-		nchars++;
-
-	String* s = S_alloc(nchars);
-	s->length = 0;
+	String* s;
+	size_t nalloc_chars = nchars;
 
 	if (source)
 	{
+		/* check if source is '\0\ terminated */
+		if (!is_nullterm(source, nchars))
+			nalloc_chars += 1;
+
+		s = S_alloc(nalloc_chars);
 		memcpy(s->value, source, nchars);
-		s->length = nchars;
+		s->length = nalloc_chars;
 	}
+	else
+	{
+		/* create an empty '\0' terminated string */
+		// FIXME check why post increment is not working with unsigned values
+		if (nchars == 0)
+			nalloc_chars += 1;
 
-	if (!terminated)
-		s->value[s->length - 1] = '\0';
-
+		s = S_alloc(nalloc_chars);
+		s->length = 0;
+	}
+	S_nullterm(s);
 	return s;
 }
 
@@ -113,16 +119,12 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nlength_reque
 ssize_t
 StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars)
 {
-	/* check if last token is not \0 */
-	int terminated = (source[nchars - 1] == '\0') ? 1 : 0;
-
-	XFDBG("\nbuffer[length:%zu, used:%zu, unused:%zu] source[terminated:%d, nchars:%zu]\n",
-	      StringBuffer_length(buffer), StringBuffer_used(buffer), StringBuffer_unused(buffer),
-	      terminated, nchars);
+	XFDBG("\nbuffer[length:%zu, used:%zu, unused:%zu] source[nchars:%zu]\n",
+	      StringBuffer_length(buffer), StringBuffer_used(buffer), StringBuffer_unused(buffer), nchars);
 
 	/* allocate space for additional \0 if input is not \0 terminated */
-	if (!terminated)
-		nchars++;
+	if (!is_nullterm(source, nchars))
+		nchars += 1;
 
 	if (StringBuffer_make_room(buffer, offset, nchars) == -1)
 		return -1;
@@ -130,9 +132,7 @@ StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, siz
 	memcpy(S_get(buffer->string, offset), source, nchars);
 	buffer->string->length = offset + nchars;
 
-	/* add \0 terminator */
-	if (!terminated)
-		buffer->string->value[buffer->string->length - 1] = '\0';
+	S_nullterm(buffer->string);
 
 	return (ssize_t)nchars;
 }
@@ -140,13 +140,25 @@ StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, siz
 ssize_t
 StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars)
 {
-	if (StringBuffer_make_room(buffer, offset, nchars) == -1)
+	// always make room for an additional '\0' terminator
+	// FIXME check why post increment is not working with unsigned values
+	size_t nalloc_chars = nchars + 1;
+
+	if (StringBuffer_make_room(buffer, offset, nalloc_chars) == -1)
 		return -1;
 
 	ssize_t nread = read(fd, S_get(buffer->string, offset), nchars);
 	XFLOG("Read %zu (read size %zu) chars into buffer", nread, nchars);
+
 	if (nread > 0)
 		buffer->string->length = offset + (size_t)nread;
+
+	if (!S_is_nullterm(buffer->string))
+	{
+		buffer->string->length += 1;
+		S_nullterm(buffer->string);
+	}
+
 	return nread;
 }
 

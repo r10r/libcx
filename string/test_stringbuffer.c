@@ -2,22 +2,24 @@
 //#include "base/xmalloc.h"
 #include "string_buffer.h"
 
+#define TEST_ASSERT_BUFFER(buf, s, blen, used, unused) \
+	TEST_ASSERT_EQUAL_STRING(s, StringBuffer_value(buf)); \
+	TEST_ASSERT_EQUAL_INT(blen, StringBuffer_length(buf)); \
+	TEST_ASSERT_EQUAL_INT(used, StringBuffer_used(buf)); \
+	TEST_ASSERT_EQUAL_INT(unused, StringBuffer_unused(buf));
+
 static void
-test_StringBuffer_append()
+test_StringBuffer_cat()
 {
 	StringBuffer* buf = StringBuffer_new(1024);
 
-	TEST_ASSERT_EQUAL_INT(1024, buf->length);
-	TEST_ASSERT_EQUAL_INT(0, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(1024, StringBuffer_unused(buf));
+	TEST_ASSERT_BUFFER(buf, "", 1024, 0, 1024);
 
-	TEST_ASSERT_EQUAL_INT(3, StringBuffer_append(buf, 0, "foo", 3));
-	TEST_ASSERT_EQUAL_INT(3, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(1024 - 3, StringBuffer_unused(buf));
+	TEST_ASSERT_EQUAL_INT(4, StringBuffer_cat(buf, "foo"));
+	TEST_ASSERT_BUFFER(buf, "foo", 1024, 4, 1024 - 4);
 
-	TEST_ASSERT_EQUAL_INT(3, StringBuffer_append(buf, 3, "bar", 3));
-	TEST_ASSERT_EQUAL_INT(6, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(1024 - 6, StringBuffer_unused(buf));
+	TEST_ASSERT_EQUAL_INT(4, StringBuffer_cat(buf, "bar"));
+	TEST_ASSERT_BUFFER(buf, "foobar", 1024, 7, 1024 - 7);
 
 	TEST_ASSERT_EQUAL_INT('f', *S_get(buf->string, 0));
 	TEST_ASSERT_EQUAL_INT('o', *S_get(buf->string, 1));
@@ -30,37 +32,28 @@ test_StringBuffer_append()
 }
 
 static void
-test_StringBuffer_append_grow()
+test_StringBuffer_cat_with_grow()
 {
-	StringBuffer* buf = StringBuffer_new(3);
+	StringBuffer* buf = StringBuffer_new(4);
 
-	TEST_ASSERT_EQUAL_INT(3, buf->length);
-	TEST_ASSERT_EQUAL_INT(0, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(3, StringBuffer_unused(buf));
+	TEST_ASSERT_BUFFER(buf, "", 4, 0, 4);
 
-	StringBuffer_append(buf, 0, "foo", 3);
-	TEST_ASSERT_EQUAL_INT(3, buf->length);
-	TEST_ASSERT_EQUAL_INT(3, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_unused(buf));
+	StringBuffer_cat(buf, "foo");
+	TEST_ASSERT_BUFFER(buf, "foo", 4, 4, 0);
 
-	StringBuffer_append(buf, 3, "foo", 3);
-	TEST_ASSERT_EQUAL_INT(6, buf->length);
-	TEST_ASSERT_EQUAL_INT(6, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_unused(buf));
+	StringBuffer_cat(buf, "bar");
+	TEST_ASSERT_BUFFER(buf, "foobar", 7, 7, 0);
 
 	StringBuffer_free(buf);
 }
 
 static void
-test_StringBuffer_append_grow_zero()
+test_StringBuffer_cat_with_grow_zero()
 {
 	StringBuffer* buf = StringBuffer_new(0);
 
-	StringBuffer_append(buf, 0, "foo", 3);
-	TEST_ASSERT_EQUAL_INT(3, buf->length);
-	TEST_ASSERT_EQUAL_INT(3, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_unused(buf));
-	;
+	StringBuffer_cat(buf, "foo");
+	TEST_ASSERT_BUFFER(buf, "foo", 4, 4, 0);
 
 	StringBuffer_free(buf);
 }
@@ -72,11 +65,7 @@ test_StringBuffer_scat()
 	String* s = S_dup("foobar");
 
 	StringBuffer_scat(buf, s);
-	TEST_ASSERT_EQUAL_INT(6, buf->length);
-	TEST_ASSERT_EQUAL_INT(6, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_unused(buf));
-
-	TEST_ASSERT_EQUAL(0, S_comp(s, buf->string));
+	TEST_ASSERT_BUFFER(buf, "foobar", 7, 7, 0);
 
 	S_free(s);
 	StringBuffer_free(buf);
@@ -91,34 +80,38 @@ test_StringBuffer_fcat()
 	int fd = mkstemp(template);
 	FILE* tmpfile = fdopen(fd, "w+");
 
-	fwrite("foo", 1, 4, tmpfile);
+	const char* data = "foo";
 
+	fwrite(data, 1, 4, tmpfile);
+
+	size_t read_size = 32;
 
 	// buffer is extended to maximum read size each time before reading
-	rewind(tmpfile);
-	TEST_ASSERT_EQUAL_INT(4, StringBuffer_fncat(buf, tmpfile, 32));
-	TEST_ASSERT_EQUAL_INT(32, buf->length);
-	TEST_ASSERT_EQUAL_INT(4, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(32 - 4, StringBuffer_unused(buf));
 
+	/* appends 4 chars [foo\0] */
 	rewind(tmpfile);
-	TEST_ASSERT_EQUAL_INT(4, StringBuffer_fncat(buf, tmpfile, 32));
-	TEST_ASSERT_EQUAL_INT(32 + 4, buf->length);
+	TEST_ASSERT_EQUAL_INT(4, StringBuffer_fncat(buf, tmpfile, read_size));
+	TEST_ASSERT_BUFFER(buf, "foo", read_size + 1, 4, read_size - 3);
 
+	/* appends 3 chars (shift \0) */
 	rewind(tmpfile);
-	TEST_ASSERT_EQUAL_INT(4, StringBuffer_fncat(buf, tmpfile, 32));
-	TEST_ASSERT_EQUAL_INT(32 + 8, buf->length);
+	TEST_ASSERT_EQUAL_INT(4, StringBuffer_fncat(buf, tmpfile, read_size));
+	TEST_ASSERT_BUFFER(buf, "foofoo", read_size + 4, 7, read_size - 3);
 
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fncat(buf, tmpfile, 32));
-	TEST_ASSERT_EQUAL_INT(32 + 12, buf->length);
+	/* appends 3 chars again (shift \0) */
+	rewind(tmpfile);
+	TEST_ASSERT_EQUAL_INT(4, StringBuffer_fncat(buf, tmpfile, read_size));
+	TEST_ASSERT_BUFFER(buf, "foofoofoo", read_size + 7, 10, read_size - 3);
+
+	/* increments buffer */
+	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fncat(buf, tmpfile, read_size));
+	TEST_ASSERT_BUFFER(buf, "foofoofoo", read_size + 10, 10, read_size);
 
 	// additional reads do not change anything
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fncat(buf, tmpfile, 32));
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fncat(buf, tmpfile, 32));
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fncat(buf, tmpfile, 32));
-
-	TEST_ASSERT_EQUAL_INT(4 + 4 + 4, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(32, StringBuffer_unused(buf));
+	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fncat(buf, tmpfile, read_size));
+	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fncat(buf, tmpfile, read_size));
+	TEST_ASSERT_EQUAL_INT(0, StringBuffer_fncat(buf, tmpfile, read_size));
+	TEST_ASSERT_BUFFER(buf, "foofoofoo", read_size + 10, 10, read_size);
 
 	StringBuffer_free(buf);
 	fclose(tmpfile);
@@ -130,19 +123,13 @@ test_StringBuffer_append_grow_offset()
 {
 	StringBuffer* buf = StringBuffer_new(3);
 
-	TEST_ASSERT_EQUAL_INT(3, buf->length);
-	TEST_ASSERT_EQUAL_INT(0, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(3, StringBuffer_unused(buf));
+	TEST_ASSERT_BUFFER(buf, "", 3, 0, 3);
 
 	StringBuffer_append(buf, 0, "foo", 3);
-	TEST_ASSERT_EQUAL_INT(3, buf->length);
-	TEST_ASSERT_EQUAL_INT(3, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_unused(buf));
+	TEST_ASSERT_BUFFER(buf, "foo", 4, 4, 0);
 
 	StringBuffer_append(buf, 2, "foo", 3);
-	TEST_ASSERT_EQUAL_INT(5, buf->length);
-	TEST_ASSERT_EQUAL_INT(5, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_unused(buf));
+	TEST_ASSERT_BUFFER(buf, "fofoo", 6, 6, 0);
 
 	StringBuffer_free(buf);
 }
@@ -168,7 +155,7 @@ test_limits()
 	for (i = 0; i < iterations; i++)
 		StringBuffer_ncat(b, pattern, pattern_length);
 
-	TEST_ASSERT_EQUAL(pattern_length * iterations, b->string->length);
+	TEST_ASSERT_EQUAL(pattern_length * iterations + 1, b->string->length);
 
 	S_free(s);
 	StringBuffer_free(b);
@@ -180,12 +167,10 @@ test_StringBuffer_shift()
 	StringBuffer* buf = StringBuffer_new(12);
 
 	StringBuffer_cat(buf, "foobar");
-	TEST_ASSERT_EQUAL_INT(7, buf->string->length);
-	TEST_ASSERT_EQUAL_INT(5, StringBuffer_unused(buf));
+	TEST_ASSERT_BUFFER(buf, "foobar", 12, 7, 5);
 
 	StringBuffer_shift(buf, 3);
-	TEST_ASSERT_EQUAL_STRING("bar", buf->string->value);
-	TEST_ASSERT_EQUAL_INT(8, StringBuffer_unused(buf));
+	TEST_ASSERT_BUFFER(buf, "bar", 12, 4, 8);
 
 	StringBuffer_free(buf);
 }
@@ -196,16 +181,13 @@ test_StringBuffer_clear()
 	StringBuffer* buf = StringBuffer_new(12);
 
 	StringBuffer_cat(buf, "foo");
-	TEST_ASSERT_EQUAL_INT(4, StringBuffer_used(buf));
-	TEST_ASSERT_EQUAL_INT(8, StringBuffer_unused(buf));
+	TEST_ASSERT_BUFFER(buf, "foo", 12, 4, 8);
 
 	StringBuffer_clear(buf);
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_used(buf));
-	TEST_ASSERT_EQUAL_INT(12, StringBuffer_unused(buf));
+	TEST_ASSERT_BUFFER(buf, "", 12, 0, 12);
 
 	StringBuffer_cat(buf, "bar");
-	TEST_ASSERT_EQUAL_STRING("bar", StringBuffer_value(buf));
-	TEST_ASSERT_EQUAL_INT(8, StringBuffer_unused(buf));
+	TEST_ASSERT_BUFFER(buf, "bar", 12, 4, 8);
 
 	StringBuffer_free(buf);
 }
@@ -216,10 +198,7 @@ test_StringBuffer_printf()
 	StringBuffer* buf = StringBuffer_new(6);
 
 	StringBuffer_printf(buf, "%s %s", "hello", "world");
-
-	TEST_ASSERT_EQUAL_STRING("hello world", StringBuffer_value(buf));
-	TEST_ASSERT_EQUAL_INT(12, StringBuffer_used(buf));
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_unused(buf));
+	TEST_ASSERT_BUFFER(buf, "hello world", 12, 12, 0);
 
 	StringBuffer_free(buf);
 }
@@ -233,10 +212,7 @@ test_StringBuffer_aprintf()
 
 	StringBuffer_printf(buf, "%d:%d", 1, 2);
 	StringBuffer_aprintf(buf, ",%d:%d", 3, 4);
-
-	TEST_ASSERT_EQUAL_STRING(expected, StringBuffer_value(buf));
-	TEST_ASSERT_EQUAL_INT(strlen(expected) + 1, StringBuffer_used(buf));
-	TEST_ASSERT_EQUAL_INT(0, StringBuffer_unused(buf));
+	TEST_ASSERT_BUFFER(buf, expected, 8, 8, 0);
 
 	StringBuffer_free(buf);
 
@@ -245,10 +221,7 @@ test_StringBuffer_aprintf()
 
 	StringBuffer_printf(buf, "%d:%d", 1, 2);
 	StringBuffer_aprintf(buf, ",%d:%d", 3, 4);
-
-	TEST_ASSERT_EQUAL_STRING(expected, StringBuffer_value(buf));
-	TEST_ASSERT_EQUAL_INT(strlen(expected) + 1, StringBuffer_used(buf));
-	TEST_ASSERT_EQUAL_INT(1024 - (strlen(expected) + 1), StringBuffer_unused(buf));
+	TEST_ASSERT_BUFFER(buf, expected, 1024, 8, 1024 - 8);
 
 	StringBuffer_free(buf);
 }
@@ -258,9 +231,9 @@ main()
 {
 	TEST_BEGIN
 
-	RUN(test_StringBuffer_append);
-	RUN(test_StringBuffer_append_grow);
-	RUN(test_StringBuffer_append_grow_zero);
+	RUN(test_StringBuffer_cat);
+	RUN(test_StringBuffer_cat_with_grow);
+	RUN(test_StringBuffer_cat_with_grow_zero);
 	RUN(test_StringBuffer_scat);
 	RUN(test_StringBuffer_fcat);
 	RUN(test_StringBuffer_append_grow_offset);
