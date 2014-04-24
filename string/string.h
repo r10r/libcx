@@ -1,6 +1,14 @@
 #ifndef _CX_STRING_H
 #define _CX_STRING_H
 
+// TODO move StringBuffer into separate compilation unit
+
+/*
+ * strings should always be \0 terminated, so they be safely printed at any time
+ * methods that append to a string buffer must overwrite the \0 terminator
+ * methods that append to a string should be able to append to a string of zero length
+ */
+
 #include "stddef.h"     /* size_t */
 #include <stdlib.h>     /* free */
 #include <string.h>     /* memcpy */
@@ -25,19 +33,20 @@ typedef struct string_pointer_t
 	const char* value;
 } StringPointer;
 
-
 // should the string contain data type information ?
 typedef struct string_buffer_t
 {
-	size_t length;                                          /* total buffer length */
-	String* string;                                         /* we can now grow the string data */
+	size_t length;  /* total buffer length */
+	String* string; /* we can now grow the string data */
 } StringBuffer;
 
 #define S_free(s) (free(s))
 
 /* access array (with negative indexes), no bounds checking */
 #define S_get(s, index) \
-	((index < 0) ? ((s)->value + (s)->length - (size_t)-index) : ((s)->value + index))
+	((index < 0) \
+	 ? ((s)->value + (s)->length - (size_t)-index) \
+	 : ((s)->value + index))
 
 #define S_last(s) \
 	S_get(s, -1)
@@ -63,11 +72,15 @@ typedef struct string_buffer_t
 	realloc(s, sizeof(String) + sizeof(char)* length);
 
 #define S_comp(a, b) \
-	(((a)->length == (b)->length) ? strncmp((a)->value, (b)->value, (a)->length) : ((long)(a)->length - (long)(b)->length))
+	(((a)->length == (b)->length) \
+	 ? strncmp((a)->value, (b)->value, (a)->length) \
+	 : ((long)(a)->length - (long)(b)->length))
 
 /* compare string a with char* nc of length nc_len */
 #define S_ncomp(a, nc) \
-	(((a)->length == strlen(nc) ? strncmp((a)->value, nc, (a)->length) : ((long)(a)->length - strlen(nc)))
+	(((a)->length == strlen(nc) \
+	  ? strncmp((a)->value, nc, (a)->length) \
+	  : ((long)(a)->length - strlen(nc)))
 
 #define S_nwrite(s, start, count, fd) \
 	write(fd, S_get(s, start), count)
@@ -104,7 +117,8 @@ String_ninit(const char* value, size_t length);
 int
 String_shift(String* s, size_t count);
 
-/* StringBuffer methods */
+
+/* [ StringBuffer methods ] */
 
 StringBuffer*
 StringBuffer_new(size_t length);
@@ -118,53 +132,23 @@ StringBuffer_free(StringBuffer* buffer);
 void
 StringBuffer_free_members(StringBuffer* buffer);
 
-#define StringBuffer_unused(buffer) \
-	((buffer)->length - (buffer)->string->length)
+int
+StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
+
+
+/* [ utility macros ] */
+
+#define StringBuffer_length(buffer) \
+	(buffer)->length
 
 #define StringBuffer_used(buffer) \
 	((buffer)->string->length)
 
+#define StringBuffer_unused(buffer) \
+	(StringBuffer_length(buffer) - StringBuffer_used(buffer))
+
 #define StringBuffer_value(buffer) \
 	((buffer)->string->value)
-
-int
-StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
-
-ssize_t
-StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars);
-
-#define StringBuffer_fload(buffer, file,  chunk_size) \
-	StringBuffer_fdload(buffer, fileno(file), chunk_size)
-
-ssize_t
-StringBuffer_fdload(StringBuffer* buffer, int fd, size_t chunk_size);
-
-#define StringBuffer_cat(buffer, chars) \
-	StringBuffer_append(buffer, (buffer)->string->length, chars, strlen(chars))
-
-#define StringBuffer_catn(buffer, chars) \
-	StringBuffer_append(buffer, (buffer)->string->length, chars, strlen(chars) + 1)
-
-#define StringBuffer_ncat(buffer, chars, nchars) \
-	StringBuffer_append(buffer, (buffer)->string->length, chars, nchars)
-
-#define StringBuffer_scat(buffer, s) \
-	StringBuffer_append(buffer, (buffer)->string->length, (s)->value, (s)->length)
-
-ssize_t
-StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars);
-
-#define StringBuffer_fdcat(buffer, fd) \
-	StringBuffer_read(buffer, (buffer)->string->length, fd, (buffer)->length)
-
-#define StringBuffer_fcat(buffer, file) \
-	StringBuffer_read(buffer, (buffer)->string->length, fileno(file), (buffer)->length)
-
-#define StringBuffer_fdncat(buffer, fd, nchars) \
-	StringBuffer_read(buffer, (buffer)->string->length, fd, nchars)
-
-#define StringBuffer_fncat(buffer, file, nchars) \
-	StringBuffer_read(buffer, (buffer)->string->length, fileno(file), nchars)
 
 #define StringBuffer_shift(buffer, count) \
 	String_shift((buffer)->string, count)
@@ -172,27 +156,64 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars);
 #define StringBuffer_clear(buffer) \
 	(buffer)->string->length = 0;
 
-#define StringBuffer_length(buffer) \
-	(buffer)->string->length
+
+/* [ append from char* ] */
+
+ssize_t
+StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars);
+
+#define StringBuffer_cat(buffer, chars) \
+	StringBuffer_append(buffer, StringBuffer_used(buffer), chars, strlen(chars) + 1)
+
+#define StringBuffer_ncat(buffer, chars, nchars) \
+	StringBuffer_append(buffer, StringBuffer_used(buffer), chars, nchars)
+
+#define StringBuffer_scat(buffer, s) \
+	StringBuffer_append(buffer, StringBuffer_used(buffer), (s)->value, (s)->length)
+
+
+/* [ append from FD or stream ] */
+
+ssize_t
+StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars);
+
+#define StringBuffer_fdcat(buffer, fd) \
+	StringBuffer_read(buffer, StringBuffer_used(buffer), fd, StringBuffer_length(buffer))
+
+#define StringBuffer_fcat(buffer, file) \
+	StringBuffer_read(buffer, StringBuffer_used(buffer), fileno(file), StringBuffer_length(buffer))
+
+#define StringBuffer_fdncat(buffer, fd, nchars) \
+	StringBuffer_read(buffer, StringBuffer_used(buffer), fd, nchars)
+
+#define StringBuffer_fncat(buffer, file, nchars) \
+	StringBuffer_read(buffer, StringBuffer_used(buffer), fileno(file), nchars)
+
+ssize_t
+StringBuffer_fdload(StringBuffer* buffer, int fd, size_t chunk_size);
+
+#define StringBuffer_fload(buffer, file,  chunk_size) \
+	StringBuffer_fdload(buffer, fileno(file), chunk_size)
+
+/* [ formatted printing ] */
 
 /*
- * http://stackoverflow.com/questions/20167124/vsprintf-and-vsnprintf-wformat-nonliteral-warning-on-clang-5-0
- * http://clang.llvm.org/docs/LanguageExtensions.html#format-string-checking
+ * [LLVM Language Extensions](http://goo.gl/92gLsT)
+ * [vsnprintf - Format String checking](http://goo.gl/aL1X57)
  */
 __attribute__((__format__(__printf__, 3, 0)))
 ssize_t
 StringBuffer_vsprintf(StringBuffer* buffer, size_t offset, const char* format, ...);
 
-#define StringBuffer_snprintf(buffer, offset, format, ...) \
-	((buffer)->string->length = (size_t)snprintf(S_get((buffer)->string, offset), (buffer)->length, format, __VA_ARGS__) + 1)
-
 #define StringBuffer_printf(buffer, format, ...) \
 	StringBuffer_vsprintf(buffer, 0, format, __VA_ARGS__)
 
 #define StringBuffer_aprintf(buffer, format, ...) \
-	StringBuffer_vsprintf(buffer, (buffer)->string->length - 1, format, __VA_ARGS__)
+	StringBuffer_vsprintf(buffer, StringBuffer_used(buffer) - 1, format, __VA_ARGS__)
 
-/* StringPointer methods */
+
+/* [ StringPointer methods ] */
+
 StringPointer*
 StringPointer_new(const char* data, size_t length);
 

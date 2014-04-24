@@ -179,7 +179,7 @@ test_StringBuffer_shift()
 {
 	StringBuffer* buf = StringBuffer_new(12);
 
-	StringBuffer_catn(buf, "foobar");
+	StringBuffer_cat(buf, "foobar");
 	TEST_ASSERT_EQUAL_INT(7, buf->string->length);
 	TEST_ASSERT_EQUAL_INT(5, StringBuffer_unused(buf));
 
@@ -195,7 +195,7 @@ test_StringBuffer_clear()
 {
 	StringBuffer* buf = StringBuffer_new(12);
 
-	StringBuffer_catn(buf, "foo");
+	StringBuffer_cat(buf, "foo");
 	TEST_ASSERT_EQUAL_INT(4, StringBuffer_used(buf));
 	TEST_ASSERT_EQUAL_INT(8, StringBuffer_unused(buf));
 
@@ -203,7 +203,7 @@ test_StringBuffer_clear()
 	TEST_ASSERT_EQUAL_INT(0, StringBuffer_used(buf));
 	TEST_ASSERT_EQUAL_INT(12, StringBuffer_unused(buf));
 
-	StringBuffer_catn(buf, "bar");
+	StringBuffer_cat(buf, "bar");
 	TEST_ASSERT_EQUAL_STRING("bar", StringBuffer_value(buf));
 	TEST_ASSERT_EQUAL_INT(8, StringBuffer_unused(buf));
 
@@ -218,7 +218,7 @@ test_StringBuffer_printf()
 	StringBuffer_printf(buf, "%s %s", "hello", "world");
 
 	TEST_ASSERT_EQUAL_STRING("hello world", StringBuffer_value(buf));
-	TEST_ASSERT_EQUAL_INT(12, StringBuffer_length(buf));
+	TEST_ASSERT_EQUAL_INT(12, StringBuffer_used(buf));
 	TEST_ASSERT_EQUAL_INT(0, StringBuffer_unused(buf));
 
 	StringBuffer_free(buf);
