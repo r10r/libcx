@@ -39,7 +39,18 @@ typedef struct string_buffer_t
 	String* string; /* we can now grow the string data */
 } StringBuffer;
 
+String*
+String_init(const char* value, size_t length);
+
+int
+String_shift(String* s, size_t count);
+
 #define S_free(s) (free(s))
+
+#define strnlen(str) (strlen(str) + 1)
+
+#define is_nullterm(source, nlength) \
+	((source[nlength - 1] == '\0') ? 1 : 0)
 
 /* access array (with negative indexes), no bounds checking */
 #define S_get(s, index) \
@@ -48,20 +59,26 @@ typedef struct string_buffer_t
 	 : ((s)->value + index))
 
 #define S_last(s) \
-	S_get(s, -1)
+	((s)->length == 0 ? S_get(s, 0) : S_get(s, -1))
+
+#define S_nullterm(s) \
+	(* S_last(s) = '\0')
+
+#define S_is_nullterm(s) \
+	(* S_last(s) == '\0')
 
 #define S_size(length) \
 	(sizeof(String) + sizeof(char)* length)
 
 #define S_dup(value) \
-	String_init(value, strlen(value))
+	String_init(value, strnlen(value))
 
 #define S_alloc(length) \
 	malloc(S_size(length))
 
 // grow or shrink the buffer
 #define S_realloc(s, length) \
-	realloc(s, sizeof(String) + sizeof(char)* length);
+	realloc(s, S_size(length));
 
 #define S_comp(a, b) \
 	strcmp((a)->value, (b)->value)
@@ -95,12 +112,6 @@ typedef struct string_buffer_t
 
 #define S_copy(s, dst) \
 	S_ncopy(s, 0, (s)->length, dst)
-
-String*
-String_init(const char* value, size_t length);
-
-int
-String_shift(String* s, size_t count);
 
 
 /* [ StringPointer methods ] */
