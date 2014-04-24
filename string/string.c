@@ -165,23 +165,21 @@ StringBuffer_vsprintf(StringBuffer* buffer, size_t offset, const char* format, .
 	va_list ap;
 
 	va_start(ap, format);
-	nchars_printed = (size_t)vsnprintf(string_start, nchars_available, format, ap);
+	nchars_printed = (size_t)vsnprintf(string_start, nchars_available, format, ap) + 1 /* \0 */;
 	va_end(ap);
 
 	/* check if buffer was large enough */
-	if (nchars_printed >= nchars_available)
+	if (nchars_printed > nchars_available)
 	{
-		StringBuffer_make_room(buffer, offset, nchars_printed + 1 /* \0 */);
+		StringBuffer_make_room(buffer, offset, nchars_printed);
 		va_start(ap, format);
 		string_start = S_get(buffer->string, offset);
 		nchars_available = buffer->length - offset;
 		vsnprintf(string_start, nchars_available, format, ap);
 		va_end(ap);
 	}
-	else
-		return -1;
 
-	buffer->string->length = buffer->length;
+	buffer->string->length = offset + nchars_printed;
 
 	return (ssize_t)nchars_printed;
 }

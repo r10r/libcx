@@ -227,15 +227,28 @@ test_StringBuffer_printf()
 static void
 test_StringBuffer_aprintf()
 {
+	// with growing
 	StringBuffer* buf = StringBuffer_new(2);
+	const char* expected = "1:2,3:4";
 
 	StringBuffer_printf(buf, "%d:%d", 1, 2);
 	StringBuffer_aprintf(buf, ",%d:%d", 3, 4);
-	const char* expected = "1:2,3:4";
 
 	TEST_ASSERT_EQUAL_STRING(expected, StringBuffer_value(buf));
-	TEST_ASSERT_EQUAL_INT(strlen(expected) + 1, StringBuffer_length(buf));
+	TEST_ASSERT_EQUAL_INT(strlen(expected) + 1, StringBuffer_used(buf));
 	TEST_ASSERT_EQUAL_INT(0, StringBuffer_unused(buf));
+
+	StringBuffer_free(buf);
+
+	// without growing
+	buf = StringBuffer_new(1024);
+
+	StringBuffer_printf(buf, "%d:%d", 1, 2);
+	StringBuffer_aprintf(buf, ",%d:%d", 3, 4);
+
+	TEST_ASSERT_EQUAL_STRING(expected, StringBuffer_value(buf));
+	TEST_ASSERT_EQUAL_INT(strlen(expected) + 1, StringBuffer_used(buf));
+	TEST_ASSERT_EQUAL_INT(1024 - (strlen(expected) + 1), StringBuffer_unused(buf));
 
 	StringBuffer_free(buf);
 }
