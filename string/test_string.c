@@ -3,21 +3,39 @@
 #include "string.h"
 
 static void
-test_String_dup()
+test_S_dup()
 {
 	String* s = S_dup("bar");
 
-	TEST_ASSERT_EQUAL_INT(s->length, 3);
-
-	printf("%p %p %c\n", s->value, &s->value[0], *s->value);
+	TEST_ASSERT_EQUAL_STRING("bar", s->value);
+	TEST_ASSERT_EQUAL_INT(4, s->length);
 
 	TEST_ASSERT_EQUAL_INT('b', *S_get(s, 0));
 	TEST_ASSERT_EQUAL_INT('a', *S_get(s, 1));
 	TEST_ASSERT_EQUAL_INT('r', *S_get(s, 2));
 
-	TEST_ASSERT_EQUAL_INT('b', *S_get(s, -3));
-	TEST_ASSERT_EQUAL_INT('a', *S_get(s, -2));
-	TEST_ASSERT_EQUAL_INT('r', *S_get(s, -1));
+	TEST_ASSERT_EQUAL_INT('b', *S_get(s, -4));
+	TEST_ASSERT_EQUAL_INT('a', *S_get(s, -3));
+	TEST_ASSERT_EQUAL_INT('r', *S_get(s, -2));
+	TEST_ASSERT_EQUAL_INT('\0', *S_get(s, -1));
+
+	free(s);
+}
+
+static void
+test_S_get()
+{
+	String* s = S_dup("bar");
+
+	TEST_ASSERT_EQUAL_INT('b', *S_get(s, 0));
+	TEST_ASSERT_EQUAL_INT('a', *S_get(s, 1));
+	TEST_ASSERT_EQUAL_INT('r', *S_get(s, 2));
+	TEST_ASSERT_EQUAL_INT('\0', *S_get(s, 3));
+
+	TEST_ASSERT_EQUAL_INT('b', *S_get(s, -4));
+	TEST_ASSERT_EQUAL_INT('a', *S_get(s, -3));
+	TEST_ASSERT_EQUAL_INT('r', *S_get(s, -2));
+	TEST_ASSERT_EQUAL_INT('\0', *S_get(s, -1));
 
 	free(s);
 }
@@ -41,15 +59,6 @@ test_S_comp()
 }
 
 static void
-test_S_dupn()
-{
-	String* s = S_dupn("foobar");
-
-	TEST_ASSERT_EQUAL_STRING("foobar", s->value);
-	S_free(s);
-}
-
-static void
 test_S_write()
 {
 	String* s = S_dup("foobar");
@@ -63,7 +72,7 @@ test_S_write()
 static void
 test_S_copy()
 {
-	String* s = S_dupn("foobar");
+	String* s = S_dup("foobar");
 	char dest[7];
 
 	S_copy(s, dest);
@@ -74,7 +83,7 @@ test_S_copy()
 static void
 test_String_shift()
 {
-	String* s = S_dupn("foobar");
+	String* s = S_dup("foobar");
 
 	TEST_ASSERT_EQUAL_INT(7, s->length);
 	TEST_ASSERT_EQUAL_INT(1, String_shift(s, 3));
@@ -101,9 +110,9 @@ main()
 {
 	TEST_BEGIN
 
+	RUN(test_S_dup);
+	RUN(test_S_get);
 	RUN(test_S_comp);
-	RUN(test_String_dup);
-	RUN(test_S_dupn);
 	RUN(test_S_write);
 	RUN(test_S_copy);
 	RUN(test_String_shift);

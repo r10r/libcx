@@ -56,13 +56,6 @@ typedef struct string_buffer_t
 #define S_dup(value) \
 	String_init(value, strlen(value))
 
-#define S_dupn(value) \
-	String_ninit(value, strlen(value))
-
-/* duplicate string and add null terminator */
-#define S_ndupn(s) \
-	String_ninit((s)->value, (s)->length)
-
 #define S_alloc(length) \
 	malloc(S_size(length))
 
@@ -71,15 +64,9 @@ typedef struct string_buffer_t
 	realloc(s, sizeof(String) + sizeof(char)* length);
 
 #define S_comp(a, b) \
-	(((a)->length == (b)->length) \
-	 ? strncmp((a)->value, (b)->value, (a)->length) \
-	 : ((long)(a)->length - (long)(b)->length))
+	strcmp((a)->value, (b)->value)
 
-/* compare string a with char* nc of length nc_len */
-#define S_ncomp(a, nc) \
-	(((a)->length == strlen(nc) \
-	  ? strncmp((a)->value, nc, (a)->length) \
-	  : ((long)(a)->length - strlen(nc)))
+/* [ write to FD/stream] */
 
 #define S_nwrite(s, start, count, fd) \
 	write(fd, S_get(s, start), count)
@@ -88,18 +75,20 @@ typedef struct string_buffer_t
 	S_nwrite(s, start, count, fileno(stream))
 
 #define S_write(s, fd) \
-	write(fd, (s)->value, (s)->length)
+	S_nwrite(s, 0, (s)->length - 1, fd)
 
 #define S_fwrite(s, stream) \
 	S_write(s, fileno(stream))
 
 /* write string + newline to file descriptor */
 #define S_puts(s, fd) \
-	(S_nwrite(s, 0, (s)->length, fd) + write(fd, "\n", sizeof(char)))
+	(S_write(s, fd) + write(fd, "\n", sizeof(char)))
 
 /* write string + newline to stream */
 #define S_fputs(s, stream) \
 	S_puts(s, fileno(stream))
+
+/* [ use memcpy instead ? ] */
 
 #define S_ncopy(s, start, count, dst) \
 	(strncpy(dst, S_get(s, start), count))
@@ -109,9 +98,6 @@ typedef struct string_buffer_t
 
 String*
 String_init(const char* value, size_t length);
-
-String*
-String_ninit(const char* value, size_t length);
 
 int
 String_shift(String* s, size_t count);
