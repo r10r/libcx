@@ -6,7 +6,7 @@
 
 #include "base/ev.h"
 #include "base/base.h"
-#include "string/string.h"
+#include "string/string_buffer.h"
 #include "request.h"
 #include "server.h" /* FIXME circular inclusion */
 #include "worker.h"
