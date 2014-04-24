@@ -146,9 +146,45 @@ RPC(method, status)
 	}
 }
 
+RPC(method, playlists)
+{
+	if (connect(request, &mpd_connection) == 1)
+	{
+		bool success = mpd_send_list_playlists(mpd_connection);
+
+		// check error
+		struct mpd_entity* entity;
+
+		while ((entity = mpd_recv_entity(mpd_connection)) != NULL)
+		{
+			if (mpd_entity_get_type(entity) == MPD_ENTITY_TYPE_PLAYLIST)
+			{
+				const struct mpd_playlist* playlist = mpd_entity_get_playlist(entity);
+				printf("playlist: %s\n", mpd_playlist_get_path(playlist));
+			}
+			else
+				printf("Not a playlist\n");
+
+			mpd_entity_free(entity);
+//		jsrpc_write_append_simple(JSONRPC_RESULT_OBJECT_END);
+		}
+
+//	mpd_playlist_free(struct mpd_playlist *playlist);
+	}
+}
+
+/* list playlists */
+
+/* save playlist */
+
+/* load playlist */
+
+/* convert playlist to itunes playlist ? */
+
 RPC(export_without_params, play);
 RPC(export_without_params, pause);
 RPC(export, send_message);
 RPC(export, add);
 RPC(export_without_params, next);
 RPC(export_without_params, status);
+RPC(export_without_params, playlists);
