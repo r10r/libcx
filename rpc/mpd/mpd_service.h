@@ -23,13 +23,15 @@ RPC(public, pause)
 RPC(public, send_message)
 RPC(public, add)
 RPC(public, next)
+RPC(public, status)
 
 #define MusicPlayerDaemon_methods \
 	RPC(public_name, play), \
 	RPC(public_name, pause), \
 	RPC(public_name, send_message), \
 	RPC(public_name, add), \
-	RPC(public_name, next)
+	RPC(public_name, next), \
+	RPC(public_name, status)
 
 
 /* error definitions key,value pairs */

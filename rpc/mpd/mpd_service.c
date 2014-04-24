@@ -2,15 +2,6 @@
 
 static struct mpd_connection* mpd_connection = NULL;
 
-#define IS_REQUEST(request) \
-	(request->id != NULL)
-
-#define jsrpc_write_error(code, message) \
-	if (IS_REQUEST(request)) StringBuffer_printf(&request->response_buffer, JSONRPC_ERROR, (request)->id, code, message)
-
-#define jsrpc_write_simple_response(format) \
-	if (IS_REQUEST(request)) StringBuffer_printf(&request->response_buffer, format, (request)->id)
-
 static int
 connect(RPC_Request* request, struct mpd_connection** conn)
 {
@@ -41,28 +32,20 @@ connect(RPC_Request* request, struct mpd_connection** conn)
 static bool
 mpd_response_check_success(RPC_Request* request, struct mpd_connection** conn)
 {
-	bool success = mpd_response_finish(mpd_connection);
-
-	// FIXME check response can be successful but connection has an error ?
-
-	if (!success)
+	if (mpd_connection_get_error(mpd_connection) != MPD_ERROR_SUCCESS)
 	{
-		if (mpd_connection_get_error(mpd_connection) != MPD_ERROR_SUCCESS)
-		{
-			jsrpc_write_error(jsrpc_ERROR_INTERNAL, mpd_connection_get_error_message(*conn));
-			mpd_connection_clear_error(mpd_connection);
-		}
-		else
-			printf("Unsuccessful response but no error\n");
+		jsrpc_write_error(jsrpc_ERROR_INTERNAL, mpd_connection_get_error_message(*conn));
+		mpd_connection_clear_error(mpd_connection);
+		return false;
 	}
-	return success;
+	return true;
 }
 
 RPC(method, play)
 {
 	if (connect(request, &mpd_connection) == 1)
 	{
-		bool success = mpd_send_play(mpd_connection);
+		bool success = mpd_run_play(mpd_connection);
 
 		if (mpd_response_check_success(request, &mpd_connection))
 			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(success));
@@ -73,7 +56,7 @@ RPC(method, pause)
 {
 	if (connect(request, &mpd_connection) == 1)
 	{
-		bool success = mpd_send_pause(mpd_connection, 1);
+		bool success = mpd_run_pause(mpd_connection, 1);
 
 		if (mpd_response_check_success(request, &mpd_connection))
 			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(success));
@@ -116,10 +99,50 @@ RPC(method, next)
 {
 	if (connect(request, &mpd_connection) == 1)
 	{
-		bool success = mpd_send_next(mpd_connection);
+		bool success = mpd_run_next(mpd_connection);
 
 		if (mpd_response_check_success(request, &mpd_connection))
 			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(success));
+	}
+}
+
+static const char* const STATUS_FORMAT =
+	JSRPC_KEYPAIR("song_id", "%d,")
+	"," JSRPC_KEYPAIR("volume", "%d")
+	"," JSRPC_KEYPAIR("random", "%d");
+
+static const char* const SONG_FORMAT =
+	"," JSRPC_KEYPAIR("track", JSONRPC_STRING)
+	"," JSRPC_KEYPAIR("album", JSONRPC_STRING)
+	"," JSRPC_KEYPAIR("artist", JSONRPC_STRING);
+
+RPC(method, status)
+{
+	if (connect(request, &mpd_connection) == 1)
+	{
+		struct mpd_status* status = mpd_run_status(mpd_connection);
+		if (mpd_response_check_success(request, &mpd_connection))
+		{
+			jsrpc_write_response(JSONRPC_RESPONSE, JSONRPC_RESULT_OBJECT_START);
+			jsrpc_write_append(STATUS_FORMAT,
+					   mpd_status_get_song_id(status),
+					   mpd_status_get_volume(status),
+					   mpd_status_get_random(status));
+			mpd_status_free(status);
+		}
+
+		struct mpd_song* song = mpd_run_current_song(mpd_connection);
+		if (mpd_response_check_success(request, &mpd_connection) && song)
+		{
+			jsrpc_write_append(SONG_FORMAT,
+					   mpd_song_get_tag(song, MPD_TAG_TITLE, 0),
+					   mpd_song_get_tag(song, MPD_TAG_ALBUM, 0),
+					   mpd_song_get_tag(song, MPD_TAG_ARTIST, 0));
+
+			mpd_song_free(song);
+		}
+
+		jsrpc_write_append_simple(JSONRPC_RESULT_OBJECT_END);
 	}
 }
 
@@ -128,3 +151,4 @@ RPC(export_without_params, pause);
 RPC(export, send_message);
 RPC(export, add);
 RPC(export_without_params, next);
+RPC(export_without_params, status);
