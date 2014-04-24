@@ -150,26 +150,23 @@ RPC(method, playlists)
 {
 	if (connect(request, &mpd_connection) == 1)
 	{
-		bool success = mpd_send_list_playlists(mpd_connection);
+		mpd_send_list_playlists(mpd_connection);
 
-		// check error
-		struct mpd_entity* entity;
-
-		while ((entity = mpd_recv_entity(mpd_connection)) != NULL)
+		if (mpd_response_check_success(request, &mpd_connection))
 		{
-			if (mpd_entity_get_type(entity) == MPD_ENTITY_TYPE_PLAYLIST)
+			struct mpd_playlist* playlist;
+
+			while ((playlist = mpd_recv_playlist(mpd_connection)) != NULL)
 			{
-				const struct mpd_playlist* playlist = mpd_entity_get_playlist(entity);
 				printf("playlist: %s\n", mpd_playlist_get_path(playlist));
+				mpd_playlist_free(playlist);
 			}
-			else
-				printf("Not a playlist\n");
 
-			mpd_entity_free(entity);
-//		jsrpc_write_append_simple(JSONRPC_RESULT_OBJECT_END);
+			// check if mpd_recv_playlist returned NULL because of an error
+			if (mpd_response_check_success(request, &mpd_connection))
+				// send response
+				printf("Success\n");
 		}
-
-//	mpd_playlist_free(struct mpd_playlist *playlist);
 	}
 }
 
