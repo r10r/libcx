@@ -1,28 +1,29 @@
 #include "string_buffer.h" /* TODO move StringBuffer* to separate compilation unit */
 
 String*
-String_init(const char* value, size_t length)
+String_init(const char* source, size_t nchars)
 {
-	if (length > STRING_MAX_LENGTH)
+	if (nchars > STRING_MAX_LENGTH)
 		return NULL;
 
-	String* s = S_alloc(length);
+	/* check if last token is not \0 */
+	int terminated = (source[nchars - 1] == '\0') ? 1 : 0;
+
+	if (!terminated)
+		nchars++;
+
+	String* s = S_alloc(nchars);
 	s->length = 0;
 
-	if (value)
+	if (source)
 	{
-		memcpy(s->value, value, length);
-		s->length = length;
+		memcpy(s->value, source, nchars);
+		s->length = nchars;
 	}
-	return s;
-}
 
-String*
-String_ninit(const char* value, size_t length)
-{
-	String* s = String_init(value, length + 1);
+	if (!terminated)
+		s->value[s->length - 1] = '\0';
 
-	s->value[length] = '\0';
 	return s;
 }
 
@@ -112,11 +113,27 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nlength_reque
 ssize_t
 StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars)
 {
+	/* check if last token is not \0 */
+	int terminated = (source[nchars - 1] == '\0') ? 1 : 0;
+
+	XFDBG("\nbuffer[length:%zu, used:%zu, unused:%zu] source[terminated:%d, nchars:%zu]\n",
+	      StringBuffer_length(buffer), StringBuffer_used(buffer), StringBuffer_unused(buffer),
+	      terminated, nchars);
+
+	/* allocate space for additional \0 if input is not \0 terminated */
+	if (!terminated)
+		nchars++;
+
 	if (StringBuffer_make_room(buffer, offset, nchars) == -1)
 		return -1;
 
 	memcpy(S_get(buffer->string, offset), source, nchars);
 	buffer->string->length = offset + nchars;
+
+	/* add \0 terminator */
+	if (!terminated)
+		buffer->string->value[buffer->string->length - 1] = '\0';
+
 	return (ssize_t)nchars;
 }
 
