@@ -6,7 +6,7 @@
 #include <stdlib.h>     /* free, exit, malloc */
 #include <stdbool.h>    /* true, false */
 #include "list/list.h"
-#include "string/string.h"
+#include "string/string_buffer.h"
 #include "string/pair.h"
 #include "parser.h"
 

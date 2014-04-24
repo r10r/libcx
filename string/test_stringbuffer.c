@@ -1,6 +1,6 @@
 #include "base/test.h"
 //#include "base/xmalloc.h"
-#include "string.h"
+#include "string_buffer.h"
 
 static void
 test_StringBuffer_append()

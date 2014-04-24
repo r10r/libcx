@@ -1,4 +1,4 @@
-#include "string.h"
+#include "string_buffer.h" /* TODO move StringBuffer* to separate compilation unit */
 
 String*
 String_init(const char* value, size_t length)
