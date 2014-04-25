@@ -36,7 +36,7 @@ rpc_connection_handler(Connection* connection, ConnectionEvent event)
 		XDBG("processing request");
 
 		RPC_Request* request = (RPC_Request*)connection->data;
-		StringBuffer_catn(&request->request_buffer, ""); // add \0 terminator to buffer
+		StringBuffer_cat(&request->request_buffer, ""); // add \0 terminator to buffer
 		RPC_Request_dispatch(request, ((RPC_Server*)connection->worker->server)->methods);
 		Connection_send_buffer(connection, &request->response_buffer);
 		RPC_Request_free((RPC_Request*)connection->data);
