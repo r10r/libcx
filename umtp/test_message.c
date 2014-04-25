@@ -1,6 +1,9 @@
 #include "base/test.h"
 #include "message_parser.h"
 
+#define List_S(list, index) \
+	((String*)List_get(list, index))->value
+
 static void
 test_Message_new()
 {
@@ -14,12 +17,6 @@ test_Message_new()
 	Message_free(message);
 }
 
-#define List_S(list, index) \
-	((String*)List_get(list, index))
-
-#define TEST_ASSERT_EQUAL_S(expected, s_actual) \
-	TEST_ASSERT_EQUAL_MEMORY(expected, s_actual->value, s_actual->length);
-
 static const char data[] =
 	"VERIFY /foo/bar\n"
 	"Header1: value1\n"
@@ -30,21 +27,21 @@ static const char data[] =
 static void
 test_assert_message(Message* message)
 {
-	TEST_ASSERT_EQUAL_S(data, message->buffer->string);
+	TEST_ASSERT_EQUAL_STRING(data, StringBuffer_value(message->buffer));
 
 	TEST_ASSERT_EQUAL_INT(2, message->protocol_values->length);
-	TEST_ASSERT_EQUAL_S("VERIFY", List_S(message->protocol_values, 0));
-	TEST_ASSERT_EQUAL_S("/foo/bar", List_S(message->protocol_values, 1));
+	TEST_ASSERT_EQUAL_STRING("VERIFY", List_S(message->protocol_values, 0));
+	TEST_ASSERT_EQUAL_STRING("/foo/bar", List_S(message->protocol_values, 1));
 
 	TEST_ASSERT_EQUAL_INT(2, message->headers->length);
 	StringPair* header1 = (StringPair*)List_get(message->headers, 0);
-	TEST_ASSERT_EQUAL_S("Header1",  header1->key);
-	TEST_ASSERT_EQUAL_S("value1",  header1->value);
+	TEST_ASSERT_EQUAL_STRING("Header1",  header1->key->value);
+	TEST_ASSERT_EQUAL_STRING("value1",  header1->value->value);
 
 	StringPair* header2 = (StringPair*)List_get(message->headers, 1);
-	TEST_ASSERT_EQUAL_S("Header2",  header2->key);
-	TEST_ASSERT_EQUAL_S("value2",  header2->value);
-	TEST_ASSERT_EQUAL_S("Hello World", message->body);
+	TEST_ASSERT_EQUAL_STRING("Header2",  header2->key->value);
+	TEST_ASSERT_EQUAL_STRING("value2",  header2->value->value);
+	TEST_ASSERT_EQUAL_STRING("Hello World", message->body->value);
 }
 
 static void
