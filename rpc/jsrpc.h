@@ -10,13 +10,12 @@
 
 
 /* [ simple responses ]*/
-
-#define JSONRPC_RESULT "\"result\":%s}"
+#define JSONRPC_RESULT_SIMPLE "\"result\":%s}"
 #define JSONRPC_RESULT_STRING "\"result\":\"%s\"}"
 #define JSONRPC_RESULT_DOUBLE "\"result\":%lf}"
 #define JSONRPC_RESULT_LONGLONG "\"result\":%lld}"
 
-static const char* const JSONRPC_RESPONSE = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT;
+static const char* const JSONRPC_RESPONSE_SIMPLE = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_SIMPLE;
 static const char* const JSONRPC_RESPONSE_STRING = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_STRING;
 static const char* const JSONRPC_RESPONSE_DOUBLE = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_DOUBLE;
 static const char* const JSONRPC_RESPONSE_LONGLONG = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_LONGLONG;
@@ -24,7 +23,6 @@ static const char* const JSONRPC_RESPONSE_LONGLONG = JSONRPC_RESPONSE_HEADER JSO
 #define JSONRPC_RESULT_TRUE "\"result\":true}"
 #define JSONRPC_RESULT_FALSE "\"result\":false}"
 #define JSONRPC_RESULT_NULL "\"result\":null}"
-#define JSONRPC_ERROR_SIMPLE "\"error\":{\"code\":%d,\"message\":\"%s\"}}"
 
 static const char* const JSONRPC_RESPONSE_TRUE = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_TRUE;
 static const char* const JSONRPC_RESPONSE_FALSE = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_FALSE;
@@ -32,18 +30,24 @@ static const char* const JSONRPC_RESPONSE_FALSE = JSONRPC_RESPONSE_HEADER JSONRP
 #define JSONRPC_RESPONSE_BOOLEAN(b) ((b == 0) ? JSONRPC_RESPONSE_FALSE : JSONRPC_RESPONSE_TRUE)
 
 static const char* const JSONRPC_RESPONSE_NULL = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_NULL;
-static const char* const JSONRPC_ERROR = JSONRPC_RESPONSE_HEADER JSONRPC_ERROR_SIMPLE;
 
+
+/* [ errors ] */
+
+#define JSONRPC_ERROR_SIMPLE "\"error\":{\"code\":%d,\"message\":\"%s\"}}"
+static const char* const JSONRPC_ERROR = JSONRPC_RESPONSE_HEADER JSONRPC_ERROR_SIMPLE;
 static const char* JSONRPC_NULL = "null"; /* for invalid ID or null values*/
 
 
 /* [ complex responses ] */
 
+#define JSONRPC_RESULT "\"result\":%s"
+#define JSONRPC_RESPONSE JSONRPC_RESPONSE_HEADER JSONRPC_RESULT
+
 #define JSONRPC_STRING "\"%s\""
 #define JSRPC_KEYPAIR(k, v) "\"" k "\":" v
 #define JSRPC_STRINGPAIR(k) JSRPC_KEYPAIR(k, JSONRPC_STRING)
-#define JSRPC_OBJECT(o) "{" o "}"
-
+#define JSRPC_OBJECT(o) "%s{" o "}"
 
 #define JSONRPC_RESULT_OBJECT_START "{"
 #define JSONRPC_RESULT_OBJECT_END "}}"

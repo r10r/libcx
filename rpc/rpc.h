@@ -3,10 +3,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>             /* strdup */
-#include "string/string.h"      /* response buffer */
+#include <string.h>                     /* strdup */
+#include "string/string_buffer.h"       /* response buffer */
 
-#define MAX_PARAMS 32           /* maximum number of parameters */
+#define MAX_PARAMS 32                   /* maximum number of parameters */
 
 typedef struct rpc_param_t RPC_Param;
 typedef struct rpc_method_t RPC_Method;

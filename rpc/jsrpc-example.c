@@ -1,4 +1,3 @@
-#include "jsrpc.h"
 #include "hello_service.h"
 
 int

@@ -114,7 +114,8 @@ static const char* const STATUS_FORMAT =
 #define MPD_SONG_FORMAT \
 	JSRPC_KEYPAIR("track", JSONRPC_STRING) \
 	"," JSRPC_KEYPAIR("album", JSONRPC_STRING) \
-	"," JSRPC_KEYPAIR("artist", JSONRPC_STRING)
+	"," JSRPC_KEYPAIR("artist", JSONRPC_STRING) \
+	"," JSRPC_KEYPAIR("uri", JSONRPC_STRING)
 
 static const char* const SONG_FORMAT = MPD_SONG_FORMAT;
 
@@ -140,7 +141,8 @@ RPC(method, status)
 			jsrpc_write_append(SONG_FORMAT,
 					   mpd_song_get_tag(song, MPD_TAG_TITLE, 0),
 					   mpd_song_get_tag(song, MPD_TAG_ALBUM, 0),
-					   mpd_song_get_tag(song, MPD_TAG_ARTIST, 0));
+					   mpd_song_get_tag(song, MPD_TAG_ARTIST, 0),
+					   mpd_song_get_uri(song));
 
 			mpd_song_free(song);
 		}
@@ -189,13 +191,17 @@ RPC(method, playlist)
 			// TODO check previous character in buffer, determine whether
 			// a delimiter is needed or not ? {[: --> no comma, }]\" --> comma
 
+			int count = 0;
 			while ((song = mpd_recv_song(mpd_connection)) != NULL)
 			{
-				jsrpc_write_append("," JSRPC_OBJECT(MPD_SONG_FORMAT),
+				jsrpc_write_append(JSRPC_OBJECT(MPD_SONG_FORMAT),
+						   ((count == 0) ? "" : ","),
 						   mpd_song_get_tag(song, MPD_TAG_TITLE, 0),
 						   mpd_song_get_tag(song, MPD_TAG_ALBUM, 0),
-						   mpd_song_get_tag(song, MPD_TAG_ARTIST, 0));
+						   mpd_song_get_tag(song, MPD_TAG_ARTIST, 0),
+						   mpd_song_get_uri(song));
 				mpd_song_free(song);
+				count++;
 			}
 
 			jsrpc_write_append_simple(JSONRPC_RESULT_ARRAY_END);
@@ -209,6 +215,13 @@ RPC(method, playlist)
 /* save playlist */
 
 /* load playlist */
+
+/* modify playlist (delete/add/move tracks see playlist.h) */
+/*
+ * modify playlist on client only ? send back to server on save ?
+ *
+ * queue each operation, send as RPC batch on save ?
+ */
 
 /* convert playlist to itunes playlist ? */
 
