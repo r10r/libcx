@@ -25,6 +25,7 @@ RPC(public, add)
 RPC(public, next)
 RPC(public, status)
 RPC(public, playlists)
+RPC(public, playlist)
 
 #define MusicPlayerDaemon_methods \
 	RPC(public_name, play), \
@@ -33,7 +34,8 @@ RPC(public, playlists)
 	RPC(public_name, add), \
 	RPC(public_name, next), \
 	RPC(public_name, status), \
-	RPC(public_name, playlists)
+	RPC(public_name, playlists), \
+	RPC(public_name, playlist)
 
 
 /* error definitions key,value pairs */

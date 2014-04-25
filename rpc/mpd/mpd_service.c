@@ -107,14 +107,16 @@ RPC(method, next)
 }
 
 static const char* const STATUS_FORMAT =
-	JSRPC_KEYPAIR("song_id", "%d,")
+	JSRPC_KEYPAIR("song_id", "%d")
 	"," JSRPC_KEYPAIR("volume", "%d")
 	"," JSRPC_KEYPAIR("random", "%d");
 
-static const char* const SONG_FORMAT =
-	"," JSRPC_KEYPAIR("track", JSONRPC_STRING)
-	"," JSRPC_KEYPAIR("album", JSONRPC_STRING)
-	"," JSRPC_KEYPAIR("artist", JSONRPC_STRING);
+#define MPD_SONG_FORMAT \
+	JSRPC_KEYPAIR("track", JSONRPC_STRING) \
+	"," JSRPC_KEYPAIR("album", JSONRPC_STRING) \
+	"," JSRPC_KEYPAIR("artist", JSONRPC_STRING)
+
+static const char* const SONG_FORMAT = MPD_SONG_FORMAT;
 
 RPC(method, status)
 {
@@ -134,6 +136,7 @@ RPC(method, status)
 		struct mpd_song* song = mpd_run_current_song(mpd_connection);
 		if (mpd_response_check_success(request, &mpd_connection) && song)
 		{
+			jsrpc_write_append_simple(",");
 			jsrpc_write_append(SONG_FORMAT,
 					   mpd_song_get_tag(song, MPD_TAG_TITLE, 0),
 					   mpd_song_get_tag(song, MPD_TAG_ALBUM, 0),
@@ -170,7 +173,38 @@ RPC(method, playlists)
 	}
 }
 
-/* list playlists */
+RPC(single_string_param, playlist, 0, playlist_name, 0)
+RPC(method, playlist)
+{
+	if (connect(request, &mpd_connection) == 1)
+	{
+		mpd_send_list_playlist_meta(mpd_connection, RPC(get_param, playlist, playlist_name));
+
+		if (mpd_response_check_success(request, &mpd_connection))
+		{
+			struct mpd_song* song;
+
+			jsrpc_write_response(JSONRPC_RESPONSE, JSONRPC_RESULT_ARRAY_START);
+
+			// TODO check previous character in buffer, determine whether
+			// a delimiter is needed or not ? {[: --> no comma, }]\" --> comma
+
+			while ((song = mpd_recv_song(mpd_connection)) != NULL)
+			{
+				jsrpc_write_append("," JSRPC_OBJECT(MPD_SONG_FORMAT),
+						   mpd_song_get_tag(song, MPD_TAG_TITLE, 0),
+						   mpd_song_get_tag(song, MPD_TAG_ALBUM, 0),
+						   mpd_song_get_tag(song, MPD_TAG_ARTIST, 0));
+				mpd_song_free(song);
+			}
+
+			jsrpc_write_append_simple(JSONRPC_RESULT_ARRAY_END);
+
+			// check if mpd_recv_playlist returned NULL because of an error
+			mpd_response_check_success(request, &mpd_connection);
+		}
+	}
+}
 
 /* save playlist */
 
@@ -185,3 +219,4 @@ RPC(export, add);
 RPC(export_without_params, next);
 RPC(export_without_params, status);
 RPC(export_without_params, playlists);
+RPC(export, playlist);
