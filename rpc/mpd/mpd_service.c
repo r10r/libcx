@@ -111,13 +111,24 @@ static const char* const STATUS_FORMAT =
 	"," JSRPC_KEYPAIR("volume", "%d")
 	"," JSRPC_KEYPAIR("random", "%d");
 
-#define MPD_SONG_FORMAT \
-	JSRPC_KEYPAIR("track", JSONRPC_STRING) \
-	"," JSRPC_KEYPAIR("album", JSONRPC_STRING) \
-	"," JSRPC_KEYPAIR("artist", JSONRPC_STRING) \
-	"," JSRPC_KEYPAIR("uri", JSONRPC_STRING)
+static const char* const SONG_FORMAT =
+	JSRPC_KEYPAIR("track", JSONRPC_STRING)
+	"," JSRPC_KEYPAIR("album", JSONRPC_STRING)
+	"," JSRPC_KEYPAIR("artist", JSONRPC_STRING)
+	"," JSRPC_KEYPAIR("duration", "%u")
+	"," JSRPC_KEYPAIR("uri", JSONRPC_STRING);
 
-static const char* const SONG_FORMAT = MPD_SONG_FORMAT;
+
+static void
+print_song_json(RPC_Request* request, struct mpd_song* song)
+{
+	jsrpc_write_append(SONG_FORMAT,
+			   mpd_song_get_tag(song, MPD_TAG_TITLE, 0),
+			   mpd_song_get_tag(song, MPD_TAG_ALBUM, 0),
+			   mpd_song_get_tag(song, MPD_TAG_ARTIST, 0),
+			   mpd_song_get_duration(song),
+			   mpd_song_get_uri(song));
+}
 
 RPC(method, status)
 {
@@ -138,12 +149,7 @@ RPC(method, status)
 		if (mpd_response_check_success(request, &mpd_connection) && song)
 		{
 			jsrpc_write_append_simple(",");
-			jsrpc_write_append(SONG_FORMAT,
-					   mpd_song_get_tag(song, MPD_TAG_TITLE, 0),
-					   mpd_song_get_tag(song, MPD_TAG_ALBUM, 0),
-					   mpd_song_get_tag(song, MPD_TAG_ARTIST, 0),
-					   mpd_song_get_uri(song));
-
+			print_song_json(request, song);
 			mpd_song_free(song);
 		}
 
@@ -194,12 +200,9 @@ RPC(method, playlist)
 			int count = 0;
 			while ((song = mpd_recv_song(mpd_connection)) != NULL)
 			{
-				jsrpc_write_append(JSRPC_OBJECT(MPD_SONG_FORMAT),
-						   ((count == 0) ? "" : ","),
-						   mpd_song_get_tag(song, MPD_TAG_TITLE, 0),
-						   mpd_song_get_tag(song, MPD_TAG_ALBUM, 0),
-						   mpd_song_get_tag(song, MPD_TAG_ARTIST, 0),
-						   mpd_song_get_uri(song));
+				jsrpc_write_append_simple((count == 0) ? "{" : ",{");
+				print_song_json(request, song);
+				jsrpc_write_append_simple("}");
 				mpd_song_free(song);
 				count++;
 			}
@@ -217,6 +220,7 @@ RPC(method, playlist)
 /* load playlist */
 
 /* modify playlist (delete/add/move tracks see playlist.h) */
+
 /*
  * modify playlist on client only ? send back to server on save ?
  *
