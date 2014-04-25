@@ -141,14 +141,12 @@ struct rpc_method_t
 /* [ Method Export ] */
 
 #define RPC_export(ns, meth) \
-	RPC_Method ns ## _ ## meth = RPC_def(ns, meth)
+	RPC_method(ns, meth); \
+	static RPC_Method ns ## _ ## meth = RPC_def(ns, meth);
 
 #define RPC_export_without_params(ns, meth) \
-	RPC_Method ns ## _ ## meth = { #meth, RPC_method_name(ns, meth), NULL, 0 }
-
-#define RPC_public(ns, meth) \
 	RPC_method(ns, meth); \
-	extern RPC_Method ns ## _ ## meth;
+	static RPC_Method ns ## _ ## meth = { #meth, RPC_method_name(ns, meth), NULL, 0 };
 
 #define RPC_methods(ns) \
 	ns ## _ ## methods

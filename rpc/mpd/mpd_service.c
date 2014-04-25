@@ -63,13 +63,6 @@ RPC(method, pause)
 	}
 }
 
-RPC(set_param_string, send_message, 0, channel, 0)
-RPC(set_param_string, send_message, 1, message, 0)
-RPC(param_list, send_message)
-{
-	&RPC(param, send_message, channel),
-	&RPC(param, send_message, message)
-};
 RPC(method, send_message)
 {
 	if (connect(request, &mpd_connection) == 1)
@@ -83,7 +76,6 @@ RPC(method, send_message)
 	}
 }
 
-RPC(single_string_param, add, 0, uri, 0)
 RPC(method, add)
 {
 	if (connect(request, &mpd_connection) == 1)
@@ -181,7 +173,6 @@ RPC(method, playlists)
 	}
 }
 
-RPC(single_string_param, playlist, 0, playlist_name, 0)
 RPC(method, playlist)
 {
 	if (connect(request, &mpd_connection) == 1)
@@ -192,6 +183,8 @@ RPC(method, playlist)
 		{
 			struct mpd_song* song;
 
+			// FIXME decouple serialization format from RPC method ?
+			// --> no just write a new service implementation ;) (really!)
 			jsrpc_write_response(JSONRPC_RESPONSE, JSONRPC_RESULT_ARRAY_START);
 
 			// TODO check previous character in buffer, determine whether
@@ -228,12 +221,3 @@ RPC(method, playlist)
  */
 
 /* convert playlist to itunes playlist ? */
-
-RPC(export_without_params, play);
-RPC(export_without_params, pause);
-RPC(export, send_message);
-RPC(export, add);
-RPC(export_without_params, next);
-RPC(export_without_params, status);
-RPC(export_without_params, playlists);
-RPC(export, playlist);

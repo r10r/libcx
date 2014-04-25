@@ -10,7 +10,7 @@ const RPC_Method RPC_Method_none =  {
 void
 RPC_Method_log(RPC_Method* method)
 {
-	printf("* method[%s] params:#%d\n", method->name, method->param_count);
+	printf("* method[%s] %p params:#%d\n", method->name, method->method, method->param_count);
 	int i = 0;
 	for (i = 0; i < method->param_count; i++)
 	{

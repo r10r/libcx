@@ -18,15 +18,29 @@
 #define RPC(action, ...) RPC_ ## action(MusicPlayerDaemon, __VA_ARGS__)
 
 /* export each function + method definition */
-RPC(public, play)
-RPC(public, pause)
-RPC(public, send_message)
-RPC(public, add)
-RPC(public, next)
-RPC(public, status)
-RPC(public, playlists)
-RPC(public, playlist)
+RPC(export_without_params, play)
+RPC(export_without_params, pause)
 
+RPC(set_param_string, send_message, 0, channel, 0)
+RPC(set_param_string, send_message, 1, message, 0)
+RPC(param_list, send_message)
+{
+	&RPC(param, send_message, channel),
+	&RPC(param, send_message, message)
+};
+RPC(export, send_message)
+
+RPC(single_string_param, add, 0, uri, 0)
+RPC(export, add)
+
+RPC(export_without_params, next)
+RPC(export_without_params, status)
+RPC(export_without_params, playlists)
+
+RPC(single_string_param, playlist, 0, playlist_name, 0)
+RPC(export, playlist)
+
+/* export methods */
 #define MusicPlayerDaemon_methods \
 	RPC(public_name, play), \
 	RPC(public_name, pause), \
