@@ -5,60 +5,59 @@
 
 #define ParserDebug(parser, msg) \
 	printf("-- parse event [%s] --\n", msg); \
-	printf("state - cs:%d iterations:%d\n", parser->cs, parser->iterations); \
+	printf("state - cs:%d iterations:%d\n", (parser)->cs, (parser)->iterations); \
 	printf("token - current:%p end:%p eof:%p\n", \
-	       parser->buffer_position, parser->buffer_end, parser->eof); \
-	printf("buffer - offset:%zu length:%zu size:%zu unused:%zu\n", \
-	       parser->buffer_offset, parser->buffer->string->length, parser->buffer->length, StringBuffer_unused(parser->buffer)); \
-	printf("marker - start:%zu length:%zu\n", parser->marker_start, parser->marker_length); \
+	       (parser)->buffer_position, (parser)->buffer_end, (parser)->eof); \
+	printf("buffer - offset:%zu length:%zu used:%zu unused:%zu\n", \
+	       (parser)->buffer_offset, StringBuffer_length((parser)->buffer), \
+	       StringBuffer_used((parser)->buffer), StringBuffer_unused((parser)->buffer)); \
+	printf("marker - start:%zu length:%zu\n", (parser)->marker_start, (parser)->marker_length); \
 	printf("-------------------------------\n");
 
 #define Marker_get(parser) \
-	S_get(parser->buffer->string, parser->marker_start)
+	S_get((parser)->buffer->string, (parser)->marker_start)
 
 #define Marker_toS(parser) \
-	String_init(Marker_get(parser), parser->marker_length)
+	String_init(Marker_get(parser), (parser)->marker_length)
 
 // TODO make unprintable tokens printable (for easier debugging)
 #define PrintToken(parser) \
 	XFLOG("Token[%zu] %p (%d)'%c'\n", \
-	      parser->buffer_offset, parser->buffer_position, *(parser->buffer_position), *(parser->buffer_position));
+	      (parser)->buffer_offset, (parser)->buffer_position, \
+	      *((parser)->buffer_position), *((parser)->buffer_position));
 
 #define PrintLastToken(parser) \
 	XFLOG("Last Token[%zu] %p (%d)'%c'\n", \
-	      parser->buffer->string->length, S_last(parser->buffer->string), \
-	      *S_last(parser->buffer->string), *S_last(parser->buffer->string));
+	      StringBuffer_used((parser)->buffer), S_last((parser)->buffer->string), \
+	      *S_last((parser)->buffer->string), *S_last((parser)->buffer->string));
 
 #define SetMarker(parser) \
 	XFLOG("Mark[%zu] %c -> %p\n", \
-	      parser->buffer_offset, *(parser->buffer_position), parser->buffer_position); \
-	parser->marker_start = parser->buffer_offset; \
-	parser->marker_length = 0; \
+	      (parser)->buffer_offset, *((parser)->buffer_position), (parser)->buffer_position); \
+	(parser)->marker_start = (parser)->buffer_offset; \
+	(parser)->marker_length = 0; \
 
 #define CountToken(parser) \
-	parser->buffer_offset++; \
-	parser->marker_length++;
+	(parser)->buffer_offset++; \
+	(parser)->marker_length++;
 
 #define EmitEvent(parser, e) \
-	parser->f_event(parser, e);
+	(parser)->f_event(parser, e);
 
 #define RagelParser_update(parser) \
-	parser->buffer_position = S_get(parser->buffer->string, parser->buffer_offset); \
-	parser->buffer_end = S_last(parser->buffer->string); \
-	if (parser->finished == 1) parser->eof = parser->buffer_end;
+	(parser)->buffer_position = S_get((parser)->buffer->string, (parser)->buffer_offset); \
+	(parser)->buffer_end = S_last((parser)->buffer->string); \
+	if ((parser)->finished == 1) (parser)->eof = (parser)->buffer_end;
 
 #define RagelParser_finish(parser) \
-	{ \
-		(parser)->finished = 1; \
-		RagelParser_parse(parser); \
-	}
+	{ (parser)->finished = 1; RagelParser_parse(parser); }
 
 #define RagelParser_eof(parser) \
-	(parser->eof == parser->buffer_end)
+	((parser)->eof == (parser)->buffer_end)
 
 /* number of unparsed tokens */
 #define RagelParser_unparsed(parser) \
-	(parser->buffer->string->length - parser->buffer_offset)
+	(StringBuffer_used((parser)->buffer) - parser->buffer_offset)
 
 typedef struct ragel_parser_t RagelParser;
 typedef void F_EventHandler (RagelParser* parser, int event);

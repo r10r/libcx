@@ -5,11 +5,7 @@ extern void
 body_fsm_parse(RagelParser* parser);
 
 #define List_S(list, index) \
-	((String*)List_get(list, index))
-
-#define TEST_ASSERT_EQUAL_S(expected, s_actual) \
-	TEST_ASSERT_EQUAL_INT(strlen(expected), s_actual->length); \
-	TEST_ASSERT_EQUAL_MEMORY(expected, s_actual->value, s_actual->length);
+	((String*)List_get(list, index))->value
 
 static const char data[] =
 	"VERIFY /foo/bar\n"
@@ -25,16 +21,16 @@ static const char data[] =
 static void
 test_assert_message(Message* message)
 {
-	TEST_ASSERT_EQUAL_S(data, message->buffer->string);
+	TEST_ASSERT_EQUAL_STRING(data, StringBuffer_value(message->buffer));
 
 	TEST_ASSERT_EQUAL_INT(2, message->protocol_values->length);
-	TEST_ASSERT_EQUAL_S("VERIFY", List_S(message->protocol_values, 0));
-	TEST_ASSERT_EQUAL_S("/foo/bar", List_S(message->protocol_values, 1));
+	TEST_ASSERT_EQUAL_STRING("VERIFY", List_S(message->protocol_values, 0));
+	TEST_ASSERT_EQUAL_STRING("/foo/bar", List_S(message->protocol_values, 1));
 
 	TEST_ASSERT_EQUAL_INT(1, message->headers->length);
 	StringPair* header1 = (StringPair*)List_get(message->headers, 0);
-	TEST_ASSERT_EQUAL_S("Header1",  header1->key);
-	TEST_ASSERT_EQUAL_S("value1",  header1->value);
+	TEST_ASSERT_EQUAL_STRING("Header1",  header1->key->value);
+	TEST_ASSERT_EQUAL_STRING("value1",  header1->value->value);
 }
 
 static StringBuffer* buf;
@@ -72,7 +68,7 @@ test_Message_parse_multi_pass()
 	RagelParser_finish(ragel_parser)  // FIXME duplicate call required to run body parser
 	test_assert_message(message);
 
-	TEST_ASSERT_EQUAL_S("XYZXYZXYZXYZXYZ", buf->string);
+	TEST_ASSERT_EQUAL_STRING("XYZXYZXYZXYZXYZ", buf->string->value);
 
 	StringBuffer_free(buf);
 	Message_free(message);
