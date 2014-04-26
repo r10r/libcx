@@ -7,6 +7,27 @@ static const char* JSONRPC_ID_PATH[] = { "id", NULL };
 static const char* JSONRPC_METHOD_PATH[] = { "method", NULL };
 static const char* JSONRPC_PARAMS_PATH[] = { "params", NULL };
 
+enum request_type
+{
+	REQUEST_NOTIFICATION,
+	REQUEST_SINGLE,
+	REQUEST_BATCH
+};
+
+typedef struct request_status_t
+{
+	enum request_type type;
+
+	int last_error;
+	enum request_type last; /* previous response in batch request */
+	yajl_val root;
+	yajl_val req_root;
+} RequestStatus;
+
+#define status_of(request) \
+	((RequestStatus*)(request)->userdata)
+
+
 static RPC_Method*
 lookup_method(RPC_Method methods[], RPC_Request* request)
 {
@@ -22,7 +43,7 @@ lookup_method(RPC_Method methods[], RPC_Request* request)
 static yajl_val
 get_param_value(RPC_Request* request, RPC_Param* param)
 {
-	yajl_val params = yajl_tree_get((yajl_val)request->userdata, JSONRPC_PARAMS_PATH, yajl_t_any);
+	yajl_val params = yajl_tree_get(status_of(request)->req_root, JSONRPC_PARAMS_PATH, yajl_t_any);
 
 	if (YAJL_IS_ARRAY(params))
 	{
@@ -162,6 +183,7 @@ parse_request_id(RPC_Request* request, yajl_val root)
 	else
 		// its' a notification
 		printf("Request has no id - it must be a notification\n");
+
 	return 1;
 }
 
@@ -184,44 +206,111 @@ parse_request_method(RPC_Request* request, yajl_val root)
 	return 0;
 }
 
+/* returns -1 on malformed request, 0 if method does not exist, 1 if request was processed */
+static int
+RPC_Request_process(RPC_Request* request, RPC_Method methods[], RequestStatus* status)
+{
+	int ret;
+
+	ret = check_jsonrpc_version(request, status->req_root);
+	if (!ret)
+		return -1;
+
+	ret = parse_request_id(request, status->req_root);
+	if (!ret)
+		return -1;
+
+	ret = parse_request_method(request, status->req_root);
+	if (!ret)
+		return -1;
+
+	printf("--> Request id:%s method:%s\n", request->id, request->method);
+
+	if (request->id)
+		status->last = REQUEST_SINGLE;
+	else
+		status->last = REQUEST_NOTIFICATION;
+
+	RPC_Method* method = lookup_method(methods, request);
+	if (method)
+	{
+		printf("Dispatching request to method %s %p\n", method->name, method->method);
+		method->method(request);
+		return 1;
+	}
+	else
+	{
+		fprintf(stderr, "Method [%s] does not exist\n", request->method);
+		return 0;
+	}
+}
+
+// TODO wrap RPC request in JSONRPC request ?
+// ([{"jsonrpc":"2.0",id:}])
+
+#define JSON_MIN_RESPONSE_SIZE 24
+
 void
 RPC_Request_dispatch(RPC_Request* request, RPC_Method methods[])
 {
 	char errbuf[1024];
 
+	RequestStatus request_status;
+
+	memset(&request_status, 0, sizeof(RequestStatus));
+	request->userdata = &request_status;
+
+	printf("Dispatching request: \n<<<\n%s\n>>>\n", StringBuffer_value(&request->request_buffer));
 	yajl_val root = yajl_tree_parse(StringBuffer_value(&request->request_buffer), errbuf, sizeof(errbuf));
+	request_status.root = root;
 
-	request->userdata = root;
-
-	if (!root)
-		fprintf(stderr, "Invalid request. Failed to parse request: \n%s\n", errbuf);
-
-	yajl_val v;
-	int ret;
-
-	ret = check_jsonrpc_version(request, root);
-	if (!ret)
-		goto error;
-
-	ret = parse_request_id(request, root);
-	if (!ret)
-		goto error;
-
-	ret = parse_request_method(request, root);
-	if (!ret)
-		goto error;
-
-	printf("--> Request id:%s method:%s\n", request->id, request->method);
-
-	RPC_Method* method = lookup_method(methods, request);
-	if (!method)
+	if (request_status.root)
 	{
-		fprintf(stderr, "Method [%s] does not exist\n", request->method);
-		goto error;
+		switch (request_status.root->type)
+		{
+		case yajl_t_array:
+			// batch request
+		{
+			request_status.type = REQUEST_BATCH;
+			// every method either returns a result, an error or nothing at all (a notification)
+			// start batch response
+			// TODO ? check if batch contains only notifications ? we don't have to return nothing
+			size_t i;
+			jsrpc_begin_batch;
+			for (i = 0; i < request_status.root->u.array.len; i++)
+			{
+				// TODO check if previous request returned something (result/error)
+				if (i > 0 && request_status.last == REQUEST_SINGLE)
+					jsrpc_write_append_simple(",");
+
+				request_status.req_root = request_status.root->u.array.values[i];
+				RPC_Request_process(request, methods, &request_status);
+			}
+			jsrpc_end_batch;
+			break;
+		}
+		case yajl_t_object:
+			request_status.type = REQUEST_SINGLE;
+			request_status.req_root = request_status.root;
+			RPC_Request_process(request, methods, &request_status);
+			break;
+		default:
+			fprintf(stderr, "Invalid request. Failed to parse request: \n%s\n", errbuf);
+		}
+	}
+	else
+		fprintf(stderr, "Invalid request. Failed to parse request: \n%s\n", errbuf);
+	// TODO send error
+
+	fprintf(stderr, "Response: \n<<<\n%s\n>>>\n", StringBuffer_value(&request->response_buffer));
+
+	// remove empty batch response
+	if (StringBuffer_used(&request->response_buffer) < JSON_MIN_RESPONSE_SIZE)
+	{
+		fprintf(stderr, "Response is to small to be valid. Clearing response buffer\n");
+		StringBuffer_clear(&request->response_buffer);
 	}
 
-	method->method(request);
-
-error:  // TODO send error
-	yajl_tree_free(root);
+	printf("XXXXXX rs:%p rs->root:%p root:%p\n", &request_status, request_status.root, root);
+	yajl_tree_free(request_status.root);
 }
