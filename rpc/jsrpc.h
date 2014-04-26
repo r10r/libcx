@@ -29,6 +29,9 @@ static const char* const JSONRPC_RESPONSE_FALSE = JSONRPC_RESPONSE_HEADER JSONRP
 
 #define JSONRPC_RESPONSE_BOOLEAN(b) ((b == 0) ? JSONRPC_RESPONSE_FALSE : JSONRPC_RESPONSE_TRUE)
 
+#define JSONRPC_BOOLEAN(b) ((b == 0) ? "false" : "true")
+
+
 static const char* const JSONRPC_RESPONSE_NULL = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_NULL;
 
 
@@ -56,13 +59,13 @@ static const char* JSONRPC_NULL = "null"; /* for invalid ID or null values*/
 #define JSONRPC_RESULT_ARRAY_END "]}"
 
 #define jsrpc_write(format, ...) \
-	StringBuffer_aprintf(&request->response_buffer, format, __VA_ARGS__)
+	StringBuffer_aprintf(result_buffer, format, __VA_ARGS__)
 
 #define jsrpc_write_append(format, ...) \
-	StringBuffer_aprintf(&request->response_buffer, format, __VA_ARGS__)
+	StringBuffer_aprintf(result_buffer, format, __VA_ARGS__)
 
 #define jsrpc_write_append_simple(chars) \
-	StringBuffer_cat(&request->response_buffer, chars)
+	StringBuffer_cat(result_buffer, chars)
 
 #define jsrpc_write_error(code, message) \
 	if (IS_RPC_REQUEST(request)) jsrpc_write(JSONRPC_ERROR, (request)->id, code, message)
@@ -72,14 +75,6 @@ static const char* JSONRPC_NULL = "null"; /* for invalid ID or null values*/
 
 #define jsrpc_write_response(format, ...) \
 	if (IS_RPC_REQUEST(request)) jsrpc_write(format, (request)->id, __VA_ARGS__)
-
-/* [ batch responses ] */
-
-#define jsrpc_begin_batch \
-	StringBuffer_cat(&request->response_buffer, "[")
-
-#define jsrpc_end_batch \
-	StringBuffer_cat(&request->response_buffer, "]")
 
 /* [ simple requests ] */
 

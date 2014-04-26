@@ -11,7 +11,7 @@
 typedef struct rpc_param_t RPC_Param;
 typedef struct rpc_method_t RPC_Method;
 typedef struct rpc_request_t RPC_Request;
-typedef void F_RPC_Method (RPC_Request* request);
+typedef void F_RPC_Method (RPC_Request* request, StringBuffer* result_buffer);
 
 typedef enum rpc_type_t
 {
@@ -25,12 +25,29 @@ typedef enum rpc_type_t
 	RPC_Undefined
 } RPC_Type;
 
+
+typedef struct pipeline_t Pipeline;
+
+struct pipeline_t
+{
+	StringBuffer* request_buffer;
+	StringBuffer* response_buffer;
+	StringBuffer* result_buffer; /* result or error message */
+
+	size_t nrequests;
+	RPC_Request* requests;
+
+	void* userdata;
+};
+
 struct rpc_request_t
 {
-	const char* method;
 	const char* id;
-	StringBuffer request_buffer;
-	StringBuffer response_buffer;
+	const char* method_name;
+
+	RPC_Method* method;
+
+	int error;
 
 	RPC_Param* params[MAX_PARAMS];
 	void* userdata;
@@ -75,7 +92,7 @@ struct rpc_method_t
 /* [ Method definition ] */
 
 #define RPC_method(ns, meth) \
-	void ns ## _ ## meth ## _method(RPC_Request * request)
+	void ns ## _ ## meth ## _method(RPC_Request * request, StringBuffer * result_buffer)
 
 #define RPC_params(ns, meth) \
 	static RPC_Param ns ## _ ## meth ## _params [] =
@@ -173,6 +190,10 @@ RPC_Request_new(void);
 void
 RPC_Request_free(RPC_Request* request);
 
+RPC_Method*
+RPC_Request_lookup_method(RPC_Request* request, RPC_Method methods[]);
+
+
 /* [Plugin API] */
 
 extern const char*
@@ -184,7 +205,13 @@ RPC_Request_get_param_value_longlong(RPC_Request* request, RPC_Param* param);
 double
 RPC_Request_get_param_value_double(RPC_Request* request, RPC_Param* param);
 
+extern Pipeline*
+RPC_Pipeline_new(void);
+
 extern void
-RPC_Request_dispatch(RPC_Request* request, RPC_Method methods[]);
+RPC_Pipeline_free(Pipeline* pipeline);
+
+extern void
+RPC_Pipeline_process(Pipeline* pipeline, RPC_Method methods[]);
 
 #endif

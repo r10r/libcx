@@ -20,20 +20,14 @@ RPC_Method_log(RPC_Method* method)
 	}
 }
 
-RPC_Request*
-RPC_Request_new()
+RPC_Method*
+RPC_Request_lookup_method(RPC_Request* request, RPC_Method methods[])
 {
-	RPC_Request* request = malloc(sizeof(RPC_Request));
+	int i;
 
-	StringBuffer_init(&request->request_buffer, 1024);
-	StringBuffer_init(&request->response_buffer, 1024);
-	return request;
-}
+	for (i = 0; methods[i].name != NULL; i++)
+		if (strcmp(methods[i].name, request->method_name) == 0)
+			return &methods[i];
 
-void
-RPC_Request_free(RPC_Request* request)
-{
-	StringBuffer_free_members(&request->request_buffer);
-	StringBuffer_free_members(&request->response_buffer);
-	free(request);
+	return NULL;
 }

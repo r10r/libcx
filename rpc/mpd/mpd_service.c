@@ -3,7 +3,7 @@
 static struct mpd_connection* mpd_connection = NULL;
 
 static int
-connect(RPC_Request* request, struct mpd_connection** conn)
+connect(struct mpd_connection** conn, RPC_Request* request, StringBuffer* result_buffer)
 {
 	if (*conn == NULL)
 	{
@@ -11,7 +11,8 @@ connect(RPC_Request* request, struct mpd_connection** conn)
 		if (*conn == NULL)
 		{
 			fprintf(stderr, "%s\n", "Out of memory"); // TODO use debug macro
-			jsrpc_write_error(ERR_OOM, api_strerror(ERR_OOM));
+			request->error = ERR_OOM;
+			jsrpc_write_append_simple(api_strerror(ERR_OOM));
 			return -1;
 		}
 
@@ -19,7 +20,8 @@ connect(RPC_Request* request, struct mpd_connection** conn)
 		{
 			// TODO use debug macro
 			fprintf(stderr, "Failed to create connection: %s\n", mpd_connection_get_error_message(*conn));
-			jsrpc_write_error(jsrpc_ERROR_INTERNAL, mpd_connection_get_error_message(*conn));
+			request->error = jsrpc_ERROR_INTERNAL;
+			jsrpc_write_append_simple(mpd_connection_get_error_message(*conn));
 			mpd_connection_free(*conn);
 			*conn = NULL;
 			return -1;
@@ -30,11 +32,12 @@ connect(RPC_Request* request, struct mpd_connection** conn)
 
 /* true if command was successful, false if error occured */
 static bool
-mpd_response_check_success(RPC_Request* request, struct mpd_connection** conn)
+mpd_response_check_success(struct mpd_connection** conn, RPC_Request* request, StringBuffer* result_buffer)
 {
 	if (mpd_connection_get_error(mpd_connection) != MPD_ERROR_SUCCESS)
 	{
-		jsrpc_write_error(jsrpc_ERROR_INTERNAL, mpd_connection_get_error_message(*conn));
+		request->error = jsrpc_ERROR_INTERNAL;
+		jsrpc_write_append_simple(mpd_connection_get_error_message(*conn));
 		mpd_connection_clear_error(mpd_connection);
 		return false;
 	}
@@ -43,58 +46,58 @@ mpd_response_check_success(RPC_Request* request, struct mpd_connection** conn)
 
 RPC(method, play)
 {
-	if (connect(request, &mpd_connection) == 1)
+	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
 		bool success = mpd_run_play(mpd_connection);
 
-		if (mpd_response_check_success(request, &mpd_connection))
-			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(success));
+		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
+			jsrpc_write_simple_response(JSONRPC_BOOLEAN(success));
 	}
 }
 
 RPC(method, pause)
 {
-	if (connect(request, &mpd_connection) == 1)
+	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
 		bool success = mpd_run_pause(mpd_connection, 1);
 
-		if (mpd_response_check_success(request, &mpd_connection))
-			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(success));
+		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
+			jsrpc_write_simple_response(JSONRPC_BOOLEAN(success));
 	}
 }
 
 RPC(method, send_message)
 {
-	if (connect(request, &mpd_connection) == 1)
+	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
 		bool success = mpd_run_send_message(mpd_connection,
 						    RPC(get_param, send_message, channel),
 						    RPC(get_param, send_message, message));
 
-		if (mpd_response_check_success(request, &mpd_connection))
-			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(success));
+		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
+			jsrpc_write_simple_response(JSONRPC_BOOLEAN(success));
 	}
 }
 
 RPC(method, add)
 {
-	if (connect(request, &mpd_connection) == 1)
+	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
 		bool success = mpd_run_add(mpd_connection, RPC(get_param, add, uri));
 
-		if (mpd_response_check_success(request, &mpd_connection))
-			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(success));
+		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
+			jsrpc_write_simple_response(JSONRPC_BOOLEAN(success));
 	}
 }
 
 RPC(method, next)
 {
-	if (connect(request, &mpd_connection) == 1)
+	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
 		bool success = mpd_run_next(mpd_connection);
 
-		if (mpd_response_check_success(request, &mpd_connection))
-			jsrpc_write_simple_response(JSONRPC_RESPONSE_BOOLEAN(success));
+		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
+			jsrpc_write_simple_response(JSONRPC_BOOLEAN(success));
 	}
 }
 
@@ -112,7 +115,7 @@ static const char* const SONG_FORMAT =
 
 
 static void
-print_song_json(RPC_Request* request, struct mpd_song* song)
+print_song_json(RPC_Request* request, StringBuffer* result_buffer, struct mpd_song* song)
 {
 	jsrpc_write_append(SONG_FORMAT,
 			   mpd_song_get_tag(song, MPD_TAG_TITLE, 0),
@@ -124,40 +127,40 @@ print_song_json(RPC_Request* request, struct mpd_song* song)
 
 RPC(method, status)
 {
-	if (connect(request, &mpd_connection) == 1)
+	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
 		struct mpd_status* status = mpd_run_status(mpd_connection);
-		if (mpd_response_check_success(request, &mpd_connection))
+		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
 		{
-			jsrpc_write_response(JSONRPC_RESPONSE, JSONRPC_RESULT_OBJECT_START);
+			jsrpc_write_append_simple("{");
 			jsrpc_write_append(STATUS_FORMAT,
 					   mpd_status_get_song_id(status),
 					   mpd_status_get_volume(status),
 					   mpd_status_get_random(status));
-			mpd_status_free(status);
 		}
+		mpd_status_free(status);
 
 		struct mpd_song* song = mpd_run_current_song(mpd_connection);
-		if (mpd_response_check_success(request, &mpd_connection) && song)
+		if (mpd_response_check_success(&mpd_connection, request, result_buffer) && song)
 		{
 			jsrpc_write_append_simple(",");
-			print_song_json(request, song);
-			mpd_song_free(song);
+			print_song_json(request, result_buffer, song);
 		}
+		mpd_song_free(song);
 
-		jsrpc_write_append_simple(JSONRPC_RESULT_OBJECT_END);
+		jsrpc_write_append_simple("}");
 	}
 }
 
 RPC(method, playlists)
 {
-	if (connect(request, &mpd_connection) == 1)
+	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
 		mpd_send_list_playlists(mpd_connection);
 
-		if (mpd_response_check_success(request, &mpd_connection))
+		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
 		{
-			struct mpd_playlist* playlist;
+			struct mpd_playlist* playlist = NULL;
 
 			while ((playlist = mpd_recv_playlist(mpd_connection)) != NULL)
 			{
@@ -166,7 +169,7 @@ RPC(method, playlists)
 			}
 
 			// check if mpd_recv_playlist returned NULL because of an error
-			if (mpd_response_check_success(request, &mpd_connection))
+			if (mpd_response_check_success(&mpd_connection, request, result_buffer))
 				// send response
 				printf("Success\n");
 		}
@@ -175,36 +178,28 @@ RPC(method, playlists)
 
 RPC(method, playlist)
 {
-	if (connect(request, &mpd_connection) == 1)
+	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
 		mpd_send_list_playlist_meta(mpd_connection, RPC(get_param, playlist, playlist_name));
 
-		if (mpd_response_check_success(request, &mpd_connection))
+		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
 		{
-			struct mpd_song* song;
-
-			// FIXME decouple serialization format from RPC method ?
-			// --> no just write a new service implementation ;) (really!)
-			jsrpc_write_response(JSONRPC_RESPONSE, JSONRPC_RESULT_ARRAY_START);
-
-			// TODO check previous character in buffer, determine whether
-			// a delimiter is needed or not ? {[: --> no comma, }]\" --> comma
-
+			jsrpc_write_append_simple("[");
+			struct mpd_song* song = NULL;
 			int count = 0;
 			while ((song = mpd_recv_song(mpd_connection)) != NULL)
 			{
 				jsrpc_write_append_simple((count == 0) ? "{" : ",{");
-				print_song_json(request, song);
+				print_song_json(request, result_buffer, song);
 				jsrpc_write_append_simple("}");
 				mpd_song_free(song);
 				count++;
 			}
-
-			jsrpc_write_append_simple(JSONRPC_RESULT_ARRAY_END);
-
-			// check if mpd_recv_playlist returned NULL because of an error
-			mpd_response_check_success(request, &mpd_connection);
+			jsrpc_write_append_simple("]");
 		}
+		else
+			// check if mpd_recv_playlist returned NULL because of an error
+			mpd_response_check_success(&mpd_connection, request, result_buffer);
 	}
 }
 
