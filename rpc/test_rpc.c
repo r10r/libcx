@@ -5,6 +5,14 @@
 #undef RPC
 #define RPC(action, ...) RPC_ ## action(Foobar, __VA_ARGS__)
 
+
+// protocol api implementation
+
+void
+RPC_RequestList_free_data(RPC_RequestList* request_list)
+{
+}
+
 /* deserialize methods */
 static const char*
 get_foo_value(RPC_Request* request, RPC_Param* param)

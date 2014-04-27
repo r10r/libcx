@@ -7,6 +7,8 @@ static const char* JSONRPC_ID_PATH[] = { "id", NULL };
 static const char* JSONRPC_METHOD_PATH[] = { "method", NULL };
 static const char* JSONRPC_PARAMS_PATH[] = { "params", NULL };
 
+// TODO error handling for parameter parsing ?
+
 static yajl_val
 get_param_value(RPC_Request* request, RPC_Param* param)
 {
@@ -26,6 +28,7 @@ get_param_value(RPC_Request* request, RPC_Param* param)
 		return yajl_tree_get(params, parameter_path, yajl_t_any);
 	}
 
+	request->error = jsrpc_ERROR_INVALID_PARAMS;
 	return NULL;
 }
 
@@ -215,13 +218,18 @@ RPC_Request_deserialize(RPC_RequestList* request_list)
 		case yajl_t_array:
 		{
 			request_list->nrequests = (int)json_root->u.array.len;
-			request_list->requests = calloc((size_t)request_list->nrequests, sizeof(RPC_Request));
-			int i;
-			for (i = 0; i < request_list->nrequests; i++)
+
+			if (request_list->nrequests > 0)
 			{
-				RPC_Request* request = request_list->requests + i;
-				request->data = json_root->u.array.values[i];
-				RPC_Request_parse(request);
+				request_list->requests = calloc((size_t)request_list->nrequests, sizeof(RPC_Request));
+				int i;
+				for (i = 0; i < request_list->nrequests; i++)
+				{
+					RPC_Request* request = request_list->requests + i;
+					request->data = json_root->u.array.values[i];
+					if (!RPC_Request_parse(request))
+						request->error = jsrpc_ERROR_INVALID_REQUEST;
+				}
 			}
 			break;
 		}
@@ -230,17 +238,17 @@ RPC_Request_deserialize(RPC_RequestList* request_list)
 			request_list->requests = calloc(1, sizeof(RPC_Request));
 			RPC_Request* request = request_list->requests;
 			request->data = json_root;
-			RPC_Request_parse(request);
+			if (!RPC_Request_parse(request))
+				request->error = jsrpc_ERROR_INVALID_REQUEST;
 			break;
 		default:
-			StringBuffer_cat(request_list->result_buffer, "Invalid request: Neither a JSON object nor array.");
+			return 0;
 		}
 	}
 	else
 	{
 		request_list->nrequests = -1;
-		StringBuffer_printf(request_list->result_buffer,
-				    "Failed to parse request JSON: \n%s\n", errbuf);
+		XFDBG("%s", errbuf);
 	}
 
 	return request_list->nrequests;
