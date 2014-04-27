@@ -17,7 +17,7 @@ typedef struct rpc_server_t
 static ssize_t
 rpc_connection_data_handler(Connection* connection)
 {
-	Pipeline* pipeline = (Pipeline*)connection->data;
+	RPC_RequestList* pipeline = (RPC_RequestList*)connection->data;
 
 	return StringBuffer_fdcat(pipeline->request_buffer, connection->fd);
 }
@@ -35,11 +35,11 @@ rpc_connection_handler(Connection* connection, ConnectionEvent event)
 	{
 		XDBG("processing request");
 
-		Pipeline* pipeline = (Pipeline*)connection->data;
+		RPC_RequestList* request_list = (RPC_RequestList*)connection->data;
 		RPC_Method* service_methods = ((RPC_Server*)connection->worker->server)->methods;
-		RPC_Pipeline_process(pipeline, service_methods);
-		Connection_send_buffer(connection, pipeline->response_buffer);
-		RPC_Pipeline_free(pipeline);
+		RPC_RequestList_process(request_list, service_methods);
+		Connection_send_buffer(connection, request_list->response_buffer);
+		RPC_RequestList_free(request_list);
 		Connection_close(connection);
 		break;
 	}
@@ -57,7 +57,7 @@ RPCConnection_new()
 
 	connection->f_data_handler = rpc_connection_data_handler;
 	connection->f_handler = rpc_connection_handler;
-	connection->data = RPC_Pipeline_new();
+	connection->data = RPC_RequestList_new();
 	return connection;
 }
 

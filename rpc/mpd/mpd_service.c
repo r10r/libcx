@@ -10,18 +10,15 @@ connect(struct mpd_connection** conn, RPC_Request* request, StringBuffer* result
 		*conn = mpd_connection_new(NULL, 0, 30000);
 		if (*conn == NULL)
 		{
-			fprintf(stderr, "%s\n", "Out of memory"); // TODO use debug macro
 			request->error = ERR_OOM;
-			jsrpc_write_append_simple(api_strerror(ERR_OOM));
+			StringBuffer_cat(result_buffer, api_strerror(ERR_OOM));
 			return -1;
 		}
 
 		if (mpd_connection_get_error(*conn) != MPD_ERROR_SUCCESS)
 		{
-			// TODO use debug macro
-			fprintf(stderr, "Failed to create connection: %s\n", mpd_connection_get_error_message(*conn));
 			request->error = jsrpc_ERROR_INTERNAL;
-			jsrpc_write_append_simple(mpd_connection_get_error_message(*conn));
+			StringBuffer_printf(result_buffer, "MPD connection error:", mpd_connection_get_error_message(*conn));
 			mpd_connection_free(*conn);
 			*conn = NULL;
 			return -1;
@@ -37,7 +34,7 @@ mpd_response_check_success(struct mpd_connection** conn, RPC_Request* request, S
 	if (mpd_connection_get_error(mpd_connection) != MPD_ERROR_SUCCESS)
 	{
 		request->error = jsrpc_ERROR_INTERNAL;
-		jsrpc_write_append_simple(mpd_connection_get_error_message(*conn));
+		StringBuffer_printf(result_buffer, "MPD connection error:", mpd_connection_get_error_message(*conn));
 		mpd_connection_clear_error(mpd_connection);
 		return false;
 	}
@@ -51,7 +48,7 @@ RPC(method, play)
 		bool success = mpd_run_play(mpd_connection);
 
 		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
-			jsrpc_write_simple_response(JSONRPC_BOOLEAN(success));
+			StringBuffer_cat(result_buffer, JSONRPC_BOOLEAN(success));
 	}
 }
 
@@ -62,7 +59,7 @@ RPC(method, pause)
 		bool success = mpd_run_pause(mpd_connection, 1);
 
 		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
-			jsrpc_write_simple_response(JSONRPC_BOOLEAN(success));
+			StringBuffer_cat(result_buffer, JSONRPC_BOOLEAN(success));
 	}
 }
 
@@ -75,7 +72,7 @@ RPC(method, send_message)
 						    RPC(get_param, send_message, message));
 
 		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
-			jsrpc_write_simple_response(JSONRPC_BOOLEAN(success));
+			StringBuffer_cat(result_buffer, JSONRPC_BOOLEAN(success));
 	}
 }
 
@@ -86,7 +83,7 @@ RPC(method, add)
 		bool success = mpd_run_add(mpd_connection, RPC(get_param, add, uri));
 
 		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
-			jsrpc_write_simple_response(JSONRPC_BOOLEAN(success));
+			StringBuffer_cat(result_buffer, JSONRPC_BOOLEAN(success));
 	}
 }
 
@@ -97,7 +94,7 @@ RPC(method, next)
 		bool success = mpd_run_next(mpd_connection);
 
 		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
-			jsrpc_write_simple_response(JSONRPC_BOOLEAN(success));
+			StringBuffer_cat(result_buffer, JSONRPC_BOOLEAN(success));
 	}
 }
 

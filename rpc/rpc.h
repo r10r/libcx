@@ -5,12 +5,14 @@
 #include <stdio.h>
 #include <string.h>                     /* strdup */
 #include "string/string_buffer.h"       /* response buffer */
+#include "base/debug.h"
 
 #define MAX_PARAMS 32                   /* maximum number of parameters */
 
 typedef struct rpc_param_t RPC_Param;
 typedef struct rpc_method_t RPC_Method;
 typedef struct rpc_request_t RPC_Request;
+typedef struct rpc_request_list_t RPC_RequestList;
 typedef void F_RPC_Method (RPC_Request* request, StringBuffer* result_buffer);
 
 typedef enum rpc_type_t
@@ -24,34 +26,6 @@ typedef enum rpc_type_t
 	RPC_Null,
 	RPC_Undefined
 } RPC_Type;
-
-
-typedef struct pipeline_t Pipeline;
-
-struct pipeline_t
-{
-	StringBuffer* request_buffer;
-	StringBuffer* response_buffer;
-	StringBuffer* result_buffer; /* result or error message */
-
-	size_t nrequests;
-	RPC_Request* requests;
-
-	void* userdata;
-};
-
-struct rpc_request_t
-{
-	const char* id;
-	const char* method_name;
-
-	RPC_Method* method;
-
-	int error;
-
-	RPC_Param* params[MAX_PARAMS];
-	void* userdata;
-};
 
 struct rpc_param_t
 {
@@ -67,6 +41,27 @@ struct rpc_method_t
 	F_RPC_Method* method;
 	RPC_Param** signature;
 	int param_count;
+};
+
+struct rpc_request_t
+{
+	const char* id;
+	const char* method_name;
+	int error;
+	RPC_Param* params[MAX_PARAMS];
+	void* data;
+};
+
+struct rpc_request_list_t
+{
+	StringBuffer* request_buffer;
+	StringBuffer* response_buffer;
+	StringBuffer* result_buffer; /* holds either result or error message */
+
+	int nrequests;
+	RPC_Request* requests;
+
+	void* data;
 };
 
 #define ARRAY_SIZE( array ) \
@@ -168,21 +163,13 @@ struct rpc_method_t
 #define RPC_methods(ns) \
 	ns ## _ ## methods
 
-/* [Service API] */
+
+/* [RPC API] */
 
 extern const RPC_Method RPC_Method_none;
 
-RPC_Method*
-RPC_Method_new(const char* name, F_RPC_Method* fmethod, RPC_Param signature[], int param_count);
-
-void
-RPC_Method_free(RPC_Method* method);
-
 void
 RPC_Method_log(RPC_Method* method);
-
-extern void
-register_method(const char* method, F_RPC_Method* fmethod, RPC_Param signature[], int size);
 
 RPC_Request*
 RPC_Request_new(void);
@@ -193,25 +180,38 @@ RPC_Request_free(RPC_Request* request);
 RPC_Method*
 RPC_Request_lookup_method(RPC_Request* request, RPC_Method methods[]);
 
+RPC_RequestList*
+RPC_RequestList_new(void);
 
-/* [Plugin API] */
+void
+RPC_RequestList_free(RPC_RequestList* request_list);
+
+
+/* [ Protocol API ] */
+
+void
+RPC_RequestList_process(RPC_RequestList* request_list, RPC_Method methods[]);
+
+
+/* [Protocol Plugin API] */
+
+extern void
+RPC_RequestList_free_data(RPC_RequestList* request_list);
+
+/*
+ * @return the number of requests (> 0) or 0 if the input is invalid
+ * @malloc request (count * sizeof(Request))
+ */
+extern int
+RPC_Request_deserialize(RPC_RequestList* request_list);
 
 extern const char*
 RPC_Request_get_param_value_string(RPC_Request* request, RPC_Param* param);
 
-long long
+extern long long
 RPC_Request_get_param_value_longlong(RPC_Request* request, RPC_Param* param);
 
-double
+extern double
 RPC_Request_get_param_value_double(RPC_Request* request, RPC_Param* param);
-
-extern Pipeline*
-RPC_Pipeline_new(void);
-
-extern void
-RPC_Pipeline_free(Pipeline* pipeline);
-
-extern void
-RPC_Pipeline_process(Pipeline* pipeline, RPC_Method methods[]);
 
 #endif

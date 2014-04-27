@@ -10,9 +10,10 @@ PROGRAMS += $(L)/mpd-server
 # -- programs --
 $(L)/mpd-server_FLAGS := -I$(L) -lyajl -lmpdclient -lev -lpthread
 $(L)/mpd-server_OBJS := $(L)/mpd-server.o \
-	$(L)/mpd_service.o \
-	$(LIBCX_DIR)/rpc/jsrpc_yajl.o \
 	$(LIBCX_DIR)/rpc/rpc.o \
+	$(LIBCX_DIR)/rpc/jsrpc.o \
+	$(LIBCX_DIR)/rpc/jsrpc_yajl.o \
+	$(L)/mpd_service.o \
 	$(LIBCX_DIR)/socket/server.o \
 	$(LIBCX_DIR)/socket/server_unix.o \
 	$(LIBCX_DIR)/socket/server_tcp.o \

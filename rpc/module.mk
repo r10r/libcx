@@ -15,8 +15,9 @@ TESTS += $(L)/test_batch
 # -- programs --
 $(L)/jsrpc-example_FLAGS := -lyajl
 $(L)/jsrpc-example_OBJS := $(L)/jsrpc-example.o \
-	$(L)/jsrpc_yajl.o \
 	$(L)/rpc.o \
+	$(L)/jsrpc.o \
+	$(L)/jsrpc_yajl.o \
 	$(L)/hello_service.o \
 	$(LIBCX_DIR)/string/string.o
 
@@ -36,16 +37,18 @@ $(L)/test_jsonrpc_OBJS := $(TEST_OBJS) \
 $(L)/test_batch_FLAGS := -lyajl -lmpdclient
 $(L)/test_batch_OBJS := $(TEST_OBJS) \
 	$(L)/test_batch.o \
-	$(L)/jsrpc_yajl.o \
 	$(L)/rpc.o \
+	$(L)/jsrpc.o \
+	$(L)/jsrpc_yajl.o \
 	$(L)/mpd/mpd_service.o \
 	$(LIBCX_DIR)/string/string.o
 
 $(L)/echo-server_FLAGS := -I$(L) -lyajl -lev -lpthread
 $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/echo_service.o \
-	$(L)/jsrpc_yajl.o \
 	$(L)/rpc.o \
+	$(L)/jsrpc.o \
+	$(L)/jsrpc_yajl.o \
 	$(LIBCX_DIR)/socket/server.o \
 	$(LIBCX_DIR)/socket/server_unix.o \
 	$(LIBCX_DIR)/socket/server_tcp.o \

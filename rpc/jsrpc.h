@@ -15,30 +15,27 @@
 #define JSONRPC_RESULT_DOUBLE "\"result\":%lf}"
 #define JSONRPC_RESULT_LONGLONG "\"result\":%lld}"
 
-static const char* const JSONRPC_RESPONSE_SIMPLE = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_SIMPLE;
-static const char* const JSONRPC_RESPONSE_STRING = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_STRING;
-static const char* const JSONRPC_RESPONSE_DOUBLE = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_DOUBLE;
-static const char* const JSONRPC_RESPONSE_LONGLONG = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_LONGLONG;
-
 #define JSONRPC_RESULT_TRUE "\"result\":true}"
 #define JSONRPC_RESULT_FALSE "\"result\":false}"
 #define JSONRPC_RESULT_NULL "\"result\":null}"
 
+static const char* const JSONRPC_RESPONSE_SIMPLE = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_SIMPLE;
+static const char* const JSONRPC_RESPONSE_STRING = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_STRING;
+static const char* const JSONRPC_RESPONSE_DOUBLE = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_DOUBLE;
+static const char* const JSONRPC_RESPONSE_LONGLONG = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_LONGLONG;
 static const char* const JSONRPC_RESPONSE_TRUE = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_TRUE;
 static const char* const JSONRPC_RESPONSE_FALSE = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_FALSE;
-
-#define JSONRPC_RESPONSE_BOOLEAN(b) ((b == 0) ? JSONRPC_RESPONSE_FALSE : JSONRPC_RESPONSE_TRUE)
-
-#define JSONRPC_BOOLEAN(b) ((b == 0) ? "false" : "true")
-
-
 static const char* const JSONRPC_RESPONSE_NULL = JSONRPC_RESPONSE_HEADER JSONRPC_RESULT_NULL;
 
+#define JSONRPC_BOOLEAN(b) ((b == 0) ? "false" : "true")
+#define JSONRPC_RESPONSE_BOOLEAN(b) ((b == 0) ? JSONRPC_RESPONSE_FALSE : JSONRPC_RESPONSE_TRUE)
+#define JSONRPC_RESULT_BOOLEAN(b) ((b == 0) ? JSONRPC_RESULT_FALSE : JSONRPC_RESULT_TRUE)
 
 /* [ errors ] */
 
-#define JSONRPC_ERROR_SIMPLE "\"error\":{\"code\":%d,\"message\":\"%s\"}}"
-static const char* const JSONRPC_ERROR = JSONRPC_RESPONSE_HEADER JSONRPC_ERROR_SIMPLE;
+#define JSONRPC_ERROR "\"error\":{\"code\":%d,\"message\":\"%s\"}}"
+static const char* const JSONRPC_RESULT_ERROR = JSONRPC_ERROR;
+static const char* const JSONRPC_RESPONSE_ERROR = JSONRPC_RESPONSE_HEADER JSONRPC_ERROR;
 static const char* JSONRPC_NULL = "null"; /* for invalid ID or null values*/
 
 
@@ -68,13 +65,14 @@ static const char* JSONRPC_NULL = "null"; /* for invalid ID or null values*/
 	StringBuffer_cat(result_buffer, chars)
 
 #define jsrpc_write_error(code, message) \
-	if (IS_RPC_REQUEST(request)) jsrpc_write(JSONRPC_ERROR, (request)->id, code, message)
+	if (IS_RPC_REQUEST(request)) jsrpc_write(JSONRPC_ERROR_SIMPLE, (request)->id, code, message)
 
 #define jsrpc_write_simple_response(format) \
 	if (IS_RPC_REQUEST(request)) jsrpc_write(format, (request)->id)
 
 #define jsrpc_write_response(format, ...) \
 	if (IS_RPC_REQUEST(request)) jsrpc_write(format, (request)->id, __VA_ARGS__)
+
 
 /* [ simple requests ] */
 
