@@ -237,6 +237,24 @@ test_StringBuffer_aprintf()
 	StringBuffer_free(buf);
 }
 
+static void
+test_StringBuffer_from_string()
+{
+	StringBuffer* buffer = StringBuffer_from_string(S_dup("foobar"));
+
+	TEST_ASSERT_EQUAL_STRING("foobar", StringBuffer_value(buffer));
+	StringBuffer_free(buffer);
+}
+
+static void
+test_StringBuffer_from_printf()
+{
+	StringBuffer* buffer = StringBuffer_from_printf(1024, "%s%s", "foo", "bar");
+
+	TEST_ASSERT_EQUAL_STRING("foobar", StringBuffer_value(buffer));
+	StringBuffer_free(buffer);
+}
+
 int
 main()
 {
@@ -254,5 +272,7 @@ main()
 	RUN(test_StringBuffer_clear);
 	RUN(test_StringBuffer_printf);
 	RUN(test_StringBuffer_aprintf);
+	RUN(test_StringBuffer_from_string);
+	RUN(test_StringBuffer_from_printf);
 	TEST_END
 }
