@@ -10,6 +10,9 @@ StringBuffer_new(size_t length);
 void
 StringBuffer_init(StringBuffer* buffer, size_t length);
 
+StringBuffer*
+StringBuffer_from_string(String* string);
+
 void
 StringBuffer_free(StringBuffer* buffer);
 
@@ -92,12 +95,21 @@ StringBuffer_fdload(StringBuffer* buffer, int fd, size_t chunk_size);
  */
 __attribute__((__format__(__printf__, 3, 0)))
 ssize_t
-StringBuffer_vsprintf(StringBuffer* buffer, size_t offset, const char* format, ...);
+StringBuffer_vsnprintf(StringBuffer* buffer, size_t offset, const char* format, va_list args);
+
+__attribute__((__format__(__printf__, 3, 0)))
+ssize_t
+StringBuffer_sprintf(StringBuffer* buffer, size_t offset, const char* format, ...);
+
+__attribute__((__format__(__printf__, 2, 0)))
+StringBuffer*
+StringBuffer_from_printf(size_t length, const char* format, ...);
+
 
 #define StringBuffer_printf(buffer, format, ...) \
-	StringBuffer_vsprintf(buffer, 0, format, __VA_ARGS__)
+	StringBuffer_sprintf(buffer, 0, format, __VA_ARGS__)
 
 #define StringBuffer_aprintf(buffer, format, ...) \
-	StringBuffer_vsprintf(buffer, StringBuffer_index_append(buffer), format, __VA_ARGS__)
+	StringBuffer_sprintf(buffer, StringBuffer_index_append(buffer), format, __VA_ARGS__)
 
 #endif

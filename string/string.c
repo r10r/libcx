@@ -70,6 +70,15 @@ StringBuffer_new(size_t length)
 	return buf;
 }
 
+StringBuffer*
+StringBuffer_from_string(String* string)
+{
+	StringBuffer* buf = malloc(sizeof(StringBuffer));
+
+	buf->string = string;
+	return buf;
+}
+
 inline void
 StringBuffer_free_members(StringBuffer* buffer)
 {
@@ -180,9 +189,32 @@ StringBuffer_fdload(StringBuffer* buffer, int fd, size_t chunk_size)
 	return total_read;
 }
 
+StringBuffer*
+StringBuffer_from_printf(size_t length, const char* format, ...)
+{
+	StringBuffer* buffer = StringBuffer_new(length);
+	va_list ap;
+
+	va_start(ap, format);
+	StringBuffer_vsnprintf(buffer, 0, format, ap);
+	va_end(ap);
+	return buffer;
+}
+
+ssize_t
+StringBuffer_sprintf(StringBuffer* buffer, size_t offset, const char* format, ...)
+{
+	va_list ap;
+
+	va_start(ap, format);
+	ssize_t chars_printed = StringBuffer_vsnprintf(buffer, offset, format, ap);
+	va_end(ap);
+	return chars_printed;
+}
+
 /* -1 on error, >= 0 for count of printed characters */
 ssize_t
-StringBuffer_vsprintf(StringBuffer* buffer, size_t offset, const char* format, ...)
+StringBuffer_vsnprintf(StringBuffer* buffer, size_t offset, const char* format, va_list args)
 {
 	/* check that offset is within within range */
 	if (offset > buffer->length)
@@ -192,8 +224,7 @@ StringBuffer_vsprintf(StringBuffer* buffer, size_t offset, const char* format, .
 	size_t nchars_available = buffer->length - offset;
 	size_t nchars_printed;
 	va_list ap;
-
-	va_start(ap, format);
+	va_copy(ap, args);
 	nchars_printed = (size_t)vsnprintf(string_start, nchars_available, format, ap) + 1 /* \0 */;
 	va_end(ap);
 
@@ -201,7 +232,7 @@ StringBuffer_vsprintf(StringBuffer* buffer, size_t offset, const char* format, .
 	if (nchars_printed > nchars_available)
 	{
 		StringBuffer_make_room(buffer, offset, nchars_printed);
-		va_start(ap, format);
+		va_copy(ap, args);
 		string_start = S_get(buffer->string, offset);
 		nchars_available = buffer->length - offset;
 		vsnprintf(string_start, nchars_available, format, ap);
