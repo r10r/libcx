@@ -9,6 +9,17 @@
 	TEST_ASSERT_EQUAL_INT(unused, StringBuffer_unused(buf));
 
 static void
+test_StringBuffer_empty()
+{
+	StringBuffer* buf = StringBuffer_new(0);
+
+	TEST_ASSERT_EQUAL_INT(0, StringBuffer_used(buf));
+	TEST_ASSERT_EQUAL_STRING("", StringBuffer_value(buf));
+
+	StringBuffer_free(buf);
+}
+
+static void
 test_StringBuffer_cat()
 {
 	StringBuffer* buf = StringBuffer_new(1024);
@@ -231,6 +242,7 @@ main()
 {
 	TEST_BEGIN
 
+	RUN(test_StringBuffer_empty);
 	RUN(test_StringBuffer_cat);
 	RUN(test_StringBuffer_cat_with_grow);
 	RUN(test_StringBuffer_cat_with_grow_zero);
