@@ -131,6 +131,87 @@ test_valid_params()
 		);
 }
 
+static void
+test_batch_invalid()
+{
+	RPC_Method echo_methods[] = { EchoService_methods, RPC_Method_none };
+
+	/* build expected response */
+	StringBuffer* batch_response = StringBuffer_new(2048);
+
+	StringBuffer_cat(batch_response, "[");
+	StringBuffer_aprintf(batch_response, JSONRPC_RESPONSE_ERROR, JSONRPC_NULL,
+			     jsrpc_ERROR_INVALID_REQUEST, jsrpc_strerror(jsrpc_ERROR_INVALID_REQUEST));
+	StringBuffer_cat(batch_response, "]");
+
+	assert_response_equals(
+		echo_methods,
+		StringBuffer_from_string(S_dup("[1]")),
+		batch_response
+		);
+}
+
+static void
+test_batch_single()
+{
+	RPC_Method echo_methods[] = { EchoService_methods, RPC_Method_none };
+	StringBuffer* batch_request = StringBuffer_new(2048);
+	StringBuffer* batch_response = StringBuffer_new(2048);
+
+	// StringBuffer_cat(batch_response, ",");
+
+	/* build request */
+	StringBuffer_cat(batch_request, "[");
+	StringBuffer_aprintf(batch_request, JSONRPC_REQUEST_SIMPLE, "1234", "echo"),
+	StringBuffer_cat(batch_request, "]");
+
+	/* build expected response */
+	StringBuffer_cat(batch_response, "[");
+	StringBuffer_aprintf(batch_response, JSONRPC_RESPONSE_ERROR, "1234",
+			     jsrpc_ERROR_INVALID_PARAMS, jsrpc_strerror(jsrpc_ERROR_INVALID_PARAMS));
+	StringBuffer_cat(batch_response, "]");
+
+	assert_response_equals(
+		echo_methods,
+		batch_request,
+		batch_response
+		);
+}
+
+static void
+test_batch_multi()
+{
+	RPC_Method echo_methods[] = { EchoService_methods, RPC_Method_none };
+	StringBuffer* batch_request = StringBuffer_new(2048);
+	StringBuffer* batch_response = StringBuffer_new(2048);
+
+	// StringBuffer_cat(batch_response, ",");
+
+	/* build request */
+	StringBuffer_cat(batch_request, "[");
+	StringBuffer_aprintf(batch_request, JSONRPC_REQUEST, "1234", "echo", "[\"hello\"]"),
+	StringBuffer_cat(batch_request, ",{},");        // invalid request
+	StringBuffer_aprintf(batch_request, JSONRPC_REQUEST_SIMPLE, "\"myid\"", "fooobar"),
+	StringBuffer_cat(batch_request, "]");
+
+	/* build expected response */
+	StringBuffer_cat(batch_response, "[");
+	StringBuffer_aprintf(batch_response, JSONRPC_RESPONSE_STRING, "1234", "hello");
+	StringBuffer_cat(batch_response, ",");
+	StringBuffer_aprintf(batch_response, JSONRPC_RESPONSE_ERROR, JSONRPC_NULL,
+			     jsrpc_ERROR_INVALID_REQUEST, jsrpc_strerror(jsrpc_ERROR_INVALID_REQUEST));
+	StringBuffer_cat(batch_response, ",");
+	StringBuffer_aprintf(batch_response, JSONRPC_RESPONSE_ERROR, "myid",
+			     jsrpc_ERROR_METHOD_NOT_FOUND, jsrpc_strerror(jsrpc_ERROR_METHOD_NOT_FOUND));
+	StringBuffer_cat(batch_response, "]");
+
+	assert_response_equals(
+		echo_methods,
+		batch_request,
+		batch_response
+		);
+}
+
 int
 main()
 {
@@ -142,6 +223,9 @@ main()
 	RUN(test_error_invalid_batch_request);
 	RUN(test_invalid_params);
 	RUN(test_valid_params);
+	RUN(test_batch_invalid);
+	RUN(test_batch_single);
+	RUN(test_batch_multi);
 
 	TEST_END
 }

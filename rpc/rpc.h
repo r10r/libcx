@@ -91,6 +91,7 @@ struct rpc_request_list_t
 
 	int nrequests;
 	RPC_Request* requests;
+	int batch;
 
 	void* data;
 };

@@ -220,6 +220,7 @@ RPC_Request_deserialize(RPC_RequestList* request_list)
 		case yajl_t_array:
 		{
 			request_list->nrequests = (int)json_root->u.array.len;
+			request_list->batch = 1;
 
 			if (request_list->nrequests > 0)
 			{

@@ -145,22 +145,25 @@ RPC_RequestList_process(RPC_RequestList* request_list, RPC_Method methods[])
 				    JSONRPC_RESPONSE_ERROR, JSONRPC_NULL,
 				    jsrpc_ERROR_INVALID_REQUEST, jsrpc_strerror(jsrpc_ERROR_INVALID_REQUEST));
 	}
-	else if (request_list->nrequests == 1)
-		RPC_RequestList_process_request(request_list, 0, methods);
-	else if (request_list->nrequests > 1)
+	else if (request_list->nrequests > 0)
 	{
-		/* begin batch response */
-		StringBuffer_ncat(request_list->response_buffer, "[", 1);
-
-		int i;
-		for (i = 0; i < request_list->nrequests; i++)
+		if (request_list->batch)
 		{
-			append_delimiter(request_list, i);
-			RPC_RequestList_process_request(request_list, i, methods);
-		}
+			/* begin batch response */
+			StringBuffer_ncat(request_list->response_buffer, "[", 1);
 
-		/* end batch response */
-		StringBuffer_ncat(request_list->response_buffer, "]", 1);
+			int i;
+			for (i = 0; i < request_list->nrequests; i++)
+			{
+				append_delimiter(request_list, i);
+				RPC_RequestList_process_request(request_list, i, methods);
+			}
+
+			/* end batch response */
+			StringBuffer_ncat(request_list->response_buffer, "]", 1);
+		}
+		else
+			RPC_RequestList_process_request(request_list, 0, methods);
 	}
 
 	/* return response buffer */
