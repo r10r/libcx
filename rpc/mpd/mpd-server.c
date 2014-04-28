@@ -96,7 +96,7 @@ main(int argc, char** argv)
 	else
 		print_usage("Invalid server type");
 
-	RPC_Method mpd_methods[] = { RPC_methods(MusicPlayerDaemon), RPC_Method_none };
+	RPC_Method mpd_methods[] = { MusicPlayerDaemon_methods, RPC_Method_none };
 	server->methods = &mpd_methods[0];
 
 	printf("Registered RPC methods:\n");

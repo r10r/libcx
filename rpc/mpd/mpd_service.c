@@ -41,7 +41,7 @@ mpd_response_check_success(struct mpd_connection** conn, RPC_Request* request, S
 	return true;
 }
 
-RPC(method, play)
+RPC_method(play)
 {
 	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
@@ -52,7 +52,7 @@ RPC(method, play)
 	}
 }
 
-RPC(method, pause)
+RPC_method(pause)
 {
 	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
@@ -63,31 +63,31 @@ RPC(method, pause)
 	}
 }
 
-RPC(method, send_message)
+RPC_method(send_message)
 {
 	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
 		bool success = mpd_run_send_message(mpd_connection,
-						    RPC(get_param, send_message, channel),
-						    RPC(get_param, send_message, message));
+						    RPC_get_param(send_message, channel),
+						    RPC_get_param(send_message, message));
 
 		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
 			StringBuffer_cat(result_buffer, JSONRPC_BOOLEAN(success));
 	}
 }
 
-RPC(method, add)
+RPC_method(add)
 {
 	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
-		bool success = mpd_run_add(mpd_connection, RPC(get_param, add, uri));
+		bool success = mpd_run_add(mpd_connection, RPC_get_param(add, uri));
 
 		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
 			StringBuffer_cat(result_buffer, JSONRPC_BOOLEAN(success));
 	}
 }
 
-RPC(method, next)
+RPC_method(next)
 {
 	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
@@ -122,7 +122,7 @@ print_song_json(RPC_Request* request, StringBuffer* result_buffer, struct mpd_so
 			   mpd_song_get_uri(song));
 }
 
-RPC(method, status)
+RPC_method(status)
 {
 	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
@@ -149,7 +149,7 @@ RPC(method, status)
 	}
 }
 
-RPC(method, playlists)
+RPC_method(playlists)
 {
 	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
@@ -173,11 +173,11 @@ RPC(method, playlists)
 	}
 }
 
-RPC(method, playlist)
+RPC_method(playlist)
 {
 	if (connect(&mpd_connection, request, result_buffer) == 1)
 	{
-		mpd_send_list_playlist_meta(mpd_connection, RPC(get_param, playlist, playlist_name));
+		mpd_send_list_playlist_meta(mpd_connection, RPC_get_param(playlist, playlist_name));
 
 		if (mpd_response_check_success(&mpd_connection, request, result_buffer))
 		{

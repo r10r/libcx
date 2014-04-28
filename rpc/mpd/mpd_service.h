@@ -14,42 +14,41 @@
 #include <mpd/connection.h>
 
 /* namespace  declaration */
-#undef RPC
-#define RPC(action, ...) RPC_ ## action(MusicPlayerDaemon, __VA_ARGS__)
+#define RPC_NAME MusicPlayerDaemon_
 
 /* export each function + method definition */
-RPC(export_without_params, play)
-RPC(export_without_params, pause)
+RPC_export_without_params(play)
+RPC_export_without_params(pause)
 
-RPC(set_param_string, send_message, 0, channel, 0)
-RPC(set_param_string, send_message, 1, message, 0)
-RPC(param_list, send_message)
+RPC_set_param_string(send_message, 0, channel, 0)
+RPC_set_param_string(send_message, 1, message, 0)
+RPC_param_list(send_message)
 {
-	&RPC(param, send_message, channel),
-	&RPC(param, send_message, message)
+	&RPC_param(send_message, channel),
+	&RPC_param(send_message, message)
 };
-RPC(export, send_message)
+RPC_export(send_message)
 
-RPC(single_string_param, add, 0, uri, 0)
-RPC(export, add)
+RPC_single_string_param(add, 0, uri, 0)
+RPC_export(add)
 
-RPC(export_without_params, next)
-RPC(export_without_params, status)
-RPC(export_without_params, playlists)
+RPC_export_without_params(next)
+RPC_export_without_params(status)
+RPC_export_without_params(playlists)
 
-RPC(single_string_param, playlist, 0, playlist_name, 0)
-RPC(export, playlist)
+RPC_single_string_param(playlist, 0, playlist_name, 0)
+RPC_export(playlist)
 
 /* export methods */
 #define MusicPlayerDaemon_methods \
-	RPC(public_name, play), \
-	RPC(public_name, pause), \
-	RPC(public_name, send_message), \
-	RPC(public_name, add), \
-	RPC(public_name, next), \
-	RPC(public_name, status), \
-	RPC(public_name, playlists), \
-	RPC(public_name, playlist)
+	RPC_public_name(play), \
+	RPC_public_name(pause), \
+	RPC_public_name(send_message), \
+	RPC_public_name(add), \
+	RPC_public_name(next), \
+	RPC_public_name(status), \
+	RPC_public_name(playlists), \
+	RPC_public_name(playlist)
 
 
 /* error definitions key,value pairs */
