@@ -1,10 +1,7 @@
 #include "base/test.h"
+
+#define RPC_NS MyNamespace_
 #include "rpc.h"
-
-/* namespace  declaration */
-#undef RPC
-#define RPC(action, ...) RPC_ ## action(Foobar, __VA_ARGS__)
-
 
 // protocol api implementation
 
@@ -27,34 +24,30 @@ get_bar_value(RPC_Request* request, RPC_Param* param)
 }
 
 /* typesafe parameter definition */
-RPC(set_param, foobar, 0, foo, const char*, get_foo_value, RPC_String, 0)
-RPC(set_param, foobar, 1, bar, int, get_bar_value, RPC_LongLong, 0)
+RPC_set_param(foobar, 0, foo, string, get_foo_value, 0)
+RPC_set_param(foobar, 1, bar, longlong, get_bar_value, 0)
 
 static void
 test_parameter_definition()
 {
 	/* must be defined for RPC_get_param macro */
-	RPC_Request* request = NULL;
+	RPC_Request* request = calloc(1, sizeof(RPC_Request));
 
-	/* get by name */
-	const char* foo = RPC(get_param, foobar, foo);
-	int bar = RPC(get_param, foobar, bar);
+	request->params = calloc(2, sizeof(RPC_Value));
 
-	TEST_ASSERT_EQUAL(0, strcmp("foo", foo));
-	TEST_ASSERT_EQUAL(666, bar);
-}
+	/* trigger deserialization */
+	RPC_param_deserialize(foobar, foo) (request);
+	RPC_param_deserialize(foobar, bar) (request);
 
-// all parameters (only per macro)
-RPC(param_list, foobar)
-{
-	&RPC(param, foobar, foo),
-	&RPC(param, foobar, bar)
-};
+	/* retrieve deserialized parameters */
+	const char* foo_value = RPC_get_param(foobar, foo);
+	long long bar_value = RPC_get_param(foobar, bar);
 
-static void
-test_parameter_list()
-{
-	// TODO implement
+	TEST_ASSERT_EQUAL(0, strcmp("foo", foo_value));
+	TEST_ASSERT_EQUAL(666, bar_value);
+
+	free(request->params);
+	free(request);
 }
 
 int
@@ -63,7 +56,6 @@ main()
 	TEST_BEGIN
 
 	RUN(test_parameter_definition);
-	RUN(test_parameter_list);
 
 	TEST_END
 }

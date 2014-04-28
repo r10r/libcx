@@ -48,10 +48,12 @@ RPC_Request_get_param_value_string(RPC_Request* request, RPC_Param* param)
 				param->pos, param->name, value->u.string);
 			return value->u.string;
 		default:
+		{
 			fprintf(stderr, "Parameter [%d:%s] is not a string value.\n",
 				param->pos, param->name);
-			// TODO return invalid request with null id if not notification
+			request->error = jsrpc_ERROR_INVALID_PARAMS;
 			break;
+		}
 		}
 	}
 	else
