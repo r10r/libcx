@@ -50,6 +50,8 @@ struct connection_t
 
 	Worker* worker;
 
+	int error;
+
 	void* data;
 };
 
