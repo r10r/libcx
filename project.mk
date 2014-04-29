@@ -26,7 +26,8 @@ MODULES := base \
 	umtp \
 	socket \
 	rpc \
-	rpc/mpd
+	rpc/mpd \
+	socket/ws
 
 # to explicitly ignore unused parameters use a macro
 # #define UNUSED(x) (void)(x)
