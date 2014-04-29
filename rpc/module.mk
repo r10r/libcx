@@ -5,6 +5,8 @@ TESTS += $(L)/test_params \
  $(L)/test_jsonrpc \
  $(L)/test_rpc
 
+#PROGRAMS += 
+
 # overwrite CFLAGS per object
 #$(L)/.o : CFLAGS += ...
 

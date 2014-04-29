@@ -1,7 +1,8 @@
 # cache evaluation of path
 L := $(LOCAL_DIR)
 
-PROGRAMS += $(L)/mpd-server
+PROGRAMS += $(L)/mpd-server \
+	$(L)/libwebsock-proxy
 #TESTS += $(L)/test_jsonrpc
 
 # overwrite CFLAGS per object
@@ -27,3 +28,8 @@ $(L)/mpd-server_OBJS := $(L)/mpd-server.o \
 	$(LIBCX_DIR)/list/list.o \
 	$(LIBCX_DIR)/string/string.o \
 	$(LIBCX_DIR)/string/pair.o
+	
+$(L)/libwebsock-proxy_FLAGS := -lwebsock
+$(L)/libwebsock-proxy_OBJS := $(L)/libwebsock-proxy.o \
+	$(LIBCX_DIR)/socket/client.o \
+	$(LIBCX_DIR)/string/string.o

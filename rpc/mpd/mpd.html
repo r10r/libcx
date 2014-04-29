@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <script>
+		var sock = new WebSocket("ws://localhost:12345/");
+		sock.onmessage = function(evt) { console.log(evt.data); };
+		var request = { jsonrpc: "2.0", id: 66, method: "playlist", params:["fooo"]};
+		var json = JSON.stringify(request);
+		console.log(json);
+		sock.onopen = function(evt) { sock.send(json); };
+        </script>
+    </head>
+    <body>
+    </body>
+</html>
+
