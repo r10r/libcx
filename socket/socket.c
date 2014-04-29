@@ -46,7 +46,8 @@ Socket_serve(Socket* socket)
 	// http://stackoverflow.com/questions/108183/how-to-prevent-sigpipes-or-handle-them-properly
 	// http://nadeausoftware.com/articles/2012/01/c_c_tip_how_use_compiler_predefined_macros_detect_operating_system
 	// both server and client socket must be protected against SIGPIPE
-	Socket_enable_option(socket, SO_NOSIGPIPE);  /* do not send SIGIPIPE on EPIPE */
+	Socket_enable_option(socket, SO_NOSIGPIPE);     /* do not send SIGIPIPE on EPIPE */
+	Socket_enable_option(socket, SO_REUSEADDR);     /* avoid address in use after termination */
 #endif
 
 	return socket->status;

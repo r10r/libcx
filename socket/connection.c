@@ -3,7 +3,7 @@
 Connection*
 Connection_new(Worker* worker, int fd)
 {
-	Connection* connection = malloc(sizeof(Connection));
+	Connection* connection = calloc(1, sizeof(Connection));
 
 	Connection_init(connection, worker, fd);
 	return connection;
@@ -34,6 +34,7 @@ Connection_start(Connection* connection)
 void
 Connection_close(Connection* connection)
 {
+	XFDBG("Closing connection[%d]", connection->fd);
 	// shut down the connection
 	ev_io_stop(connection->worker->loop, &connection->receive_data_watcher);
 	close(connection->fd);
@@ -73,18 +74,22 @@ receive_data_callback(ev_loop* loop, ev_io* w, int revents)
 
 	ssize_t nread = connection->f_data_handler(connection);
 
-	XFLOG("Connection[%d] - received data:%zu", connection->fd, nread);
-
 	if (nread > 0)
+	{
+		XFLOG("Connection[%d] - received data:%zu", connection->fd, nread);
 		connection->f_handler(connection, CONNECTION_EVENT_DATA);
+	}
 	else if (nread == 0)
 	{
+		XFLOG("Connection[%d] - received EOF", connection->fd);
 		ev_io_stop(loop, w); /* stop reading from socket */
 		connection->f_handler(connection, CONNECTION_EVENT_CLOSE_READ);
 	}
 	else if (nread < 0)
 	{
-		ev_io_stop(loop, w);
+		/* errno is thread local see http://stackoverflow.com/questions/1694164/is-errno-thread-safe */
+		XFLOG("Connection[%d] - received error %d: %s", connection->fd, errno, strerror(errno));
+		connection->error = errno;
 		connection->f_handler(connection, CONNECTION_EVENT_ERRNO);
 	}
 }
