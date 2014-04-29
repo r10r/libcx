@@ -22,6 +22,7 @@
  */
 
 #include "websocket.h"
+#include "base/debug.h"
 
 static char rn[] PROGMEM = "\r\n";
 
@@ -324,13 +325,16 @@ wsParseInputFrame(uint8_t* inputFrame, size_t inputLength,
 		uint8_t payloadFieldExtraBytes = 0;
 		size_t payloadLength = getPayloadLength(inputFrame, inputLength,
 							&payloadFieldExtraBytes, &frameType);
+
+		XFDBG("Frame: payload:%zu, input:%zu, extra:%u", payloadLength, inputLength, payloadFieldExtraBytes);
 		if (payloadLength > 0)
 		{
-			if (payloadLength < inputLength - 6 - payloadFieldExtraBytes) // 4-maskingKey, 2-header
-				return WS_INCOMPLETE_FRAME;
+//			if (payloadLength < inputLength - 6 - payloadFieldExtraBytes) // 4-maskingKey, 2-header
+//				return WS_INCOMPLETE_FRAME;
+
 			uint8_t* maskingKey = &inputFrame[2 + payloadFieldExtraBytes];
 
-			assert(payloadLength == inputLength - 6 - payloadFieldExtraBytes);
+//			assert(payloadLength == inputLength - 6 - payloadFieldExtraBytes);
 
 			*dataPtr = &inputFrame[2 + payloadFieldExtraBytes + 4];
 			*dataLength = payloadLength;
