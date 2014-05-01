@@ -32,4 +32,8 @@
 #define EACH(__iter, __elem, __next) \
 	for (; __iter && (__elem = __iter); __iter = __iter->__next)
 
+/* for safely printing NULL values */
+#define NULLS(val) \
+	(val ? val : "(null)")
+
 #endif
