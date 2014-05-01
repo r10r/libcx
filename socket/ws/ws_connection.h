@@ -1,5 +1,5 @@
-#ifndef WS_CONNECTION_H
-#define WS_CONNECTION_H
+#ifndef CX_WS_CONNECTION_H
+#define CX_WS_CONNECTION_H
 
 #include "websocket.h"
 #include "string/string_buffer.h"
@@ -7,17 +7,6 @@
 #include "base/debug.h"
 
 #define PACKET_DUMP
-
-typedef struct websockets_state_t
-{
-	StringBuffer* in;
-	StringBuffer* out;
-	enum wsState state;
-	enum wsFrameType frameType;
-	struct handshake handshake;
-	uint8_t* data;
-	size_t dataLength;
-} Websockets;
 
 Websockets*
 Websockets_new(void);

@@ -1,17 +1,9 @@
 #include "ws_connection.h"
 
-static const char* const BAD_REQUEST =
-	"HTTP/1.1 400 Bad Request\r\n"
-	"%s%s\r\n"
-	"\r\n";
-
-static const char* const NOT_FOUND =
-	"HTTP/1.1 404 Not Found\r\n"
-	"\r\n";
-
 static const char* RESOURCE = "/echo";
 
-#define WS_BUFFER_LENGTH 0xffff
+//#define WS_BUFFER_LENGTH 0xffff
+#define WS_BUFFER_LENGTH 512
 
 #define CXDBG(con, message) \
 	XFDBG("Connection[%d] - " message, con->fd)
@@ -56,13 +48,11 @@ Websockets_reset(Websockets* ws)
 static void
 Websockets_send_frame(Connection* con, Websockets* ws, enum wsFrameType type)
 {
-	StringBuffer_clear(ws->out);
-	size_t frameSize = StringBuffer_used(ws->in) - 1; /* without \0 */
-	wsMakeFrame(ws->data, ws->dataLength, (const uint8_t*)(StringBuffer_value(ws->out)), &frameSize, type);
-	ws->out->string->length = frameSize;
+//	StringBuffer_clear(ws->out);
+	wsMakeFrame(ws, type);
 	Connection_send_buffer(con, ws->out);
-	CXFDBG(con, "Send frame --> %zu.", frameSize);
-	StringBuffer_shift(ws->in, frameSize + WS_HEADER_SIZE);
+	CXFDBG(con, "Send frame --> %zu.", StringBuffer_used(ws->out));
+	StringBuffer_shift(ws->in, StringBuffer_used(ws->out) - 1); // only for echo frame !!!
 }
 
 static void
@@ -85,13 +75,6 @@ Websockets_parse_handshake(Websockets* ws)
 					 StringBuffer_used(ws->in) - 1 /* exclude \0 */, &ws->handshake);
 }
 
-static void
-Websockets_parse_input_frame(Websockets* ws)
-{
-	ws->frameType = wsParseInputFrame((const uint8_t*)(StringBuffer_value(ws->in)),
-					  StringBuffer_used(ws->in) - 1 /* exclude \0 */, &ws->data, &ws->dataLength);
-}
-
 int
 Websockets_process(Connection* con, Websockets* ws)
 {
@@ -109,7 +92,7 @@ Websockets_process(Connection* con, Websockets* ws)
 	{
 		CXDBG(con, "Parse input frame");
 		Websockets_parse_input_frame(ws);
-		CXFDBG(con, "Frame data length %zu", ws->dataLength);
+		CXFDBG(con, "Frame data length %zu", ws->payload_length);
 	}
 
 	CXFDBG(con, "Received frame: type:%#1x state:%d", ws->frameType, ws->state);
