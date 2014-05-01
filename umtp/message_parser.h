@@ -26,7 +26,10 @@ extern void
 message_fsm_parse(RagelParser* parser);
 
 MessageParser*
-MessageParser_new(size_t buffer_size);
+MessageParser_from_buf(StringBuffer* buffer);
+
+#define MessageParser_new(buffer_size) \
+	MessageParser_from_buf(StringBuffer_new(buffer_size));
 
 Message*
 MessageParser_free(MessageParser* parser);
