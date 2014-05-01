@@ -4,6 +4,13 @@
 #include "string.h"
 #include <stdarg.h>     /* vsnprintf, va_* */
 
+// should the string contain data type information ?
+typedef struct string_buffer_t
+{
+	size_t length;  /* total buffer length */
+	String* string; /* we can now grow the string data */
+} StringBuffer;
+
 StringBuffer*
 StringBuffer_new(size_t length);
 
