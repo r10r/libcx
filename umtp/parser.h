@@ -2,6 +2,7 @@
 #define _CX_PARSER
 
 #include "string/string_buffer.h"
+#include <assert.h>
 
 #define ParserDebug(parser, msg) \
 	printf("-- parse event [%s] --\n", msg); \
@@ -54,10 +55,6 @@
 
 #define RagelParser_eof(parser) \
 	((parser)->eof == (parser)->buffer_end)
-
-/* number of unparsed tokens */
-#define RagelParser_unparsed(parser) \
-	(StringBuffer_used((parser)->buffer) - parser->buffer_offset)
 
 typedef struct ragel_parser_t RagelParser;
 typedef void F_EventHandler (RagelParser* parser, int event);
@@ -114,5 +111,9 @@ RagelParser_shift_buffer(RagelParser* parser);
  */
 ssize_t
 RagelParser_fdparse(RagelParser* parser, int fd, size_t chunk_size);
+
+/* number of unparsed tokens */
+size_t
+RagelParser_unparsed(RagelParser* parser);
 
 #endif

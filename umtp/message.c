@@ -40,25 +40,36 @@ Message_free(Message* message)
 }
 
 void
-Message_print_stats(Message* message, FILE* file)
+Message_print(Message* message, StringBuffer* buffer)
 {
-	fprintf(file, "Message: %p\n", message);
-	fprintf(file, "Counters: Protocol values [%ld], headers [%ld]\n",
-		message->protocol_values->length, message->headers->length);
-	fprintf(file, "----------- begin message\n");
-	String* envelope = Message_envelope(message);
-//	String_write(envelope, file);
-	fprintf(file, "----------- end message\n");
+	Message_print_envelope(message, buffer);
+	StringBuffer_cat(buffer, MESSAGE_LF);
+	if (message->body)
+		StringBuffer_ncat(buffer, message->body->value, message->body->length);
 }
 
-#define ENVELOPE_DEFAULT_SIZE 1024
-
-String*
-Message_envelope(Message* message)
+void
+Message_print_envelope(Message* message, StringBuffer* buffer)
 {
-	String* envelope = String_init(NULL, ENVELOPE_DEFAULT_SIZE);
+	/* TODO add something like StringBuffer_join(buffer, separator, values[], iterator_func) */
+	unsigned int values = (unsigned int)message->protocol_values->length;
+	unsigned int nvalue;
 
-	// TODO append protocol line
-	// TODO append headers
-	return envelope;
+	for (nvalue = 0; nvalue < values; nvalue++)
+	{
+		const char* value = ((String*)List_get(message->protocol_values, nvalue))->value;
+		if (nvalue < values - 1)
+			StringBuffer_aprintf(buffer, "%s ", value);
+		else
+			StringBuffer_aprintf(buffer, "%s" MESSAGE_LF, value);
+	}
+
+	Node* head = message->headers->first;
+	Node* header;
+	LIST_EACH(head, header)
+	{
+		StringPair* hdr = (StringPair*)header->data;
+
+		StringBuffer_aprintf(buffer, "%s: %s" MESSAGE_LF, hdr->key->value, hdr->value->value);
+	}
 }

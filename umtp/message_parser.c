@@ -58,12 +58,16 @@ simple_body_parser(RagelParser* parser)
 	// @optimize shift buffer up to body start
 	if (RagelParser_eof(parser))
 	{
-		XDBG("EOF simple body parser");
-		// marker length is not set since we do not count tokens in a FSM
-		size_t marker_length = parser->buffer->string->length - parser->marker_start;
-		StringPointer* body_pointer = StringPointer_new(Marker_get(parser), marker_length);
+		size_t nunparsed = RagelParser_unparsed(parser);
+		assert(nunparsed > 0);
+
+		/* save remaining tokens in body */
+		StringPointer* body_pointer = StringPointer_new(Marker_get(parser), nunparsed);
 		((MessageParser*)parser)->message->body = body_pointer;
+		/* advance parser pointer to the end */
+		parser->buffer_position = parser->buffer_end;
 	}
+
 	parser->iterations++;
 }
 
@@ -109,15 +113,11 @@ event_handler(RagelParser* parser, int event)
 
 #define CHUNK_SIZE 1024
 
-Message*
+MessageParser*
 MessageParser_fread(const char* path)
 {
 	MessageParser* parser = MessageParser_new(CHUNK_SIZE);
 
 	RagelParser_parse_file((RagelParser*)parser, path, CHUNK_SIZE);
-
-	// do something useful with the message
-	Message* message = parser->message;
-	MessageParser_free(parser);
-	return message;
+	return parser;
 }

@@ -41,6 +41,7 @@ test_assert_message(Message* message)
 	StringPair* header2 = (StringPair*)List_get(message->headers, 1);
 	TEST_ASSERT_EQUAL_STRING("Header2",  header2->key->value);
 	TEST_ASSERT_EQUAL_STRING("value2",  header2->value->value);
+
 	TEST_ASSERT_EQUAL_STRING("Hello World", message->body->value);
 }
 
@@ -86,10 +87,14 @@ test_Message_parse_multi_pass()
 static void
 test_Message_read_file()
 {
-	Message* message = MessageParser_fread("umtp/testmessages/hello_world.txt");
+	MessageParser* parser = MessageParser_fread("umtp/testmessages/hello_world.txt");
 
+	TEST_ASSERT_EQUAL_INT(0, RagelParser_unparsed((RagelParser*)parser));
+
+	Message* message = parser->message;
 	test_assert_message(message);
 	Message_free(message);
+	MessageParser_free(parser);
 }
 
 int

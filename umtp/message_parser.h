@@ -37,7 +37,7 @@ MessageParser_free(MessageParser* parser);
 void
 MessageParser_parse_body(MessageParser* message_parser);
 
-Message*
+MessageParser*
 MessageParser_fread(const char* file_path);
 
 #endif
