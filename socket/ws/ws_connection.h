@@ -5,6 +5,7 @@
 #include "string/string_buffer.h"
 #include "socket/connection.h"
 #include "base/debug.h"
+#include "handshake.h"
 
 #define PACKET_DUMP
 
