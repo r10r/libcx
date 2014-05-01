@@ -157,7 +157,7 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars)
 		return -1;
 
 	ssize_t nread = read(fd, S_get(buffer->string, offset), nchars);
-	XFLOG("Read %zu (read size %zu) chars into buffer", nread, nchars);
+	XFLOG("Read %zd (read size %zu) chars into buffer", nread, nchars);
 
 	if (nread > 0)
 		buffer->string->length = offset + (size_t)nread;
@@ -172,19 +172,25 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars)
 }
 
 ssize_t
-StringBuffer_fdload(StringBuffer* buffer, int fd, size_t chunk_size)
+StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int blocking)
 {
 	ssize_t total_read = 0;
 
 	while (1)
 	{
 		ssize_t nread = StringBuffer_fdncat(buffer, fd, chunk_size);
-		total_read += nread;
 
 		if (nread == 0)
 			break;
 		if (nread < 0)
-			return nread;
+		{
+			if (!blocking && errno == EWOULDBLOCK)
+				return total_read;
+			else
+				return nread;
+		}
+
+		total_read += nread;
 	}
 	return total_read;
 }
