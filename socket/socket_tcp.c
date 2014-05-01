@@ -3,38 +3,40 @@
 TCPSocket*
 TCPSocket_new(const char* ip, uint16_t port)
 {
-	TCPSocket* tcp_socket = calloc(1, sizeof(TCPSocket));
-	Socket* socket = (Socket*)tcp_socket;
+	TCPSocket* tcp_sock = calloc(1, sizeof(TCPSocket));
+	Socket* sock = (Socket*)tcp_sock;
 
-	socket->namespace = PF_INET;
-	socket->style = SOCK_STREAM;
-	socket->protocol = IPPROTO_TCP;
+	sock->namespace = PF_INET;
+	sock->style = SOCK_STREAM;
+	sock->protocol = IPPROTO_TCP;
+	sock->backlog = SOCK_BACKLOG;
 
-	tcp_socket->ip = strdup(ip);
+	tcp_sock->port = port;
+	tcp_sock->ip = strdup(ip);
 
 	struct sockaddr_in* address = calloc(1, sizeof(struct sockaddr_in));
-	socket->address = (struct sockaddr*)address;
-	socket->address_size = sizeof(struct sockaddr_in);
+	sock->address = (struct sockaddr*)address;
+	sock->address_size = sizeof(struct sockaddr_in);
 	address->sin_family = AF_INET;
 
 	int ret = inet_pton(AF_INET, ip, &(address->sin_addr));
 	if (ret == 1)
 	{
 		address->sin_port = htons(port);
-		socket->status = SOCKET_INITIALIZED;
+		sock->status = SOCKET_INITIALIZED;
 	}
 	else if (ret == 0)
-		socket->status = SOCKET_ERROR_INVALID_ADDRESS;
+		sock->status = SOCKET_ERROR_INVALID_ADDRESS;
 	else if (ret == -1)
-		socket->status = SOCKET_ERROR_ERRNO;
+		sock->status = SOCKET_ERROR_ERRNO;
 
-	return tcp_socket;
+	return tcp_sock;
 }
 
 void
-TCPSocket_free(TCPSocket* socket)
+TCPSocket_free(TCPSocket* sock)
 {
-	free(((Socket*)socket)->address);
-	free(socket->ip);
-	free(socket);
+	free(((Socket*)sock)->address);
+	free(sock->ip);
+	free(sock);
 }

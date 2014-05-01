@@ -2,19 +2,20 @@
 L := $(LOCAL_DIR)
 
 #OBJS += $(L)/
-PROGRAMS += $(L)/echo-client \
-	$(L)/echo-server \
+PROGRAMS += $(L)/echo-server \
 	$(L)/echo-client-threaded
 	
 TESTS += $(L)/test_queue
 
 # -- executables --
-$(L)/echo-client_OBJS := $(L)/echo-client.o \
-	$(L)/client.o 
 
-$(L)/echo-client-threaded_OBJS := $(L)/echo-client-threaded.o \
-	$(L)/client.o
 $(L)/echo-client-threaded_FLAGS := -lpthread
+$(L)/echo-client-threaded_OBJS := $(L)/echo-client-threaded.o \
+	$(L)/client.o \
+	$(L)/socket.o \
+	$(L)/socket_tcp.o \
+	$(L)/socket_unix.o \
+	$(LIBCX_DIR)/string/string.o
 
 $(L)/echo-server_FLAGS := -lev  -lpthread
 $(L)/echo-server_OBJS := $(L)/echo-server.o \

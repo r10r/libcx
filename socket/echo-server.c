@@ -27,13 +27,13 @@ echo_connection_handler(Connection* connection, ConnectionEvent event)
 	case CONNECTION_EVENT_CLOSE_READ:
 	{
 		XDBG("close read");
-		const char* byebye = "bye bye\n";
-		Connection_send(connection, byebye, strlen(byebye));
 		StringBuffer_free((StringBuffer*)connection->data);
 		Connection_close(connection);
 		break;
 	}
 	case CONNECTION_EVENT_ERRNO:
+		perror("failed to accept connection");
+		break;
 	case CONNECTION_EVENT_ERROR_WRITE:
 		break;
 	}
@@ -82,7 +82,7 @@ main(int argc, char** argv)
 	if (strcmp(argv[1], "unix") == 0)
 		server = (Server*)UnixServer_new("/tmp/echo.sock");
 	else if (strcmp(argv[1], "tcp") == 0)
-		server = (Server*)TCPServer_new("127.0.0.1", 6666);
+		server = (Server*)TCPServer_new("0.0.0.0", 6666);
 	else
 		print_usage("Invalid server type");
 

@@ -36,21 +36,3 @@ client_connect(const char* sock_path)
 	XDBG("Connected.");
 	return sock;
 }
-
-void
-receive_response(int sock)
-{
-	char receive_buffer[100];
-	ssize_t receive_count;
-
-	receive_count = recv(sock, receive_buffer, 100, 0);
-	XFDBG("Received %zu", receive_count);
-
-	if (receive_count > 0)
-	{
-		receive_buffer[receive_count] = '\0';
-		XFDBG("Response : %s", receive_buffer);
-	}
-	else
-		XDBG("Do not received nothing");
-}

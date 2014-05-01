@@ -3,35 +3,36 @@
 UnixSocket*
 UnixSocket_new(const char* path)
 {
-	UnixSocket* unix_socket = calloc(1, sizeof(UnixSocket));
-	Socket* socket = (Socket*)unix_socket;
+	UnixSocket* unix_sock = calloc(1, sizeof(UnixSocket));
+	Socket* sock = (Socket*)unix_sock;
 
-	socket->namespace = PF_LOCAL; /* == PF_UNIX */
-	socket->style = SOCK_STREAM;
-	socket->protocol = 0;
+	sock->namespace = PF_LOCAL; /* == PF_UNIX */
+	sock->style = SOCK_STREAM;
+	sock->protocol = 0;
+	sock->backlog = SOCK_BACKLOG;
 
-	unix_socket->path = strdup(path); // TODO free
+	unix_sock->path = strdup(path); // TODO free
 
 	/* check path length */
 	if (strlen(path) <= UNIX_PATH_MAX)
 	{
 		struct sockaddr_un* address = calloc(1, sizeof(struct sockaddr_un));
-		socket->address = (struct sockaddr*)address;
-		socket->address_size = sizeof(struct sockaddr_un);
+		sock->address = (struct sockaddr*)address;
+		sock->address_size = sizeof(struct sockaddr_un);
 		address->sun_family = PF_LOCAL;
 		sprintf(address->sun_path, "%s", path);
-		socket->status = SOCKET_INITIALIZED;
+		sock->status = SOCKET_INITIALIZED;
 	}
 	else
-		socket->status = SOCKET_ERROR_INVALID_ADDRESS; // TODO set socket->error_message
+		sock->status = SOCKET_ERROR_INVALID_ADDRESS; // TODO set socket->error_message
 
-	return unix_socket;
+	return unix_sock;
 }
 
 void
-UnixSocket_free(UnixSocket* socket)
+UnixSocket_free(UnixSocket* sock)
 {
-	free(socket->path);
-	free(((Socket*)socket)->address);
-	free(socket);
+	free(sock->path);
+	free(((Socket*)sock)->address);
+	free(sock);
 }

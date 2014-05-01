@@ -11,6 +11,10 @@
 #include <assert.h>
 #include <unistd.h> /* close */
 
+#include "socket.h"
+#include "socket_tcp.h"
+#include "socket_unix.h"
+
 #include "base/debug.h"
 
 void
@@ -18,8 +22,5 @@ send_data(int fd, const char* data);
 
 int
 client_connect(const char* sock_path);
-
-void
-receive_response(int sock);
 
 #endif
