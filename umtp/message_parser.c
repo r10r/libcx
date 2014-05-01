@@ -7,16 +7,13 @@ static void
 simple_body_parser(RagelParser* parser);
 
 MessageParser*
-MessageParser_new(size_t buffer_size)
+MessageParser_from_buf(StringBuffer* buffer)
 {
 	MessageParser* parser = malloc(sizeof(MessageParser));
 	RagelParser* ragel_parser = (RagelParser*)parser;
 
 	RagelParser_init(ragel_parser);
 	parser->message = Message_new();
-
-	/* setup parser buffer */
-	StringBuffer* buffer = StringBuffer_new(buffer_size);
 
 	parser->message->buffer = buffer;
 	ragel_parser->buffer = buffer;
