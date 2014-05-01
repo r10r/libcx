@@ -97,6 +97,56 @@ test_Message_read_file()
 	MessageParser_free(parser);
 }
 
+static void
+test_Message_protocol_value_equals()
+{
+	Message* message = Message_new();
+
+	Message_add_protocol_value(message, "GET");
+	Message_add_protocol_value(message, "/foo");
+	Message_add_protocol_value(message, "HTTP/1.1");
+
+	TEST_ASSERT_EQUAL_INT(1, Message_protocol_value_equals(message, 0, "GET", 0));
+	TEST_ASSERT_EQUAL_INT(1, Message_protocol_value_equals(message, 1, "/foo", 0));
+	TEST_ASSERT_EQUAL_INT(1, Message_protocol_value_equals(message, 2, "HTTP/1.1", 0));
+
+	TEST_ASSERT_EQUAL_INT(1, Message_protocol_value_equals(message, 2, "http/1.1", 1));
+
+	Message_free(message);
+}
+
+static void
+test_Message_header_value_equals()
+{
+	Message* message = Message_new();
+
+	Message_set_header(message, "foo", "bar");
+
+	TEST_ASSERT_NOT_NULL(Message_get_header(message, "foo"));
+	TEST_ASSERT_EQUAL_INT(1, message->headers->length);
+
+	/* case sensitive */
+	TEST_ASSERT_EQUAL_INT(1, Message_header_value_equals(message, "foo", "bar", 0));
+	TEST_ASSERT_EQUAL_INT(0, Message_header_value_equals(message, "foo", "Bar", 0));
+
+	/* case insensitive */
+	TEST_ASSERT_EQUAL_INT(1, Message_header_value_equals(message, "foo", "bar", 1));
+	TEST_ASSERT_EQUAL_INT(1, Message_header_value_equals(message, "foo", "Bar", 1));
+
+	/* overwrite header */
+	Message_set_header(message, "foo", "blubber");
+	TEST_ASSERT_EQUAL_INT(1, message->headers->length);
+
+	TEST_ASSERT_EQUAL_INT(1, Message_header_value_equals(message, "foo", "blubber", 0));
+
+	const char* link;
+	Message_set_header(message, "xxx", "yyy");
+	Message_link_header_value(message, "xxx", &link);
+	TEST_ASSERT_EQUAL_STRING(link, "yyy");
+
+	Message_free(message);
+}
+
 int
 main()
 {
@@ -106,6 +156,8 @@ main()
 	RUN(test_Message_parse_single_pass);
 	RUN(test_Message_parse_multi_pass);
 	RUN(test_Message_read_file);
+	RUN(test_Message_protocol_value_equals);
+	RUN(test_Message_header_value_equals);
 
 	TEST_END
 }
