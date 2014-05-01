@@ -32,13 +32,6 @@ typedef struct string_pointer_t
 	const char* value;
 } StringPointer;
 
-// should the string contain data type information ?
-typedef struct string_buffer_t
-{
-	size_t length;  /* total buffer length */
-	String* string; /* we can now grow the string data */
-} StringBuffer;
-
 String*
 String_init(const char* value, size_t length);
 
