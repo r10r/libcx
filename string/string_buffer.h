@@ -47,6 +47,9 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
 	(buffer)->string->length = 0; \
 	S_nullterm((buffer)->string)
 
+#define StringBuffer_log(buf, message) \
+	XFDBG("\n	%s [%p] - used:%zu, unused:%zu, length:%zu", \
+	      message, buf, StringBuffer_used(buf), StringBuffer_unused(buf), StringBuffer_length(buf))
 
 /* [ append from char* ] */
 
@@ -80,8 +83,11 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars);
 #define StringBuffer_fncat(buffer, file, nchars) \
 	StringBuffer_read(buffer, StringBuffer_index_append(buffer), fileno(file), nchars)
 
+#define StringBuffer_fdload(buffer, fd, chunk_size) \
+	StringBuffer_fdxload(buffer, fd, chunk_size, 1)
+
 ssize_t
-StringBuffer_fdload(StringBuffer* buffer, int fd, size_t chunk_size);
+StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int blocking);
 
 #define StringBuffer_fload(buffer, file,  chunk_size) \
 	StringBuffer_fdload(buffer, fileno(file), chunk_size)
