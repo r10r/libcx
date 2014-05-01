@@ -18,8 +18,10 @@ struct message_t
 {
 	List* protocol_values;  /* list of strings */
 	List* headers;          /* list of string pairs */
+	int keep_buffer;        /* do not free buffer when message is freed */
 	StringPointer* body;
 	StringBuffer* buffer;
+	StringBuffer* error;
 };
 
 Message*
@@ -36,5 +38,32 @@ Message_print_envelope(Message* message, StringBuffer* buffer);
 
 ssize_t
 Message_read(Message* message, FILE* file, size_t chunk_size);
+
+#define Message_add_protocol_value(message, value) \
+	List_push(message->protocol_values, S_dup(value))
+
+const char*
+Message_get_protocol_value(Message* message, unsigned int index);
+
+int
+Message_protocol_value_equals(Message* message, unsigned int index, const char* expected, int ignorecase);
+
+void
+Message_set_header(Message* message, const char* key, const char* value);
+
+StringPair*
+Message_get_header(Message* message, const char* name);
+
+int
+Message_link_header_value(Message* message, const char* name, const char** const destination);
+
+int
+Message_header_value_equals(Message* message, const char* name, const char* value, int ignorecase);
+
+ssize_t
+Message_write(Message* message, int fd);
+
+#define Message_fwrite(message, stream) \
+	Message_write(message, fileno(stream))
 
 #endif
