@@ -55,6 +55,9 @@ List_push(List* list, void* data);
 Node*
 List_match(List* list, void* key, F_NodeMatch* f_node_match);
 
+void*
+List_match_node(List* list, void* key, F_NodeMatch* f_node_match);
+
 void
 List_each(List* list, F_NodeIterator* f_node_iterator);
 
