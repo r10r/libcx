@@ -6,7 +6,7 @@ static
 int
 data_strcmp(Node* node, void* data)
 {
-	return strcmp(node->data, (char*)data);
+	return strcmp((char*)data, node->data);
 }
 
 static

@@ -82,15 +82,27 @@ List_match(List* list, void* key, F_NodeMatch* f_node_match)
 {
 	if (list->length == 0)
 		return NULL;
-	Node* node = list->first;
 
+	Node* node = list->first;
 	while (node)
 	{
 		if (f_node_match(node, key) == 0)
-			break;
-		node = node->next;
+			return node;
+		else
+			node = node->next;
 	}
-	return node;
+	return NULL;
+}
+
+void*
+List_match_node(List* list, void* key, F_NodeMatch* f_node_match)
+{
+	Node* node = List_match(list, key, f_node_match);
+
+	if (node)
+		return node->data;
+	else
+		return NULL;
 }
 
 void
