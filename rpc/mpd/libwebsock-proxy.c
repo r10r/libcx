@@ -3,44 +3,106 @@
 #include <websock/websock.h>
 #include "socket/client.h"
 #include "string/string_buffer.h"
+#include "socket/socket.h"
+#include "signal.h"
 
 struct upstream_t
 {
 	const char* path;
 	int fd;
+	StringBuffer* receive_buffer;
 };
 
-static void
-proxy_payload(libwebsock_client_state* state, libwebsock_message* msg)
+static int
+socket_connect(const char* sock_path)
 {
-	StringBuffer* receive_buffer = StringBuffer_new(1024);
-	libwebsock_context* ctx = (libwebsock_context*)state->ctx;
-	struct upstream_t* upstream = ctx->user_data;
+	int sock;
+	struct sockaddr_un address;
 
-	upstream->fd = client_connect(upstream->path);
-	fprintf(stderr, "%s:%d\n", upstream->path, upstream->fd);
-	send_data(upstream->fd, msg->payload);
-	shutdown(upstream->fd, SHUT_WR);
+	if ((sock = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1)
+		perror("socket");
 
-	StringBuffer_fdload(receive_buffer, upstream->fd, 512);
-	receive_response(upstream->fd);
-	close(upstream->fd);
+	XDBG("Trying to connect...");
 
-	/* send response back to ws client */
-	libwebsock_send_text(state, StringBuffer_value(receive_buffer));
+	address.sun_family = PF_LOCAL;
+	strcpy(address.sun_path, sock_path);
+	if (connect(sock, (struct sockaddr*)&address, sizeof(address)) == -1)
+		perror("connect");
+
+	XDBG("Connected.");
+	return sock;
 }
 
-//basic onmessage callback, prints some information about this particular message
-//then echos back to the client.
+static struct upstream_t*
+Upstream_new(const char* path)
+{
+	struct upstream_t* upstream = calloc(1, sizeof(struct upstream_t));
+
+	upstream->path = path;
+	upstream->fd =  socket_connect(upstream->path);
+	if (upstream->fd != -1)
+	{
+		enable_so_opt(upstream->fd, SO_NOSIGPIPE);  /* do not send SIGIPIPE on EPIPE */
+		upstream->receive_buffer = StringBuffer_new(1024);
+	}
+	return upstream;
+}
+
+static void
+Upstream_free(struct upstream_t* upstream)
+{
+	if (upstream)
+	{
+		if (upstream->fd != -1)
+		{
+			shutdown(upstream->fd, SHUT_RDWR);
+			close(upstream->fd);
+		}
+		StringBuffer_value(upstream->receive_buffer);
+		free(upstream);
+	}
+}
+
+static void
+proxy_payload(struct upstream_t* upstream, libwebsock_client_state* state, libwebsock_message* msg)
+{
+	if (upstream)
+	{
+		printf("upstream socket: %s:%d\n", upstream->path, upstream->fd);
+		send_data(upstream->fd, msg->payload);
+		shutdown(upstream->fd, SHUT_WR);
+
+		StringBuffer_fdload(upstream->receive_buffer, upstream->fd, 512);
+
+		/* send response back to ws client */
+		libwebsock_send_text(state, StringBuffer_value(upstream->receive_buffer));
+	}
+	else
+		printf("Connection was closed an upstream removed\n");
+}
+
 static int
 onmessage(libwebsock_client_state* state, libwebsock_message* msg)
 {
-	fprintf(stderr, "Received message from client: %d\n", state->sockfd);
-	fprintf(stderr, "Message opcode: %d\n", msg->opcode);
-	fprintf(stderr, "Payload Length: %llu\n", msg->payload_len);
-	fprintf(stderr, "Payload: %s\n", msg->payload);
+	// TODO pool upstream connections
+	libwebsock_context* ctx = (libwebsock_context*)(state->ctx);
+	struct upstream_t* upstream = Upstream_new((const char*)ctx->user_data);
 
-	proxy_payload(state, msg);
+	state->data =  upstream;
+
+	printf("Received message from client: %d\n", state->sockfd);
+	printf("Message opcode: %d\n", msg->opcode);
+	printf("Payload Length: %llu\n", msg->payload_len);
+	printf("Payload: %s\n", msg->payload);
+	printf("State %p\n", state);
+
+	if (upstream->fd != -1)
+		proxy_payload(upstream, state, msg);
+	else
+		libwebsock_send_text(state, "ERROR");
+
+	Upstream_free(upstream);
+	state->data = NULL;
 	return 0;
 }
 
@@ -48,14 +110,24 @@ static int
 onopen(libwebsock_client_state* state)
 {
 	fprintf(stderr, "onopen: %d\n", state->sockfd);
+	state->data = NULL;
 	return 0;
 }
 
 static int
 onclose(libwebsock_client_state* state)
 {
-	fprintf(stderr, "onclose: %d\n", state->sockfd);
+	fprintf(stderr, "onclose: %d --> state->data %p\n", state->sockfd, state->data);
+	if (state->data)
+		Upstream_free((struct upstream_t*)state->data);
+
 	return 0;
+}
+
+static void
+sighandler(int signal)
+{
+	printf("Received signal %d. Ignore\n", signal);
 }
 
 /*
@@ -79,16 +151,19 @@ main(int argc, char* argv[])
 		fprintf(stderr, "Error during libwebsock_init.\n");
 		exit(1);
 	}
-	libwebsock_bind(ctx, "0.0.0.0", argv[1]);
-	fprintf(stderr, "libwebsock listening on port %s\n", argv[1]);
-	fprintf(stderr, "upstream to socket %s\n", argv[2]);
+	char* port = argv[1];
+	char* upstream_path = argv[2];
 
-	struct upstream_t upstream = { .path = argv[2], .fd = -1 };
+	libwebsock_bind(ctx, "0.0.0.0", port);
+	fprintf(stderr, "listening on port: %s\n", port);
+	fprintf(stderr, "using upstream socket: %s\n", upstream_path);
 
-	ctx->user_data = &upstream;
+	ctx->user_data = upstream_path;
 	ctx->onmessage = onmessage;
 	ctx->onopen = onopen;
 	ctx->onclose = onclose;
+
+	signal(SIGUSR2, sighandler);
 	libwebsock_wait(ctx);
 	//perform any cleanup here.
 	fprintf(stderr, "Exiting.\n");
