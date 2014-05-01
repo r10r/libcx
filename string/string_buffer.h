@@ -51,6 +51,9 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
 	XFDBG("\n	%s [%p] - used:%zu, unused:%zu, length:%zu", \
 	      message, buf, StringBuffer_used(buf), StringBuffer_unused(buf), StringBuffer_length(buf))
 
+#define StringBuffer_equals(buf1, buf2) \
+	(strcmp(StringBuffer_value(buf1), StringBuffer_value(buf2)) == 0)
+
 /* [ append from char* ] */
 
 ssize_t
@@ -92,6 +95,14 @@ StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int blocki
 #define StringBuffer_fload(buffer, file,  chunk_size) \
 	StringBuffer_fdload(buffer, fileno(file), chunk_size)
 
+
+/* [ writing ] */
+
+#define StringBuffer_write(buffer, fd) \
+	write(fd, StringBuffer_value(buffer), StringBuffer_used(buffer));
+
+#define StringBuffer_fwrite(buffer, stream) \
+	StringBuffer_write(buffer, fileno(stream));
 
 /* [ formatted printing ] */
 
