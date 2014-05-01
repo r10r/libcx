@@ -13,3 +13,4 @@ rpc/mpd/mpd-server
 rpc/test_rpc
 rpc/echo-server
 rpc/test_params
+socket/ws/test_handshake
