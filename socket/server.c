@@ -27,8 +27,8 @@ Server_new()
 void
 Server_init(Server* server)
 {
-	server->backlog = 0;    // TODO set reasonable default (currently unused)
-	server->loop = EV_DEFAULT;
+	server->backlog = SOCK_BACKLOG;    // TODO set reasonable default (currently unused)
+	server->loop = ev_default_loop(EVBACKEND);
 	server->workers = List_new();
 	server->workers->f_node_data_free = free_worker;
 }

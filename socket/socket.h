@@ -5,7 +5,7 @@
 #include <stdlib.h>     /* calloc */
 #include "base/debug.h"
 
-#define SOCK_BACKLOG 128
+#define SOCK_BACKLOG 512
 
 /*
  * gee all these function either define the error response
@@ -17,6 +17,7 @@ typedef enum socket_status_t
 	SOCKET_CREATED,
 	SOCKET_BIND,
 	SOCKET_LISTEN,
+	SOCKET_CONNECTED,
 	SOCKET_ERROR_INVALID_ADDRESS,   /* Unparsable IPv4 address | Unix Socket path limit (108 tokens) exceeded */
 	SOCKET_ERROR_ERRNO              /* errno holds error information */
 } SocketStatus;
@@ -34,11 +35,10 @@ typedef struct cx_socket_t
 	int backlog;
 } Socket;
 
-SocketStatus
-Socket_serve(Socket* socket);
+/* [ server ] */
 
 SocketStatus
-Socket_create(Socket* socket);
+Socket_serve(Socket* socket);
 
 SocketStatus
 Socket_bind(Socket* socket);
@@ -46,8 +46,24 @@ Socket_bind(Socket* socket);
 SocketStatus
 Socket_listen(Socket* socket);
 
+
+/* [ client ] */
+
+SocketStatus
+Socket_use(Socket* sock);
+
+SocketStatus
+Socket_connect(Socket* sock);
+
+
+/* [ shared ] */
+
+SocketStatus
+Socket_create(Socket* socket);
+
 void
 Socket_print_status(Socket* socket);
+
 
 /* helper functions */
 
