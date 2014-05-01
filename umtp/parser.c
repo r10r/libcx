@@ -145,3 +145,12 @@ RagelParser_shift_buffer(RagelParser* parser)
 	else
 		XDBG("Failed to shift buffer");
 }
+
+size_t
+RagelParser_unparsed(RagelParser* parser)
+{
+	long nunparsed = parser->buffer_end - parser->buffer_position;
+
+	assert(nunparsed >= 0); /* memory corruption if negative */
+	return (size_t)nunparsed;
+}
