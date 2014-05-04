@@ -10,11 +10,13 @@ TESTS += $(L)/test_jsonrpc
 # -- programs --
 $(L)/jsrpc-example_FLAGS := -lyajl
 $(L)/jsrpc-example_OBJS := $(L)/jsrpc-example.o \
-	$(LIBCX_DIR)/list/list.o \
-	$(L)/jsrpc_yajl.o
+	$(L)/jsrpc_yajl.o \
+	$(L)/rpc.o \
+	$(L)/hello_service.o
 
 # -- tests -- 
 
 $(L)/test_jsonrpc_FLAGS := -lyajl
 $(L)/test_jsonrpc_OBJS := $(TEST_OBJS) \
-	$(L)/test_jsonrpc.o
+	$(L)/test_jsonrpc.o \
+	$(L)/rpc.o
