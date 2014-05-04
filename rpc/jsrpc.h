@@ -4,7 +4,8 @@
 #include "rpc.h"
 
 // FIXME uppercase names are difficult to read
-#define JSONRPC_RESPONSE_HEADER "{\"jsonrpc\":\"2.0\",\"id\":%s,"
+#define JSONRPC_VERSION "{\"jsonrpc\":\"2.0\""
+#define JSONRPC_RESPONSE_HEADER JSONRPC_VERSION ",\"id\":%s,"
 #define JSONRPC_RESULT_SIMPLE "\"result\":%s}\n"
 #define JSONRPC_RESULT_STRING "\"result\":\"%s\"}\n"
 #define JSONRPC_ERROR_SIMPLE "\"error\":{\"code\":%d,\"message\":\"%s\"}}\n"
@@ -19,6 +20,9 @@ static const char* const JSONRPC_REQUEST =
 
 static const char* const JSONRPC_REQUEST_POS =
 	JSONRPC_RESPONSE_HEADER "\"method\":\"%s\",\"params\":[\"%s\"]}";
+
+static const char* const JSONRPC_NOTIFICATION =
+	JSONRPC_VERSION ",\"method\":\"%s\",\"params\":{\"%s\":\"%s\"}}";
 
 typedef enum json_error_code
 {
