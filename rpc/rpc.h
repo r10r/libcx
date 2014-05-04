@@ -3,7 +3,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h> /* strdup */
+#include <string.h>             /* strdup */
+#include "string/string.h"      /* response buffer */
 
 #define MAX_PARAMS 32
 
@@ -11,6 +12,7 @@ typedef struct rpc_request_t
 {
 	const char* method;
 	const char* id;
+	StringBuffer response_buffer;
 
 	char* params[MAX_PARAMS];
 } RPC_Request;
@@ -97,6 +99,6 @@ extern void*
 get_param_value_string(RPC_Param* param, int index, void* data);
 
 extern void
-dispatch_request(RPC_Method methods[], const char* json);
+dispatch_request(RPC_Request* request, RPC_Method methods[], const char* json);
 
 #endif

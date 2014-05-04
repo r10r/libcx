@@ -170,7 +170,7 @@ parse_request_method(yajl_val v, RPC_Request* request)
 }
 
 void
-dispatch_request(RPC_Method methods[], const char* json)
+dispatch_request(RPC_Request* request, RPC_Method methods[], const char* json)
 {
 	char errbuf[1024];
 
@@ -179,7 +179,6 @@ dispatch_request(RPC_Method methods[], const char* json)
 	if (!root)
 		fprintf(stderr, "Invalid request. Failed to parse request: \n%s\n", errbuf);
 
-	RPC_Request request;
 	const char* jsonrpc_path[] = { "jsonrpc", NULL };
 	const char* id_path[] = { "id", NULL };
 	const char* method_path[] = { "method", NULL };
@@ -192,30 +191,30 @@ dispatch_request(RPC_Method methods[], const char* json)
 	if (!ret)
 		goto error;         // TODO send error
 
-	ret = parse_request_id(yajl_tree_get(root, id_path, yajl_t_any), &request);
+	ret = parse_request_id(yajl_tree_get(root, id_path, yajl_t_any), request);
 	if (!ret)
 		goto error; // TODO send error
 
-	ret = parse_request_method(yajl_tree_get(root, method_path, yajl_t_any), &request);
+	ret = parse_request_method(yajl_tree_get(root, method_path, yajl_t_any), request);
 	if (!ret)
 		goto error; // TODO send error
 
-	printf("--> Request id:%s method:%s\n", request.id, request.method);
+	printf("--> Request id:%s method:%s\n", request->id, request->method);
 
-	RPC_Method* method = lookup_method(methods, &request);
+	RPC_Method* method = lookup_method(methods, request);
 	if (!method)
 	{
-		fprintf(stderr, "Method [%s] does not exist\n", request.method);
+		fprintf(stderr, "Method [%s] does not exist\n", request->method);
 		goto error; // TODO send error
 	}
 
-	ret = extract_request_parameters(yajl_tree_get(root, params_path, yajl_t_any), &request, method);
+	ret = extract_request_parameters(yajl_tree_get(root, params_path, yajl_t_any), request, method);
 	if (!ret)
 		goto error; // TODO send error
 
 	// if we want to process the request evented we have to do a memcpy the request here
 	// values saved to the request must be duplicated !!!
-	method->method(&request);
+	method->method(request);
 
 error:
 	yajl_tree_free(root);
