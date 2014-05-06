@@ -66,8 +66,10 @@ Websockets_process(Connection* con, Websockets* ws)
 		CXFDBG(con, "Process handshake: \n%s", StringBuffer_value(ws->in));
 		return Websockets_process_handshake(con, ws);
 	case WS_STATE_ESTABLISHED:
-		CXDBG(con, "Process frame:");
+	case WS_STATE_INCOMPLETE:
+		CXDBG(con, "Process frame");
 		int res = WebsocketsFrame_parse(ws);
+
 		/* send response / error */
 		if (StringBuffer_used(ws->out) > 1)
 		{
@@ -75,6 +77,7 @@ Websockets_process(Connection* con, Websockets* ws)
 			Connection_send_buffer(con, ws->out);
 			StringBuffer_clear(ws->out);
 		}
+
 		if (res == 1)
 		{
 			/* removed processed frame from input */

@@ -20,19 +20,19 @@ ws_connection_handler(Connection* connection, ConnectionEvent event)
 
 		size_t nbuffered;
 
-		while ((nbuffered = StringBuffer_used(ws->in)) > 1) //&& buffer_after < buffer_before)
+		while ((nbuffered = StringBuffer_used(ws->in)) > 1)
 		{
-			if (Websockets_process(connection, ws) > 0)
+			if (Websockets_process(connection, ws) == -1)
 			{
-				StringBuffer_log(ws->in, "Input buffer (after process)");
-				StringBuffer_log(ws->out, "Output buffer (after process");
-			}
-			else
-			{
-				XDBG("Closing connection");
+				XFDBG("ERROR: closing connection: %s", StringBuffer_value(ws->error_message));
 				Websockets_free(ws);
 				Connection_close(connection);
 				break;
+			}
+			else
+			{
+				StringBuffer_log(ws->in, "Input buffer (after process)");
+				StringBuffer_log(ws->out, "Output buffer (after process");
 			}
 
 			/* wait for more input */
