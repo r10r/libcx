@@ -32,8 +32,6 @@ Websockets_free(Websockets* ws)
 static int
 Websockets_process_handshake(Connection* con, Websockets* ws)
 {
-	CXFDBG(con, "received handshake: \n%s\n", StringBuffer_value(ws->in));
-
 	CXDBG(con, "Parse handshake frame");
 	WebsocketsHandshake* handshake = WebsocketsHandshake_new();
 	int parse_result = WebsocketsHandshake_parse(handshake, ws->in);
@@ -51,6 +49,8 @@ Websockets_process_handshake(Connection* con, Websockets* ws)
 		Connection_send_buffer(con, ws->out);
 		WebsocketsHandshake_free(handshake);
 		ws->state = WS_STATE_ESTABLISHED;
+		StringBuffer_clear(ws->in);
+		StringBuffer_clear(ws->out);
 		return 1;
 	}
 }
@@ -59,16 +59,26 @@ int
 Websockets_process(Connection* con, Websockets* ws)
 {
 	CXDBG(con, "Websockets_process.");
-	StringBuffer_log(ws->in, "Input buffer");
-	StringBuffer_log(ws->out, "Output buffer");
 
-	/* parse input */
-	if (ws->state == WS_STATE_NEW)
+	switch (ws->state)
+	{
+	case WS_STATE_NEW:
+		CXFDBG(con, "Process handshake: \n%s\n", StringBuffer_value(ws->in));
 		return Websockets_process_handshake(con, ws);
-	else
-		CXDBG(con, "Parse input frame");
-	return -1;
-//		Websockets_parse_input_frame(ws);
+	case WS_STATE_ESTABLISHED:
+		CXDBG(con, "Process frame:");
+		int res = WebsocketsFrame_parse(ws);
+		if (res == 1)
+		{
+			/* removed processed frame from input */
+			size_t nbytes =  (size_t)(ws->frame.payload_raw_last - ws->frame.raw);
+			StringBuffer_shift(ws->in, nbytes);
+		}
+		return res;
+	case WS_STATE_CLOSED:
+	case WS_STATE_ERROR:
+		return -1;
+	}
 
 //	CXFDBG(con, "Received frame: type:%#1x state:%d", ws->frameType, ws->state);
 

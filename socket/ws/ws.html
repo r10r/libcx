@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <script>
+		var received = 0;
+		var sock = new WebSocket("ws://localhost:8088/echo");
+		sock.onmessage = function(evt) {
+			console.log("<-- " + evt.data); 
+		};
+		sock.onopen = function(evt) { 
+			sock.send("foobar");
+		};
+        </script>
+    </head>
+    <body>
+    </body>
+</html>
+

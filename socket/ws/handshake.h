@@ -30,7 +30,6 @@ static const char* const NOT_FOUND =
 		return -1; \
 	}
 
-
 void
 WebsocketsHandshake_reply(WebsocketsHandshake* handshake, StringBuffer* out);
 

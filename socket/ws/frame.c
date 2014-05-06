@@ -1,114 +1,178 @@
 #include "frame.h"
 
-size_t
-WebsocketsFrame_get_payload_length(Websockets* ws)
+void
+WebsocketsFrame_unmask_payload_data(Websockets* ws, uint8_t* masking_key)
 {
-	uint8_t payload_length = ws->frame.header_data[1] & CONTINUED_EXTENDED_PAYLOAD_LENGTH;
-	uint64_t extended_payload_length = 0;
+	size_t i = 0;
+	uint8_t* payload_byte = ws->frame.payload_raw;
 
-	/* TODO check for incomplete frames !!! and payload length > CONTINUED_EXTENDED_PAYLOAD_LENGTH  */
+	for (i = 0; i < ws->frame.payload_length; i++)
+	{
+		/* we are corrupting memory */
+		assert(payload_byte <= ws->frame.payload_raw_last);
 
-	if (payload_length < EXTENDED_PAYLOAD_LENGTH)
-		extended_payload_length = payload_length;
-	if (payload_length == EXTENDED_PAYLOAD_LENGTH)
-		extended_payload_length = ntohs((uint16_t)ws->frame.header_data[2]);
-	else if (payload_length == CONTINUED_EXTENDED_PAYLOAD_LENGTH)
-		extended_payload_length = be64toh((uint64_t)ws->frame.header_data[2]);
+		uint8_t key = *(masking_key + (i % WS_MASKING_KEY_LENGTH));
+//		printf("masking_key: %u 0x%x\n", key, key);
 
-	XFDBG("Payload length: %llu\n", extended_payload_length);
-
-	return extended_payload_length;
+		*payload_byte = *payload_byte ^ key;
+		payload_byte++;
+	}
 }
 
-//void
-//wsMakeFrame(Websockets* ws, enum wsFrameType frameType, uint8_t* payload, uint64_t payload_length)
-//{
-//	/* ensure frameType is not an error frame type  ? */
-////	assert(frameType < WS_EMPTY_FRAME /* first error frame */);
+void
+WebsocketsFrame_parse_extended_payload_length(Websockets* ws)
+{
+	switch (ws->frame.payload_length)
+	{
+	case PAYLOAD_EXTENDED:
+		ws->frame.payload_length = HeaderField_value(WS_HDR_PAYLOAD_LENGTH_EXT, ws->frame.raw);
+		ws->frame.payload_offset += PAYLOAD_EXTENDED_SIZE;
+		break;
+	case PAYLOAD_EXTENDED_CONTINUED:
+		ws->frame.payload_length = HeaderField_value(WS_HDR_PAYLOAD_LENGTH_EXT_CONTINUED, ws->frame.raw);
+		ws->frame.payload_offset += PAYLOAD_EXTENDED_CONTINUED_SIZE;
+		break;
+	}
+}
+
+static void
+WebsocketsFrame_log(Websockets* ws)
+{
+	printf("opcode: %u\n", HeaderField_byte_value(WS_HDR_OPCODE, ws->frame.raw));
+	printf("masked: %u\n", HeaderField_byte_value(WS_HDR_MASKED, ws->frame.raw));
+	printf("fin: %u\n", HeaderField_byte_value(WS_HDR_FIN, ws->frame.raw));
+	printf("rsv1: %u\n", HeaderField_byte_value(WS_HDR_RSV1, ws->frame.raw));
+	printf("rsv2: %u\n", HeaderField_byte_value(WS_HDR_RSV2, ws->frame.raw));
+	printf("rsv3: %u\n", HeaderField_byte_value(WS_HDR_RSV3, ws->frame.raw));
+}
+
+static int
+process_control_frame(Websockets* ws)
+{
+	/*
+	   All control frames MUST have a payload length of 125 bytes or less
+	   and MUST NOT be fragmented.
+	 */
+	if (ws->frame.payload_length < PAYLOAD_EXTENDED)
+	{
+		switch (ws->frame.opcode)
+		{
+		case WS_FRAME_CLOSE:
+		case WS_FRAME_PING:
+		case WS_FRAME_PONG:
+		default:
+			break;
+		}
+		return 1;
+	}
+	else
+		return -1;
+}
+
+static int
+process_data_frame(Websockets* ws)
+{
+	switch (ws->frame.opcode)
+	{
+	case WS_FRAME_CONTINUATION:
+	case WS_FRAME_TEXT:
+	case WS_FRAME_BINARY:
+	default:
+		break;
+	}
+
+	WebsocketsFrame_parse_extended_payload_length(ws);
+
+	uint8_t masked = HeaderField_byte_value(WS_HDR_MASKED, ws->frame.raw);
+
+	if (masked)
+		ws->frame.payload_offset += WS_MASKING_KEY_LENGTH;
+
+	ws->frame.payload_raw = ws->frame.raw + ws->frame.payload_offset;
+	ws->frame.payload_raw_last = ws->frame.payload_raw + ws->frame.payload_length;
+
+	/* ensure we are not corrupting memory */
+	assert(ws->frame.payload_raw_last <= (uint8_t*)S_last(ws->in->string));
+
+	/* unmask input data */
+	if (masked)
+	{
+		uint8_t* masking_key = ws->frame.payload_raw - WS_MASKING_KEY_LENGTH;
+		WebsocketsFrame_unmask_payload_data(ws, masking_key);
+	}
+
+	printf("payload offset:%hhu length:%llu [%s]\n",
+	       ws->frame.payload_offset, ws->frame.payload_length,
+	       StringBuffer_at(ws->in, ws->frame.payload_offset));
+
+	return 1;
+}
+
+int
+WebsocketsFrame_parse(Websockets* ws)
+{
+	ws->frame.raw = (uint8_t*)StringBuffer_value(ws->in);
+	ws->frame.payload_length = HeaderField_byte_value(WS_HDR_PAYLOAD_LENGTH, ws->frame.raw);
+	ws->frame.payload_offset = 2;
+
+	StringBuffer_print_bytes_hex(ws->in, StringBuffer_used(ws->in), "package bytes");
+	WebsocketsFrame_log(ws);
+
+	/* decode opcode */
+	uint8_t opcode = HeaderField_byte_value(WS_HDR_OPCODE, ws->frame.raw);
+
+	switch (opcode)
+	{
+	case WS_FRAME_CONTINUATION:
+	case WS_FRAME_TEXT:
+	case WS_FRAME_BINARY:
+		ws->frame.opcode = (WebsocketsOpcode)opcode;
+		return process_data_frame(ws);
+	case WS_FRAME_CLOSE:
+	case WS_FRAME_PING:
+	case WS_FRAME_PONG:
+		ws->frame.opcode = (WebsocketsOpcode)opcode;
+		return process_control_frame(ws);
+	default:
+		// TODO close connection with error
+		printf("Invalid opcode: 0x%x\n", opcode);
+		return -1;
+	}
+}
+
+static void
+WebsocketsFrame_create(Websockets* ws)
+{
+//	WebsocketsFrame response;
+
+//	response.raw = (uint8_t*)StringBuffer_value(ws->out);
+//	response.payload_offset = 2;
 //
-//	/* clear buffer */
-//	StringBuffer_clear(ws->out);
-//	size_t frame_header_length = 2;
-//	uint8_t* frame_buf = (uint8_t*)StringBuffer_value(ws->out);
+//	*(response.raw) = BIT(7) | WS_FRAME_TEXT;
 //
-//	frame_buf[0] =  (0x80 | frameType);
-//
-//	if (payload_length < EXTENDED_PAYLOAD_LENGTH)
-//		frame_buf[1] = (uint8_t)payload_length;
-//	else if (payload_length <= EXTENDED_PAYLOAD_MAX)
+//	if (ws->frame.payload_length <  EXTENDED_PAYLOAD_LENGTH)
+//		*(response.raw + 1) = EXTENDED_PAYLOAD_LENGTH;
+//	else if (ws->frame.payload_length < EXTENDED_PAYLOAD_MAX)
 //	{
-//		frame_buf[1] = EXTENDED_PAYLOAD_LENGTH;
-//		uint16_t payload_length_net = htons(payload_length);
-//		memcpy(frame_buf[2], &payload_length_net, sizeof(payload_length_net));
-//		frame_header_length += sizeof(payload_length_net);
+//		*(response.raw + 1) = EXTENDED_PAYLOAD_LENGTH;
+//		response.payload_offset += 2;
+//		*((uint16_t*)(response.raw + 2)) = htons(ws->frame.payload_length);
 //	}
 //	else
 //	{
-//		frame_buf[1] = CONTINUED_EXTENDED_PAYLOAD_LENGTH;
-//		uint64_t payload_length_net = htobe64(payload_length);
-//		memcpy(frame_buf[2], &payload_length_net, sizeof(payload_length_net));
-//		frame_header_length += sizeof(payload_length_net);
+//		*(response.raw + 1) = CONTINUED_EXTENDED_PAYLOAD_LENGTH;
+//		response.payload_offset += 8;
+//		*((uint64_t*)(response.raw + 2)) = hton64(ws->frame.payload_length);
 //	}
 //
-//	/* copy data */
-//	// ensure output buffer is large enough
-//	size_t package_length = frame_header_length + payload_length;
-//	StringBuffer_make_room(ws->out, 0, package_length + 1);
-//
-//	/* copy input data */
-//	memcpy(frame_buf[frame_header_length], payload, payload_length);
-//
-//	// terminate buffer
-//	frame_buf[package_length] = '\0';
-//	ws->out->string->length = package_length + 1;
-//}
+//	ws->out->string->length = response.payload_length;
+//	S_nullterm(ws->out->string);
+//	StringBuffer_append(ws->out, response.payload_offset, (char*)ws->frame.payload_raw, ws->frame.payload_length);
 
-void
-Websockets_parse_input_frame(Websockets* ws)
-{
-//	uint8_t inputFrame = StringBuffer_value(ws->in)[0];
-//
-//	ws->
+	*(ws->frame.raw) = BIT_CLEAR(*(ws->frame.payload_raw + 1), 7);
+	StringBuffer_append(ws->in, 2, (char*)ws->frame.payload_raw, ws->frame.payload_length);
 
-//	if ((inputFrame[0] & 0x70) != 0x0)      // checks extensions off
-//		return WS_ERROR_FRAME;
-//	if ((inputFrame[0] & 0x80) != 0x80)     // we haven't continuation frames support
-//		return WS_ERROR_FRAME;                                  // so, fin flag must be set
-//		int masked = wsinputFrame[1] & 0x80) != 0x80)     // checks masking bit
-//		return WS_ERROR_FRAME;
+	StringBuffer_print_bytes_hex(ws->in, StringBuffer_used(ws->in), "output message");
 
-//	uint8_t opcode = StringBuffer_value(ws->in)[0] & 0x0F;
-//
-//	if (opcode == WS_TEXT_FRAME ||
-//	    opcode == WS_BINARY_FRAME ||
-//	    opcode == WS_CLOSING_FRAME ||
-//	    opcode == WS_PING_FRAME ||
-//	    opcode == WS_PONG_FRAME
-//	    )
-//	{
-//		enum wsFrameType frameType = opcode;
-//
-//		uint64_t payload_length = getPayloadLength(ws);
-//
-//		XFDBG("Frame: opcode:%#x payload:%zu, input:%zu, extra:%u", opcode, payload_length);
-//		if (payload_length > 0)
-//		{
-////			if (payloadLength < inputLength - 6 - payloadFieldExtraBytes) // 4-maskingKey, 2-header
-////				return WS_INCOMPLETE_FRAME;
-//
-//			uint8_t* maskingKey = &inputFrame[2 + payloadFieldExtraBytes];
-//
-////			assert(payloadLength == inputLength - 6 - payloadFieldExtraBytes);
-//
-//			*dataPtr = &inputFrame[2 + payloadFieldExtraBytes + 4];
-//			*dataLength = payload_length;
-//
-//			size_t i;
-//			for (i = 0; i < *dataLength; i++)
-//				(*dataPtr)[i] = (*dataPtr)[i] ^ maskingKey[i % 4];
-//		}
-//		return frameType;
-//	}
-//
-//	return WS_ERROR_FRAME;
+	StringBuffer_clear(ws->out);
 }
