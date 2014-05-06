@@ -38,14 +38,14 @@ Websockets_process_handshake(Connection* con, Websockets* ws)
 
 	if (parse_result == -1)
 	{
-		printf("Handshake parse error: %s\n", StringBuffer_value(handshake->error_message));
+		CXFDBG(con, "Handshake parse error: %s", StringBuffer_value(handshake->error_message));
 		WebsocketsHandshake_free(handshake);
 		return -1;
 	}
 	else
 	{
 		WebsocketsHandshake_reply(handshake, ws->out);
-		CXFDBG(con, "sending handshake response: \n%s\n", StringBuffer_value(ws->out));
+		CXFDBG(con, "sending handshake response: \n%s", StringBuffer_value(ws->out));
 		Connection_send_buffer(con, ws->out);
 		WebsocketsHandshake_free(handshake);
 		ws->state = WS_STATE_ESTABLISHED;
@@ -63,15 +63,23 @@ Websockets_process(Connection* con, Websockets* ws)
 	switch (ws->state)
 	{
 	case WS_STATE_NEW:
-		CXFDBG(con, "Process handshake: \n%s\n", StringBuffer_value(ws->in));
+		CXFDBG(con, "Process handshake: \n%s", StringBuffer_value(ws->in));
 		return Websockets_process_handshake(con, ws);
 	case WS_STATE_ESTABLISHED:
 		CXDBG(con, "Process frame:");
 		int res = WebsocketsFrame_parse(ws);
+		/* send response / error */
+		if (StringBuffer_used(ws->out) > 1)
+		{
+			CXFDBG(con, "Clear response buffer %zu", StringBuffer_used(ws->out));
+			Connection_send_buffer(con, ws->out);
+			StringBuffer_clear(ws->out);
+		}
 		if (res == 1)
 		{
 			/* removed processed frame from input */
-			size_t nbytes =  (size_t)(ws->frame.payload_raw_last - ws->frame.raw);
+			size_t nbytes =  (size_t)(ws->frame.payload_raw_end - ws->frame.raw);
+			CXFDBG(con, "Shift input buffer by %zu bytes", nbytes);
 			StringBuffer_shift(ws->in, nbytes);
 		}
 		return res;
@@ -79,76 +87,4 @@ Websockets_process(Connection* con, Websockets* ws)
 	case WS_STATE_ERROR:
 		return -1;
 	}
-
-//	CXFDBG(con, "Received frame: type:%#1x state:%d", ws->frameType, ws->state);
-
-//	if (ws->frameType == WS_ERROR_FRAME)
-//	{
-//		CXDBG(con, "Error in incoming frame");
-//
-//		if (ws->state == WS_STATE_OPENING)
-//		{
-//			CXDBG(con, "Bad request");
-//			StringBuffer_printf(ws->out, BAD_REQUEST, versionField, version);
-//			Connection_send_buffer(con, ws->out);
-//			return -1;
-//		}
-//		else
-//		{
-//			CXDBG(con, "Send closing frame");
-//			Websockets_send_frame(con, ws, WS_CLOSING_FRAME);
-//			Websockets_reset(ws);
-//			StringBuffer_clear(ws->in);
-//			return 1;
-//		}
-//	}
-
-//	if (ws->state == WS_STATE_OPENING)
-//	{
-//		if (ws->frameType == WS_OPENING_FRAME)
-//		{
-//			CXFDBG(con, "Opening frame for resource : %s", ws->handshake.resource);
-//			// if resource is right, generate answer handshake and send it
-//			if (strcmp(ws->handshake.resource, RESOURCE) == 0)
-//			{
-//				Websockets_send_handshake(con, ws);
-//				Websockets_reset(ws);
-//				StringBuffer_clear(ws->in);
-//				return 1;
-//			}
-//			else
-//			{
-//				CXFDBG(con, "Resource not found : %s", ws->handshake.resource);
-//				StringBuffer_cat(ws->out, NOT_FOUND);
-//				Connection_send_buffer(con, ws->out);
-//				return -1;
-//			}
-//		}
-//		else
-//		{
-//			CXDBG(con, "Input garbage - not a websockets frame\n");
-//			return -1;
-//		}
-//	}
-//
-//	/* close connection afterwards */
-//	if (ws->frameType == WS_CLOSING_FRAME)
-//	{
-//		if (ws->state != WS_STATE_CLOSING)
-//		{
-//			CXDBG(con, "Send closing frame");
-//			Websockets_send_frame(con, ws, WS_CLOSING_FRAME);
-//		}
-//		return 0;
-//	}
-//
-//	if (ws->frameType == WS_TEXT_FRAME)
-//	{
-//		CXDBG(con, "Reply to incomming text frame");
-//		Websockets_send_frame(con, ws, WS_TEXT_FRAME);
-//		Websockets_reset(ws);
-//		return 1;
-//	}
-
-//	return 1;
 }

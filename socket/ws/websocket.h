@@ -78,11 +78,21 @@ typedef struct websockets_frame_t
 {
 	uint8_t* raw;
 	uint8_t payload_offset;         /* payload offset from start of frame */
-	WebsocketsOpcode opcode;        /* decoded opcode */
 
-	uint64_t payload_length;        /* decoded payload length */
-	uint8_t* payload_raw;           /* pointer to the start of the data (points to input buffer) */
-	uint8_t* payload_raw_last;      /* pointer to last payload byte */
+	/* decoded bit fields */
+	unsigned int fin : 1;
+	unsigned int rsv1 : 1;
+	unsigned int rsv2 : 1;
+	unsigned int rsv3 : 1;
+	unsigned int masked : 1;        /* bit field whether frame is masked or not */
+
+	uint8_t opcode;
+
+	uint8_t payload_length;
+	uint64_t payload_length_extended;       /* decoded payload length */
+	uint8_t* payload_raw;                   /* pointer to the start of the data (points to input buffer) */
+	uint8_t* payload_raw_end;               /* pointer to last payload byte */
+	uint8_t* masking_key;                   /* pointe to the masking key */
 } WebsocketsFrame;
 
 typedef struct websockets_state_t

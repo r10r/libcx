@@ -18,9 +18,12 @@ int
 WebsocketsFrame_parse(Websockets* ws);
 
 void
-WebsocketsFrame_unmask_payload_data(Websockets* ws, uint8_t* masking_key);
+WebsocketsFrame_unmask_payload_data(Websockets* ws);
 
 void
-WebsocketsFrame_parse_extended_payload_length(Websockets* ws);
+WebsocketsFrame_parse_payload_length_extended(Websockets* ws);
+
+void
+WebsocketsFrame_create_data_frame(StringBuffer* buf, const char* payload, uint64_t nchars, WebsocketsOpcode opcode);
 
 #endif

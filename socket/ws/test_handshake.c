@@ -38,12 +38,12 @@ test_Handshake_parse()
 	Message_fwrite(handshake->message, stdout);
 
 	if (result == -1)
-		printf("Handshake parse error: %s\n", StringBuffer_value(handshake->error_message));
+		XFDBG("Handshake parse error: %s", StringBuffer_value(handshake->error_message));
 	TEST_ASSERT_EQUAL_INT(1, result);
 
 	StringBuffer* buffer_out = StringBuffer_new(2048);
 	WebsocketsHandshake_reply(handshake, buffer_out);
-	printf("%s\n", StringBuffer_value(buffer_out));
+	XFDBG("Handshake Reply:\n%s", StringBuffer_value(buffer_out));
 
 	StringBuffer_free(buffer_in);
 	StringBuffer_free(buffer_out);
@@ -59,10 +59,10 @@ test_cpu_endian()
 	switch (CheckCPUEndian())
 	{
 	case little_endian:
-		printf("Little Endian\n");
+		XDBG("Little Endian");
 		break;
 	case big_endian:
-		printf("Big Endign\n");
+		XDBG("Big Endign");
 		break;
 	}
 }
