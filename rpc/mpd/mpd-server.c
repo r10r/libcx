@@ -99,15 +99,14 @@ main(int argc, char** argv)
 	RPC_Method mpd_methods[] = { MusicPlayerDaemon_methods, RPC_Method_none };
 	server->methods = &mpd_methods[0];
 
-	printf("Registered RPC methods:\n");
 	int i;
 	for (i = 0; mpd_methods[i].name != NULL; i++)
 		RPC_Method_log(&mpd_methods[i]);
 
 	List_push(((Server*)server)->workers, RPCWorker_new());
-	List_push(((Server*)server)->workers, RPCWorker_new());
-	List_push(((Server*)server)->workers, RPCWorker_new());
-	List_push(((Server*)server)->workers, RPCWorker_new());
+//	List_push(((Server*)server)->workers, RPCWorker_new());
+//	List_push(((Server*)server)->workers, RPCWorker_new());
+//	List_push(((Server*)server)->workers, RPCWorker_new());
 
 	Server_start((Server*)server);         // blocks
 }

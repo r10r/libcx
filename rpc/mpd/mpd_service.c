@@ -1,5 +1,6 @@
 #include "mpd_service.h"
 
+// FIXME make connection threadsafe
 static struct mpd_connection* mpd_connection = NULL;
 
 static int
@@ -14,11 +15,11 @@ connect(struct mpd_connection** conn, RPC_Request* request, StringBuffer* result
 			StringBuffer_cat(result_buffer, api_strerror(ERR_OOM));
 			return -1;
 		}
-
-		if (mpd_connection_get_error(*conn) != MPD_ERROR_SUCCESS)
+		else if (mpd_connection_get_error(*conn) != MPD_ERROR_SUCCESS)
 		{
 			request->error = jsrpc_ERROR_INTERNAL;
-			StringBuffer_printf(result_buffer, "MPD connection error:", mpd_connection_get_error_message(*conn));
+			StringBuffer_printf(result_buffer, "MPD connection error %d: %s",
+					    mpd_connection_get_error(*conn), mpd_connection_get_error_message(*conn));
 			mpd_connection_free(*conn);
 			*conn = NULL;
 			return -1;
@@ -161,14 +162,14 @@ RPC_method(playlists)
 
 			while ((playlist = mpd_recv_playlist(mpd_connection)) != NULL)
 			{
-				printf("playlist: %s\n", mpd_playlist_get_path(playlist));
+				XFDBG("playlist: %s", mpd_playlist_get_path(playlist));
 				mpd_playlist_free(playlist);
 			}
 
 			// check if mpd_recv_playlist returned NULL because of an error
 			if (mpd_response_check_success(&mpd_connection, request, result_buffer))
 				// send response
-				printf("Success\n");
+				XDBG("Success");
 		}
 	}
 }

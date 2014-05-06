@@ -32,4 +32,5 @@ $(L)/mpd-server_OBJS := $(L)/mpd-server.o \
 $(L)/libwebsock-proxy_FLAGS := -lwebsock
 $(L)/libwebsock-proxy_OBJS := $(L)/libwebsock-proxy.o \
 	$(LIBCX_DIR)/socket/client.o \
-	$(LIBCX_DIR)/string/string.o
+	$(LIBCX_DIR)/string/string.o \
+	$(LIBCX_DIR)/socket/socket.o \
