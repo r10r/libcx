@@ -36,4 +36,59 @@
 #define NULLS(val) \
 	(val ? val : "(null)")
 
+/* [ bit operations ]
+ *
+ * - http://frank.harvard.edu/~coldwell/toolchain/bigendian.html
+ * - http://stackoverflow.com/questions/13514614/why-is-network-byte-order-defined-to-be-big-endian
+ * - http://www.microhowto.info/howto/send_an_arbitrary_ethernet_frame_using_an_af_packet_socket_in_c.html
+ * - http://www.linuxjournal.com/article/6788
+ * - http://betterexplained.com/articles/understanding-big-and-little-endian-byte-order/
+ */
+
+/*
+ * use bit fields (man htons)
+ *
+ */
+
+/* [ litte endian ] */
+
+#define LE_BIT(n) \
+	(1 << n)
+
+/* macro to set bit "n" in byte "mask" */
+#define LE_BIT_SET(mask, n) \
+	((mask) | (1 << n))
+
+/* macro to clear bit "n" in byte "mask" */
+#define LE_BIT_CLEAR(mask, n) \
+	((mask) & ~(1 << n))
+
+/* macro to return the value of bit "n" in byte "mask" */
+#define LE_BIT_GET(mask, n) \
+	(((mask) & (1 << n)) != 0)
+
+
+/* [ big endian (byte with word length 8) ] */
+
+#define BE_BIT(n) \
+	(0x80 >> n)
+
+/* macro to set bit "n" in byte "mask" */
+#define BE_BIT_SET(mask, n) \
+	((mask) | (0x80 >> n))
+
+/* macro to clear bit "n" in byte "mask" */
+#define BE_BIT_CLEAR(mask, n) \
+	((mask) & ~(0x80 >> n))
+
+/* macro to return the value of bit "n" in byte "mask" */
+#define BE_BIT_GET(mask, n) \
+	(((mask) & (0x80 >> n)) != 0)
+
+
+#define BIT LE_BIT
+#define BIT_SET LE_BIT_SET
+#define BIT_GET LE_BIG_GET
+#define BIT_CLEAR LE_BIT_CLEAR
+
 #endif
