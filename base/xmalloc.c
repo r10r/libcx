@@ -7,8 +7,8 @@ d_xmalloc(size_t size, const char* func, const char* file, int line)
 {
 	void* ptr = malloc(size);
 
-	printf("MALLOC[%p size %ld] - (%s):%s:%d\n",
-	       ptr, size, func, file, line);
+	XFDBG("MALLOC[%p size %ld] - (%s):%s:%d",
+	      ptr, size, func, file, line);
 	return ptr;
 }
 
@@ -17,8 +17,8 @@ d_xcalloc(size_t count, size_t size, const char* func, const char* file, int lin
 {
 	void* ptr = calloc(count, size);
 
-	printf("CALLOC[%p count %ld, size %ld] - (%s):%s:%d\n",
-	       ptr, count, size, func, file, line);
+	XFDBG("CALLOC[%p count %ld, size %ld] - (%s):%s:%d",
+	      ptr, count, size, func, file, line);
 	return ptr;
 }
 
@@ -27,14 +27,14 @@ d_xrealloc(void* ptr, size_t size, const char* func, const char* file, int line)
 {
 	void* new_ptr = realloc(ptr, size);
 
-	printf("REALLOC[%p -> %p] (new size %ld) - (%s):%s:%d\n",
-	       ptr, new_ptr, size, func, file, line);
+	XFDBG("REALLOC[%p -> %p] (new size %ld) - (%s):%s:%d",
+	      ptr, new_ptr, size, func, file, line);
 	return new_ptr;
 }
 
 void
 d_xfree(void* ptr, const char* func, const char* file, int line)
 {
-	printf("FREE[%p] - (%s):%s:%d\n", ptr, func, file, line);
+	XFDBG("FREE[%p] - (%s):%s:%d", ptr, func, file, line);
 	free(ptr);
 }

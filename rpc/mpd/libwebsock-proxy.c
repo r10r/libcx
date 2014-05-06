@@ -68,7 +68,7 @@ proxy_payload(struct upstream_t* upstream, libwebsock_client_state* state, libwe
 {
 	if (upstream)
 	{
-		printf("upstream socket: %s:%d\n", upstream->path, upstream->fd);
+		XFDBG("upstream socket: %s:%d", upstream->path, upstream->fd);
 		send_data(upstream->fd, msg->payload);
 		shutdown(upstream->fd, SHUT_WR);
 
@@ -78,7 +78,7 @@ proxy_payload(struct upstream_t* upstream, libwebsock_client_state* state, libwe
 		libwebsock_send_text(state, StringBuffer_value(upstream->receive_buffer));
 	}
 	else
-		printf("Connection was closed an upstream removed\n");
+		XDBG("Connection was closed an upstream removed");
 }
 
 static int
@@ -90,11 +90,11 @@ onmessage(libwebsock_client_state* state, libwebsock_message* msg)
 
 	state->data =  upstream;
 
-	printf("Received message from client: %d\n", state->sockfd);
-	printf("Message opcode: %d\n", msg->opcode);
-	printf("Payload Length: %llu\n", msg->payload_len);
-	printf("Payload: %s\n", msg->payload);
-	printf("State %p\n", state);
+	XFDBG("Received message from client: %d", state->sockfd);
+	XFDBG("Message opcode: %d", msg->opcode);
+	XFDBG("Payload Length: %llu", msg->payload_len);
+	XFDBG("Payload: %s", msg->payload);
+	XFDBG("State %p", state);
 
 	if (upstream->fd != -1)
 		proxy_payload(upstream, state, msg);
@@ -109,7 +109,7 @@ onmessage(libwebsock_client_state* state, libwebsock_message* msg)
 static int
 onopen(libwebsock_client_state* state)
 {
-	fprintf(stderr, "onopen: %d\n", state->sockfd);
+	XFDBG("onopen: %d", state->sockfd);
 	state->data = NULL;
 	return 0;
 }
@@ -117,7 +117,7 @@ onopen(libwebsock_client_state* state)
 static int
 onclose(libwebsock_client_state* state)
 {
-	fprintf(stderr, "onclose: %d --> state->data %p\n", state->sockfd, state->data);
+	XFDBG("onclose: %d --> state->data %p", state->sockfd, state->data);
 	if (state->data)
 		Upstream_free((struct upstream_t*)state->data);
 
@@ -127,7 +127,7 @@ onclose(libwebsock_client_state* state)
 static void
 sighandler(int signal)
 {
-	printf("Received signal %d. Ignore\n", signal);
+	XFDBG("Received signal %d. Ignore", signal);
 }
 
 /*
@@ -148,7 +148,7 @@ main(int argc, char* argv[])
 	ctx = libwebsock_init();
 	if (ctx == NULL)
 	{
-		fprintf(stderr, "Error during libwebsock_init.\n");
+		XERR("Error during libwebsock_init.");
 		exit(1);
 	}
 	char* port = argv[1];

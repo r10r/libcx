@@ -63,12 +63,12 @@ start_consumer(void* data)
 			// queue is destroyed on the last request
 			if (i == (NITERATATIONS - 1))
 			{
-				printf("Consumer[%d] I'm processing the last request\n", consumer->id);
+				XFDBG("Consumer[%d] I'm processing the last request", consumer->id);
 				Queue_destroy(consumer->queue);
 			}
 		}
 	}
-	printf("Consumer[%d] Leaving inactive queue\n", consumer->id);
+	XFDBG("Consumer[%d] Leaving inactive queue", consumer->id);
 	return NULL;
 }
 

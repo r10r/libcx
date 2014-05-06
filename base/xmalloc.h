@@ -5,6 +5,8 @@
 #include <stdlib.h>     /* malloc / free */
 #include <stdio.h>      /* printf */
 
+#include "debug.h"
+
 void*
 d_xmalloc(size_t size, const char* func, const char* file, int line);
 

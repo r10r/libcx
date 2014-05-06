@@ -5,21 +5,22 @@
 #include <assert.h>
 #include "string/string_buffer.h"
 
-typedef void F_Connected(TCPSocket *sock);
+typedef void F_Connected (TCPSocket* sock);
 
 static int connections;
 static const char* ip;
 static uint16_t port;
 
-static void on_connect(TCPSocket *tcp)
+static void
+on_connect(TCPSocket* tcp)
 {
-	XFDBG("Connected with fd %d\n", tcp->socket.fd);
-	StringBuffer *out = StringBuffer_from_printf(100, "foobar %d", rand());
+	XFDBG("Connected with fd %d", tcp->socket.fd);
+	StringBuffer* out = StringBuffer_from_printf(100, "foobar %d", rand());
 	StringBuffer_write(out, tcp->socket.fd);
 
 	shutdown(tcp->socket.fd, SHUT_WR); /* indicates EOF on server side */
 
-	StringBuffer *in = StringBuffer_new(1024);
+	StringBuffer* in = StringBuffer_new(1024);
 	StringBuffer_fdxload(in, tcp->socket.fd, 128, 0);
 
 	assert(StringBuffer_equals(out, in));
@@ -31,15 +32,16 @@ static void on_connect(TCPSocket *tcp)
 static void*
 thread_send_data(void* data)
 {
-	F_Connected* callback = (F_Connected*) data;
+	F_Connected* callback = (F_Connected*)data;
 
 	int i;
+
 	PROFILE_BEGIN_FMT("Thread[%p] - Starting %d connections\n", pthread_self(), connections);
 	for (i = 0; i < connections; i++)
 	{
 		TCPSocket* tcp = TCPSocket_new(ip, port);
 
-		XFDBG("Connection TCP socket: %s:%d\n", tcp->ip, tcp->port);
+		XFDBG("Connection TCP socket: %s:%d", tcp->ip, tcp->port);
 
 		SocketStatus status = Socket_use((Socket*)tcp);
 		if (status != SOCKET_CONNECTED)
