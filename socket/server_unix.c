@@ -31,7 +31,7 @@ UnixServer_free(Server* server)
 static void
 supervisor_watcher_cb(ev_loop* loop, ev_timer* timer, int revents)
 {
-	printf("Hello from the supervisor\n");
+	XDBG("Hello from the supervisor");
 }
 
 /* can be replaced by the server */

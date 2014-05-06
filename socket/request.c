@@ -50,5 +50,5 @@ Request_stop(Request* request)
 void
 Request_log(Request* request)
 {
-	printf("Request[%p] duration:%f msec\n", request, timeval_diff(request->started_at, request->finished_at));
+	XFDBG("Request[%p] duration:%f msec", request, timeval_diff(request->started_at, request->finished_at));
 }

@@ -97,7 +97,7 @@ Queue_destroy(Queue* queue)
 {
 	int rc = 0;
 
-	printf("Queue is destroyed\n");
+	XDBG("Queue is destroyed");
 
 	queue->_active = false;
 

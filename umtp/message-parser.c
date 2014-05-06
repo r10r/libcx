@@ -10,13 +10,13 @@ main(int argc, char** argv)
 
 	size_t nunparsed = RagelParser_unparsed((RagelParser*)parser);
 	if (nunparsed > 0)
-		printf("ERROR: %zu unparsed tokens\n", nunparsed);
+		XFDBG("ERROR: %zu unparsed tokens", nunparsed);
 	else
 	{
 		/* print the message */
 		StringBuffer* buffer = StringBuffer_new(2048);
 		Message_print(message, buffer);
-		printf("%s", StringBuffer_value(buffer));
+		XFDBG("%s", StringBuffer_value(buffer));
 		StringBuffer_free(buffer);
 	}
 

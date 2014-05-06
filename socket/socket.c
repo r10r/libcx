@@ -7,22 +7,22 @@ Socket_print_status(Socket* sock)
 	{
 	// FIXME print socket address (path or IP)
 	case SOCKET_INITIALIZED:
-		XDBG("Socket initialized\n");
+		XDBG("Socket initialized");
 		break;
 	case SOCKET_CREATED:
-		XDBG("Socket created\n");
+		XDBG("Socket created");
 		break;
 	case SOCKET_BIND:
-		XDBG("Socket bind\n");
+		XDBG("Socket bind");
 		break;
 	case SOCKET_LISTEN:
-		XDBG("Socket listen\n");
+		XDBG("Socket listen");
 		break;
 	case SOCKET_CONNECTED:
-		XDBG("Socket connected\n");
+		XDBG("Socket connected");
 		break;
 	case SOCKET_ERROR_INVALID_ADDRESS:
-		XFERR("Invalid socket address: %s\n", ""); // FIXME print socket address
+		XFERR("Invalid socket address: %s", ""); // FIXME print socket address
 		break;
 	case SOCKET_ERROR_ERRNO:
 		XERR("Internal socket error");
