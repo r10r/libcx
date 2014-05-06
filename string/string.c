@@ -112,7 +112,10 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nlength_reque
 	if (new_string == NULL)
 		return -1;
 
+#ifdef STRING_DEBUG
 	XFDBG("Incremented buffer size %zu -> %zu", buffer->length, new_length);
+#endif
+
 
 	buffer->string = new_string;
 	buffer->length = new_length;
@@ -144,7 +147,10 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars)
 		return -1;
 
 	ssize_t nread = read(fd, S_term(buffer->string), nchars);
+
+#ifdef STRING_DEBUG
 	XFDBG("Read %zd (read size %zu) chars into buffer", nread, nchars);
+#endif
 
 	if (nread > 0)
 	{
