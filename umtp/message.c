@@ -162,6 +162,7 @@ Message_header_value_equals(Message* message, const char* name, const char* valu
 
 	if (header)
 	{
+		assert(header->value); /* parser bug */
 		if (ignorecase)
 			return strcasecmp(value, header->value->value) == 0;
 		else
