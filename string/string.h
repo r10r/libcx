@@ -40,41 +40,50 @@ String_shift(String* s, size_t count);
 
 #define S_free(s) (free(s))
 
-#define strnlen(str) (strlen(str) + 1)
-
-#define is_nullterm(source, nlength) \
-	((source[nlength - 1] == '\0') ? 1 : 0)
+/* TODO hide this macro from external usage
+ */
+#define __strpos(s, _pos) \
+	(((_pos) < 0) ? ((s)->length - (size_t)-(_pos)) : (size_t)(_pos))
 
 /* access array (with negative indexes), no bounds checking */
-#define S_get(s, index) \
-	((index < 0) \
-	 ? ((s)->value + (s)->length - (size_t)-index) \
-	 : ((s)->value + index))
+#define S_get(s, _pos) \
+	((s)->value + __strpos(s, _pos))
+
+/* access array (with negative indexes) with bounds checking */
+#define S_sget(s, _pos) \
+	((__strpos(s, _pos) >= (s)->length) ? NULL : S_get(s, __strpos(s, _pos)))
 
 #define S_last(s) \
-	((s)->length == 0 ? S_get(s, 0) : S_get(s, -1))
+	((s)->length == 0 ? (s)->value : (s)->value + ((s)->length - 1))
 
+#define S_clear(s) \
+	String_shift(s, (s)->length)
+
+/* return pointer to the last \0 terminator */
+#define S_term(s) \
+	((s)->length == 0 ? (s)->value : (s)->value + (s)->length)
+
+/* set the last \0 terminator */
 #define S_nullterm(s) \
-	(* S_last(s) = '\0')
+	(*(S_term(s)) = '\0')
 
-#define S_is_nullterm(s) \
-	(* S_last(s) == '\0')
-
+/* string size for given length including null terminator */
 #define S_size(length) \
-	(sizeof(String) + sizeof(char)* length)
-
-#define S_dup(value) \
-	String_init(value, strnlen(value))
+	(sizeof(String) + sizeof(char)*(length + 1 /* \0 */))
 
 #define S_alloc(length) \
 	malloc(S_size(length))
 
-// grow or shrink the buffer
+/* to grow or shrink a string */
 #define S_realloc(s, length) \
 	realloc(s, S_size(length));
 
+#define S_dup(value) \
+	String_init(value, strlen(value))
+
 #define S_comp(a, b) \
 	strcmp((a)->value, (b)->value)
+
 
 /* [ write to FD/stream] */
 
@@ -85,7 +94,7 @@ String_shift(String* s, size_t count);
 	S_nwrite(s, start, count, fileno(stream))
 
 #define S_write(s, fd) \
-	S_nwrite(s, 0, (s)->length - 1, fd)
+	S_nwrite(s, 0, (s)->length, fd)
 
 #define S_fwrite(s, stream) \
 	S_write(s, fileno(stream))
@@ -104,7 +113,7 @@ String_shift(String* s, size_t count);
 	(strncpy(dst, S_get(s, start), count))
 
 #define S_copy(s, dst) \
-	S_ncopy(s, 0, (s)->length, dst)
+	S_ncopy(s, 0, (s)->length + 1, dst)
 
 
 /* [ StringPointer methods ] */

@@ -42,7 +42,7 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
 	(StringBuffer_length(buffer) - StringBuffer_used(buffer))
 
 #define StringBuffer_index_append(buffer) \
-	StringBuffer_used(buffer) == 0 ? 0 : (StringBuffer_used(buffer) - 1)
+	(StringBuffer_used(buffer) == 0 ? 0 : (StringBuffer_used(buffer)))
 
 #define StringBuffer_value(buffer) \
 	((buffer)->string->value)
@@ -51,8 +51,7 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
 	String_shift((buffer)->string, count)
 
 #define StringBuffer_clear(buffer) \
-	(buffer)->string->length = 0; \
-	S_nullterm((buffer)->string)
+	S_clear((buffer)->string)
 
 #define StringBuffer_log(buf, message) \
 	XFDBG("\n	%s [%p] - used:%zu, unused:%zu, length:%zu", \
@@ -61,13 +60,16 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
 #define StringBuffer_equals(buf1, buf2) \
 	(strcmp(StringBuffer_value(buf1), StringBuffer_value(buf2)) == 0)
 
+#define StringBuffer_at(buf, index) \
+	S_sget((buf)->string, index)
+
 /* [ append from char* ] */
 
 ssize_t
 StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars);
 
 #define StringBuffer_cat(buffer, chars) \
-	StringBuffer_append(buffer, StringBuffer_index_append(buffer), chars, strnlen(chars))
+	StringBuffer_append(buffer, StringBuffer_index_append(buffer), chars, strlen(chars))
 
 #define StringBuffer_ncat(buffer, chars, nchars) \
 	StringBuffer_append(buffer, StringBuffer_index_append(buffer), chars, nchars)
@@ -135,5 +137,15 @@ StringBuffer_from_printf(size_t length, const char* format, ...);
 
 #define StringBuffer_aprintf(buffer, format, ...) \
 	StringBuffer_sprintf(buffer, StringBuffer_index_append(buffer), format, __VA_ARGS__)
+
+
+/* debug print n bytes fom bytes using format format into buf */
+__attribute__((__format__(__printf__, 2, 0)))
+void
+StringBuffer_write_bytes_into(StringBuffer* buf, const char* const format, const uint8_t* bytes, size_t nbytes);
+
+/* print hex values of bytes to stderr prepended by message */
+void
+StringBuffer_print_bytes_hex(StringBuffer* in, size_t nbytes, const char* message);
 
 #endif

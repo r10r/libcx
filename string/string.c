@@ -7,28 +7,19 @@ String_init(const char* source, size_t nchars)
 		return NULL;
 
 	String* s;
-	size_t nalloc_chars = nchars;
 
 	if (source)
 	{
-		/* check if source is '\0\ terminated */
-		if (!is_nullterm(source, nchars))
-			nalloc_chars += 1;
-
-		s = S_alloc(nalloc_chars);
+		s = S_alloc(nchars);
 		memcpy(s->value, source, nchars);
-		s->length = nalloc_chars;
+		s->length = nchars;
 	}
 	else
 	{
-		/* create an empty '\0' terminated string */
-		// FIXME check why post increment is not working with unsigned values
-		if (nchars == 0)
-			nalloc_chars += 1;
-
-		s = S_alloc(nalloc_chars);
+		s = S_alloc(nchars);
 		s->length = 0;
 	}
+
 	S_nullterm(s);
 	return s;
 }
@@ -36,6 +27,8 @@ String_init(const char* source, size_t nchars)
 int
 String_shift(String* s, size_t count)
 {
+	XFDBG("shift count:%zu, string length:%zu", count, s->length);
+
 	if (count == 0)
 		return 0;
 	if (count > s->length)
@@ -49,6 +42,7 @@ String_shift(String* s, size_t count)
 		memcpy(s->value, s->value + count, remaining);
 		s->length = remaining;
 	}
+	S_nullterm(s);
 	return 1;
 }
 
@@ -118,7 +112,7 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nlength_reque
 	if (new_string == NULL)
 		return -1;
 
-	XFLOG("Incremented buffer size %zu -> %zu", buffer->length, new_length);
+	XFDBG("Incremented buffer size %zu -> %zu", buffer->length, new_length);
 
 	buffer->string = new_string;
 	buffer->length = new_length;
@@ -128,19 +122,16 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nlength_reque
 ssize_t
 StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars)
 {
-	XFDBG("\nbuffer[length:%zu, used:%zu, unused:%zu] source[nchars:%zu]\n",
+	XFDBG("\n	buffer[length:%zu, used:%zu, unused:%zu] source[nchars:%zu]",
 	      StringBuffer_length(buffer), StringBuffer_used(buffer), StringBuffer_unused(buffer), nchars);
 
-	/* allocate space for additional \0 if input is not \0 terminated */
-	if (!is_nullterm(source, nchars))
-		nchars += 1;
+	XFDBG("append nchars:%zu at offset:%zu", nchars, offset);
 
 	if (StringBuffer_make_room(buffer, offset, nchars) == -1)
 		return -1;
 
-	memcpy(S_get(buffer->string, offset), source, nchars);
+	memcpy(StringBuffer_value(buffer) + offset, source, nchars);
 	buffer->string->length = offset + nchars;
-
 	S_nullterm(buffer->string);
 
 	return (ssize_t)nchars;
@@ -149,22 +140,15 @@ StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, siz
 ssize_t
 StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars)
 {
-	// always make room for an additional '\0' terminator
-	// FIXME check why post increment is not working with unsigned values
-	size_t nalloc_chars = nchars + 1;
-
-	if (StringBuffer_make_room(buffer, offset, nalloc_chars) == -1)
+	if (StringBuffer_make_room(buffer, offset, nchars) == -1)
 		return -1;
 
-	ssize_t nread = read(fd, S_get(buffer->string, offset), nchars);
-	XFLOG("Read %zd (read size %zu) chars into buffer", nread, nchars);
+	ssize_t nread = read(fd, S_term(buffer->string), nchars);
+	XFDBG("Read %zd (read size %zu) chars into buffer", nread, nchars);
 
 	if (nread > 0)
-		buffer->string->length = offset + (size_t)nread;
-
-	if (!S_is_nullterm(buffer->string))
 	{
-		buffer->string->length += 1;
+		buffer->string->length = offset + (size_t)nread;
 		S_nullterm(buffer->string);
 	}
 
@@ -227,20 +211,20 @@ StringBuffer_vsnprintf(StringBuffer* buffer, size_t offset, const char* format, 
 		return -1;
 
 	char* string_start = S_get(buffer->string, offset);
-	size_t nchars_available = buffer->length - offset;
-	size_t nchars_printed;
+	size_t nchars_available = (buffer->length - offset) + 1 /* \0 */;
+	size_t nchars_printed; /* number of chars printed (excluding \0) */
 	va_list ap;
 	va_copy(ap, args);
-	nchars_printed = (size_t)vsnprintf(string_start, nchars_available, format, ap) + 1 /* \0 */;
+	nchars_printed = (size_t)vsnprintf(string_start, nchars_available, format, ap);
 	va_end(ap);
 
 	/* check if buffer was large enough */
-	if (nchars_printed > nchars_available)
+	if (nchars_printed >= nchars_available)
 	{
 		StringBuffer_make_room(buffer, offset, nchars_printed);
 		va_copy(ap, args);
 		string_start = S_get(buffer->string, offset);
-		nchars_available = buffer->length - offset;
+		nchars_available = (buffer->length - offset) + 1 /* \0 */;
 		vsnprintf(string_start, nchars_available, format, ap);
 		va_end(ap);
 	}
@@ -248,6 +232,27 @@ StringBuffer_vsnprintf(StringBuffer* buffer, size_t offset, const char* format, 
 	buffer->string->length = offset + nchars_printed;
 
 	return (ssize_t)nchars_printed;
+}
+
+void
+StringBuffer_write_bytes_into(StringBuffer* buf, const char* const format, const uint8_t* bytes, size_t nbytes)
+{
+	size_t i;
+
+	for (i = 0; i < nbytes; i++)
+		StringBuffer_aprintf(buf, format, *(bytes + i));
+}
+
+void
+StringBuffer_print_bytes_hex(StringBuffer* in, size_t nbytes, const char* message)
+{
+	size_t nbytes_max = (nbytes > StringBuffer_used(in) ? StringBuffer_used(in) : nbytes);
+	static const char* const format = "0x%x ";
+	StringBuffer* buf = StringBuffer_new(nbytes_max * sizeof(format));
+
+	StringBuffer_write_bytes_into(buf, format, (uint8_t*)StringBuffer_value(in), nbytes_max);
+	XFDBG("%s [%zu of %zu]: %s", message, nbytes_max, StringBuffer_used(in), StringBuffer_value(buf));
+	StringBuffer_free(buf);
 }
 
 /* string pointer methods */
