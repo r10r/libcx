@@ -32,6 +32,8 @@ ntoh64(uint64_t x)
 	       (x << 56);
 }
 
+/* TODO make header fields bitmask typesafe */
+
 uint64_t
 HeaderField_value(HeaderField field, void* data)
 {
