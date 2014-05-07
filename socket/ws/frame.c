@@ -143,7 +143,7 @@ WebsocketsFrame_parse_header(Websockets* ws)
 	WebsocketsFrame_log(&ws->frame);
 }
 
-int
+void
 WebsocketsFrame_parse(Websockets* ws)
 {
 	/* frame is complete so we can set the data pointers */
@@ -161,7 +161,11 @@ WebsocketsFrame_parse(Websockets* ws)
 	assert(ws->frame.payload_raw_end <= (uint8_t*)S_term(ws->in->string));
 
 	StringBuffer_print_bytes_hex(ws->in, FRAME_HEX_NPRINT, "package bytes");
+}
 
+int
+WebsocketsFrame_process(Websockets* ws)
+{
 	switch (ws->frame.opcode)
 	{
 	case WS_FRAME_CONTINUATION:

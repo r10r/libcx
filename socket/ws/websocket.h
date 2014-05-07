@@ -15,6 +15,9 @@
 
 #include "umtp/message_parser.h"
 
+#define WS_OK 1
+#define WS_ERR 0
+
 extern const HeaderField WS_HDR_FIN;
 extern const HeaderField WS_HDR_RSV1;
 extern const HeaderField WS_HDR_RSV2;
