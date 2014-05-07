@@ -109,6 +109,17 @@ test_EACH()
 	TEST_ASSERT_EQUAL_INT(2, element->num);
 }
 
+static void
+test_unsigned_arithmetic()
+{
+	unsigned int a = 5;
+	unsigned int b = 7;
+
+	int c = (int)(a - b);
+
+	TEST_ASSERT_EQUAL_INT(-2, c);
+}
+
 int
 main()
 {
@@ -118,6 +129,7 @@ main()
 	RUN(test_clone);
 	RUN(test_unsigned_minus_signed);
 	RUN(test_EACH);
+	RUN(test_unsigned_arithmetic);
 
 	TEST_END
 }
