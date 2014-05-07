@@ -17,6 +17,7 @@
 
 #define WS_OK 1
 #define WS_ERR 0
+#define FRAME_HEX_NPRINT 16 /* number of bytes to print for debugging */
 
 extern const HeaderField WS_HDR_FIN;
 extern const HeaderField WS_HDR_RSV1;
@@ -74,7 +75,9 @@ typedef enum websockets_status_t
 	WS_STATE_NEW,
 	WS_STATE_FRAME_NEW,
 	WS_STATE_FRAME_INCOMPLETE,
-	WS_STATE_ERROR
+	WS_STATE_FRAME_SEND_RESPONSE,
+	WS_STATE_ERROR, /* generic error ? */
+	WS_STATE_CLOSE
 } WebsocketsState;
 
 typedef struct websockets_frame_t
@@ -104,6 +107,8 @@ typedef struct websockets_state_t
 	WebsocketsState state;
 	StringBuffer* in;
 	StringBuffer* out;
+
+	WebsocketsStatusCode status_code;
 	StringBuffer* error_message;
 } Websockets;
 
@@ -122,5 +127,20 @@ typedef struct websockets_handshake_t
 	int error;                      /* error code */
 	StringBuffer* error_message;    /* error message explaining the error code */
 } WebsocketsHandshake;
+
+
+#define Websockets_error(ws, code, message) \
+	{ \
+		StringBuffer_cat((ws)->error_message, message); \
+		ws->status_code = code; \
+		ws->state = WS_STATE_ERROR; \
+	}
+
+#define Websockets_ferror(ws, code, format, ...) \
+	{ \
+		StringBuffer_printf((ws)->error_message, format, __VA_ARGS__); \
+		ws->status_code = code; \
+		ws->state = WS_STATE_ERROR; \
+	}
 
 #endif  /* WEBSOCKET_H */

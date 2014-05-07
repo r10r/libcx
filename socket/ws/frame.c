@@ -50,7 +50,7 @@ WebsocketsFrame_log(WebsocketsFrame* frame)
 	      frame->payload_length, frame->payload_length_extended);
 }
 
-static int
+static void
 process_control_frame(Websockets* ws)
 {
 	/*
@@ -63,31 +63,30 @@ process_control_frame(Websockets* ws)
 		{
 		case WS_FRAME_CLOSE:
 			XFDBG("Received WS_FRAME_CLOSE masked:%u", ws->frame.masked);
-			/* TODO send close frame */
-
+			uint16_t status = htons(WS_CODE_SUCCESS);
+			WebsocketsFrame_create(ws->out, WS_FRAME_CLOSE, (char*)&status, 2);
+			ws->state = WS_STATE_CLOSE;
 			break;
 		case WS_FRAME_PING:
 			XDBG("Received WS_FRAME_PING");
+			/* TODO send pong frame and copy application data */
 			break;
 		case WS_FRAME_PONG:
 			XDBG("Received WS_FRAME_PONG");
+			/* TODO send pong frame and copy application data */
 			break;
 		default:
 			break;
 		}
-		return 1;
 	}
 	else
 	{
-		XFDBG("Invalid payload length for control package %hhu", ws->frame.payload_length);
-		// TODO send error
-		return -1;
+		Websockets_ferror(ws, WS_CODE_ERROR_PROTOCOL,
+				  "Invalid payload length for control package %hhu", ws->frame.payload_length)
 	}
 }
 
-#define FRAME_HEX_NPRINT 16
-
-static int
+static void
 Websockets_echo(Websockets* ws)
 {
 	XFDBG("payload offset:%hhu length:%llu", ws->frame.payload_offset, ws->frame.payload_length_extended);
@@ -104,18 +103,15 @@ Websockets_echo(Websockets* ws)
 		break;
 	case WS_FRAME_TEXT:
 		WebsocketsFrame_create(ws->out, WS_FRAME_TEXT, (char*)ws->frame.payload_raw, ws->frame.payload_length_extended);
+		ws->state = WS_STATE_FRAME_SEND_RESPONSE;
 		break;
 	case WS_FRAME_BINARY:
 		WebsocketsFrame_create(ws->out, WS_FRAME_BINARY, (char*)ws->frame.payload_raw, ws->frame.payload_length_extended);
+		ws->state = WS_STATE_FRAME_SEND_RESPONSE;
 		break;
 	default:
 		break; /* error, just to make the compiler happy */
 	}
-
-	// echo frame
-	StringBuffer_print_bytes_hex(ws->out, FRAME_HEX_NPRINT, "output message");
-
-	return 1;
 }
 
 /* extract header fields and calculate offset */
@@ -159,11 +155,9 @@ WebsocketsFrame_parse(Websockets* ws)
 	/* ensure we are not corrupting memory */
 	assert(ws->frame.payload_raw <= ws->frame.payload_raw_end);
 	assert(ws->frame.payload_raw_end <= (uint8_t*)S_term(ws->in->string));
-
-	StringBuffer_print_bytes_hex(ws->in, FRAME_HEX_NPRINT, "package bytes");
 }
 
-int
+void
 WebsocketsFrame_process(Websockets* ws)
 {
 	switch (ws->frame.opcode)
@@ -171,15 +165,15 @@ WebsocketsFrame_process(Websockets* ws)
 	case WS_FRAME_CONTINUATION:
 	case WS_FRAME_TEXT:
 	case WS_FRAME_BINARY:
-		return Websockets_echo(ws);
+		Websockets_echo(ws);
+		break;
 	case WS_FRAME_CLOSE:
 	case WS_FRAME_PING:
 	case WS_FRAME_PONG:
-		return process_control_frame(ws);
+		process_control_frame(ws);
+		break;
 	default:
-		// TODO close connection with error
-		XFDBG("Invalid opcode: 0x%x", ws->frame.opcode);
-		return -1;
+		Websockets_ferror(ws, WS_CODE_ERROR_PROTOCOL, "Invalid opcode: 0x%x", ws->frame.opcode)
 	}
 }
 
