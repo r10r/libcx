@@ -13,6 +13,9 @@
 
 #define WS_MASKING_KEY_LENGTH 4
 
+void
+WebsocketsFrame_parse_header(Websockets* ws);
+
 /* -1 on error, 1 else */
 int
 WebsocketsFrame_parse(Websockets* ws);
@@ -28,5 +31,12 @@ WebsocketsFrame_write_to_buffer(StringBuffer* buf, uint8_t header_bits, const ch
 
 #define WebsocketsFrame_create(buf, opcode, payload, nchars) \
 	WebsocketsFrame_write_to_buffer(buf, (uint8_t)WS_HDR_FIN.bitmask | opcode, payload, nchars, 0)
+
+/*
+ * checks if frame is fully loaded into buffer, if not stop processing here
+ * @return number of additional bytes (>= 0) or number of missing bytes (< 0)
+ */
+#define WebsocketsFrame_buffer_level(ws) \
+	(int64_t)(StringBuffer_used((ws)->in) - (ws)->frame.length)
 
 #endif

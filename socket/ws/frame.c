@@ -21,15 +21,19 @@ WebsocketsFrame_unmask_payload_data(Websockets* ws)
 void
 WebsocketsFrame_parse_payload_length_extended(Websockets* ws)
 {
+	uint8_t* raw = (uint8_t*)StringBuffer_value(ws->in);
+
 	switch (ws->frame.payload_length)
 	{
 	case PAYLOAD_EXTENDED:
-		ws->frame.payload_length_extended = HeaderField_value(WS_HDR_PAYLOAD_LENGTH_EXT, ws->frame.raw);
 		ws->frame.payload_offset += PAYLOAD_EXTENDED_SIZE;
+		assert(StringBuffer_used(ws->in) > ws->frame.payload_offset); /* avoid memory corruption */
+		ws->frame.payload_length_extended = HeaderField_value(WS_HDR_PAYLOAD_LENGTH_EXT, raw);
 		break;
 	case PAYLOAD_EXTENDED_CONTINUED:
-		ws->frame.payload_length_extended = HeaderField_value(WS_HDR_PAYLOAD_LENGTH_EXT_CONTINUED, ws->frame.raw);
 		ws->frame.payload_offset += PAYLOAD_EXTENDED_CONTINUED_SIZE;
+		assert(StringBuffer_used(ws->in) > ws->frame.payload_offset); /* avoid memory corruption */
+		ws->frame.payload_length_extended = HeaderField_value(WS_HDR_PAYLOAD_LENGTH_EXT_CONTINUED, raw);
 		break;
 	default:
 		ws->frame.payload_length_extended = ws->frame.payload_length;
@@ -37,14 +41,13 @@ WebsocketsFrame_parse_payload_length_extended(Websockets* ws)
 }
 
 static void
-WebsocketsFrame_log(Websockets* ws)
+WebsocketsFrame_log(WebsocketsFrame* frame)
 {
-	XFDBG("opcode: %u", ws->frame.opcode);
-	XFDBG("masked: %u", ws->frame.masked);
-	XFDBG("fin: %u", HeaderField_byte_value(WS_HDR_FIN, ws->frame.raw));
-	XFDBG("rsv1: %u", HeaderField_byte_value(WS_HDR_RSV1, ws->frame.raw));
-	XFDBG("rsv2: %u", HeaderField_byte_value(WS_HDR_RSV2, ws->frame.raw));
-	XFDBG("rsv3: %u", HeaderField_byte_value(WS_HDR_RSV3, ws->frame.raw));
+	XFDBG("\n"
+	      "--->	fin:%u, rsv1:%u, rsv2:%u, rsv3:%u, masked:%u, opcode:0x%x\n"
+	      "	payload_length:%u, payload_length_extended:%llu",
+	      frame->fin, frame->rsv1, frame->rsv2, frame->rsv3, frame->masked, frame->opcode,
+	      frame->payload_length, frame->payload_length_extended);
 }
 
 static int
@@ -60,7 +63,7 @@ process_control_frame(Websockets* ws)
 		{
 		case WS_FRAME_CLOSE:
 			XFDBG("Received WS_FRAME_CLOSE masked:%u", ws->frame.masked);
-				/* TODO send close frame */
+			/* TODO send close frame */
 
 			break;
 		case WS_FRAME_PING:
@@ -115,60 +118,49 @@ Websockets_echo(Websockets* ws)
 	return 1;
 }
 
+/* extract header fields and calculate offset */
+void
+WebsocketsFrame_parse_header(Websockets* ws)
+{
+	assert(StringBuffer_used(ws->in) >= 2);
+	uint8_t* raw = (uint8_t*)StringBuffer_value(ws->in);
+
+	ws->frame.payload_length = HeaderField_byte_value(WS_HDR_PAYLOAD_LENGTH, raw);
+	ws->frame.payload_offset = 2;
+	ws->frame.opcode = HeaderField_byte_value(WS_HDR_OPCODE, raw);
+	ws->frame.masked = HeaderField_byte_value(WS_HDR_MASKED, raw);
+	ws->frame.fin = HeaderField_byte_value(WS_HDR_FIN, raw);
+	ws->frame.rsv1 = HeaderField_byte_value(WS_HDR_RSV1, raw);
+	ws->frame.rsv2 = HeaderField_byte_value(WS_HDR_RSV2, raw);
+	ws->frame.rsv3 = HeaderField_byte_value(WS_HDR_RSV3, raw);
+	/* extract extended payload length */
+	WebsocketsFrame_parse_payload_length_extended(ws);
+	/* extract masking key */
+	if (ws->frame.masked)
+		ws->frame.payload_offset += WS_MASKING_KEY_LENGTH;
+	ws->frame.length = ws->frame.payload_offset + ws->frame.payload_length_extended;
+
+	WebsocketsFrame_log(&ws->frame);
+}
+
 int
 WebsocketsFrame_parse(Websockets* ws)
 {
-	assert(StringBuffer_used(ws->in) >= 2);
-
-	/* string buffer is resized so every time there is new data we have to reset all data pointers */
-	ws->frame.raw = (uint8_t*)StringBuffer_value(ws->in);
-
-	if (ws->state == WS_STATE_ESTABLISHED)
-	{
-		ws->frame.payload_length = HeaderField_byte_value(WS_HDR_PAYLOAD_LENGTH, ws->frame.raw);
-		ws->frame.payload_offset = 2;
-
-		ws->frame.opcode = HeaderField_byte_value(WS_HDR_OPCODE, ws->frame.raw);
-		ws->frame.masked = HeaderField_byte_value(WS_HDR_MASKED, ws->frame.raw);
-		ws->frame.fin = HeaderField_byte_value(WS_HDR_FIN, ws->frame.raw);
-		ws->frame.rsv1 = HeaderField_byte_value(WS_HDR_RSV1, ws->frame.raw);
-		ws->frame.rsv2 = HeaderField_byte_value(WS_HDR_RSV2, ws->frame.raw);
-		ws->frame.rsv3 = HeaderField_byte_value(WS_HDR_RSV3, ws->frame.raw);
-
-		/* extract extended payload length */
-		WebsocketsFrame_parse_payload_length_extended(ws);
-
-		/* extract masking key */
-		if (ws->frame.masked)
-			ws->frame.payload_offset += WS_MASKING_KEY_LENGTH;
-	}
+	/* frame is complete so we can set the data pointers */
+	uint8_t* raw = (uint8_t*)StringBuffer_value(ws->in);
 
 	if (ws->frame.masked)
-		ws->frame.masking_key = ws->frame.raw + ws->frame.payload_offset - WS_MASKING_KEY_LENGTH;
+		ws->frame.masking_key = raw + ws->frame.payload_offset - WS_MASKING_KEY_LENGTH;
 
 	/* calculate final payload offset */
-	ws->frame.payload_raw = ws->frame.raw + ws->frame.payload_offset;
+	ws->frame.payload_raw = raw + ws->frame.payload_offset;
 	ws->frame.payload_raw_end = ws->frame.payload_raw + ws->frame.payload_length_extended;
 
 	/* ensure we are not corrupting memory */
 	assert(ws->frame.payload_raw <= ws->frame.payload_raw_end);
-
-	/* check if frame is fully loaded into buffer, if not stop processing here */
-	long missing_payload_bytes = (char*)ws->frame.payload_raw_end - S_term(ws->in->string);
-	if (missing_payload_bytes > 0)
-	{
-		XFDBG("incomplete frame: %ld bytes missing", missing_payload_bytes);
-		ws->state = WS_STATE_INCOMPLETE;
-		return 0;
-	}
-
-	/* reset state to established (maybe WS_STATE_COMPLETE is better ?) */
-	ws->state = WS_STATE_ESTABLISHED;
-
 	assert(ws->frame.payload_raw_end <= (uint8_t*)S_term(ws->in->string));
 
 	StringBuffer_print_bytes_hex(ws->in, FRAME_HEX_NPRINT, "package bytes");
-	WebsocketsFrame_log(ws);
 
 	switch (ws->frame.opcode)
 	{
@@ -194,6 +186,7 @@ void
 WebsocketsFrame_write_to_buffer(StringBuffer* buf, uint8_t header_bits, const char* payload, uint64_t nchars, unsigned int masked)
 {
 	uint8_t header[2];
+
 	header[0] = header_bits;
 
 	uint8_t payload_offset = 2;
@@ -211,14 +204,15 @@ WebsocketsFrame_write_to_buffer(StringBuffer* buf, uint8_t header_bits, const ch
 	/* TODO debug response */
 
 	header[1] = payload_length;
-	if(masked) header[1] |= (uint8_t)WS_HDR_MASKED.bitmask;
+	if (masked)
+		header[1] |= (uint8_t)WS_HDR_MASKED.bitmask;
 
 	StringBuffer_ncat(buf, (char*)header, 2);
 
 	if (payload_length > 0)
 	{
 		/* write extended payload length */
-		switch(payload_length)
+		switch (payload_length)
 		{
 		case PAYLOAD_EXTENDED:
 			payload_offset += StringBuffer_cat_htons(buf, (uint16_t)nchars);

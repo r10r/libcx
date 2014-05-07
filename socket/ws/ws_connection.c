@@ -48,11 +48,38 @@ Websockets_process_handshake(Connection* con, Websockets* ws)
 		CXFDBG(con, "sending handshake response: \n%s", StringBuffer_value(ws->out));
 		Connection_send_buffer(con, ws->out);
 		WebsocketsHandshake_free(handshake);
-		ws->state = WS_STATE_ESTABLISHED;
+		ws->state = WS_STATE_FRAME_NEW;
 		StringBuffer_clear(ws->in);
 		StringBuffer_clear(ws->out);
 		return 1;
 	}
+}
+
+static int
+Websockets_process_frame(Connection* con, Websockets* ws)
+{
+	int parsed = WebsocketsFrame_parse(ws);
+
+	/* send response | error */
+	if (StringBuffer_used(ws->out) > 1)
+	{
+		CXFDBG(con, "Sending response buffer (%zu bytes)",
+		       StringBuffer_used(ws->out));
+		Connection_send_buffer(con, ws->out);
+		StringBuffer_clear(ws->out);
+	}
+	if (parsed == 1)
+	{
+		/* remove processed frame from input */
+		CXFDBG(con, "Shift input buffer by %llu bytes", ws->frame.length);
+		StringBuffer_shift(ws->in, ws->frame.length);
+		ws->state = WS_STATE_FRAME_NEW;
+	}
+	else if (parsed == -1)
+		// TODO send error
+		return -1;
+
+	return parsed;
 }
 
 int
@@ -65,29 +92,25 @@ Websockets_process(Connection* con, Websockets* ws)
 	case WS_STATE_NEW:
 		CXFDBG(con, "Process handshake: \n%s", StringBuffer_value(ws->in));
 		return Websockets_process_handshake(con, ws);
-	case WS_STATE_ESTABLISHED:
-	case WS_STATE_INCOMPLETE:
+	case WS_STATE_FRAME_NEW:
+	{
 		CXDBG(con, "Process frame");
-		int res = WebsocketsFrame_parse(ws);
-
-		/* send response / error */
-		if (StringBuffer_used(ws->out) > 1)
-		{
-			CXFDBG(con, "Clear response buffer %zu", StringBuffer_used(ws->out));
-			Connection_send_buffer(con, ws->out);
-			StringBuffer_clear(ws->out);
-		}
-
-		if (res == 1)
-		{
-			/* removed processed frame from input */
-			size_t nbytes =  (size_t)(ws->frame.payload_raw_end - ws->frame.raw);
-			CXFDBG(con, "Shift input buffer by %zu bytes", nbytes);
-			StringBuffer_shift(ws->in, nbytes);
-		}
-		return res;
-	case WS_STATE_CLOSED:
+		WebsocketsFrame_parse_header(ws);
+		if (WebsocketsFrame_buffer_level(ws) >= 0)
+			return Websockets_process_frame(con, ws);
+		else
+			ws->state = WS_STATE_FRAME_INCOMPLETE;
+	}
+	break;
+	case WS_STATE_FRAME_INCOMPLETE:
+	{
+		CXDBG(con, "Process incomplete frame");
+		if (WebsocketsFrame_buffer_level(ws) >= 0)
+			return Websockets_process_frame(con, ws);
+	}
+	break;
 	case WS_STATE_ERROR:
 		return -1;
 	}
+	return 1;
 }
