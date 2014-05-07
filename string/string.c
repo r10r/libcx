@@ -123,9 +123,9 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nlength_reque
 }
 
 ssize_t
-StringBuffer_append_number(StringBuffer *buffer, size_t offset, uint64_t num, size_t nbytes)
+StringBuffer_append_number(StringBuffer* buffer, size_t offset, uint64_t num, size_t nbytes)
 {
-	return StringBuffer_append(buffer, offset, (char *)&num, nbytes);
+	return StringBuffer_append(buffer, offset, (char*)&num, nbytes);
 }
 
 ssize_t
