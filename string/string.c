@@ -123,6 +123,12 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nlength_reque
 }
 
 ssize_t
+StringBuffer_append_number(StringBuffer *buffer, size_t offset, uint64_t num, size_t nbytes)
+{
+	return StringBuffer_append(buffer, offset, (char *)&num, nbytes);
+}
+
+ssize_t
 StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars)
 {
 	XFDBG("\n	buffer[length:%zu, used:%zu, unused:%zu] source[nchars:%zu]",

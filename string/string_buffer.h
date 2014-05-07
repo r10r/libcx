@@ -78,6 +78,15 @@ StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, siz
 	StringBuffer_append(buffer, StringBuffer_index_append(buffer), (s)->value, (s)->length)
 
 
+/* [ append from number ] */
+
+ssize_t
+StringBuffer_append_number(StringBuffer *buffer, size_t offset, uint64_t num, size_t nbytes);
+
+#define StringBuffer_cat_number(buffer, num, nbytes) \
+		StringBuffer_append_number(buffer, StringBuffer_index_append(buffer), num, nbytes)
+
+
 /* [ append from FD or stream ] */
 
 ssize_t
