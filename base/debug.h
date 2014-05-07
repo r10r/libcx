@@ -50,6 +50,11 @@
 		fprintf(stderr, "XERR:(%s):%s:%d - %s - errno:%d:[%s]\n", \
 			__func__, __FILE__, __LINE__, message, errno, strerror(errno))
 
+#define XFERRNO(format, ...) \
+	if (errno != 0) \
+		fprintf(stderr, "XERR:(%s):%s:%d - errno:%d:[%s] - " format "\n", \
+			__func__, __FILE__, __LINE__, errno, strerror(errno), __VA_ARGS__)
+
 #define XFERR(format, ...) \
 	fprintf(stderr, "XERR:(%s):%s:%d - " format "\n", \
 		__func__, __FILE__, __LINE__, __VA_ARGS__)
