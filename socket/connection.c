@@ -45,7 +45,27 @@ Connection_close(Connection* connection)
 void
 Connection_send(Connection* c, const char* data, size_t length)
 {
-	ssize_t nsend = send(c->fd, data, length, 0);
+	/* FIXME this is inefficient brute force sending using busy waiting - use the event loop instead */
+	size_t remaining = length;
+	size_t processed = 0;
+	ssize_t nsend = 0;
+
+	while (remaining > 0)
+	{
+		nsend = send(c->fd, data + processed, remaining, 0);
+
+		if (nsend == -1)
+		{
+			if (errno != EWOULDBLOCK || errno != EAGAIN)
+				break;
+		}
+		else
+		{
+			XFDBG("Sent bytes (%zu of %zu)", nsend, length);
+			remaining -= (size_t)nsend;
+			processed += (size_t)nsend;
+		}
+	}
 
 // @from write function documentation
 //	This function returns the number of bytes transmitted, or -1 on failure. If the socket is nonblocking, then
@@ -54,7 +74,10 @@ Connection_send(Connection* c, const char* data, size_t length)
 //	Note, however, that a successful return value merely indicates that the message has been sent without
 //	 error, not necessarily that it has been received without error.
 	if (nsend == -1)
+	{
+		XFERRNO("Writing to connection %d", c->fd);
 		c->f_handler(c, CONNECTION_EVENT_ERROR_WRITE);
+	}
 
 //	ev_io_init(&c->send_data_watcher, send_data_callback, c->connection_fd, EV_WRITE);
 //	ev_io_start(c->loop, &c->send_data_watcher);
