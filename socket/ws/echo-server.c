@@ -59,6 +59,9 @@ ws_connection_handler(Connection* connection, ConnectionEvent event)
 		Connection_close(connection);
 		break;
 	case CONNECTION_EVENT_ERROR_WRITE:
+		XDBG("Error on writing. Closing connection");
+		Websockets_free(ws);
+		Connection_close(connection);
 		break;
 	}
 	return connection;
