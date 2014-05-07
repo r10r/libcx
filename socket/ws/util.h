@@ -5,6 +5,11 @@
 #include <arpa/inet.h>  /* ntohs ... */
 #include <assert.h>
 
+typedef enum _endian { little_endian, big_endian } EndianType;
+
+EndianType
+CheckCPUEndian(void);
+
 /* host to network byte order */
 uint64_t
 hton64(uint64_t x);
