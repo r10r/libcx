@@ -6,6 +6,12 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+
+// WARNING do not enable this on linux (ARM)
+//#define UNITY_SUPPORT_64
+// use TEST_ASSERT_TRUE(num == b) for safe number comparison instead
+// TODO replace unity with ... (ctest / cunit) ?
+
 #include "unity.h"
 #include "debug.h"
 

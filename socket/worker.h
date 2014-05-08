@@ -23,7 +23,7 @@ struct worker_t
 };
 
 Worker*
-Worker_new(Worker* worker);
+Worker_new(void);
 
 void
 Worker_init(Worker* worker);

@@ -18,7 +18,7 @@
 typedef struct socket_tcp_t
 {
 	Socket socket;
-	const char* ip;
+	char* ip;
 	uint16_t port;
 } TCPSocket;
 

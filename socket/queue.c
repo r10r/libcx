@@ -103,4 +103,7 @@ Queue_destroy(Queue* queue)
 
 	/* wakeup up all waiting threads */
 	rc = pthread_cond_broadcast(queue->mutex_cond_add_item);
+
+	XFCHECK(rc == 0,
+		"pthread_cond_broadcast should exit with 0 (was %d)", rc);
 }

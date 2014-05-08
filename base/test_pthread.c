@@ -40,8 +40,6 @@ mylog(const char* message)
 static void*
 pthread_foo_run(void* arg)
 {
-	int i;
-
 	FooBar f = { .foo = "hello", .bar = NULL };
 
 	TLC_set(foobar, &f);

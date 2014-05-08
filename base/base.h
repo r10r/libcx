@@ -26,7 +26,8 @@
 	(type*)( (char*)(ptr) - offsetof(type, member))
 
 /* flat object cloning */
-#define clone(type, obj) \
+/* WARNING clone macro is defined in pthread.h (under linux) */
+#define CX_clone(type, obj) \
 	(type*)memcpy(malloc(sizeof(type)), obj, sizeof(type))
 
 #define EACH(__iter, __elem, __next) \
@@ -35,6 +36,10 @@
 /* for safely printing NULL values */
 #define NULLS(val) \
 	(val ? val : "(null)")
+
+/* requires sys/time header */
+#define timeval_diff(t_start, t_end) \
+	((double)(((t_end)->tv_sec - (t_start)->tv_sec) * 1000.0 + ((t_end)->tv_usec - (t_start)->tv_usec) / 1000.0))
 
 /* [ bit operations ]
  *

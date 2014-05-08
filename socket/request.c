@@ -1,5 +1,4 @@
 #include "request.h"
-#include "base/profile.h"
 
 void
 Request_init(Request* request)
@@ -50,5 +49,5 @@ Request_stop(Request* request)
 void
 Request_log(Request* request)
 {
-	XFDBG("Request[%p] duration:%f msec", request, timeval_diff(request->started_at, request->finished_at));
+	XFDBG("Request[%p] duration:%f msec", (void*)request, timeval_diff(request->started_at, request->finished_at));
 }

@@ -6,9 +6,6 @@
 #ifndef _CX_PROFILE_H
 #define _CX_PROFILE_H
 
-#define timeval_diff(t_start, t_end) \
-	((double)(((t_end)->tv_sec - (t_start)->tv_sec) * 1000.0 + ((t_end)->tv_usec - (t_start)->tv_usec) / 1000.0))
-
 #ifdef NPROFILE
 
 #define PROFILE_INIT
@@ -20,6 +17,8 @@
 
 #include <sys/time.h> /* clock, gettimeofday, CLOCKS_PER_SEC */
 #include <stdio.h>
+
+#include "base.h"
 
 #ifndef CLOCKS_PER_SEC
 /* (on linux CLOCKS_PER_SEC is undefined, see man 3 clock */
