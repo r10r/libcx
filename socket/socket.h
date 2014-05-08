@@ -11,7 +11,7 @@
  * gee all these function either define the error response
  * ore the success response
  */
-typedef enum socket_status_t
+typedef enum cx_socket_status_t
 {
 	SOCKET_INITIALIZED,
 	SOCKET_CREATED,

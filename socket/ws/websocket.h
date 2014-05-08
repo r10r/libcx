@@ -29,7 +29,7 @@ extern const HeaderField WS_HDR_PAYLOAD_LENGTH_EXT;
 extern const HeaderField WS_HDR_PAYLOAD_LENGTH_EXT_CONTINUED;
 
 /* https://tools.ietf.org/html/rfc6455#section-5.2 */
-typedef enum websockets_opcode_t
+typedef enum cx_websockets_opcode_t
 {
 	WS_FRAME_CONTINUATION = 0x0,    /* a continuation frame */
 	WS_FRAME_TEXT = 0x1,            /* a text frame */
@@ -52,7 +52,7 @@ typedef enum websockets_opcode_t
  * - 3000-3999 public use (libraries/frameworks/application) - IANA registration
  * - 4000-4999 private use
  */
-typedef enum websockets_status_code_t
+typedef enum cx_websockets_status_code_t
 {
 	WS_CODE_SUCCESS = 1000,                 /* normal closure */
 	WS_CODE_MOVED = 1001,                   /* server going down / browser navigated away */
@@ -69,7 +69,7 @@ typedef enum websockets_status_code_t
 	                                        // 1015 reserved for client (TLC handshake error)
 } WebsocketsStatusCode;
 
-typedef enum websockets_status_t
+typedef enum cx_websockets_status_t
 {
 	WS_STATE_NEW,
 	WS_STATE_FRAME_NEW,
@@ -79,9 +79,17 @@ typedef enum websockets_status_t
 	WS_STATE_CLOSE
 } WebsocketsState;
 
-typedef struct websockets_frame_t
+typedef struct cx_websockets_frame_t
 {
-	uint8_t payload_offset;         /* payload offset from start of frame */
+	uint8_t* payload_raw;                   /* pointer to the start of the data (points to input buffer) */
+	uint8_t* payload_raw_end;               /* pointer to last payload byte */
+	uint8_t* masking_key;                   /* pointe to the masking key */
+	uint64_t payload_length_extended;       /* decoded payload length */
+	uint64_t length;                        /* payload_length_extended + payload_offset */
+
+	uint8_t payload_offset;                 /* payload offset from start of frame */
+	uint8_t opcode;
+	uint8_t payload_length;
 
 	/* decoded bit fields */
 	unsigned int fin : 1;
@@ -89,18 +97,9 @@ typedef struct websockets_frame_t
 	unsigned int rsv2 : 1;
 	unsigned int rsv3 : 1;
 	unsigned int masked : 1;        /* bit field whether frame is masked or not */
-
-	uint8_t opcode;
-
-	uint8_t payload_length;
-	uint64_t payload_length_extended;       /* decoded payload length */
-	uint8_t* payload_raw;                   /* pointer to the start of the data (points to input buffer) */
-	uint8_t* payload_raw_end;               /* pointer to last payload byte */
-	uint8_t* masking_key;                   /* pointe to the masking key */
-	uint64_t length;                        /* payload_length_extended + payload_offset */
 } WebsocketsFrame;
 
-typedef struct websockets_state_t
+typedef struct cx_websockets_state_t
 {
 	WebsocketsFrame frame; /* the current incomming frame */
 	WebsocketsState state;
@@ -111,7 +110,7 @@ typedef struct websockets_state_t
 	StringBuffer* error_message;
 } Websockets;
 
-typedef struct websockets_handshake_t
+typedef struct cx_websockets_handshake_t
 {
 	const char* host;               /* the server's authority */
 	const char* resource;           /* the resource path from the request line */

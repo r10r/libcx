@@ -7,15 +7,15 @@
 #include "string/string_buffer.h"       /* response buffer */
 #include "base/debug.h"
 
-typedef union rpc_param_value_t RPC_Value;
-typedef struct rpc_param_t RPC_Param;
-typedef struct rpc_method_t RPC_Method;
-typedef struct rpc_request_t RPC_Request;
-typedef struct rpc_request_list_t RPC_RequestList;
+typedef union cx_rpc_param_value_t RPC_Value;
+typedef struct cx_rpc_param_t RPC_Param;
+typedef struct cx_rpc_method_t RPC_Method;
+typedef struct cx_rpc_request_t RPC_Request;
+typedef struct cx_rpc_request_list_t RPC_RequestList;
 typedef void F_RPC_Method (RPC_Request* request, StringBuffer* result_buffer);
 typedef void F_RPC_Param_deserialize (RPC_Request* request);
 
-union rpc_param_value_t
+union cx_rpc_param_value_t
 {
 	int int_value;
 	double double_value;
@@ -45,7 +45,7 @@ union rpc_param_value_t
 #define RPC_TYPE_object void*
 #define RPC_TYPE_ACCESSOR_array ptr_value
 
-typedef enum rpc_param_type_t
+typedef enum cx_rpc_param_type_t
 {
 	RPC_double,
 	RPC_longlong,
@@ -56,7 +56,7 @@ typedef enum rpc_param_type_t
 	RPC_undefined
 } RPC_Type;
 
-struct rpc_param_t
+struct cx_rpc_param_t
 {
 	const char* name;
 	RPC_Type type;
@@ -65,7 +65,7 @@ struct rpc_param_t
 	F_RPC_Param_deserialize* f_deserialize;
 };
 
-struct rpc_method_t
+struct cx_rpc_method_t
 {
 	const char* name;
 	F_RPC_Method* method;
@@ -73,7 +73,7 @@ struct rpc_method_t
 	int param_count;
 };
 
-struct rpc_request_t
+struct cx_rpc_request_t
 {
 	const char* id;
 	const char* method_name;
@@ -83,7 +83,7 @@ struct rpc_request_t
 	RPC_Value* params;
 };
 
-struct rpc_request_list_t
+struct cx_rpc_request_list_t
 {
 	StringBuffer* request_buffer;
 	StringBuffer* response_buffer;

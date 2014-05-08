@@ -23,13 +23,13 @@
 #define STRING_MAX_LENGTH (1024 * 1024 * 1024)
 #endif
 
-typedef struct string_t
+typedef struct cx_string_t
 {
 	size_t length;  /* used data */
 	char value[];   /* incomplete type, can only be used as last field */
 } String;
 
-typedef struct string_pointer_t
+typedef struct cx_string_pointer_t
 {
 	size_t length;
 	const char* value;

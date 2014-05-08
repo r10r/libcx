@@ -6,7 +6,7 @@
 
 #define UNIX_PATH_MAX 108
 
-typedef struct socket_unix_t
+typedef struct cx_socket_unix_t
 {
 	Socket socket;
 	char* path;

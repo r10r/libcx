@@ -8,7 +8,7 @@ Array_init(const void* value, unsigned long length)
 	XASSERT(sizeof(void*) == sizeof(char*),
 		"void pointer size should equal char pointer size");
 
-	struct array_header_t* hdr = cx_alloc(Array_size(length));
+	struct cx_array_header_t* hdr = cx_alloc(Array_size(length));
 
 //	XFDBG("header:%p", hdr);
 
@@ -43,7 +43,7 @@ Array_free(Array a)
 void
 Array_each(Array a, F_ArrayIterator f_array_iterator)
 {
-	struct array_header_t* hdr = Array_header(a);
+	struct cx_array_header_t* hdr = Array_header(a);
 	int i;
 
 	for (i = 0; i < (long)hdr->length; i++)
@@ -58,7 +58,7 @@ Array_match(Array a, void* key, F_ArrayMatch f_array_match)
 	if (a == NULL)
 		return i_matched;
 
-	struct array_header_t* hdr = Array_header(a);
+	struct cx_array_header_t* hdr = Array_header(a);
 	int i;
 	for (i = 0; i < (long)hdr->length; i++)
 	{
@@ -75,7 +75,7 @@ Array_match(Array a, void* key, F_ArrayMatch f_array_match)
 Array
 Array_grow(Array a, unsigned long elements)
 {
-	struct array_header_t* hdr, * new_hdr;
+	struct cx_array_header_t* hdr, * new_hdr;
 	unsigned long unused = Array_unused(a);
 	unsigned long length, new_length;
 
@@ -116,7 +116,7 @@ _Array_append(Array a, void* data)
 	if (data == NULL)
 		return a;
 
-	struct array_header_t* a_hdr = Array_header(a);
+	struct cx_array_header_t* a_hdr = Array_header(a);
 
 	unsigned long next_index = Array_next(a);
 
@@ -151,7 +151,7 @@ Array_push(Array arr, void* data)
 void*
 Array_pop(Array arr)
 {
-	struct array_header_t* hdr = Array_header(arr);
+	struct cx_array_header_t* hdr = Array_header(arr);
 
 	unsigned long index = Array_next(arr);
 

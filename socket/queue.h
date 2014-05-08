@@ -8,7 +8,7 @@
 #include "worker.h"
 #include <stdbool.h>
 
-typedef struct queue_t
+typedef struct cx_queue_t
 {
 	List* items;
 	pthread_cond_t* mutex_cond_add_item;

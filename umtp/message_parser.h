@@ -4,7 +4,7 @@
 #include "message.h"
 #include "base/base.h"
 
-typedef enum parse_event_t
+typedef enum cx_parse_event_t
 {
 	P_PROTOCOL_VALUE,
 	P_HEADER_NAME,
@@ -13,7 +13,7 @@ typedef enum parse_event_t
 	P_ERROR_MESSAGE_MALFORMED
 } ParseEvent;
 
-typedef struct message_parser_t
+typedef struct cx_message_parser_t
 {
 	RagelParser header_parser;
 	F_ParseHandler* f_body_parse;

@@ -17,9 +17,8 @@ typedef char** Array;
 typedef void F_ArrayIterator (int index, void* data);
 /* match element of array, similar to */
 typedef int F_ArrayMatch (void* data, void* key);
-struct array_header_t;
 
-struct array_header_t
+struct cx_array_header_t
 {
 	unsigned long length;
 	unsigned long unused;
@@ -28,11 +27,11 @@ struct array_header_t
 
 /* http://stackoverflow.com/questions/3922958/void-arithmetic */
 /* http://stackoverflow.com/questions/3523145/pointer-arithmetic-for-void-pointer-in-c */
-static inline struct array_header_t*
+static inline struct cx_array_header_t*
 Array_header(const Array a)
 {
-	size_t offset = sizeof(struct array_header_t) / sizeof(a);
-	struct array_header_t* hdr = (struct array_header_t*)(a - offset);
+	size_t offset = sizeof(struct cx_array_header_t) / sizeof(a);
+	struct cx_array_header_t* hdr = (struct cx_array_header_t*)(a - offset);
 
 	return hdr;
 }
@@ -62,14 +61,14 @@ Array_next(Array a)
 static inline size_t
 Array_size(unsigned long length)
 {
-	return sizeof(struct array_header_t) + sizeof(char*) * length;
+	return sizeof(struct cx_array_header_t) + sizeof(char*) * length;
 }
 
 /* get length of the given array */
 static inline size_t
 Array_sizeof(Array a)
 {
-	return sizeof(struct array_header_t) + Array_header(a)->length * sizeof(char*);
+	return sizeof(struct cx_array_header_t) + Array_header(a)->length * sizeof(char*);
 }
 
 /* last element of array */

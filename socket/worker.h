@@ -7,11 +7,11 @@
 #include "list/list.h"
 #include "base/ev.h"
 
-typedef struct worker_t Worker;
+typedef struct cx_worker_t Worker;
 
 typedef void F_WorkerHandler (Worker* worker);
 
-struct worker_t
+struct cx_worker_t
 {
 	/* statistics ? */
 	unsigned long id;               /* the worker id */

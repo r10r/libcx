@@ -18,7 +18,7 @@
 #define unblock(fd) \
 	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK)
 
-typedef enum connection_event_t
+typedef enum cx_connection_event_t
 {
 	CONNECTION_EVENT_DATA,
 
@@ -31,12 +31,12 @@ typedef enum connection_event_t
 	CONNECTION_EVENT_ERROR_WRITE
 } ConnectionEvent;
 
-typedef struct connection_t Connection;
+typedef struct cx_connection_t Connection;
 typedef Connection* F_ConnectionHandler (Connection* connection, ConnectionEvent event);
 typedef ssize_t F_ConnectionDataHandler (Connection* connection);
 
 /* created by the connection watcher */
-struct connection_t
+struct cx_connection_t
 {
 	/* FIXME limited to unix socket connections ? */
 	int fd;
