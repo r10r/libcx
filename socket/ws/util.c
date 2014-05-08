@@ -48,10 +48,14 @@ HeaderField_value(HeaderField field, void* data)
 	case HDR_FIELD_INT16:
 		return ntohs(*((uint16_t*)start)) & field.bitmask;
 	case HDR_FIELD_INT32:
-		return ntohs(*((uint32_t*)start)) & field.bitmask;
+		return ntohl(*((uint32_t*)start)) & field.bitmask;
 	case HDR_FIELD_INT64:
 		return ntoh64(*((uint64_t*)start)) & field.bitmask;
 	}
+
+	/* dead code makes GCC happy, since GCC does not check switch cases */
+	assert(0);
+	return 0;
 }
 
 uint8_t

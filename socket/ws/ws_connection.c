@@ -70,7 +70,9 @@ Websockets_process_frame(Connection* con, Websockets* ws)
 
 		/* remove processed frame from input */
 		CXFDBG(con, "Shift input buffer by %llu bytes", ws->frame.length);
-		StringBuffer_shift(ws->in, ws->frame.length);
+
+		assert(ws->frame.length <= UINT32_MAX); /* FIXME refactor String_* to accept uint64_t */
+		StringBuffer_shift(ws->in, (uint32_t)ws->frame.length);
 
 		StringBuffer_clear(ws->out);
 

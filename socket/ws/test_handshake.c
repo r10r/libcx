@@ -4,7 +4,7 @@
 static void
 test_Handshake_parse()
 {
-	FILE* file = fopen("/Users/ruben/Code/libcx/socket/ws/ws_handshake.txt", "r");
+	FILE* file = fopen("./socket/ws/ws_handshake.txt", "r");
 
 	assert(file);
 
@@ -30,9 +30,6 @@ test_Handshake_parse()
 	WebsocketsHandshake_free(handshake);
 }
 
-//#define WS_HDR(bits, opcode, payload_len) \
-// //	bits | (opcode << WS_HDR_OPCODE) | (payload_len << WS_HDR_PAYLOAD_LENGTH);
-
 static void
 test_cpu_endian()
 {
@@ -47,8 +44,9 @@ test_StringBuffer_cat_htons()
 
 	StringBuffer_cat_htons(buf, num);
 
-	uint16_t decoded = ntohs(*((uint16_t*)StringBuffer_value(buf)));
-	TEST_ASSERT_EQUAL_INT16(num, decoded);
+	uint16_t* val = (uint16_t*)StringBuffer_value(buf);
+	uint16_t decoded = ntohs(*val);
+	TEST_ASSERT_TRUE(num == decoded);
 
 	StringBuffer_free(buf);
 }
@@ -61,8 +59,9 @@ test_StringBuffer_cat_htonl()
 
 	StringBuffer_cat_htonl(buf, num);
 
-	uint32_t decoded = ntohl(*((uint32_t*)StringBuffer_value(buf)));
-	TEST_ASSERT_EQUAL_INT16(num, decoded);
+	uint32_t* val = (uint32_t*)StringBuffer_value(buf);
+	uint32_t decoded = ntohl(*val);
+	TEST_ASSERT_TRUE(num == decoded);
 
 	StringBuffer_free(buf);
 }
@@ -75,8 +74,9 @@ test_StringBuffer_cat_hton64()
 
 	StringBuffer_cat_hton64(buf, num);
 
-	uint64_t decoded = ntoh64(*((uint64_t*)StringBuffer_value(buf)));
-	TEST_ASSERT_EQUAL_INT64(num, decoded);
+	uint64_t* val = (uint64_t*)StringBuffer_value(buf);
+	uint64_t decoded = ntoh64(*val);
+	TEST_ASSERT_TRUE(num == decoded);
 
 	StringBuffer_free(buf);
 }

@@ -16,6 +16,7 @@ $(L)/test_debug_OBJS := $(TEST_OBJS) \
 $(L)/test_base_OBJS := $(TEST_OBJS) \
 	$(L)/test_base.o
 	
-$(L)/test_pthread.o: CFLAGS += -pthread -Wno-error=unused-macros
+$(L)/test_pthread_FLAGS := -lpthread
+$(L)/test_pthread.o: CFLAGS += -Wno-error=unused-macros
 $(L)/test_pthread_OBJS := $(TEST_OBJS) \
 	$(L)/test_pthread.o

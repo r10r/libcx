@@ -1,8 +1,7 @@
 # cache evaluation of path
 L := $(LOCAL_DIR)
 
-PROGRAMS += $(L)/mpd-server \
-	$(L)/libwebsock-proxy
+PROGRAMS += $(L)/mpd-server
 #TESTS += $(L)/test_jsonrpc
 
 # overwrite CFLAGS per object

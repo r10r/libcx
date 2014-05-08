@@ -9,7 +9,7 @@
 typedef struct socket_unix_t
 {
 	Socket socket;
-	const char* path;
+	char* path;
 } UnixSocket;
 
 UnixSocket*

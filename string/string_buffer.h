@@ -3,6 +3,7 @@
 
 #include "string.h"
 #include <stdarg.h>     /* vsnprintf, va_* */
+#include <stdint.h>     /* uint*_t */
 
 // should the string contain data type information ?
 typedef struct string_buffer_t
@@ -55,7 +56,7 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
 
 #define StringBuffer_log(buf, message) \
 	XFDBG("\n	%s [%p] - used:%zu, unused:%zu, length:%zu", \
-	      message, buf, StringBuffer_used(buf), StringBuffer_unused(buf), StringBuffer_length(buf))
+	      message, (void*)buf, StringBuffer_used(buf), StringBuffer_unused(buf), StringBuffer_length(buf))
 
 #define StringBuffer_equals(buf1, buf2) \
 	(strcmp(StringBuffer_value(buf1), StringBuffer_value(buf2)) == 0)

@@ -11,7 +11,7 @@ void
 RPC_Method_log(RPC_Method* method)
 {
 	XDBG("Registered RPC methods:");
-	XFDBG("* method[%s] %p params:#%d", method->name, method->method, method->param_count);
+	XFDBG("* method[%s] %p params:#%d", method->name, (unsigned char*)&method->method, method->param_count);
 	int i = 0;
 	for (i = 0; i < method->param_count; i++)
 	{

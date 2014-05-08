@@ -221,6 +221,7 @@ WebsocketsFrame_write_to_buffer(StringBuffer* buf, uint8_t header_bits, const ch
 		}
 
 		/* write payload */
-		StringBuffer_ncat(buf, payload, nchars);
+		assert(nchars <= UINT32_MAX); /* FIXME make StringBuffer_append accept uint64_t as length */
+		StringBuffer_ncat(buf, payload, (uint32_t)nchars);
 	}
 }

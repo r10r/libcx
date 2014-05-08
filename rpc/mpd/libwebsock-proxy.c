@@ -58,7 +58,7 @@ Upstream_free(struct upstream_t* upstream)
 			shutdown(upstream->fd, SHUT_RDWR);
 			close(upstream->fd);
 		}
-		StringBuffer_value(upstream->receive_buffer);
+		StringBuffer_free(upstream->receive_buffer);
 		free(upstream);
 	}
 }
@@ -94,7 +94,7 @@ onmessage(libwebsock_client_state* state, libwebsock_message* msg)
 	XFDBG("Message opcode: %d", msg->opcode);
 	XFDBG("Payload Length: %llu", msg->payload_len);
 	XFDBG("Payload: %s", msg->payload);
-	XFDBG("State %p", state);
+	XFDBG("State %p", (void*)state);
 
 	if (upstream->fd != -1)
 		proxy_payload(upstream, state, msg);

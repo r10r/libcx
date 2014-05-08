@@ -32,11 +32,11 @@ on_connect(TCPSocket* tcp)
 static void*
 thread_send_data(void* data)
 {
-	F_Connected* callback = (F_Connected*)data;
+	F_Connected* callback = on_connect;
 
 	int i;
 
-	PROFILE_BEGIN_FMT("Thread[%p] - Starting %d connections\n", pthread_self(), connections);
+	PROFILE_BEGIN_FMT("Thread[%p] - Starting %d connections\n", (void*)(pthread_self()), connections);
 	for (i = 0; i < connections; i++)
 	{
 		TCPSocket* tcp = TCPSocket_new(ip, port);
@@ -76,7 +76,7 @@ main(int argc, char** argv)
 
 	int i;
 	for (i = 0; i < thread_count; i++)
-		pthread_create(&threads[i], NULL, thread_send_data, (void*)on_connect);
+		pthread_create(&threads[i], NULL, thread_send_data, NULL);
 
 
 	for (i = 0; i < thread_count; i++)

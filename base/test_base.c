@@ -55,7 +55,7 @@ test_clone()
 	bar->xxx = "fooobar";
 	bar->foo = foo;
 
-	struct bar* cloned = clone(struct bar, bar);
+	struct bar* cloned = CX_clone(struct bar, bar);
 
 	TEST_ASSERT_NOT_EQUAL(bar, cloned);
 	TEST_ASSERT_EQUAL_INT(bar->x, cloned->x);
