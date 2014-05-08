@@ -8,12 +8,7 @@ Array_init(const void* value, unsigned long length)
 	XASSERT(sizeof(void*) == sizeof(char*),
 		"void pointer size should equal char pointer size");
 
-	struct array_header_t* hdr;
-
-	if (value)
-		hdr =  malloc(Array_size(length));
-	else
-		hdr =  calloc(Array_size(length), 1);
+	struct array_header_t* hdr = cx_alloc(Array_size(length));
 
 //	XFDBG("header:%p", hdr);
 
@@ -40,10 +35,9 @@ Array_new(unsigned long length)
 void
 Array_free(Array a)
 {
-//	XFDBG("free:%p", a);
 	if (a == NULL)
 		return;
-	free(Array_header(a));
+	cx_free(Array_header(a));
 }
 
 void

@@ -8,7 +8,7 @@ _Worker_run(void* data);
 Worker*
 Worker_new()
 {
-	Worker* worker = malloc(sizeof(Worker));
+	Worker* worker = cx_alloc(sizeof(Worker));
 
 	Worker_init(worker);
 	return worker;
@@ -17,7 +17,7 @@ Worker_new()
 void
 Worker_init(Worker* worker)
 {
-	worker->thread = malloc(sizeof(pthread_t));
+	worker->thread = cx_alloc(sizeof(pthread_t));
 	worker->loop = ev_loop_new(EVBACKEND);
 	worker->f_handler = NULL;
 }
@@ -25,8 +25,8 @@ Worker_init(Worker* worker)
 void
 Worker_free(Worker* worker)
 {
-	free(worker->thread);
-	free(worker);
+	cx_free(worker->thread);
+	cx_free(worker);
 }
 
 /* @return 0 when worker was started sucessfully */

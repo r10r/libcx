@@ -9,7 +9,7 @@ simple_body_parser(RagelParser* parser);
 MessageParser*
 MessageParser_from_buf(StringBuffer* buffer, int keep_buffer)
 {
-	MessageParser* parser = malloc(sizeof(MessageParser));
+	MessageParser* parser = cx_alloc(sizeof(MessageParser));
 	RagelParser* ragel_parser = (RagelParser*)parser;
 
 	RagelParser_init(ragel_parser);
@@ -36,7 +36,7 @@ MessageParser_free(MessageParser* parser)
 {
 	Message* message = parser->message;
 
-	free(parser);
+	cx_free(parser);
 	return message;
 }
 

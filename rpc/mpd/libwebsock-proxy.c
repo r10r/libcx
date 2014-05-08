@@ -36,7 +36,7 @@ socket_connect(const char* sock_path)
 static struct upstream_t*
 Upstream_new(const char* path)
 {
-	struct upstream_t* upstream = calloc(1, sizeof(struct upstream_t));
+	struct upstream_t* upstream = cx_alloc(sizeof(struct upstream_t));
 
 	upstream->path = path;
 	upstream->fd =  socket_connect(upstream->path);
@@ -59,7 +59,7 @@ Upstream_free(struct upstream_t* upstream)
 			close(upstream->fd);
 		}
 		StringBuffer_free(upstream->receive_buffer);
-		free(upstream);
+		cx_free(upstream);
 	}
 }
 

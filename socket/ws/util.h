@@ -1,9 +1,10 @@
-#ifndef CX_WS_UTIL_H
-#define CX_WS_UTIL_H
+#ifndef _CX_WS_UTIL_H
+#define _CX_WS_UTIL_H
 
 #include <stdint.h>     /* uint64_t */
 #include <arpa/inet.h>  /* ntohs ... */
-#include <assert.h>
+
+#include "base/base.h"
 
 typedef enum _endian { little_endian, big_endian } EndianType;
 

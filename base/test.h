@@ -12,6 +12,7 @@
 // use TEST_ASSERT_TRUE(num == b) for safe number comparison instead
 // TODO replace unity with ... (ctest / cunit) ?
 
+#include "base.h"
 #include "unity.h"
 #include "debug.h"
 

@@ -3,7 +3,7 @@
 Connection*
 Connection_new(Worker* worker, int fd)
 {
-	Connection* connection = calloc(1, sizeof(Connection));
+	Connection* connection = cx_alloc(sizeof(Connection));
 
 	Connection_init(connection, worker, fd);
 	return connection;
@@ -12,7 +12,6 @@ Connection_new(Worker* worker, int fd)
 void
 Connection_init(Connection* connection, Worker* worker, int fd)
 {
-	memset(connection, 0, sizeof(Connection));
 	connection->worker = worker;
 	connection->fd = fd;
 }
@@ -20,7 +19,7 @@ Connection_init(Connection* connection, Worker* worker, int fd)
 void
 Connection_free(Connection* connection)
 {
-	free(connection);
+	cx_free(connection);
 }
 
 void

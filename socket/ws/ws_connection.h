@@ -1,7 +1,5 @@
-#ifndef CX_WS_CONNECTION_H
-#define CX_WS_CONNECTION_H
-
-#include <assert.h>
+#ifndef _CX_WS_CONNECTION_H
+#define _CX_WS_CONNECTION_H
 
 #include "base/debug.h"
 #include "string/string_buffer.h"

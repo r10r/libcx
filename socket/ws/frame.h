@@ -1,5 +1,5 @@
-#ifndef CX_WS_FRAME_H
-#define CX_WS_FRAME_H
+#ifndef _CX_WS_FRAME_H
+#define _CX_WS_FRAME_H
 
 #include "websocket.h"
 #include "util.h"

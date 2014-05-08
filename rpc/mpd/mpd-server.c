@@ -87,7 +87,7 @@ main(int argc, char** argv)
 	if (argc != 2)
 		print_usage("Invalid parameter count");
 
-	RPC_Server* server = malloc(sizeof(RPC_Server));
+	RPC_Server* server = cx_alloc(sizeof(RPC_Server));
 
 	if (strcmp(argv[1], "unix") == 0)
 		UnixServer_init((Server*)server, "/tmp/mpd.sock");

@@ -1,5 +1,4 @@
 #include "base/test.h"
-//#include "base/xmalloc.h"
 #include "string.h"
 
 static void
@@ -22,7 +21,7 @@ test_S_dup()
 
 	TEST_ASSERT_EQUAL_INT('r', *S_last(s));
 
-	free(s);
+	S_free(s);
 }
 
 static void
@@ -41,7 +40,7 @@ test_S_sget()
 	TEST_ASSERT_NULL(S_sget(s, 4));
 	TEST_ASSERT_NULL(S_sget(s, -4));
 
-	free(s);
+	S_free(s);
 }
 
 static void
@@ -57,8 +56,8 @@ test_empty_string()
 	TEST_ASSERT_EQUAL_STRING("", sempty);
 
 
-	free(szero);
-	free(sempty);
+	S_free(szero);
+	S_free(sempty);
 }
 
 static void
@@ -87,7 +86,7 @@ test_S_write()
 	TEST_ASSERT_EQUAL_INT(6, S_fwrite(s, stdout));
 	TEST_ASSERT_EQUAL_INT(7, S_fputs(s, stdout));
 
-	free(s);
+	S_free(s);
 }
 
 static void
@@ -98,7 +97,7 @@ test_S_copy()
 
 	S_copy(s, dest);
 	TEST_ASSERT_EQUAL_STRING("foobar", dest);
-	free(s);
+	S_free(s);
 }
 
 static void
@@ -123,7 +122,7 @@ test_String_shift()
 	TEST_ASSERT_EQUAL_INT(1, String_shift(s, 3));
 	TEST_ASSERT_EQUAL_INT(0, s->length);
 
-	free(s);
+	S_free(s);
 }
 
 static void
@@ -137,7 +136,7 @@ test_S_clear()
 	TEST_ASSERT_EQUAL_STRING("", s->value);
 	TEST_ASSERT_EQUAL_INT(0, S_clear(s));
 
-	free(s);
+	S_free(s);
 }
 
 int

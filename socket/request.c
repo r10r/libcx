@@ -4,8 +4,8 @@ void
 Request_init(Request* request)
 {
 	request->status = REQUEST_STARTED;
-	request->started_at = malloc(sizeof(struct timeval));
-	request->finished_at = malloc(sizeof(struct timeval));
+	request->started_at = cx_alloc(sizeof(struct timeval));
+	request->finished_at = cx_alloc(sizeof(struct timeval));
 
 	int ret = gettimeofday(request->started_at, NULL);
 	XASSERT(ret == 0, "gettimeofday should return 0");
@@ -16,7 +16,7 @@ Request_init(Request* request)
 Request*
 Request_new(unsigned long id)
 {
-	Request* request = malloc(sizeof(Request));
+	Request* request = cx_alloc(sizeof(Request));
 
 	request->id = id;
 
@@ -27,15 +27,15 @@ Request_new(unsigned long id)
 void
 Request_free_members(Request* request)
 {
-	free(request->started_at);
-	free(request->finished_at);
+	cx_free(request->started_at);
+	cx_free(request->finished_at);
 }
 
 void
 Request_free(Request* request)
 {
 	Request_free_members(request);
-	free(request);
+	cx_free(request);
 }
 
 void

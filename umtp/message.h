@@ -3,8 +3,8 @@
 
 #include <string.h>     /* memcpy, strerror, */
 #include <stdio.h>      /* fprintf, feof, fopen, FILE */
-#include <stdlib.h>     /* free, exit, malloc */
 #include <stdbool.h>    /* true, false */
+
 #include "list/list.h"
 #include "string/string_buffer.h"
 #include "string/pair.h"

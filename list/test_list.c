@@ -13,7 +13,7 @@ static
 void
 node_free(void* data)
 {
-	free(data);
+	cx_free(data);
 }
 
 static void

@@ -15,7 +15,7 @@ free_header(void* value)
 Message*
 Message_new()
 {
-	Message* message = calloc(1, sizeof(Message));
+	Message* message = cx_alloc(sizeof(Message));
 
 	message->protocol_values = List_new();
 	message->protocol_values->f_node_data_free = free_protocol_value;
@@ -33,8 +33,8 @@ Message_free(Message* message)
 	List_free(message->headers);
 	if (!message->keep_buffer)
 		StringBuffer_free(message->buffer);
-	free(message->body);
-	free(message);
+	cx_free(message->body);
+	cx_free(message);
 }
 
 void

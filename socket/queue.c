@@ -3,12 +3,12 @@
 Queue*
 Queue_new()
 {
-	Queue* queue = malloc(sizeof(Queue));
+	Queue* queue = cx_alloc(sizeof(Queue));
 
-	queue->mutex_add_item = malloc(sizeof(pthread_mutex_t));
+	queue->mutex_add_item = cx_alloc(sizeof(pthread_mutex_t));
 	pthread_mutex_init(queue->mutex_add_item, NULL);
 
-	queue->mutex_cond_add_item = malloc(sizeof(pthread_cond_t));
+	queue->mutex_cond_add_item = cx_alloc(sizeof(pthread_cond_t));
 	pthread_cond_init(queue->mutex_cond_add_item, NULL);
 
 	queue->items = List_new();
@@ -24,12 +24,12 @@ Queue_free(Queue* queue)
 	List_free(queue->items);
 
 	pthread_mutex_destroy(queue->mutex_add_item);
-	free(queue->mutex_add_item);
+	cx_free(queue->mutex_add_item);
 
 	pthread_cond_destroy(queue->mutex_cond_add_item);
-	free(queue->mutex_cond_add_item);
+	cx_free(queue->mutex_cond_add_item);
 
-	free(queue);
+	cx_free(queue);
 }
 
 // POP returns NULL when Queue is not active anymore ?

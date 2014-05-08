@@ -28,11 +28,11 @@ typedef struct consumer_t
 static Consumer*
 Consumer_new(Queue* queue, int id)
 {
-	Consumer* consumer = malloc(sizeof(Consumer));
+	Consumer* consumer = cx_alloc(sizeof(Consumer));
 
 	consumer->id = id;
 	consumer->queue = queue;
-	consumer->thread = malloc(sizeof(pthread_t));
+	consumer->thread = cx_alloc(sizeof(pthread_t));
 	consumer->processed = 0;
 	return consumer;
 }
@@ -40,8 +40,8 @@ Consumer_new(Queue* queue, int id)
 static void
 Consumer_free(Consumer* consumer)
 {
-	free(consumer->thread);
-	free(consumer);
+	cx_free(consumer->thread);
+	cx_free(consumer);
 }
 
 static void*
@@ -57,7 +57,7 @@ start_consumer(void* data)
 		if (x)
 		{
 			int i = *x;
-			free(x);
+			cx_free(x);
 			consumer->processed++;
 
 			// queue is destroyed on the last request
@@ -101,7 +101,7 @@ test_Queue()
 	int expected_sum = 0;
 	for (i_item = 0; i_item < NITERATATIONS; i_item++)
 	{
-		int* x = malloc(sizeof(int));
+		int* x = cx_alloc(sizeof(int));
 		*x = i_item;
 		Queue_add(queue, x);
 		expected_sum += i_item;

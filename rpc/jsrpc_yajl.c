@@ -218,7 +218,7 @@ RPC_Request_deserialize(RPC_RequestList* request_list)
 
 			if (request_list->nrequests > 0)
 			{
-				request_list->requests = calloc((size_t)request_list->nrequests, sizeof(RPC_Request));
+				request_list->requests = cx_alloc((size_t)request_list->nrequests * sizeof(RPC_Request));
 				int i;
 				for (i = 0; i < request_list->nrequests; i++)
 				{
@@ -232,7 +232,7 @@ RPC_Request_deserialize(RPC_RequestList* request_list)
 		}
 		case yajl_t_object:
 			request_list->nrequests = 1;
-			request_list->requests = calloc(1, sizeof(RPC_Request));
+			request_list->requests = cx_alloc(sizeof(RPC_Request));
 			RPC_Request* request = request_list->requests;
 			request->data = json_root;
 			if (!RPC_Request_parse(request))

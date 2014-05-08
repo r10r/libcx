@@ -17,7 +17,6 @@
 #include <stdio.h>      /* fileno */
 
 #include "base/debug.h"
-//#include "base/xmalloc.h"
 
 #ifndef STRING_MAX_LENGTH
 // 1 GiB = 2^30
@@ -42,7 +41,7 @@ String_init(const char* value, size_t length);
 int
 String_shift(String* s, size_t count);
 
-#define S_free(s) (free(s))
+#define S_free(s) (cx_free(s))
 
 /* TODO hide this macro from external usage
  */
@@ -76,7 +75,7 @@ String_shift(String* s, size_t count);
 	(sizeof(String) + sizeof(char)*(length + 1 /* \0 */))
 
 #define S_alloc(length) \
-	calloc(1, S_size(length))
+	cx_alloc(S_size(length))
 
 /* to grow or shrink a string */
 // TODO @security better use calloc and memcpy to avoid memory exposure

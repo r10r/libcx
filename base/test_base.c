@@ -17,12 +17,12 @@ struct bar
 static void
 test_container_of()
 {
-	struct bar* bar = malloc(sizeof(struct bar));
+	struct bar* bar = cx_alloc(sizeof(struct bar));
 
 	bar->x = 1;
 	bar->y = 2;
 	bar->xxx = "fooobar";
-	bar->foo = malloc(sizeof(struct foo));
+	bar->foo = cx_alloc(sizeof(struct foo));
 
 	struct bar* container;
 	container = container_of(&bar->foo, struct bar, foo);
@@ -38,18 +38,18 @@ test_container_of()
 	container = container_of(bla, struct bar, xxx);
 	TEST_ASSERT_EQUAL_PTR(bar, container);
 
-	free(bar->foo);
-	free(bar);
+	cx_free(bar->foo);
+	cx_free(bar);
 }
 
 static void
 test_clone()
 {
-	struct foo* foo = malloc(sizeof(struct foo));
+	struct foo* foo = cx_alloc(sizeof(struct foo));
 
 	foo->x = 99;
 
-	struct bar* bar = malloc(sizeof(struct bar));
+	struct bar* bar = cx_alloc(sizeof(struct bar));
 	bar->x = 66;
 	bar->y = 33;
 	bar->xxx = "fooobar";
@@ -63,9 +63,9 @@ test_clone()
 	TEST_ASSERT_EQUAL_STRING(bar->xxx, cloned->xxx);
 	TEST_ASSERT_EQUAL_PTR(bar->foo, cloned->foo);
 
-	free(foo);
-	free(bar);
-	free(cloned);
+	cx_free(foo);
+	cx_free(bar);
+	cx_free(cloned);
 }
 
 static void

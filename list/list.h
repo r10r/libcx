@@ -2,9 +2,9 @@
 #define _CX_LIST_H
 
 #include <stdio.h>
-#include <stdlib.h> /* malloc */
-#include <base/base.h>
-#include <base/debug.h>
+
+#include "base/base.h"
+#include "base/debug.h"
 
 typedef struct node_t Node;
 typedef struct list_t List;

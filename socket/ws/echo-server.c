@@ -122,9 +122,9 @@ main(int argc, char** argv)
 //		print_usage("Invalid server type");
 
 	List_push(server->workers, WebsocketsWorker_new());
-//	List_push(server->workers, WebsocketsWorker_new());
-//	List_push(server->workers, WebsocketsWorker_new());
-//	List_push(server->workers, WebsocketsWorker_new());
+	List_push(server->workers, WebsocketsWorker_new());
+	List_push(server->workers, WebsocketsWorker_new());
+	List_push(server->workers, WebsocketsWorker_new());
 
 	Server_start(server);         // blocks
 }

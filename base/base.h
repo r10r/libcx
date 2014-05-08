@@ -2,6 +2,21 @@
 #define _CX_BASE_H
 
 #include <stddef.h>     /* offsetoff */
+#include <stdlib.h>     /* malloc */
+
+#ifdef NASSERT
+#define assert
+#else
+#include <assert.h>
+#endif
+
+/* [ memory management ] */
+
+#define cx_alloc(size) calloc(1, size)
+#define cx_free(ptr) free(ptr)
+
+
+
 /* see http://www.kroah.com/log/linux/container_of.html */
 /* http://psomas.wordpress.com/2009/07/01/weird-kernel-macros-container_of/ */
 
@@ -28,7 +43,7 @@
 /* flat object cloning */
 /* WARNING clone macro is defined in pthread.h (under linux) */
 #define CX_clone(type, obj) \
-	(type*)memcpy(malloc(sizeof(type)), obj, sizeof(type))
+	(type*)memcpy(cx_alloc(sizeof(type)), obj, sizeof(type))
 
 #define EACH(__iter, __elem, __next) \
 	for (; __iter && (__elem = __iter); __iter = __iter->__next)
