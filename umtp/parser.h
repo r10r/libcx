@@ -55,11 +55,11 @@
 #define RagelParser_eof(parser) \
 	((parser)->eof == (parser)->buffer_end)
 
-typedef struct ragel_parser_t RagelParser;
+typedef struct cx_ragel_parser_t RagelParser;
 typedef void F_EventHandler (RagelParser* parser, int event);
 typedef void F_ParseHandler (RagelParser* parser);
 
-struct ragel_parser_t
+struct cx_ragel_parser_t
 {
 	/* non-ragel state */
 	F_EventHandler* f_event;        /* handles parsing events */

@@ -12,7 +12,7 @@ void
 unix_connection_watcher(ev_loop* loop, ev_io* w, int revents);
 
 
-typedef struct unix_worker_t
+typedef struct cx_unix_worker_t
 {
 	Worker worker;
 	int server_fd;

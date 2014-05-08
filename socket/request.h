@@ -7,18 +7,18 @@
 #include "base/debug.h"
 #include "umtp/message.h"
 
-typedef enum request_status_t
+typedef enum cx_request_status_t
 {
 	REQUEST_STARTED,
 	REQUEST_FINISHED,
 	REQUEST_ERROR
 } RequestStatus;
 
-typedef struct request_t Request;
+typedef struct cx_request_t Request;
 
 #define MESSAGE_INITIAL_BUFFER_SIZE 1024
 
-struct request_t
+struct cx_request_t
 {
 	/* some kind of id  */
 	unsigned long id;

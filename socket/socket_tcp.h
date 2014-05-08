@@ -15,7 +15,7 @@
 
 #include "socket.h"
 
-typedef struct socket_tcp_t
+typedef struct cx_socket_tcp_t
 {
 	Socket socket;
 	char* ip;

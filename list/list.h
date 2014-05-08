@@ -6,21 +6,21 @@
 #include "base/base.h"
 #include "base/debug.h"
 
-typedef struct node_t Node;
-typedef struct list_t List;
+typedef struct cx_node_t Node;
+typedef struct cx_list_t List;
 
 typedef int F_NodeMatch (Node* node, void* key);
 typedef void F_NodeDataFree (void* data);
 typedef void F_NodeIterator (int index, Node* node);
 
-struct node_t
+struct cx_node_t
 {
 	Node* next;
 	Node* previous;
 	void* data;
 };
 
-struct list_t
+struct cx_list_t
 {
 	Node* first;
 	Node* last;

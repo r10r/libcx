@@ -10,18 +10,19 @@
 #include "string/pair.h"
 #include "parser.h"
 
-typedef struct message_t Message;
+typedef struct cx_message_t Message;
 
 #define MESSAGE_LF "\n"
 
-struct message_t
+struct cx_message_t
 {
 	List* protocol_values;  /* list of strings */
 	List* headers;          /* list of string pairs */
-	int keep_buffer;        /* do not free buffer when message is freed */
 	StringPointer* body;
 	StringBuffer* buffer;
 	StringBuffer* error;
+
+	int keep_buffer;        /* do not free buffer when message is freed */
 };
 
 Message*

@@ -3,7 +3,7 @@
 
 #include "string.h"
 
-typedef struct string_pair_t
+typedef struct cx_string_pair_t
 {
 	String* key;
 	String* value;

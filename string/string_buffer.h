@@ -6,7 +6,7 @@
 #include <stdint.h>     /* uint*_t */
 
 // should the string contain data type information ?
-typedef struct string_buffer_t
+typedef struct cx_string_buffer_t
 {
 	size_t length;  /* total buffer length */
 	String* string; /* we can now grow the string data */

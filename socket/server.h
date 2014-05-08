@@ -15,9 +15,9 @@
 #include "list/list.h"
 #include "socket.h"
 
-typedef struct server_t Server;
+typedef struct cx_server_t Server;
 
-typedef enum server_event_t
+typedef enum cx_server_event_t
 {
 	SERVER_START,
 	SERVER_SHUTDOWN
@@ -25,7 +25,7 @@ typedef enum server_event_t
 
 typedef void F_ServerHandler (Server* server, ServerEvent event);
 
-struct server_t
+struct cx_server_t
 {
 	int backlog; /* maximum pending connections */
 	ev_loop* loop;
