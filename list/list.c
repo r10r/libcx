@@ -3,7 +3,7 @@
 Node*
 Node_new()
 {
-	Node* node = calloc(1, sizeof(Node));
+	Node* node = cx_alloc(sizeof(Node));
 
 	return node;
 }
@@ -13,13 +13,13 @@ Node_free(Node* node, F_NodeDataFree* f_node_data_free)
 {
 	if (f_node_data_free)
 		f_node_data_free(node->data);
-	free(node);
+	cx_free(node);
 }
 
 List*
 List_new()
 {
-	List* list = calloc(1, sizeof(List));
+	List* list = cx_alloc(sizeof(List));
 
 	list->f_node_data_free = free;
 	return list;
@@ -38,7 +38,7 @@ List_free(List* list)
 			next = cur->next;
 			Node_free(cur, list->f_node_data_free);
 		}
-		free(list);
+		cx_free(list);
 	}
 }
 

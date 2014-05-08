@@ -59,7 +59,7 @@ StringBuffer_new(size_t length)
 	if (length > STRING_MAX_LENGTH)
 		return NULL;
 
-	StringBuffer* buf = malloc(sizeof(StringBuffer));
+	StringBuffer* buf = cx_alloc(sizeof(StringBuffer));
 	StringBuffer_init(buf, length);
 	return buf;
 }
@@ -67,7 +67,7 @@ StringBuffer_new(size_t length)
 StringBuffer*
 StringBuffer_from_string(String* string)
 {
-	StringBuffer* buf = malloc(sizeof(StringBuffer));
+	StringBuffer* buf = cx_alloc(sizeof(StringBuffer));
 
 	buf->string = string;
 	return buf;
@@ -85,7 +85,7 @@ StringBuffer_free(StringBuffer* buffer)
 	if (buffer)
 	{
 		StringBuffer_free_members(buffer);
-		free(buffer);
+		cx_free(buffer);
 	}
 }
 
@@ -272,7 +272,7 @@ StringBuffer_print_bytes_hex(StringBuffer* in, size_t nbytes, const char* messag
 StringPointer*
 StringPointer_new(const char* data, size_t length)
 {
-	StringPointer* pointer = malloc(sizeof(StringPointer));
+	StringPointer* pointer = cx_alloc(sizeof(StringPointer));
 
 	pointer->value = data;
 	pointer->length = length;
@@ -282,5 +282,5 @@ StringPointer_new(const char* data, size_t length)
 void
 StringPointer_free(StringPointer* pointer)
 {
-	free(pointer);
+	cx_free(pointer);
 }

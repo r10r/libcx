@@ -18,7 +18,7 @@ free_worker(void* data)
 Server*
 Server_new()
 {
-	Server* server = malloc(sizeof(Server));
+	Server* server = cx_alloc(sizeof(Server));
 
 	Server_init(server);
 	return server;
@@ -37,7 +37,7 @@ void
 Server_free(Server* server)
 {
 	List_free(server->workers);
-	free(server);
+	cx_free(server);
 }
 
 int

@@ -3,7 +3,7 @@
 StringPair*
 StringPair_init(String* key, String* value)
 {
-	StringPair* p = malloc(sizeof(StringPair));
+	StringPair* p = cx_alloc(sizeof(StringPair));
 
 	p->key = key;
 	p->value = value;
@@ -21,5 +21,5 @@ StringPair_free(StringPair* p)
 {
 	S_free(p->key);
 	S_free(p->value);
-	free(p);
+	cx_free(p);
 }

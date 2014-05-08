@@ -38,7 +38,7 @@ RagelParser_init(RagelParser* parser)
 RagelParser*
 RagelParser_new()
 {
-	RagelParser* parser = malloc(sizeof(RagelParser));
+	RagelParser* parser = cx_alloc(sizeof(RagelParser));
 
 	RagelParser_init(parser);
 	return parser;
@@ -47,7 +47,7 @@ RagelParser_new()
 void
 RagelParser_free(RagelParser* parser)
 {
-	free(parser);
+	cx_free(parser);
 }
 
 int

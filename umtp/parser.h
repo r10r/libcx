@@ -1,7 +1,5 @@
-#ifndef _CX_PARSER
-#define _CX_PARSER
-
-#include <assert.h>
+#ifndef _CX_PARSER_H
+#define _CX_PARSER_H
 
 #include "string/string_buffer.h"
 

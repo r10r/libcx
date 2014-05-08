@@ -8,7 +8,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <assert.h>
 #include <unistd.h> /* close */
 
 #include "socket.h"

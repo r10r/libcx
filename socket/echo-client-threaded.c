@@ -70,7 +70,7 @@ main(int argc, char** argv)
 	ip = argv[3];
 	port = (uint16_t)atoi(argv[4]);
 
-	pthread_t* threads = malloc((size_t)thread_count * sizeof(pthread_t*));
+	pthread_t* threads = cx_alloc((size_t)thread_count * sizeof(pthread_t*));
 
 	PROFILE_BEGIN_FMT("threads:%d requests/thread:%d\n", thread_count, connections);
 
@@ -85,6 +85,6 @@ main(int argc, char** argv)
 
 	PROFILE_END;
 
-	free(threads);
+	cx_free(threads);
 	return 0;
 }

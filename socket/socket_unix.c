@@ -3,7 +3,7 @@
 UnixSocket*
 UnixSocket_new(const char* path)
 {
-	UnixSocket* unix_sock = calloc(1, sizeof(UnixSocket));
+	UnixSocket* unix_sock = cx_alloc(sizeof(UnixSocket));
 	Socket* sock = (Socket*)unix_sock;
 
 	sock->namespace = PF_LOCAL; /* == PF_UNIX */
@@ -16,7 +16,7 @@ UnixSocket_new(const char* path)
 	/* check path length */
 	if (strlen(path) <= UNIX_PATH_MAX)
 	{
-		struct sockaddr_un* address = calloc(1, sizeof(struct sockaddr_un));
+		struct sockaddr_un* address = cx_alloc(sizeof(struct sockaddr_un));
 		sock->address = (struct sockaddr*)address;
 		sock->address_size = sizeof(struct sockaddr_un);
 		address->sun_family = PF_LOCAL;
@@ -32,7 +32,7 @@ UnixSocket_new(const char* path)
 void
 UnixSocket_free(UnixSocket* sock)
 {
-	free(sock->path);
-	free(((Socket*)sock)->address);
-	free(sock);
+	cx_free(sock->path);
+	cx_free(((Socket*)sock)->address);
+	cx_free(sock);
 }

@@ -7,7 +7,7 @@ unix_server_handler(Server* server, ServerEvent event);
 Server*
 UnixServer_new(const char* sock_path)
 {
-	Server* server = malloc(sizeof(Server));
+	Server* server = cx_alloc(sizeof(Server));
 
 	UnixServer_init(server, sock_path);
 	return server;
@@ -60,7 +60,7 @@ unix_server_handler(Server* server, ServerEvent event)
 			exit(1);
 		}
 		// TODO start worker supervisor
-		ev_timer* supervisor_watcher = malloc(sizeof(ev_timer));
+		ev_timer* supervisor_watcher = cx_alloc(sizeof(ev_timer));
 		ev_timer_init(supervisor_watcher, supervisor_watcher_cb, 0., 15.);
 		ev_timer_again(EV_DEFAULT, supervisor_watcher);
 		break;

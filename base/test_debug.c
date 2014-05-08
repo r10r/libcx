@@ -35,7 +35,7 @@ test_XERR()
 //	String allocated by strerror must be freed,
 //	although manpage says it should be 'const'.
 #if (!defined(__linux))
-	free(err);
+	cx_free(err);
 #endif
 }
 

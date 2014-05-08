@@ -11,7 +11,7 @@ UnixWorker_init(UnixWorker* worker)
 UnixWorker*
 UnixWorker_new()
 {
-	UnixWorker* worker = malloc(sizeof(UnixWorker));
+	UnixWorker* worker = cx_alloc(sizeof(UnixWorker));
 
 	UnixWorker_init(worker);
 	return worker;

@@ -1,5 +1,4 @@
 #include "base/test.h"
-//#include "base/xmalloc.h"
 #include "string_buffer.h"
 
 #define TEST_ASSERT_BUFFER(buf, s, blen, used, unused) \

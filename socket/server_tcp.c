@@ -6,7 +6,7 @@ tcp_server_handler(Server* server, ServerEvent event);
 Server*
 TCPServer_new(const char* ip, uint16_t port)
 {
-	Server* server = malloc(sizeof(Server));
+	Server* server = cx_alloc(sizeof(Server));
 
 	TCPServer_init(server, ip, port);
 	return server;
@@ -57,7 +57,7 @@ tcp_server_handler(Server* server, ServerEvent event)
 			exit(1);
 		}
 		// TODO start worker supervisor
-		ev_timer* timer = malloc(sizeof(ev_timer));
+		ev_timer* timer = cx_alloc(sizeof(ev_timer));
 		ev_timer_init(timer, timer_cb, 0., 15.);
 		ev_timer_again(EV_DEFAULT, timer);
 		break;

@@ -4,7 +4,7 @@
 #include "base/debug.h"
 #include "base/profile.h"
 
-PROFILE_INIT
+PROFILE_INIT;
 
 struct client_data_t
 {
@@ -40,7 +40,7 @@ int main(int argc, char** argv)
 	int connections = atoi(argv[2]);
 	char *data = argv[3];
 
-	pthread_t *threads = malloc((size_t)thread_count * sizeof(pthread_t *));
+	pthread_t *threads = cx_alloc((size_t)thread_count * sizeof(pthread_t *));
 
 	struct client_data_t d =
 	{ .socket_path			= "/tmp/echo.sock",
@@ -58,6 +58,6 @@ int main(int argc, char** argv)
 
 	PROFILE_END;
 
-	free(threads);
+	cx_free(threads);
 	return 0;
 }
