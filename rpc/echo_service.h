@@ -8,9 +8,14 @@
 #define RPC(action, ...) RPC_ ## action(Echo, __VA_ARGS__)
 
 /* export each function + method definition */
-RPC(public, echo)
-RPC(public, echo_double)
-RPC(public, echo_longlong)
+RPC(single_string_param, echo, 0, input, 0)
+RPC(export, echo)
+
+RPC(single_double_param, echo_double, 0, input, 0)
+RPC(export, echo_double)
+
+RPC(single_longlong_param, echo_longlong, 0, input, 0)
+RPC(export, echo_longlong)
 
 /* export all methods with a macro */
 #define Echo_methods \
