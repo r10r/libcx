@@ -106,6 +106,18 @@ struct rpc_method_t
 	static RPC_Param *  ns ## _ ## meth ## _params[] =
 
 
+/* [ Convenience Macros ] */
+
+#define RPC_set_string_param(ns, meth, name, pos, flags) \
+	RPC_set_param(ns, meth, pos, name, const char*, RPC_Request_get_param_string_value, RPC_String, flags)
+
+#define RPC_param_list_single(ns, meth, name) \
+	RPC_param_list(ns, meth) { &RPC_param(ns, meth, name) };
+
+#define RPC_single_string_param(ns, meth, pos, name, flags) \
+	RPC_set_string_param(ns, meth, name, pos, flags) \
+	RPC_param_list_single(ns, meth, name)
+
 /* [ Method Export ] */
 
 #define RPC_export(ns, meth) \
