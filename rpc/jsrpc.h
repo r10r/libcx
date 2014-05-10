@@ -56,7 +56,7 @@ static const char* JSONRPC_NULL = "null"; /* for invalid ID or null values*/
 #define JSONRPC_RESULT_ARRAY_END "]}"
 
 #define jsrpc_write(format, ...) \
-	StringBuffer_printf(&request->response_buffer, format, __VA_ARGS__)
+	StringBuffer_aprintf(&request->response_buffer, format, __VA_ARGS__)
 
 #define jsrpc_write_append(format, ...) \
 	StringBuffer_aprintf(&request->response_buffer, format, __VA_ARGS__)
@@ -73,6 +73,13 @@ static const char* JSONRPC_NULL = "null"; /* for invalid ID or null values*/
 #define jsrpc_write_response(format, ...) \
 	if (IS_RPC_REQUEST(request)) jsrpc_write(format, (request)->id, __VA_ARGS__)
 
+/* [ batch responses ] */
+
+#define jsrpc_begin_batch \
+	StringBuffer_cat(&request->response_buffer, "[")
+
+#define jsrpc_end_batch \
+	StringBuffer_cat(&request->response_buffer, "]")
 
 /* [ simple requests ] */
 
