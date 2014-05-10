@@ -55,6 +55,11 @@ struct rpc_method_t
 #define ARRAY_SIZE( array ) \
 	sizeof( array ) / sizeof( array[0] )
 
+/* [ Utility macros */
+
+#define IS_RPC_REQUEST(request) \
+	(request->id != NULL)
+
 /* [ RPC actions ] */
 
 #define RPC_public_name(ns, meth) \
