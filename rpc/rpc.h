@@ -109,28 +109,28 @@ struct rpc_method_t
 
 /* [ Convenience Macros ] */
 
-#define RPC_set_param_string(ns, meth, name, pos, flags) \
+#define RPC_set_param_string(ns, meth, pos, name, flags) \
 	RPC_set_param(ns, meth, pos, name, const char*, RPC_Request_get_param_value_string, RPC_String, flags)
 
-#define RPC_set_param_double(ns, meth, name, pos, flags) \
+#define RPC_set_param_double(ns, meth, pos, name, flags) \
 	RPC_set_param(ns, meth, pos, name, double, RPC_Request_get_param_value_double, RPC_Double, flags)
 
-#define RPC_set_param_longlong(ns, meth, name, pos, flags) \
+#define RPC_set_param_longlong(ns, meth, pos, name, flags) \
 	RPC_set_param(ns, meth, pos, name, long long, RPC_Request_get_param_value_longlong, RPC_LongLong, flags)
 
 #define RPC_param_list_single(ns, meth, name) \
 	RPC_param_list(ns, meth) { &RPC_param(ns, meth, name) };
 
 #define RPC_single_string_param(ns, meth, pos, name, flags) \
-	RPC_set_param_string(ns, meth, name, pos, flags) \
+	RPC_set_param_string(ns, meth, pos, name, flags) \
 	RPC_param_list_single(ns, meth, name)
 
 #define RPC_single_double_param(ns, meth, pos, name, flags) \
-	RPC_set_param_double(ns, meth, name, pos, flags) \
+	RPC_set_param_double(ns, meth, pos, name, flags) \
 	RPC_param_list_single(ns, meth, name)
 
 #define RPC_single_longlong_param(ns, meth, pos, name, flags) \
-	RPC_set_param_longlong(ns, meth, name, pos, flags) \
+	RPC_set_param_longlong(ns, meth, pos, name, flags) \
 	RPC_param_list_single(ns, meth, name)
 
 /* [ Method Export ] */
