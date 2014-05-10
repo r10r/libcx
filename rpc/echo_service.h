@@ -9,9 +9,13 @@
 
 /* export each function + method definition */
 RPC(public, echo)
+RPC(public, echo_double)
+RPC(public, echo_longlong)
 
 /* export all methods with a macro */
 #define Echo_methods \
-	RPC(public_name, echo)
+	RPC(public_name, echo), \
+	RPC(public_name, echo_double), \
+	RPC(public_name, echo_longlong)
 
 #endif
