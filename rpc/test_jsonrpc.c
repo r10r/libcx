@@ -4,8 +4,13 @@
 static void
 test_jsrpc_printf()
 {
-	printf("%s\n", JSONRPC_RESPONSE);
+	printf("%s\n", JSONRPC_RESPONSE_SIMPLE);
 	printf("%s\n", JSONRPC_RESPONSE_STRING);
+	printf("%s\n", JSONRPC_RESPONSE_DOUBLE);
+	printf("%s\n", JSONRPC_RESPONSE_LONGLONG);
+	printf("%s\n", JSONRPC_RESPONSE_FALSE);
+	printf("%s\n", JSONRPC_RESPONSE_TRUE);
+	printf("%s\n", JSONRPC_RESPONSE_NULL);
 	printf("%s\n", JSONRPC_ERROR);
 	jsrpc_fprintf_response(stdout, "22", "foobar");
 	jsrpc_fprintf_error(stdout, NULL, jsrpc_ERROR_INVALID_REQUEST, "Invalid request");
