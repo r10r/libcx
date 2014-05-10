@@ -32,6 +32,7 @@ struct rpc_request_t
 	StringBuffer response_buffer;
 
 	RPC_Param* params[MAX_PARAMS];
+	void* userdata;
 };
 
 struct rpc_param_t
@@ -46,14 +47,14 @@ struct rpc_method_t
 {
 	const char* name;
 	F_RPC_Method* method;
-	RPC_Param* signature;
+	RPC_Param** signature;
 	int param_count;
 };
 
 #define ARRAY_SIZE( array ) \
 	sizeof( array ) / sizeof( array[0] )
 
-/* [RPC actions] */
+/* [ RPC actions ] */
 
 #define RPC_public_name(ns, meth) \
 	ns ## _ ## meth
@@ -64,7 +65,8 @@ struct rpc_method_t
 #define RPC_params_name(ns, meth) \
 	ns ## _ ## meth ## _params
 
-/* ---------------------------- */
+
+/* [ Method definition ] */
 
 #define RPC_method(ns, meth) \
 	void ns ## _ ## meth ## _method(RPC_Request * request)
@@ -75,22 +77,8 @@ struct rpc_method_t
 #define RPC_def(ns, meth) \
 	{ #meth, RPC_method_name(ns, meth), RPC_params_name(ns, meth), ARRAY_SIZE(RPC_params_name(ns, meth)) }
 
-/* [Export Definitions] */
 
-#define RPC_export(ns, meth) \
-	RPC_Method ns ## _ ## meth = RPC_def(ns, meth)
-
-#define RPC_export_without_params(ns, meth) \
-	RPC_Method ns ## _ ## meth = { #meth, RPC_method_name(ns, meth), NULL, 0 }
-
-#define RPC_public(ns, meth) \
-	RPC_method(ns, meth); \
-	extern RPC_Method ns ## _ ## meth;
-
-#define RPC_methods(ns) \
-	ns ## _ ## methods
-
-/* [Parameter Handling] */
+/* [ Parameter Handling ] */
 
 #define RPC_param(ns, meth, name) \
 	ns ## _ ## meth ## _param_ ## name
@@ -104,8 +92,8 @@ struct rpc_method_t
 
 #define RPC_param_define_deserialize(ns, meth, name, param_name, type, func) \
 	static inline \
-	type RPC_param_deserialize(ns, meth, name) (void* data) \
-	{return func(&RPC_param(ns, meth, param_name), data); }
+	type RPC_param_deserialize(ns, meth, name) (RPC_Request * request) \
+	{ return func(request, &RPC_param(ns, meth, param_name)); }
 
 #define RPC_set_param(ns, meth, pos, name, type, func, rpc_type, flags) \
 	RPC_param_define(ns, meth, name, rpc_type, pos, flags) \
@@ -113,10 +101,26 @@ struct rpc_method_t
 	RPC_param_define_deserialize(ns, meth, pos, name, type, func)
 
 #define RPC_get_param(ns, meth, name) \
-	RPC_param_deserialize(ns, meth, name) (NULL)
+	RPC_param_deserialize(ns, meth, name) (request)
 
 #define RPC_param_list(ns, meth) \
 	static RPC_Param *  ns ## _ ## meth ## _params[] =
+
+
+/* [ Method Export ] */
+
+#define RPC_export(ns, meth) \
+	RPC_Method ns ## _ ## meth = RPC_def(ns, meth)
+
+#define RPC_export_without_params(ns, meth) \
+	RPC_Method ns ## _ ## meth = { #meth, RPC_method_name(ns, meth), NULL, 0 }
+
+#define RPC_public(ns, meth) \
+	RPC_method(ns, meth); \
+	extern RPC_Method ns ## _ ## meth;
+
+#define RPC_methods(ns) \
+	ns ## _ ## methods
 
 /* [Service API] */
 
@@ -142,10 +146,10 @@ RPC_Request_free(RPC_Request* request);
 
 /* [Plugin API] */
 
-extern void*
-get_param_value_string(RPC_Param* param, int index, void* data);
+extern const char*
+RPC_Request_get_param_string_value(RPC_Request* request, RPC_Param* param);
 
 extern void
-dispatch_request(RPC_Request* request, RPC_Method methods[]);
+RPC_Request_dispatch(RPC_Request* request, RPC_Method methods[]);
 
 #endif

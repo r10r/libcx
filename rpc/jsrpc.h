@@ -16,13 +16,13 @@ static const char* const JSONRPC_ERROR = JSONRPC_RESPONSE_HEADER JSONRPC_ERROR_S
 static const char* JSONRPC_NULL = "null"; /* for invalid ID or null values*/
 
 static const char* const JSONRPC_REQUEST =
-	JSONRPC_RESPONSE_HEADER "\"method\":\"%s\",\"params\":{\"%s\":\"%s\"}}";
+	JSONRPC_RESPONSE_HEADER "\"method\":\"%s\",\"params\":{\"%s\":\"%s\"}}\n";
 
 static const char* const JSONRPC_REQUEST_POS =
-	JSONRPC_RESPONSE_HEADER "\"method\":\"%s\",\"params\":[\"%s\"]}";
+	JSONRPC_RESPONSE_HEADER "\"method\":\"%s\",\"params\":[\"%s\"]}\n";
 
 static const char* const JSONRPC_NOTIFICATION =
-	JSONRPC_VERSION ",\"method\":\"%s\",\"params\":{\"%s\":\"%s\"}}";
+	JSONRPC_VERSION ",\"method\":\"%s\",\"params\":{\"%s\":\"%s\"}}\n";
 
 typedef enum json_error_code
 {

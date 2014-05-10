@@ -5,7 +5,7 @@
 
 /* namespace  declaration */
 #undef RPC
-#define RPC(action, cmd) RPC_ ## action(HelloWorld, cmd)
+#define RPC(action, ...) RPC_ ## action(HelloWorld, __VA_ARGS__)
 
 /* export each function + method definition */
 RPC(public, foo)

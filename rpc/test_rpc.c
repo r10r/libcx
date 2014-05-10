@@ -7,13 +7,13 @@
 
 /* deserialize methods */
 static const char*
-get_foo_value(RPC_Param* param, void* data)
+get_foo_value(RPC_Request* request, RPC_Param* param)
 {
 	return "foo";
 }
 
 static int
-get_bar_value(RPC_Param* param, void* data)
+get_bar_value(RPC_Request* request, RPC_Param* param)
 {
 	return 666;
 }
@@ -25,6 +25,8 @@ RPC(set_param, foobar, 1, bar, int, get_bar_value, RPC_Number, 0)
 static void
 test_parameter_definition()
 {
+	/* must be defined for RPC_get_param macro */
+	RPC_Request* request = NULL;
 	const char* foo;
 	int bar;
 
