@@ -7,8 +7,6 @@ static const char* JSONRPC_ID_PATH[] = { "id", NULL };
 static const char* JSONRPC_METHOD_PATH[] = { "method", NULL };
 static const char* JSONRPC_PARAMS_PATH[] = { "params", NULL };
 
-// TODO error handling for parameter parsing ?
-
 static yajl_val
 get_param_value(RPC_Request* request, RPC_Param* param)
 {
@@ -149,13 +147,11 @@ set_request_id(RPC_Request* request, yajl_val root)
 			break;
 		default:
 			printf("Invalid type %d for property id\n", v->type);
-			// TODO return invalid request with null id if not notification
 			return 0;
 		}
 	}
 	else
-		// its' a notification
-		printf("Request has no id - it must be a notification\n");
+		printf("Received a notification\n");
 
 	return 1;
 }
@@ -175,7 +171,6 @@ set_request_method(RPC_Request* request, yajl_val root)
 			fprintf(stderr, "Invalid type %d for parameter 'method'\n", v->type);
 	}
 	else
-		// TODO return invalid request
 		fprintf(stderr, "Request has no parameter 'method'\n");
 	return 0;
 }
