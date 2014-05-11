@@ -7,27 +7,10 @@ static const char* JSONRPC_ID_PATH[] = { "id", NULL };
 static const char* JSONRPC_METHOD_PATH[] = { "method", NULL };
 static const char* JSONRPC_PARAMS_PATH[] = { "params", NULL };
 
-enum request_type
-{
-	REQUEST_NOTIFICATION,
-	REQUEST_SINGLE,
-	REQUEST_BATCH
-};
-
-typedef struct request_status_t
-{
-	enum request_type type;
-
-	int last_error;
-	enum request_type last; /* previous response in batch request */
-	yajl_val root;
-	yajl_val req_root;
-} RequestStatus;
-
 static yajl_val
 get_param_value(RPC_Request* request, RPC_Param* param)
 {
-	yajl_val params = yajl_tree_get((yajl_val)request->userdata, JSONRPC_PARAMS_PATH, yajl_t_any);
+	yajl_val params = yajl_tree_get((yajl_val)request->data, JSONRPC_PARAMS_PATH, yajl_t_any);
 
 	if (YAJL_IS_ARRAY(params))
 	{
@@ -140,6 +123,7 @@ check_jsonrpc_version(RPC_Request* request, yajl_val root)
 	return 0;
 }
 
+/* @return 0 if request is malformed, 1 else */
 static int
 set_request_id(RPC_Request* request, yajl_val root)
 {
@@ -150,7 +134,7 @@ set_request_id(RPC_Request* request, yajl_val root)
 		switch (v->type)
 		{
 		case yajl_t_null:
-			fprintf(stderr, "Using null as id is discouraged!\n");
+			fprintf(stderr, "Using null as id is discouraged! Request be handled as notification\n");
 			return 0;
 		case yajl_t_number:
 			request->id = YAJL_GET_NUMBER(v);
@@ -171,6 +155,7 @@ set_request_id(RPC_Request* request, yajl_val root)
 	return 1;
 }
 
+/* @return 0 if request is malformed, 1 else */
 static int
 set_request_method(RPC_Request* request, yajl_val root)
 {
@@ -190,14 +175,12 @@ set_request_method(RPC_Request* request, yajl_val root)
 	return 0;
 }
 
-/* @returns 0 if request is malformed, 1 else */
+/* @return 0 if request is malformed, 1 else */
 static int
 RPC_Request_parse(RPC_Request* request)
 {
 	int ret;
-	yajl_val root = (yajl_val)request->userdata;
-
-	printf("YYYYYY: %p obj:%d\n", root, YAJL_IS_OBJECT(root));
+	yajl_val root = (yajl_val)request->data;
 
 	ret = check_jsonrpc_version(request, root);
 	if (!ret)
@@ -214,147 +197,57 @@ RPC_Request_parse(RPC_Request* request)
 	return 1;
 }
 
-/*
- * @return the number of requests (> 0) or 0 if the input is invalid
- * @malloc request (count * sizeof(Request))
- */
-static size_t
-RPC_Request_deserialize(Pipeline* pipeline)
+int
+RPC_Request_deserialize(RPC_RequestList* request_list)
 {
 	char errbuf[1024];
-	size_t nrequests = 0;
 
-	yajl_val root = yajl_tree_parse(StringBuffer_value(pipeline->request_buffer), errbuf, sizeof(errbuf));
+	request_list->nrequests = 0;
 
-	pipeline->userdata = root;
+	yajl_val json_root = yajl_tree_parse(StringBuffer_value(request_list->request_buffer), errbuf, sizeof(errbuf));
 
-	printf("YYYYYY: %p obj:%d arr:%d\n", root, YAJL_IS_OBJECT(root), YAJL_IS_ARRAY(root));
+	request_list->data = json_root;
 
-	if (root)
+	if (json_root)
 	{
-		switch (root->type)
+		switch (json_root->type)
 		{
 		case yajl_t_array:
 		{
-			nrequests = root->u.array.len;
-			pipeline->requests = calloc(nrequests, sizeof(RPC_Request));
-			size_t i;
-			for (i = 0; i < nrequests; i++)
+			request_list->nrequests = (int)json_root->u.array.len;
+			request_list->requests = calloc((size_t)request_list->nrequests, sizeof(RPC_Request));
+			int i;
+			for (i = 0; i < request_list->nrequests; i++)
 			{
-				RPC_Request* request = pipeline->requests + i;
-				request->userdata = root->u.array.values[i];
+				RPC_Request* request = request_list->requests + i;
+				request->data = json_root->u.array.values[i];
 				RPC_Request_parse(request);
 			}
 			break;
 		}
 		case yajl_t_object:
-			nrequests = 1;
-			pipeline->requests = calloc(1, sizeof(RPC_Request));
-			RPC_Request* request = pipeline->requests;
-			request->userdata = root;
+			request_list->nrequests = 1;
+			request_list->requests = calloc(1, sizeof(RPC_Request));
+			RPC_Request* request = request_list->requests;
+			request->data = json_root;
 			RPC_Request_parse(request);
 			break;
 		default:
-			fprintf(stderr, "Invalid request (neither object/nor array)\n");
+			StringBuffer_cat(request_list->result_buffer, "Invalid request: Neither a JSON object nor array.");
 		}
 	}
 	else
-		fprintf(stderr, "Invalid request. Failed to parse request: \n%s\n", errbuf);
-
-	return nrequests;
-}
-
-Pipeline*
-RPC_Pipeline_new()
-{
-	Pipeline* pipeline = calloc(1, sizeof(Pipeline));
-
-	pipeline->request_buffer = StringBuffer_new(2048);
-	pipeline->response_buffer = StringBuffer_new(2048);
-	pipeline->result_buffer = StringBuffer_new(2048);
-
-	return pipeline;
-}
-
-void
-RPC_Pipeline_free(Pipeline* pipeline)
-{
-	// destroy pipeline (TODO recycle pipeline for next request | pooling)
-	yajl_tree_free((yajl_val)pipeline->userdata);
-	free(pipeline->requests);
-	StringBuffer_free(pipeline->result_buffer);
-	StringBuffer_free(pipeline->request_buffer);
-	StringBuffer_free(pipeline->response_buffer);
-	free(pipeline);
-}
-
-/*
- * A batch request is just a list of independent requests (no atomicity)
- * - the service can decide whether all requests in a batch request must
- *       be not-malformed for any request to be processed
- *
- * process request
- * - a request writes the result to the result buffer
- * - after the request has been processed the result buffer is
- *      appended to the response buffer
- *
- *      - multiple requests of a batch-request are always passed serially
- *              to the service
- *      - the service might multiplex multiple requests (e.g mpd_command_list_begin/end)
- *
- *      TODO test mpd command list behaviour
- */
-void
-RPC_Pipeline_process(Pipeline* pipeline, RPC_Method methods[])
-{
-	printf("Dispatching request: \n<<<\n%s\n>>>\n", StringBuffer_value(pipeline->request_buffer));
-
-	pipeline->nrequests = RPC_Request_deserialize(pipeline);
-	printf("Requests: %zu\n", pipeline->nrequests);
-
-	// begin batch response
-	if (pipeline->nrequests > 1)
-		StringBuffer_ncat(pipeline->response_buffer, "[", 1);
-
-	size_t i;
-	for (i = 0; i < pipeline->nrequests; i++)
 	{
-		RPC_Request* request = pipeline->requests + i;
-		// lookup service method
-		request->method = RPC_Request_lookup_method(request, methods);
-
-		if (request->method)
-			request->method->method(request, pipeline->result_buffer);
-		else
-		{
-			// method not found
-			StringBuffer_printf(pipeline->result_buffer, JSONRPC_ERROR_SIMPLE,
-					    jsrpc_ERROR_METHOD_NOT_FOUND, "Method not found");
-		}
-
-		// append response with result or error to response buffer
-		if (request->id)
-		{
-			if (i > 0 && pipeline->nrequests > 1)
-				StringBuffer_ncat(pipeline->response_buffer, ",", 1);
-
-			if (StringBuffer_used(pipeline->result_buffer) == 0)
-				// no result
-				StringBuffer_aprintf(pipeline->response_buffer,
-						     JSONRPC_RESPONSE_NULL, request->id);
-			else
-				StringBuffer_aprintf(pipeline->response_buffer,
-						     JSONRPC_RESPONSE_SIMPLE, request->id, StringBuffer_value(pipeline->result_buffer));
-
-			// clear result buffer after each request
-			StringBuffer_clear(pipeline->result_buffer);
-		}
+		request_list->nrequests = -1;
+		StringBuffer_printf(request_list->result_buffer,
+				    "Failed to parse request JSON: \n%s\n", errbuf);
 	}
 
-	// end batch response
-	if (pipeline->nrequests > 1)
-		StringBuffer_ncat(pipeline->response_buffer, "]", 1);
+	return request_list->nrequests;
+}
 
-	// return response buffer
-	printf("Response: \n<<<\n%s\n>>>\n", StringBuffer_value(pipeline->response_buffer));
+inline void
+RPC_RequestList_free_data(RPC_RequestList* pipeline)
+{
+	yajl_tree_free((yajl_val)pipeline->data);
 }

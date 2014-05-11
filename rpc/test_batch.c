@@ -8,7 +8,7 @@
 static void
 test_write_object()
 {
-	Pipeline* pipeline = RPC_Pipeline_new();
+	RPC_RequestList* pipeline = RPC_RequestList_new();
 
 	RPC_Method mpd_methods[] = { RPC_methods(MusicPlayerDaemon), RPC_Method_none };
 
@@ -18,8 +18,8 @@ test_write_object()
 	StringBuffer_fload(pipeline->request_buffer, f, 128);
 	fclose(f);
 
-	RPC_Pipeline_process(pipeline, mpd_methods);
-	RPC_Pipeline_free(pipeline);
+	RPC_RequestList_process(pipeline, mpd_methods);
+	RPC_RequestList_free(pipeline);
 }
 
 int
