@@ -88,7 +88,7 @@ static const char* const JSONRPC_NOTIFICATION =
 
 /* [ error codes ] */
 
-typedef enum json_error_code
+typedef enum cx_json_error_code
 {
 	jsrpc_ERROR_PARSE_ERROR = -32700,
 	jsrpc_ERROR_INVALID_REQUEST = -32600,
