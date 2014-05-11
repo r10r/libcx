@@ -6,7 +6,8 @@ assert_response_equals(RPC_Method methods[], StringBuffer* request, StringBuffer
 {
 	RPC_RequestList* request_list = RPC_RequestList_new();
 
-	StringBuffer_cat(request_list->request_buffer, StringBuffer_value(request));
+	if (StringBuffer_used(request) > 0)
+		StringBuffer_cat(request_list->request_buffer, StringBuffer_value(request));
 
 	RPC_RequestList_process(request_list, methods);
 
