@@ -10,13 +10,14 @@ const RPC_Method RPC_Method_none =  {
 void
 RPC_Method_log(RPC_Method* method)
 {
-	printf("* method[%s] %p params:#%d\n", method->name, method->method, method->param_count);
+	XDBG("Registered RPC methods:");
+	XFDBG("* method[%s] %p params:#%d", method->name, method->method, method->param_count);
 	int i = 0;
 	for (i = 0; i < method->param_count; i++)
 	{
 		RPC_Param* param = method->signature[i];
-		printf("  param[%d] name:%s type:%d, flags:%d\n",
-		       param->pos, param->name, param->type, param->flags);
+		XFDBG("  param[%d] name:%s type:%d, flags:%d",
+		      param->pos, param->name, param->type, param->flags);
 	}
 }
 

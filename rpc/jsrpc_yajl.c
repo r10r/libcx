@@ -18,7 +18,7 @@ get_param_value(RPC_Request* request, RPC_Param* param)
 		if (param->pos < (int)params->u.array.len)
 			return *(params->u.array.values + param->pos);
 		else
-			fprintf(stderr, "Param index[%d] out of bounds\n", param->pos);
+			XFERR("Param index[%d] out of bounds", param->pos);
 	}
 	else if (YAJL_IS_OBJECT(params))
 	{
@@ -42,21 +42,20 @@ RPC_Request_get_param_value_string(RPC_Request* request, RPC_Param* param)
 		case yajl_t_null:
 			break;
 		case yajl_t_string:
-			fprintf(stderr, "Deserialized parameter[%d] %s --> %s\n",
-				param->pos, param->name, value->u.string);
+			XFDBG("Deserialized parameter[%d] %s --> %s",
+			      param->pos, param->name, value->u.string);
 			return value->u.string;
 		default:
 		{
-			fprintf(stderr, "Parameter [%d:%s] is not a string value.\n",
-				param->pos, param->name);
+			XFERR("Parameter [%d:%s] is not a string value.",
+			      param->pos, param->name);
 			request->error = jsrpc_ERROR_INVALID_PARAMS;
 			break;
 		}
 		}
 	}
 	else
-		fprintf(stderr, "Missing param[%d] named '%s'\n",
-			param->pos, param->name);
+		XFERR("Missing param[%d] named '%s'", param->pos, param->name);
 
 	return NULL;
 }
@@ -71,12 +70,12 @@ RPC_Request_get_param_value_longlong(RPC_Request* request, RPC_Param* param)
 		if (YAJL_IS_INTEGER(value))
 			return YAJL_GET_INTEGER(value);
 		else
-			fprintf(stderr, "Parameter [%d:%s] is not a longlong value.\n",
-				param->pos, param->name);
+			XFERR("Parameter [%d:%s] is not a longlong value.",
+			      param->pos, param->name);
 	}
 	else
-		fprintf(stderr, "Missing param[%d] named '%s'\n",
-			param->pos, param->name);
+		XFERR("Missing param[%d] named '%s'",
+		      param->pos, param->name);
 
 
 	return 0;
@@ -92,11 +91,11 @@ RPC_Request_get_param_value_double(RPC_Request* request, RPC_Param* param)
 		if (YAJL_IS_DOUBLE(value))
 			return YAJL_GET_DOUBLE(value);
 		else
-			fprintf(stderr, "Parameter [%d:%s] is not a double value.\n",
-				param->pos, param->name);
+			XFERR("Parameter [%d:%s] is not a double value.",
+			      param->pos, param->name);
 	}
 	else
-		fprintf(stderr, "Missing param[%d] named '%s'\n", param->pos, param->name);
+		XFERR("Missing param[%d] named '%s'", param->pos, param->name);
 
 	return 0;
 }
@@ -115,13 +114,13 @@ check_jsonrpc_version(RPC_Request* request, yajl_val root)
 			if (strcmp(jsonrpc_version, "2.0") == 0)
 				return 1;
 			else
-				fprintf(stderr, "Unsupported jsonrpc version '%s'\n", jsonrpc_version);
+				XFERR("Unsupported jsonrpc version '%s'", jsonrpc_version);
 		}
 		else
-			fprintf(stderr, "Invalid type %d for property 'jsonrpc'\n", v->type);
+			XFERR("Invalid type %d for property 'jsonrpc'", v->type);
 	}
 	else
-		fprintf(stderr, "No 'jsonrpc' version string\n");
+		XERR("No 'jsonrpc' version string");
 
 	return 0;
 }
@@ -137,7 +136,7 @@ set_request_id(RPC_Request* request, yajl_val root)
 		switch (v->type)
 		{
 		case yajl_t_null:
-			fprintf(stderr, "Using null as id is discouraged! Request be handled as notification\n");
+			XERR("Using null as id is discouraged! Request be handled as notification");
 			return 0;
 		case yajl_t_number:
 			request->id = YAJL_GET_NUMBER(v);
@@ -146,12 +145,12 @@ set_request_id(RPC_Request* request, yajl_val root)
 			request->id = YAJL_GET_STRING(v);
 			break;
 		default:
-			printf("Invalid type %d for property id\n", v->type);
+			XFERR("Invalid type %d for property id", v->type);
 			return 0;
 		}
 	}
 	else
-		printf("Received a notification\n");
+		XDBG("Received a notification");
 
 	return 1;
 }
@@ -168,10 +167,10 @@ set_request_method(RPC_Request* request, yajl_val root)
 		if (request->method_name)
 			return 1;
 		else
-			fprintf(stderr, "Invalid type %d for parameter 'method'\n", v->type);
+			XFDBG("Invalid type %d for parameter 'method'", v->type);
 	}
 	else
-		fprintf(stderr, "Request has no parameter 'method'\n");
+		XDBG("Request has no parameter 'method'");
 	return 0;
 }
 

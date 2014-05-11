@@ -126,7 +126,7 @@ append_delimiter(RPC_RequestList* request_list, int i)
 void
 RPC_RequestList_process(RPC_RequestList* request_list, RPC_Method methods[])
 {
-	printf("Dispatching request: \n<<<\n%s\n>>>\n", StringBuffer_value(request_list->request_buffer));
+	XFDBG("Dispatching request: \n<<<\n%s\n>>>", StringBuffer_value(request_list->request_buffer));
 
 	RPC_Request_deserialize(request_list);
 
@@ -167,5 +167,5 @@ RPC_RequestList_process(RPC_RequestList* request_list, RPC_Method methods[])
 	}
 
 	/* return response buffer */
-	printf("Response: \n<<<\n%s\n>>>\n", StringBuffer_value(request_list->response_buffer));
+	XFDBG("Response: \n<<<\n%s\n>>>", StringBuffer_value(request_list->response_buffer));
 }
