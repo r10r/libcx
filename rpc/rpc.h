@@ -50,6 +50,7 @@ struct rpc_request_t
 	int error;
 	RPC_Param* params[MAX_PARAMS];
 	void* data;
+	int response_written;
 };
 
 struct rpc_request_list_t
@@ -199,7 +200,9 @@ extern void
 RPC_RequestList_free_data(RPC_RequestList* request_list);
 
 /*
- * @return the number of requests (> 0) or 0 if the input is invalid
+ * @return the number of requests (> 0)
+ * -1 if input is invalid JSON
+ * 0 if input is not a valid JSON RPC request object
  * @malloc request (count * sizeof(Request))
  */
 extern int

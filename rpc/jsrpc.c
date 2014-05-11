@@ -1,37 +1,61 @@
 #include "jsrpc.h"
 
+const char*
+jsrpc_strerror(int code)
+{
+	switch (code)
+	{
+	case jsrpc_ERROR_PARSE_ERROR: return "Parse error";
+	case jsrpc_ERROR_INVALID_REQUEST: return "Invalid Request";
+	case jsrpc_ERROR_METHOD_NOT_FOUND: return "Method not found";
+	case jsrpc_ERROR_INVALID_PARAMS: return "Invalid params";
+	case jsrpc_ERROR_INTERNAL: return "Internal error";
+	default: return "Undefined error";
+	}
+}
+
 static void
-RPC_Pipeline_process_request(RPC_RequestList* request_list, int nrequest, RPC_Method methods[])
+RPC_RequestList_process_request(RPC_RequestList* request_list, int nrequest, RPC_Method methods[])
 {
 	RPC_Request* request = request_list->requests + nrequest;
 
-	/* lookup service method */
-	RPC_Method* rpc_method = RPC_Request_lookup_method(request, methods);
-
-	if (!rpc_method)
+	/* check for deserialization errors (only invalid request) */
+	if (request->error)
 	{
-		/* method not found */
-		request->error = jsrpc_ERROR_METHOD_NOT_FOUND;
-		StringBuffer_cat(request_list->result_buffer, "Method not found");
+		StringBuffer_aprintf(request_list->response_buffer,
+				     JSONRPC_RESPONSE_ERROR, (request->id ? request->id : JSONRPC_NULL), request->error,
+				     jsrpc_strerror(request->error));
+		request->response_written = 1;
 	}
 	else
-		rpc_method->method(request, request_list->result_buffer);
-
-	/* append result to response buffer if request is not a notification */
-	if (request->id)
 	{
-		if (nrequest > 0)
-			StringBuffer_ncat(request_list->response_buffer, ",", 1);
-
-		if (request->error)
+		/* lookup service method */
+		RPC_Method* rpc_method = NULL;
+		if (request->method_name)
 		{
-			StringBuffer_aprintf(request_list->response_buffer,
-					     JSONRPC_RESPONSE_ERROR, request->id, request->error,
-					     StringBuffer_value(request_list->result_buffer));
+			rpc_method = RPC_Request_lookup_method(request, methods);
+			if (!rpc_method)
+			{
+				/* method not found */
+				request->error = jsrpc_ERROR_METHOD_NOT_FOUND;
+				StringBuffer_cat(request_list->result_buffer, "Method not found");
+			}
+			else
+				rpc_method->method(request, request_list->result_buffer);
 		}
-		else
+
+		/* append result to response buffer if request is not a notification */
+		if (request->id)
 		{
-			if (StringBuffer_used(request_list->result_buffer) > 0)
+			request->response_written = 1;
+			/* check for execution error */
+			if (request->error)
+			{
+				StringBuffer_aprintf(request_list->response_buffer,
+						     JSONRPC_RESPONSE_ERROR, request->id, request->error,
+						     StringBuffer_value(request_list->result_buffer));
+			}
+			else if (StringBuffer_used(request_list->result_buffer) > 0)
 			{
 				StringBuffer_aprintf(request_list->response_buffer,
 						     JSONRPC_RESPONSE_SIMPLE, request->id,
@@ -50,6 +74,14 @@ RPC_Pipeline_process_request(RPC_RequestList* request_list, int nrequest, RPC_Me
 	StringBuffer_clear(request_list->result_buffer);
 }
 
+static inline void
+append_delimiter(RPC_RequestList* request_list, int i)
+{
+	if ((i > 0 && i < request_list->nrequests) &&
+	    (request_list->requests + i - 1)->response_written)
+		StringBuffer_ncat(request_list->response_buffer, ",", 1);
+}
+
 void
 RPC_RequestList_process(RPC_RequestList* request_list, RPC_Method methods[])
 {
@@ -60,18 +92,20 @@ RPC_RequestList_process(RPC_RequestList* request_list, RPC_Method methods[])
 	/* check error */
 	if (request_list->nrequests == -1)
 	{
+		/* parse error */
 		StringBuffer_printf(request_list->response_buffer,
 				    JSONRPC_RESPONSE_ERROR, JSONRPC_NULL,
-				    jsrpc_ERROR_MALFORMED_JSON, StringBuffer_value(request_list->result_buffer));
+				    jsrpc_ERROR_PARSE_ERROR, jsrpc_strerror(jsrpc_ERROR_PARSE_ERROR));
 	}
 	else if (request_list->nrequests == 0)
 	{
+		/* invalid request object */
 		StringBuffer_printf(request_list->response_buffer,
 				    JSONRPC_RESPONSE_ERROR, JSONRPC_NULL,
-				    jsrpc_ERROR_INVALID_REQUEST, StringBuffer_value(request_list->result_buffer));
+				    jsrpc_ERROR_INVALID_REQUEST, jsrpc_strerror(jsrpc_ERROR_INVALID_REQUEST));
 	}
 	else if (request_list->nrequests == 1)
-		RPC_Pipeline_process_request(request_list, 0, methods);
+		RPC_RequestList_process_request(request_list, 0, methods);
 	else if (request_list->nrequests > 1)
 	{
 		/* begin batch response */
@@ -79,7 +113,10 @@ RPC_RequestList_process(RPC_RequestList* request_list, RPC_Method methods[])
 
 		int i;
 		for (i = 0; i < request_list->nrequests; i++)
-			RPC_Pipeline_process_request(request_list, i, methods);
+		{
+			append_delimiter(request_list, i);
+			RPC_RequestList_process_request(request_list, i, methods);
+		}
 
 		/* end batch response */
 		StringBuffer_ncat(request_list->response_buffer, "]", 1);
