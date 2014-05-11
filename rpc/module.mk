@@ -1,8 +1,9 @@
 # cache evaluation of path
 L := $(LOCAL_DIR)
-	
-TESTS += $(L)/test_rpc \
-	$(L)/test_jsonrpc
+
+TESTS += $(L)/test_params \
+ $(L)/test_jsonrpc \
+ $(L)/test_rpc
 
 # overwrite CFLAGS per object
 #$(L)/.o : CFLAGS += ...
@@ -24,3 +25,7 @@ $(L)/test_jsonrpc_OBJS := $(TEST_OBJS) \
 	$(L)/jsrpc_yajl.o \
 	$(L)/echo_service.o \
 	$(LIBCX_DIR)/string/string.o
+
+$(L)/test_params_FLAGS := -lyajl
+$(L)/test_params_OBJS := $(TEST_OBJS) \
+	$(L)/test_params.o

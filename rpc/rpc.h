@@ -7,24 +7,53 @@
 #include "string/string_buffer.h"       /* response buffer */
 #include "base/debug.h"
 
-#define MAX_PARAMS 32                   /* maximum number of parameters */
-
+typedef union rpc_param_value_t RPC_Value;
 typedef struct rpc_param_t RPC_Param;
 typedef struct rpc_method_t RPC_Method;
 typedef struct rpc_request_t RPC_Request;
 typedef struct rpc_request_list_t RPC_RequestList;
 typedef void F_RPC_Method (RPC_Request* request, StringBuffer* result_buffer);
+typedef void F_RPC_Param_deserialize (RPC_Request* request);
 
-typedef enum rpc_type_t
+union rpc_param_value_t
 {
-	RPC_Double,
-	RPC_LongLong,
-	RPC_String,
-	RPC_Boolean,
-	RPC_Array,
-	RPC_Object,
-	RPC_Null,
-	RPC_Undefined
+	int int_value;
+	double double_value;
+	long long longlong_value;
+	const char* string_value;
+	void* ptr_value;
+};
+
+#define RPC_TYPE_int int
+#define RPC_TYPE_ACCESSOR_int int_value
+
+#define RPC_TYPE_double double
+#define RPC_TYPE_ACCESSOR_double double_value
+
+#define RPC_TYPE_longlong long long
+#define RPC_TYPE_ACCESSOR_longlong longlong_value
+
+#define RPC_TYPE_string const char*
+#define RPC_TYPE_ACCESSOR_string string_value
+
+#define RPC_TYPE_boolean int
+#define RPC_TYPE_ACCESSOR_boolean int_value
+
+#define RPC_TYPE_array void*
+#define RPC_TYPE_ACCESSOR_array ptr_value
+
+#define RPC_TYPE_object void*
+#define RPC_TYPE_ACCESSOR_array ptr_value
+
+typedef enum rpc_param_type_t
+{
+	RPC_double,
+	RPC_longlong,
+	RPC_string,
+	RPC_boolean,
+	RPC_array,
+	RPC_object,
+	RPC_undefined
 } RPC_Type;
 
 struct rpc_param_t
@@ -33,6 +62,7 @@ struct rpc_param_t
 	RPC_Type type;
 	unsigned int flags;
 	int pos;
+	F_RPC_Param_deserialize* f_deserialize;
 };
 
 struct rpc_method_t
@@ -48,9 +78,9 @@ struct rpc_request_t
 	const char* id;
 	const char* method_name;
 	int error;
-	RPC_Param* params[MAX_PARAMS];
 	void* data;
 	int response_written;
+	RPC_Value* params;
 };
 
 struct rpc_request_list_t
@@ -73,96 +103,118 @@ struct rpc_request_list_t
 #define IS_RPC_REQUEST(request) \
 	(request->id != NULL)
 
+
+/* [ RPC namespace expansion ] */
+
+#ifndef RPC_NS
+#define RPC_NS NamespaceUndefined_
+#endif
+
+#define RPC_ns_paste(prefix, token) prefix ## token
+#define RPC_ns_expand(prefix, token) RPC_ns_paste(prefix, token)
+#define RPC_ns(token) RPC_ns_expand(RPC_NS, token)
+
+
 /* [ RPC actions ] */
 
-#define RPC_public_name(ns, meth) \
-	ns ## _ ## meth
 
-#define RPC_method_name(ns, meth) \
-	ns ## _ ## meth ## _method
+#define RPC_public_name(meth) \
+	RPC_ns(meth)
 
-#define RPC_params_name(ns, meth) \
-	ns ## _ ## meth ## _params
+#define RPC_method_name(meth) \
+	RPC_ns(meth ## _method)
 
+#define RPC_params_name(meth) \
+	RPC_ns(meth ## _params)
 
 /* [ Method definition ] */
 
-#define RPC_method(ns, meth) \
-	void ns ## _ ## meth ## _method(RPC_Request * request, StringBuffer * result_buffer)
+#define RPC_method(meth) \
+	void RPC_ns(meth ## _method) (RPC_Request * request, StringBuffer * result_buffer)
 
-#define RPC_params(ns, meth) \
-	static RPC_Param ns ## _ ## meth ## _params [] =
+#define RPC_params(meth) \
+	static RPC_Param RPC_ns( ## meth ## _params)[] =
 
-#define RPC_def(ns, meth) \
-	{ #meth, RPC_method_name(ns, meth), RPC_params_name(ns, meth), ARRAY_SIZE(RPC_params_name(ns, meth)) }
+#define RPC_def(meth) \
+	{ #meth, RPC_method_name(meth), RPC_params_name(meth), ARRAY_SIZE(RPC_params_name(meth)) }
 
 
 /* [ Parameter Handling ] */
 
-#define RPC_param(ns, meth, name) \
-	ns ## _ ## meth ## _param_ ## name
+#define RPC_param(meth, name) \
+	RPC_ns(meth ## _param_ ## name)
 
-#define RPC_param_deserialize(ns, meth, name) \
-	RPC_param(ns, meth, name ## _deserialize)
+#define RPC_param_deserialize(meth, name) \
+	RPC_param(meth, name ## _deserialize)
 
-#define RPC_param_define(ns, meth, _name, _rpc_type, _pos, _flags) \
-	static RPC_Param RPC_param(ns, meth, _name) = \
-	{ .name = #_name, .pos = _pos, .type = _rpc_type, .flags = _flags };
+#define RPC_param_get(meth, name) \
+	RPC_param(meth, name ## _get)
 
-#define RPC_param_define_deserialize(ns, meth, name, param_name, type, func) \
-	static inline \
-	type RPC_param_deserialize(ns, meth, name) (RPC_Request * request) \
-	{ return func(request, &RPC_param(ns, meth, param_name)); }
+#define RPC_param_define(meth, _name, _type, _pos, _func, _flags) \
+	static RPC_Param RPC_param(meth, _name) = \
+	{ .name = #_name, .pos = _pos, .type = RPC_ ## _type, .flags = _flags, .f_deserialize = RPC_param_deserialize(meth, _name) };
 
-#define RPC_set_param(ns, meth, pos, name, type, func, rpc_type, flags) \
-	RPC_param_define(ns, meth, name, rpc_type, pos, flags) \
-	RPC_param_define_deserialize(ns, meth, name, name, type, func)
+#define RPC_param_declare_serialize(meth, name) \
+	static inline void RPC_param_deserialize(meth, name) (RPC_Request * request);
 
-#define RPC_get_param(ns, meth, name) \
-	RPC_param_deserialize(ns, meth, name) (request)
+#define RPC_param_define_deserialize(meth, name, _pos, _type, _func) \
+	static inline void \
+	RPC_param_deserialize(meth, name) (RPC_Request * request) \
+	{ request->params[_pos].RPC_TYPE_ACCESSOR_ ## _type = _func(request, &RPC_param(meth, name)); }
 
-#define RPC_param_list(ns, meth) \
-	static RPC_Param *  ns ## _ ## meth ## _params[] =
+#define RPC_param_define_get(meth, name, _type) \
+	static inline RPC_TYPE_ ## _type \
+	RPC_param_get(meth, name) (RPC_Request * request) \
+	{ return request->params[RPC_param(meth, name).pos].RPC_TYPE_ACCESSOR_ ## _type; }
+
+#define RPC_set_param(meth, pos, name, _type, _func, flags) \
+	RPC_param_declare_serialize(meth, name) \
+	RPC_param_define(meth, name, _type, pos, _func, flags) \
+	RPC_param_define_deserialize(meth, name, pos, _type, _func) \
+	RPC_param_define_get(meth, name, _type)
+
+#define RPC_get_param(meth, name) \
+	RPC_param_get(meth, name) (request)
+
+#define RPC_param_list(meth) \
+	static RPC_Param *  RPC_ns(meth ## _params)[] =
 
 
 /* [ Convenience Macros ] */
 
-#define RPC_set_param_string(ns, meth, pos, name, flags) \
-	RPC_set_param(ns, meth, pos, name, const char*, RPC_Request_get_param_value_string, RPC_String, flags)
+#define RPC_set_param_string(meth, pos, name, flags) \
+	RPC_set_param(meth, pos, name, string, RPC_Request_get_param_value_string, flags)
 
-#define RPC_set_param_double(ns, meth, pos, name, flags) \
-	RPC_set_param(ns, meth, pos, name, double, RPC_Request_get_param_value_double, RPC_Double, flags)
+#define RPC_set_param_double(meth, pos, name, flags) \
+	RPC_set_param(meth, pos, name, double, RPC_Request_get_param_value_double, flags)
 
-#define RPC_set_param_longlong(ns, meth, pos, name, flags) \
-	RPC_set_param(ns, meth, pos, name, long long, RPC_Request_get_param_value_longlong, RPC_LongLong, flags)
+#define RPC_set_param_longlong(meth, pos, name, flags) \
+	RPC_set_param(meth, pos, name, longlong, RPC_Request_get_param_value_longlong, flags)
 
-#define RPC_param_list_single(ns, meth, name) \
-	RPC_param_list(ns, meth) { &RPC_param(ns, meth, name) };
+#define RPC_param_list_single(meth, name) \
+	RPC_param_list(meth) { &RPC_param(meth, name) };
 
-#define RPC_single_string_param(ns, meth, pos, name, flags) \
-	RPC_set_param_string(ns, meth, pos, name, flags) \
-	RPC_param_list_single(ns, meth, name)
+#define RPC_single_string_param(meth, pos, name, flags) \
+	RPC_set_param_string(meth, pos, name, flags) \
+	RPC_param_list_single(meth, name)
 
-#define RPC_single_double_param(ns, meth, pos, name, flags) \
-	RPC_set_param_double(ns, meth, pos, name, flags) \
-	RPC_param_list_single(ns, meth, name)
+#define RPC_single_double_param(meth, pos, name, flags) \
+	RPC_set_param_double(meth, pos, name, flags) \
+	RPC_param_list_single(meth, name)
 
-#define RPC_single_longlong_param(ns, meth, pos, name, flags) \
-	RPC_set_param_longlong(ns, meth, pos, name, flags) \
-	RPC_param_list_single(ns, meth, name)
+#define RPC_single_longlong_param(meth, pos, name, flags) \
+	RPC_set_param_longlong(meth, pos, name, flags) \
+	RPC_param_list_single(meth, name)
 
 /* [ Method Export ] */
 
-#define RPC_export(ns, meth) \
-	RPC_method(ns, meth); \
-	static RPC_Method ns ## _ ## meth = RPC_def(ns, meth);
+#define RPC_export(meth) \
+	RPC_method(meth); \
+	static RPC_Method RPC_ns(meth) = RPC_def(meth);
 
-#define RPC_export_without_params(ns, meth) \
-	RPC_method(ns, meth); \
-	static RPC_Method ns ## _ ## meth = { #meth, RPC_method_name(ns, meth), NULL, 0 };
-
-#define RPC_methods(ns) \
-	ns ## _ ## methods
+#define RPC_export_without_params(meth) \
+	RPC_method(meth); \
+	static RPC_Method RPC_ns(meth) = { #meth, RPC_method_name(meth), NULL, 0 };
 
 
 /* [RPC API] */

@@ -1,16 +1,16 @@
 #include "echo_service.h"
 
-RPC(method, echo)
+RPC_method(echo)
 {
-	StringBuffer_cat(result_buffer, RPC(get_param, echo, input));
+	StringBuffer_printf(result_buffer, "\"%s\"", RPC_get_param(echo, input));
 }
 
-RPC(method, echo_double)
+RPC_method(echo_double)
 {
-	StringBuffer_printf(result_buffer, "%lf", RPC(get_param, echo_double, input));
+	StringBuffer_printf(result_buffer, "%lf", RPC_get_param(echo_double, input));
 }
 
-RPC(method, echo_longlong)
+RPC_method(echo_longlong)
 {
-	StringBuffer_printf(result_buffer, "%lld", RPC(get_param, echo_longlong, input));
+	StringBuffer_printf(result_buffer, "%lld", RPC_get_param(echo_longlong, input));
 }
