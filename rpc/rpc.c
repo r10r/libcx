@@ -36,7 +36,7 @@ RPC_Request_lookup_method(RPC_Request* request, RPC_Method methods[])
 RPC_RequestList*
 RPC_RequestList_new()
 {
-	RPC_RequestList* request_list = calloc(1, sizeof(RPC_RequestList));
+	RPC_RequestList* request_list = cx_alloc(sizeof(RPC_RequestList));
 
 	request_list->request_buffer = StringBuffer_new(2048);
 	request_list->response_buffer = StringBuffer_new(2048);
@@ -50,9 +50,9 @@ void
 RPC_RequestList_free(RPC_RequestList* request_list)
 {
 	RPC_RequestList_free_data(request_list);
-	free(request_list->requests);
+	cx_free(request_list->requests);
 	StringBuffer_free(request_list->result_buffer);
 	StringBuffer_free(request_list->request_buffer);
 	StringBuffer_free(request_list->response_buffer);
-	free(request_list);
+	cx_free(request_list);
 }

@@ -83,13 +83,13 @@ test_params_union()
 
 	request.data = (void*)"foobar";
 
-	request.params = calloc(1, sizeof(RPC_Value));
+	request.params = cx_alloc(sizeof(RPC_Value));
 
 	param_deserialize_blubber(&request);
 
 	TEST_ASSERT_EQUAL_STRING("foobar", param_get(blubber));
 
-	free(request.params);
+	cx_free(request.params);
 }
 
 int

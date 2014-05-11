@@ -31,9 +31,9 @@ static void
 test_parameter_definition()
 {
 	/* must be defined for RPC_get_param macro */
-	RPC_Request* request = calloc(1, sizeof(RPC_Request));
+	RPC_Request* request = cx_alloc(sizeof(RPC_Request));
 
-	request->params = calloc(2, sizeof(RPC_Value));
+	request->params = cx_alloc(2 * sizeof(RPC_Value));
 
 	/* trigger deserialization */
 	RPC_param_deserialize(foobar, foo) (request);
@@ -46,8 +46,8 @@ test_parameter_definition()
 	TEST_ASSERT_EQUAL(0, strcmp("foo", foo_value));
 	TEST_ASSERT_EQUAL(666, bar_value);
 
-	free(request->params);
-	free(request);
+	cx_free(request->params);
+	cx_free(request);
 }
 
 int

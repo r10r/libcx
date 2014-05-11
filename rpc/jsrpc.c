@@ -33,7 +33,7 @@ RPC_RequestList_deserialize_method(RPC_RequestList* request_list, RPC_Request* r
 		if (nparams > 0)
 		{
 			/* deserialize the parameters */
-			request->params = calloc((size_t)nparams, sizeof(RPC_Value));
+			request->params = cx_alloc((size_t)nparams * sizeof(RPC_Value));
 			int i;
 			for (i = 0; i < nparams; i++)
 			{
@@ -107,7 +107,7 @@ RPC_RequestList_process_request(RPC_RequestList* request_list, int nrequest, RPC
 						     request->id, request->error, StringBuffer_value(request_list->result_buffer));
 
 			/* clear params */
-			free(request->params);
+			cx_free(request->params);
 		}
 	}
 
