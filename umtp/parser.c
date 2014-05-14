@@ -72,7 +72,7 @@ RagelParser_parse_file(RagelParser* parser, const char* file_path, size_t chunk_
 	ssize_t nread = StringBuffer_fload(parser->buffer, file, chunk_size);
 	fclose(file);
 
-	if (nread <= 0)
+	if (nread < 0)
 		XFLOG("error while reading from file : %s : %s", file_path, strerror(errno));
 
 	RagelParser_finish(parser);

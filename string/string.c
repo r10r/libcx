@@ -205,7 +205,7 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, ssize_t nchars)
 }
 
 /* read until EOF or when blocking is set to 0 until EWOULDBLOCK,
- * @ return CX_ERR on error or CX_OK on success
+ * @ return CX_ERR on error, 0 if no data was loaded, CX_OK else
  */
 int
 StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int blocking)
@@ -221,6 +221,9 @@ StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int blocki
 	if (nread < 0)
 		if (blocking || errno != EWOULDBLOCK)
 			return CX_ERR;
+
+	if (nread == 0)
+		return 0;
 
 	return CX_OK;
 }
