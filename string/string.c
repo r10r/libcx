@@ -179,7 +179,7 @@ StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, siz
 {
 	if (nchars == 0)
 	{
-		XFERR("Buffer[%p] - request to append 0 chars: %s", buffer, source);
+		XFWARN("Buffer[%p] - request to append 0 chars: %s", buffer, source);
 		return CX_OK;
 	}
 

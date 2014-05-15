@@ -61,6 +61,14 @@
 	fprintf(stderr, "XERR:(%s):%s:%d - " format "\n", \
 		__func__, __FILE__, __LINE__, __VA_ARGS__)
 
+#define XWARN(message) \
+	fprintf(stderr, "XWARN:(%s):%s:%d - %s \n", \
+		__func__, __FILE__, __LINE__, message)
+
+#define XFWARN(format, ...) \
+	fprintf(stderr, "XWARN:(%s):%s:%d - " format "\n", \
+		__func__, __FILE__, __LINE__, __VA_ARGS__)
+
 #ifdef NASSERT
 #define XCHECK(condition, message)
 #define XCHECK_EQUALS_INT(expected, actual, message)
