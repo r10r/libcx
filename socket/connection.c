@@ -98,19 +98,19 @@ receive_data_callback(ev_loop* loop, ev_io* w, int revents)
 
 	if (nread > 0)
 	{
-		XFLOG("Connection[%d] - received %zu bytes", connection->fd, nread);
+		XFDBG("Connection[%d] - received %zu bytes", connection->fd, nread);
 		connection->f_handler(connection, CONNECTION_EVENT_DATA);
 	}
 	else if (nread == 0)
 	{
-		XFLOG("Connection[%d] - received EOF", connection->fd);
+		XFDBG("Connection[%d] - received EOF", connection->fd);
 		ev_io_stop(loop, w); /* stop reading from socket */
 		connection->f_handler(connection, CONNECTION_EVENT_CLOSE_READ);
 	}
 	else if (nread < 0)
 	{
 		/* errno is thread local see http://stackoverflow.com/questions/1694164/is-errno-thread-safe */
-		XFLOG("Connection[%d] - received error %d: %s", connection->fd, errno, strerror(errno));
+		XFERR("Connection[%d] - received error %d: %s", connection->fd, errno, strerror(errno));
 		connection->error = errno;
 		connection->f_handler(connection, CONNECTION_EVENT_ERRNO);
 	}

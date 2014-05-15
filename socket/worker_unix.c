@@ -41,7 +41,7 @@ unix_connection_watcher(ev_loop* loop, ev_io* w, int revents)
 	int client_fd = accept(unix_worker->server_fd, NULL, NULL);
 
 	if (client_fd == -1)
-		XFLOG("Worker[%lu] - failed to accept", worker->id);
+		XFDBG("Worker[%lu] - failed to accept", worker->id);
 	else
 	{
 #if (!defined (__linux__) && defined(__unix__)) || (defined(__APPLE__) && defined(__MACH__))
@@ -49,7 +49,7 @@ unix_connection_watcher(ev_loop* loop, ev_io* w, int revents)
 		enable_so_opt(client_fd, SO_NOSIGPIPE);
 #endif
 
-		XFLOG("Worker[%lu] - accepted connection on fd:%d", worker->id, client_fd);
+		XFDBG("Worker[%lu] - accepted connection on fd:%d", worker->id, client_fd);
 		Connection* connection = unix_worker->f_create_connection();
 		connection->worker = worker;
 		connection->fd = client_fd;
