@@ -26,7 +26,6 @@
 
 typedef enum cx_string_status_t
 {
-	CX_NOOP = 0,
 	CX_OK = 1,
 	CX_ERR = -1
 } BufferStatus;

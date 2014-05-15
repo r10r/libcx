@@ -98,7 +98,7 @@ receive_data_callback(ev_loop* loop, ev_io* w, int revents)
 
 	if (nread > 0)
 	{
-		XFLOG("Connection[%d] - received data:%zu", connection->fd, nread);
+		XFLOG("Connection[%d] - received %zu bytes", connection->fd, nread);
 		connection->f_handler(connection, CONNECTION_EVENT_DATA);
 	}
 	else if (nread == 0)

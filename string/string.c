@@ -36,8 +36,6 @@ String_init(const char* source, size_t nchars)
 BufferStatus
 String_shift(String* s, size_t count)
 {
-	XFDBG("Shifting %zu tokens of string with length:%zu", count, s->length);
-
 	if (count > s->length)
 	{
 		XFERR("Shift count %zu exceed string length %zu", count, s->length);
@@ -47,7 +45,12 @@ String_shift(String* s, size_t count)
 	{
 		size_t nremaining = s->length - count;
 		if (nremaining > 0)
+		{
+			XFDBG("Shifting %zu tokens of string with length %zu", count, s->length);
 			memcpy(s->value, s->value + count, nremaining);
+		}
+		else
+			XFDBG("Clear string (length %zu)", s->length);
 		/* zero unused data */
 		size_t nunused = s->length - nremaining;
 		memset(s->value + nremaining, nunused, 0);
@@ -104,12 +107,11 @@ StringBuffer_free(StringBuffer* buffer)
 void
 StringBuffer_set_error(StringBuffer* buffer, StringBufferError error)
 {
-	if (buffer->error == STRING_ERROR_ERRNO)
-		XFDBG("Error in string bufffer %s", strerror(errno));
-	else
-		XFDBG("Error %d in string buffer", buffer->error);
-
 	buffer->error = error;
+	if (error == STRING_ERROR_ERRNO)
+		XFDBG("Errno[%d] while processing data for bufffer: %s", errno, strerror(errno));
+	else
+		XFDBG("Error[%d] while processing data for buffer.", error);
 }
 
 /*
@@ -185,7 +187,7 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, ssize_t nchars)
 
 	ssize_t nread = read(fd, S_term(buffer->string), (size_t)nchars);
 
-	XFDBG("Read %zd (read size %zu) chars into buffer", nread, nchars);
+	XFDBG("Read %zd bytes into buffer (read size %zu)", nread, nchars);
 
 	if (nread < 0)
 	{
@@ -207,43 +209,39 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, ssize_t nchars)
 BufferStatus
 StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int block)
 {
+	size_t nread_total = 0;
 	ssize_t nread;
-	size_t ntotal = 0;
+
+	ssize_t chunk_size_original = chunk_size % READ_MAX;
+	ssize_t chunk_size_actual = chunk_size_original;
 
 	/* read until EOF or until an error occurs */
-
-	ssize_t original_chunk_size = chunk_size % READ_MAX;
-	ssize_t chunk_size_used = original_chunk_size;
-
-
-	while ((nread = StringBuffer_fdncat(buffer, fd, chunk_size_used)) > 0)
+	while ((nread = StringBuffer_fdncat(buffer, fd, chunk_size_actual)) > 0)
 	{
-		ntotal += (size_t)nread;
+		nread_total += (size_t)nread;
 
-		/* If read returns at least one character, there is no way you can tell whether end-of-file was reached.
-		 * But if you did reach the end, the next read will return zero.
+		/* from 'man 2 read'
+		 * "If read returns at least one character, there is no way you can tell whether end-of-file was reached.
+		 * But if you did reach the end, the next read will return zero."
 		 *
-		 * - TODO avoid unnecessary buffer growth and reduce the chunk size to the available buffer size
+		 * Reduce read size to remaining buffer length if
+		 * actual characters read < read size
 		 */
-		if (nread > 0 && nread < chunk_size_used)
+		if (nread > 0 && nread < chunk_size_actual)
 		{
-			size_t unused = StringBuffer_unused(buffer);
-			if ((size_t)chunk_size_used > unused)
+			size_t nunused = StringBuffer_unused(buffer);
+
+			if ((size_t)chunk_size_actual > nunused)
 			{
-				ssize_t chunk_size_new = (ssize_t)unused;
+				ssize_t chunk_size_reduced = (ssize_t)nunused;
 				XFDBG("Read less bytes (%zu) than chunk size (%zu). Reduced read size to %zu",
-				      nread, chunk_size_used, chunk_size_new);
-				chunk_size_used = chunk_size_new;
+				      nread, chunk_size_actual, chunk_size_reduced);
+				chunk_size_actual = chunk_size_reduced;
 			}
 		}
-		// TODO
 	}
 
-	XFDBG("Read %zu bytes", ntotal);
-
-	/* check for EOF */
-	if (nread == 0)
-		return CX_NOOP;
+	XFDBG("Read %zu bytes", nread_total);
 
 	/* check error */
 	if (nread < 0)
@@ -260,28 +258,29 @@ StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int block)
 BufferStatus
 StringBuffer_ffill(StringBuffer* buffer, int fd, int blocking)
 {
+	XFDBG("Fill buffer (buffer length %zu)", StringBuffer_length(buffer));
 	size_t nunused;
 	size_t ntotal = 0;
 
+	/* read until buffer is full */
 	while ((nunused = StringBuffer_unused(buffer)) > 0)
 	{
-		/* multipass read */
 		ssize_t nread = StringBuffer_fdncat(buffer, fd, nunused % READ_MAX);
-
-		XFDBG("Read %zd bytes", nread);
-
-		if (nread == 0)
-			return CX_NOOP;
 
 		if (nread < 0)
 		{
 			if (blocking || errno != EWOULDBLOCK)
 				return CX_ERR;
 			else
-				return CX_OK;
+				break;
 		}
+		else if (nread == 0)
+			break;
+		else if (nread > 0)
+			ntotal += (size_t)nread;
 	}
 
+	XFDBG("Filled buffer with %zu bytes (buffer length %zu)", ntotal, StringBuffer_length(buffer));
 	return CX_OK;
 }
 
