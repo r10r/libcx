@@ -3,6 +3,12 @@
 
 #include <stddef.h>     /* offsetoff */
 #include <stdlib.h>     /* malloc */
+#include <limits.h>
+
+#ifndef SSIZE_MAX
+#define SSIZE_MAX LONG_MAX
+//typedef unsigned long ssize_t;
+#endif
 
 #ifdef NASSERT
 #define assert
@@ -110,5 +116,9 @@
 #define BIT_SET LE_BIT_SET
 #define BIT_GET LE_BIG_GET
 #define BIT_CLEAR LE_BIT_CLEAR
+
+
+/* assertions for safe type narrowing */
+#define ASSERT_LONG(val) assert((long long val) < LONG_MAX && (long long)val > LONG_MIN)
 
 #endif
