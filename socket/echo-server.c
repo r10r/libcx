@@ -10,7 +10,17 @@ echo_connection_data_handler(Connection* connection)
 {
 	StringBuffer* buffer = (StringBuffer*)connection->data;
 
-	return StringBuffer_ffill(buffer, connection->fd, 0);
+	size_t nused_before = StringBuffer_used(buffer);
+	BufferStatus status = StringBuffer_ffill(buffer, connection->fd, 0);
+
+	if (status == CX_OK)
+	{
+		size_t incremented = StringBuffer_used(buffer) - nused_before;
+		assert(incremented < SSIZE_MAX); /* application bug */
+		return (ssize_t)incremented;
+	}
+	else
+		return CX_ERR;
 }
 
 static Connection*
@@ -22,6 +32,7 @@ echo_connection_handler(Connection* connection, ConnectionEvent event)
 	{
 		StringBuffer* buffer = (StringBuffer*)connection->data;
 		Connection_send(connection, buffer->string->value, buffer->string->length);
+		StringBuffer_clear(buffer);
 		break;
 	}
 	case CONNECTION_EVENT_CLOSE_READ:
