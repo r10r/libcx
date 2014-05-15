@@ -82,7 +82,7 @@ StringBuffer_set_error(StringBuffer* buffer, StringBufferError error);
 
 /* [ append from char* ] */
 
-int
+BufferStatus
 StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars);
 
 #define StringBuffer_cat(buffer, chars) \
@@ -97,7 +97,7 @@ StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, siz
 
 /* [ append from number ] */
 
-int
+BufferStatus
 StringBuffer_append_number(StringBuffer* buffer, size_t offset, uint64_t num, size_t nbytes);
 
 #define StringBuffer_cat_number(buffer, num, nbytes) \
@@ -126,8 +126,8 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, ssize_t nchars);
 
 /* multi pass reading, maximum read length == SIZE_MAX */
 
-int
-StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int blocking);
+BufferStatus
+StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int block);
 
 #define StringBuffer_fdload(buffer, fd, chunk_size) \
 	StringBuffer_fdxload(buffer, fd, chunk_size, 1)
@@ -137,8 +137,8 @@ StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int blocki
 
 /* read until buffer is full */
 
-int
-StringBuffer_ffill(StringBuffer* buffer, int fd, int blocking);
+BufferStatus
+StringBuffer_ffill(StringBuffer* buffer, int fd, int block);
 
 
 /* [ writing ] */
