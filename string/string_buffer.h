@@ -10,18 +10,37 @@
 
 typedef enum cx_string_buffer_error_t
 {
-	STRING_ERROR_ERRNO = 1,
-	STRING_ERROR_TO_SMALL,
-	STRING_ERROR_INVALID_OFFSET
-} StringBufferError;
+	STRING_BUFFER_STATUS_ERROR_ERRNO,
+	STRING_BUFFER_STATUS_ERROR_TO_SMALL,
+	STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS,
+	STRING_BUFFER_STATUS_CLEARED,
+	STRING_BUFFER_STATUS_SHIFTED,
+	STRING_BUFFER_STATUS_RESIZED,
+	STRING_BUFFER_STATUS_NEW_DATA
+} StringBufferStatus;
 
 // should the string contain data type information ?
 typedef struct cx_string_buffer_t
 {
 	size_t length;                  /* total buffer length */
 	String* string;                 /* we can now grow the string data */
-	StringBufferError error;        /* error while processing input */
+	StringBufferStatus status;      /* error while processing input */
+	size_t status_data;
+//	char *userdata;								/* associate custom userdata with the buffer */
 } StringBuffer;
+
+
+#define STRING_BUFFER_STATUS(buffer, _status_, _data_) \
+	if (_status_ == STRING_BUFFER_STATUS_ERROR_ERRNO)  \
+		XFDBG("Buffer[%p l:%zu u:%zu] state[%d] %s: errno[%d : %s]", \
+		      buffer, StringBuffer_length(buffer), StringBuffer_used(buffer), \
+		      _status_, cx_strstatus(_status_), errno, strerror(errno)); \
+	else \
+		XFDBG("Buffer[%p l:%zu u:%zu] state[%d] %s: %zu", \
+		      buffer, StringBuffer_length(buffer), StringBuffer_used(buffer), \
+		      _status_, cx_strstatus(_status_), _data_); \
+	(buffer)->status = _status_; \
+	(buffer)->status_data = _data_
 
 StringBuffer*
 StringBuffer_new(size_t length);
@@ -41,8 +60,9 @@ StringBuffer_free_members(StringBuffer* buffer);
 int
 StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
 
-void
-StringBuffer_set_error(StringBuffer* buffer, StringBufferError error);
+
+BufferStatus
+StringBuffer_shift(StringBuffer* buffer, size_t count);
 
 #define StringBuffer_error(buffer) \
 	((buffer)->error != 0)
@@ -64,15 +84,12 @@ StringBuffer_set_error(StringBuffer* buffer, StringBufferError error);
 #define StringBuffer_value(buffer) \
 	((buffer)->string->value)
 
-#define StringBuffer_shift(buffer, count) \
-	String_shift((buffer)->string, count)
-
 #define StringBuffer_clear(buffer) \
-	S_clear((buffer)->string)
+	StringBuffer_shift(buffer, StringBuffer_used(buffer))
 
 #define StringBuffer_log(buf, message) \
-	XFDBG("\n	%s [%p] - used:%zu, unused:%zu, length:%zu", \
-	      message, (void*)buf, StringBuffer_used(buf), StringBuffer_unused(buf), StringBuffer_length(buf))
+	XFDBG("\n	%s - Buffer[%p l:%zu u:%zu f:%zu]", \
+	      message, (void*)buf,  StringBuffer_length(buf), StringBuffer_used(buf), StringBuffer_unused(buf))
 
 #define StringBuffer_equals(buf1, buf2) \
 	(strcmp(StringBuffer_value(buf1), StringBuffer_value(buf2)) == 0)
@@ -183,5 +200,8 @@ StringBuffer_write_bytes_into(StringBuffer* buf, const char* const format, const
 /* print hex values of bytes to stderr prepended by message */
 void
 StringBuffer_print_bytes_hex(StringBuffer* in, size_t nbytes, const char* message);
+
+const char*
+cx_strstatus(StringBufferStatus status);
 
 #endif

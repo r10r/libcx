@@ -100,46 +100,6 @@ test_S_copy()
 	S_free(s);
 }
 
-static void
-test_String_shift()
-{
-	String* s = S_dup("foobar");
-
-	TEST_ASSERT_EQUAL_INT(6, s->length);
-	TEST_ASSERT_EQUAL_INT(CX_OK, String_shift(s, 3));
-	TEST_ASSERT_EQUAL_STRING("bar", s->value);
-	TEST_ASSERT_EQUAL_INT(3, s->length);
-
-	/* shifting nothing should return 0 */
-	TEST_ASSERT_EQUAL_INT(CX_OK, String_shift(s, 0));
-	TEST_ASSERT_EQUAL_INT(3, s->length);
-
-	/* shifting to much should do nothing and return -1 */
-	TEST_ASSERT_EQUAL_INT(CX_ERR, String_shift(s, 5));
-	TEST_ASSERT_EQUAL_INT(3, s->length);
-
-	/* shifting the remaining content*/
-	TEST_ASSERT_EQUAL_INT(CX_OK, String_shift(s, 3));
-	TEST_ASSERT_EQUAL_INT(0, s->length);
-
-	S_free(s);
-}
-
-static void
-test_S_clear()
-{
-	String* s = S_dup("foobar");
-
-	TEST_ASSERT_EQUAL_INT(6, s->length);
-
-	TEST_ASSERT_EQUAL_INT(CX_OK, S_clear(s));
-	TEST_ASSERT_EQUAL_STRING("", s->value);
-	TEST_ASSERT_EQUAL_INT(CX_OK, S_clear(s));
-	TEST_ASSERT_EQUAL_STRING("", s->value);
-
-	S_free(s);
-}
-
 int
 main()
 {
@@ -151,7 +111,5 @@ main()
 	RUN(test_S_comp);
 	RUN(test_S_write);
 	RUN(test_S_copy);
-	RUN(test_String_shift);
-	RUN(test_S_clear);
 	TEST_END
 }

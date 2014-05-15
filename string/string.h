@@ -66,9 +66,6 @@ String_shift(String* s, size_t count);
 #define S_last(s) \
 	((s)->length == 0 ? (s)->value : (s)->value + ((s)->length - 1))
 
-#define S_clear(s) \
-	String_shift(s, (s)->length)
-
 /* return pointer to the last \0 terminator */
 #define S_term(s) \
 	((s)->length == 0 ? (s)->value : (s)->value + (s)->length)

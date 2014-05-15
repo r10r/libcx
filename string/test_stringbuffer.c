@@ -153,8 +153,20 @@ test_StringBuffer_shift()
 	StringBuffer_cat(buf, "foobar");
 	TEST_ASSERT_BUFFER(buf, "foobar", 12, 6, 6);
 
-	StringBuffer_shift(buf, 3);
+	/* shift nothing should return 0 */
+	TEST_ASSERT_EQUAL_INT(CX_OK, StringBuffer_shift(buf, 0));
+	TEST_ASSERT_BUFFER(buf, "foobar", 12, 6, 6);
+
+	TEST_ASSERT_EQUAL_INT(CX_OK, StringBuffer_shift(buf, 3));
 	TEST_ASSERT_BUFFER(buf, "bar", 12, 3, 9);
+
+	/* shift to much should do nothing and return CX_ERR */
+	TEST_ASSERT_EQUAL_INT(CX_ERR, StringBuffer_shift(buf, 6));
+	TEST_ASSERT_BUFFER(buf, "bar", 12, 3, 9);
+
+	/* shift the remaining content*/
+	TEST_ASSERT_EQUAL_INT(CX_OK, StringBuffer_shift(buf, 3));
+	TEST_ASSERT_BUFFER(buf, "", 12, 0, 12);
 
 	StringBuffer_free(buf);
 }
