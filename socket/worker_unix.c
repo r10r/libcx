@@ -41,7 +41,7 @@ unix_connection_watcher(ev_loop* loop, ev_io* w, int revents)
 	int client_fd = accept(unix_worker->server_fd, NULL, NULL);
 
 	if (client_fd == -1)
-		XFDBG("Worker[%lu] - failed to accept", worker->id);
+		XFERRNO("worker[%lu] failed to accept connection", worker->id);
 	else
 	{
 #if (!defined (__linux__) && defined(__unix__)) || (defined(__APPLE__) && defined(__MACH__))

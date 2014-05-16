@@ -24,11 +24,7 @@
 #define STRING_MAX_LENGTH SIZE_MAX
 #endif
 
-typedef enum cx_string_status_t
-{
-	CX_OK = 1,
-	CX_ERR = -1
-} BufferStatus;
+#define CX_ERR -1
 
 typedef struct cx_string_t
 {
@@ -45,7 +41,7 @@ typedef struct cx_string_pointer_t
 String*
 String_init(const char* value, size_t length);
 
-BufferStatus
+int
 String_shift(String* s, size_t count);
 
 #define S_free(s) (cx_free(s))

@@ -69,13 +69,11 @@ RagelParser_parse_file(RagelParser* parser, const char* file_path, size_t chunk_
 	FILE* file = fopen(file_path, "r");
 
 	XFASSERT(file, "file %s should exist", file_path);
-	ssize_t nread = StringBuffer_fload(parser->buffer, file, chunk_size);
+	StringBuffer_fload(parser->buffer, file, chunk_size);
 	fclose(file);
 
-	if (nread < 0)
-		XFLOG("error while reading from file : %s : %s", file_path, strerror(errno));
-
-	RagelParser_finish(parser);
+	if (parser->buffer->status == STRING_BUFFER_STATUS_EOF)
+		RagelParser_finish(parser);
 }
 
 ssize_t
@@ -132,18 +130,15 @@ RagelParser_parse(RagelParser* parser)
 void
 RagelParser_shift_buffer(RagelParser* parser)
 {
-	int ret = StringBuffer_shift(parser->buffer, parser->buffer_offset);
+	StringBuffer_shift(parser->buffer, parser->buffer_offset);
 
-	if (ret == 1)
+	if (parser->buffer->status == STRING_BUFFER_STATUS_OK)
 	{
-		XFDBG("Shifted buffer by %zu tokens", parser->buffer_offset);
 		parser->buffer_offset = 0;
 		parser->marker_length = 0;
 		parser->marker_start = 0;
 		RagelParser_update(parser);
 	}
-	else
-		XDBG("Failed to shift buffer");
 }
 
 size_t

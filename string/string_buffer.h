@@ -4,43 +4,55 @@
 #include "string.h"
 #include <stdarg.h>     /* vsnprintf, va_* */
 #include <stdint.h>     /* uint*_t */
+#include <stdbool.h>    /* bool */
 
-/* READ_MAX must be <= SSIZE_MAX */
-#define READ_MAX SSIZE_MAX
+/* READ_SIZE_MAX must be <= SSIZE_MAX */
+#define READ_SIZE_MAX SSIZE_MAX
 
-typedef enum cx_string_buffer_error_t
+typedef enum cx_string_buffer_status_t
 {
+	STRING_BUFFER_STATUS_OK = 0,
+	STRING_BUFFER_STATUS_EOF,
 	STRING_BUFFER_STATUS_ERROR_ERRNO,
 	STRING_BUFFER_STATUS_ERROR_TO_SMALL,
 	STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS,
-	STRING_BUFFER_STATUS_CLEARED,
-	STRING_BUFFER_STATUS_SHIFTED,
-	STRING_BUFFER_STATUS_RESIZED,
-	STRING_BUFFER_STATUS_NEW_DATA
+	STRING_BUFFER_STATUS_ERROR_INVALID_READ_SIZE
 } StringBufferStatus;
 
-// should the string contain data type information ?
 typedef struct cx_string_buffer_t
 {
 	size_t length;                  /* total buffer length */
 	String* string;                 /* we can now grow the string data */
-	StringBufferStatus status;      /* error while processing input */
-	size_t status_data;
-//	char *userdata;								/* associate custom userdata with the buffer */
+	StringBufferStatus status;      /* input processing status */
+	int error_errno;                /* when status is error is due to errno */
 } StringBuffer;
 
+#define STRING_BUFFER_FERROR(buffer, _error_, _format_, ...) \
+	XFERR("Buffer[%p l:%zu u:%zu] - error[%d:%s] " _format_, \
+	      (void*)buffer, StringBuffer_length(buffer), StringBuffer_used(buffer), \
+	      _error_, cx_strstatus(_error_), __VA_ARGS__); \
+	(buffer)->status = _error_
 
-#define STRING_BUFFER_STATUS(buffer, _status_, _data_) \
-	if (_status_ == STRING_BUFFER_STATUS_ERROR_ERRNO)  \
-		XFDBG("Buffer[%p l:%zu u:%zu] state[%d] %s: errno[%d : %s]", \
-		      buffer, StringBuffer_length(buffer), StringBuffer_used(buffer), \
-		      _status_, cx_strstatus(_status_), errno, strerror(errno)); \
-	else \
-		XFDBG("Buffer[%p l:%zu u:%zu] state[%d] %s: %zu", \
-		      buffer, StringBuffer_length(buffer), StringBuffer_used(buffer), \
-		      _status_, cx_strstatus(_status_), _data_); \
-	(buffer)->status = _status_; \
-	(buffer)->status_data = _data_
+#define STRING_BUFFER_ERROR(buffer, _error_, _message_) \
+	STRING_BUFFER_FERROR(buffer, _error_, "%s", _message_)
+
+#define STRING_BUFFER_ERRNO(buffer) \
+	STRING_BUFFER_ERROR(buffer, STRING_BUFFER_STATUS_ERROR_ERRNO, strerror(errno)); \
+	(buffer)->error_errno = errno
+
+#define STRING_BUFFER_FDBG(buf, _format_, ...) \
+	XFDBG("Buffer[%p l:%zu u:%zu] - " _format_, \
+	      (void*)buf,  StringBuffer_length(buf), StringBuffer_used(buf), __VA_ARGS__)
+
+#define STRING_BUFFER_DBG(buf, _message_) \
+	STRING_BUFFER_FDBG(buf, "%s", _message_)
+
+#define STRING_BUFFER_FWARN(buf, _format_, ...) \
+	XFWARN("Buffer[%p l:%zu u:%zu] - " _format_, \
+	       (void*)buf,  StringBuffer_length(buf), StringBuffer_used(buf), __VA_ARGS__)
+
+#define STRING_BUFFER_WARN(buf, _message_) \
+	STRING_BUFFER_FWARN(buf, "%s", _message_)
 
 StringBuffer*
 StringBuffer_new(size_t length);
@@ -57,11 +69,10 @@ StringBuffer_free(StringBuffer* buffer);
 void
 StringBuffer_free_members(StringBuffer* buffer);
 
-int
+bool
 StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
 
-
-BufferStatus
+void
 StringBuffer_shift(StringBuffer* buffer, size_t count);
 
 #define StringBuffer_error(buffer) \
@@ -87,10 +98,6 @@ StringBuffer_shift(StringBuffer* buffer, size_t count);
 #define StringBuffer_clear(buffer) \
 	StringBuffer_shift(buffer, StringBuffer_used(buffer))
 
-#define StringBuffer_log(buf, message) \
-	XFDBG("\n	%s - Buffer[%p l:%zu u:%zu f:%zu]", \
-	      message, (void*)buf,  StringBuffer_length(buf), StringBuffer_used(buf), StringBuffer_unused(buf))
-
 #define StringBuffer_equals(buf1, buf2) \
 	(strcmp(StringBuffer_value(buf1), StringBuffer_value(buf2)) == 0)
 
@@ -99,7 +106,7 @@ StringBuffer_shift(StringBuffer* buffer, size_t count);
 
 /* [ append from char* ] */
 
-BufferStatus
+void
 StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars);
 
 #define StringBuffer_cat(buffer, chars) \
@@ -114,7 +121,7 @@ StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, siz
 
 /* [ append from number ] */
 
-BufferStatus
+void
 StringBuffer_append_number(StringBuffer* buffer, size_t offset, uint64_t num, size_t nbytes);
 
 #define StringBuffer_cat_number(buffer, num, nbytes) \
@@ -141,21 +148,21 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, ssize_t nchars);
 	StringBuffer_read(buffer, StringBuffer_index_append(buffer), fileno(file), nchars)
 
 
-/* multi pass reading, maximum read length == SIZE_MAX */
+/* [multi pass reading] */
 
-BufferStatus
-StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int block);
+/* read until there is no more input */
+void
+StringBuffer_fdload(StringBuffer* buffer, int fd, size_t read_size);
 
-#define StringBuffer_fdload(buffer, fd, chunk_size) \
-	StringBuffer_fdxload(buffer, fd, chunk_size, 1)
-
-#define StringBuffer_fload(buffer, file,  chunk_size) \
-	StringBuffer_fdload(buffer, fileno(file), chunk_size)
+#define StringBuffer_fload(buffer, file, read_size) \
+	StringBuffer_fdload(buffer, fileno(file), read_size)
 
 /* read until buffer is full */
+void
+StringBuffer_ffill(StringBuffer* buffer, int fd);
 
-BufferStatus
-StringBuffer_ffill(StringBuffer* buffer, int fd, int block);
+#define StringBuffer_fill(buffer, file) \
+	StringBuffer_ffill(buffer, fileno(file))
 
 
 /* [ writing ] */

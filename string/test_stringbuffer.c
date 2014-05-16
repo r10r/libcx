@@ -25,10 +25,10 @@ test_StringBuffer_cat()
 
 	TEST_ASSERT_BUFFER(buf, "", 1024, 0, 1024);
 
-	TEST_ASSERT_EQUAL_INT(1, StringBuffer_cat(buf, "foo"));
+	StringBuffer_cat(buf, "foo");
 	TEST_ASSERT_BUFFER(buf, "foo", 1024, 3, 1024 - 3);
 
-	TEST_ASSERT_EQUAL_INT(1, StringBuffer_cat(buf, "bar"));
+	StringBuffer_cat(buf, "bar");
 	TEST_ASSERT_BUFFER(buf, "foobar", 1024, 6, 1024 - 6);
 
 	TEST_ASSERT_EQUAL_INT('f', *S_get(buf->string, 0));
@@ -145,6 +145,7 @@ test_StringBuffer_append_grow_offset()
 	StringBuffer_free(buf);
 }
 
+/* TODO check error codes */
 static void
 test_StringBuffer_shift()
 {
@@ -154,18 +155,18 @@ test_StringBuffer_shift()
 	TEST_ASSERT_BUFFER(buf, "foobar", 12, 6, 6);
 
 	/* shift nothing should return 0 */
-	TEST_ASSERT_EQUAL_INT(CX_OK, StringBuffer_shift(buf, 0));
+	StringBuffer_shift(buf, 0);
 	TEST_ASSERT_BUFFER(buf, "foobar", 12, 6, 6);
 
-	TEST_ASSERT_EQUAL_INT(CX_OK, StringBuffer_shift(buf, 3));
+	StringBuffer_shift(buf, 3);
 	TEST_ASSERT_BUFFER(buf, "bar", 12, 3, 9);
 
 	/* shift to much should do nothing and return CX_ERR */
-	TEST_ASSERT_EQUAL_INT(CX_ERR, StringBuffer_shift(buf, 6));
+	StringBuffer_shift(buf, 6);
 	TEST_ASSERT_BUFFER(buf, "bar", 12, 3, 9);
 
 	/* shift the remaining content*/
-	TEST_ASSERT_EQUAL_INT(CX_OK, StringBuffer_shift(buf, 3));
+	StringBuffer_shift(buf, 3);
 	TEST_ASSERT_BUFFER(buf, "", 12, 0, 12);
 
 	StringBuffer_free(buf);
@@ -261,7 +262,7 @@ test_StringBuffer_append_nullbytes()
 
 	const char data[] = { 0x0, 0x0 };
 
-	TEST_ASSERT_EQUAL_INT(CX_OK, StringBuffer_ncat(buffer, data, 2));
+	StringBuffer_ncat(buffer, data, 2);
 	TEST_ASSERT_EQUAL_INT(2, StringBuffer_used(buffer));
 	TEST_ASSERT_EQUAL_INT(0x0, *S_get(buffer->string, 0));
 	TEST_ASSERT_EQUAL_INT(0x0, *S_get(buffer->string, 1));

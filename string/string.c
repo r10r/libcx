@@ -33,36 +33,38 @@ String_init(const char* source, size_t nchars)
 	return s;
 }
 
-BufferStatus
-StringBuffer_shift(StringBuffer* buffer, size_t count)
+void
+StringBuffer_shift(StringBuffer* buffer, size_t nshift)
 {
-	if (count == 0)
-		return CX_OK;
+	if (nshift == 0)
+	{
+		STRING_BUFFER_WARN(buffer, "shift size 0");
+		return;
+	}
 
 	size_t nused = StringBuffer_used(buffer);
 
-	if (count > nused)
+	if (nshift > nused)
 	{
-		STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS, count);
-		buffer->status_data = count;
-		return CX_ERR;
+		STRING_BUFFER_FERROR(buffer, STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS,
+				     "shift count %zu out of bounds", nshift);
+		return;
 	}
 	else
 	{
-		size_t nremaining = nused - count;
+		size_t nremaining = nused - nshift;
 		char* buf_start = StringBuffer_value(buffer);
+		StringBuffer_used(buffer) = nremaining;
 
 		if (nremaining > 0)
 		{
-			memmove(buf_start, buf_start + count, nremaining);
-			STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_SHIFTED, count);
+			memmove(buf_start, buf_start + nshift, nremaining);
+			STRING_BUFFER_FDBG(buffer, "shifted %zu byte", nshift);
 		}
 		else
 		{
-			STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_CLEARED, count);
+			STRING_BUFFER_DBG(buffer, "cleared");
 		}
-
-		StringBuffer_used(buffer) = nremaining;
 
 		/* zero unused data */
 		size_t nunused = nused - nremaining;
@@ -70,7 +72,6 @@ StringBuffer_shift(StringBuffer* buffer, size_t count)
 	}
 
 	S_nullterm(buffer->string);
-	return CX_OK;
 }
 
 inline void
@@ -80,7 +81,7 @@ StringBuffer_init(StringBuffer* buffer, size_t length)
 	buffer->string = String_init(NULL, length);
 	if (buffer->string == NULL)
 	{
-		STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_ERROR_ERRNO, 0UL);
+		STRING_BUFFER_ERRNO(buffer);
 	}
 }
 
@@ -90,7 +91,7 @@ StringBuffer_new(size_t length)
 	StringBuffer* buf = cx_alloc(sizeof(StringBuffer));
 
 	StringBuffer_init(buf, length);
-	XFDBG("Created buffer[%p l:%zu]", buf, length);
+	STRING_BUFFER_DBG(buf, "created");
 
 	return buf;
 }
@@ -120,34 +121,33 @@ StringBuffer_free(StringBuffer* buffer)
 	}
 }
 
-/*
- * @return CX_OK on succes, CX_ERR on failure
- */
-BufferStatus
-StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nlength_requested)
+/* @return true if the requested size is availabe, false on error */
+bool
+StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nsize_required)
 {
 	String* old_string = buffer->string;
 	size_t old_length = buffer->length;
 
-	/* offset index must be within range */
-	if (offset > old_length)
-	{
-		STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS, offset);
-		return CX_ERR;
-	}
-
-	size_t new_length = offset + nlength_requested;
+	size_t new_length = offset + nsize_required;
 
 	/* check if we have to grow */
 	if (new_length > old_length)
 	{
+		/* offset index must be within range */
+		if (offset > old_length)
+		{
+			STRING_BUFFER_FERROR(buffer, STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS,
+					     "offset %zu out of bounds", offset);
+			return false;
+		}
+
 		String* new_string = String_init(NULL, new_length);
 
 		/* memory allocation failure */
 		if (new_string == NULL)
 		{
-			STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_ERROR_ERRNO, 0UL);
-			return CX_ERR;
+			STRING_BUFFER_ERRNO(buffer);
+			return false;
 		}
 
 		buffer->string = new_string;
@@ -161,90 +161,105 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nlength_reque
 		}
 
 		S_free(old_string);
-
-		STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_RESIZED, new_length - old_length);
+		STRING_BUFFER_FDBG(buffer, "resized %zu --> %zu", old_length, new_length);
 	}
-
-	return CX_OK;
+	return true;
 }
 
-BufferStatus
-StringBuffer_append_number(StringBuffer* buffer, size_t offset, uint64_t num, size_t nbytes)
+void
+StringBuffer_append_number(StringBuffer* buffer, size_t offset, uint64_t num, size_t nsize)
 {
-	return StringBuffer_append(buffer, offset, (char*)&num, nbytes);
+	StringBuffer_append(buffer, offset, (char*)&num, nsize);
 }
 
-BufferStatus
-StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars)
+void
+StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nsize)
 {
-	if (nchars == 0)
+	if (nsize == 0)
 	{
-		XFWARN("Buffer[%p] - request to append 0 chars: %s", buffer, source);
-		return CX_OK;
-	}
-
-	if (StringBuffer_make_room(buffer, offset, nchars) == CX_OK)
-	{
-		memcpy(StringBuffer_value(buffer) + offset, source, nchars);
-		buffer->string->length = offset + nchars;
-		S_nullterm(buffer->string);
-		STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_NEW_DATA, nchars);
-		return CX_OK;
+		STRING_BUFFER_WARN(buffer, "append size is 0");
+		return;
 	}
 	else
-		return CX_ERR;
+	{
+		if (StringBuffer_make_room(buffer, offset, nsize))
+		{
+			memcpy(StringBuffer_value(buffer) + offset, source, nsize);
+			buffer->string->length = offset + nsize;
+			S_nullterm(buffer->string);
+			STRING_BUFFER_FDBG(buffer, "appended %zu byte", nsize);
+		}
+	}
 }
 
-/* @return the number of bytes read or CX_ERR on error */
+/* @return the number of bytes read or CX_ERR (-1) on error */
 ssize_t
-StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, ssize_t nchars)
+StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, ssize_t read_size)
 {
-	if (nchars == 0)
+	if (read_size < 0)
 	{
-		XERR("Request to append 0 chars");
-		return CX_OK;
-	}
-
-	if (StringBuffer_make_room(buffer, offset, (size_t)nchars) < 0)
-		return CX_ERR;
-
-	ssize_t nread = read(fd, S_term(buffer->string), (size_t)nchars);
-
-	if (nread < 0)
-	{
-		STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_ERROR_ERRNO, 0UL);
+		STRING_BUFFER_FERROR(buffer, STRING_BUFFER_STATUS_ERROR_INVALID_READ_SIZE,
+				     "negative read size: %zu", read_size);
 		return CX_ERR;
 	}
-	else if (nread > 0)
+	else if (read_size == 0)
 	{
-		STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_NEW_DATA, (size_t)nread);
-		buffer->string->length = offset + (size_t)nread;
-		S_nullterm(buffer->string);
+		STRING_BUFFER_WARN(buffer, "read size is 0");
+		return 0;
 	}
-
-	return nread;
+	else
+	{
+		if (StringBuffer_make_room(buffer, offset, (size_t)read_size))
+		{
+			ssize_t nread = read(fd, S_term(buffer->string), (size_t)read_size);
+			if (nread == -1)
+			{
+//				STRING_BUFFER_ERRNO(buffer);
+				buffer->status = STRING_BUFFER_STATUS_ERROR_ERRNO;
+				buffer->error_errno = errno;
+				return CX_ERR;
+			}
+			if (nread == 0)
+			{
+				STRING_BUFFER_DBG(buffer, "EOF");
+				buffer->status = STRING_BUFFER_STATUS_EOF;
+			}
+			else
+			{
+				STRING_BUFFER_FDBG(buffer, "read %zu byte (read size %zu)", nread, read_size);
+				if (nread > 0)
+				{
+					buffer->string->length = offset + (size_t)nread;
+					S_nullterm(buffer->string);
+				}
+			}
+			return nread;
+		}
+		else
+			return CX_ERR;
+	}
 }
 
-/* read until EOF or when blocking is set to 0 until EWOULDBLOCK,
- * @ return CX_ERR on error, 0 if no data was loaded, CX_OK else
+/*
+ * read until EOF or when blocking is set to 0 until EWOULDBLOCK
  */
-BufferStatus
-StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int block)
+void
+StringBuffer_fdload(StringBuffer* buffer, int fd, size_t read_size)
 {
-	if (chunk_size == 0)
+	if (read_size == 0)
 	{
-		XERR("Request to append 0 chars");
-		return CX_OK;
+		STRING_BUFFER_WARN(buffer, "read size 0");
+		return;
 	}
 
 	size_t nread_total = 0;
 	ssize_t nread;
 
-	ssize_t chunk_size_original = chunk_size % READ_MAX;
-	ssize_t chunk_size_actual = chunk_size_original;
+	ssize_t read_size_original = read_size % READ_SIZE_MAX;
+	ssize_t read_size_actual = read_size_original;
 
 	/* read until EOF or until an error occurs */
-	while ((nread = StringBuffer_fdncat(buffer, fd, chunk_size_actual)) > 0)
+	while ((nread = StringBuffer_fdncat(buffer, fd, read_size_actual)) > 0)
 	{
 		nread_total += (size_t)nread;
 
@@ -255,79 +270,49 @@ StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int block)
 		 * Reduce read size to remaining buffer length if
 		 * actual characters read < read size
 		 */
-		if (nread > 0 && nread < chunk_size_actual)
+		if (nread > 0 && nread < read_size_actual)
 		{
 			size_t nunused = StringBuffer_unused(buffer);
 
-			if ((size_t)chunk_size_actual > nunused)
+			if ((size_t)read_size_actual > nunused)
 			{
 				ssize_t chunk_size_reduced = (ssize_t)nunused;
-				XFDBG("Buffer[%p] - reduced read size to %zu", buffer, chunk_size_reduced);
-				chunk_size_actual = chunk_size_reduced;
+				STRING_BUFFER_FDBG(buffer, "reduced read size (%zu --> %zu)",
+						   read_size_actual, chunk_size_reduced);
+				read_size_actual = chunk_size_reduced;
 			}
 		}
 	}
 
-	STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_NEW_DATA, (size_t)nread_total);
-
-	/* check error */
-	if (nread < 0)
-	{
-		if (block || errno != EWOULDBLOCK)
-		{
-			STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_ERROR_ERRNO, 0UL);
-			return CX_ERR;
-		}
-	}
-
-	return CX_OK;
+	STRING_BUFFER_FDBG(buffer, "total bytes read %zu", nread_total);
 }
 
 /*
  * Load data until buffer is full, the input blocks or an error occurs.
- * @return the number of unused bytes available in the buffer, or -1 on error (see errno)
  */
-BufferStatus
-StringBuffer_ffill(StringBuffer* buffer, int fd, int blocking)
+void
+StringBuffer_ffill(StringBuffer* buffer, int fd)
 {
-	if (StringBuffer_length(buffer) == 0)
+	if (StringBuffer_length(buffer) == 0 || StringBuffer_unused(buffer) == 0)
 	{
-		XERR("Request fill buffer of size 0");
-		return CX_OK;
+//		STRING_BUFFER_WARN(buffer, "buffer full");
+		return;
 	}
-
 	size_t nunused;
-	size_t ntotal = 0;
+	size_t nread_total = 0;
 
 	/* read until buffer is full */
 	while ((nunused = StringBuffer_unused(buffer)) > 0)
 	{
-		ssize_t nread = StringBuffer_fdncat(buffer, fd, nunused % READ_MAX);
+		ssize_t nread = StringBuffer_fdncat(buffer, fd, nunused % READ_SIZE_MAX);
 
-		if (nread < 0)
-		{
-			if (blocking || errno != EWOULDBLOCK)
-			{
-				STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_ERROR_ERRNO, 0UL);
-				return CX_ERR;
-			}
-			else
-			{
-				break;
-			}
-		}
-		else if (nread == 0)
-		{
+		if (nread > 0)
+			nread_total += (size_t)nread;
+		else
 			break;
-		}
-		else if (nread > 0)
-		{
-			ntotal += (size_t)nread;
-		}
 	}
 
-	STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_NEW_DATA, ntotal);
-	return CX_OK;
+	STRING_BUFFER_FDBG(buffer, "total bytes read %zu", nread_total);
 }
 
 StringBuffer*
@@ -355,7 +340,7 @@ StringBuffer_sprintf(StringBuffer* buffer, size_t offset, const char* format, ..
 }
 
 /*
- * CX_ERR if an error occured, or >= 0 for count of printed characters
+ * @return The number of printed characters or CX_ERR (-1) if an error occurred.
  */
 int
 StringBuffer_vsnprintf(StringBuffer* buffer, size_t offset, const char* format, va_list args)
@@ -363,7 +348,8 @@ StringBuffer_vsnprintf(StringBuffer* buffer, size_t offset, const char* format, 
 	/* check that offset is within within range */
 	if (offset > buffer->length)
 	{
-		STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS, offset);
+		STRING_BUFFER_FERROR(buffer, STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS,
+				     "offset %zu out of bounds", offset);
 		return CX_ERR;
 	}
 
@@ -388,24 +374,26 @@ StringBuffer_vsnprintf(StringBuffer* buffer, size_t offset, const char* format, 
 	 */
 	assert(nchars_printed >= 0); /* c library bug */
 
-	/* check if buffer was to small */
+	/* if buffer was to small then grow buffer and repeat the procedure */
 	if ((size_t)nchars_printed > nchars_available)
 	{
 		/* expand string buffer */
-		if (StringBuffer_make_room(buffer, offset, (size_t)nchars_printed) != CX_OK)
+		if (StringBuffer_make_room(buffer, offset, (size_t)nchars_printed))
+		{
+			va_copy(ap, args);
+			string_start = S_get(buffer->string, offset);
+			nchars_available = buffer->length - offset;
+			nchars_printed = vsnprintf(string_start, nchars_available + 1, format, ap);
+			va_end(ap);
+
+			assert((size_t)nchars_printed == nchars_available); /* application bug */
+		}
+		else
 			return CX_ERR;
-
-		va_copy(ap, args);
-		string_start = S_get(buffer->string, offset);
-		nchars_available = buffer->length - offset;
-		nchars_printed = vsnprintf(string_start, nchars_available + 1, format, ap);
-		va_end(ap);
-
-		assert((size_t)nchars_printed == nchars_available); /* application bug */
 	}
 
 	buffer->string->length = offset + (size_t)nchars_printed;
-	STRING_BUFFER_STATUS(buffer, STRING_BUFFER_STATUS_NEW_DATA, (size_t)nchars_printed);
+	STRING_BUFFER_FDBG(buffer, "printed %d byte", nchars_printed);
 
 	return nchars_printed;
 }
@@ -438,13 +426,12 @@ cx_strstatus(StringBufferStatus status)
 {
 	switch (status)
 	{
+	case STRING_BUFFER_STATUS_OK: return "OK";
+	case STRING_BUFFER_STATUS_EOF: return "EOF";
 	case STRING_BUFFER_STATUS_ERROR_ERRNO: return "ERROR_ERRNO";
 	case STRING_BUFFER_STATUS_ERROR_TO_SMALL: return "ERROR_TO_SMALL";
 	case STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS: return "ERROR_INVALID_ACCESS";
-	case STRING_BUFFER_STATUS_CLEARED: return "CLEARED";
-	case STRING_BUFFER_STATUS_SHIFTED: return "SHIFTED";
-	case STRING_BUFFER_STATUS_RESIZED: return "RESIZED";
-	case STRING_BUFFER_STATUS_NEW_DATA: return "NEW_DATA";
+	case STRING_BUFFER_STATUS_ERROR_INVALID_READ_SIZE: return "ERROR_INVALID_READ_SIZE";
 	}
 }
 

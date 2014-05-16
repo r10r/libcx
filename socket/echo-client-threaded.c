@@ -21,7 +21,7 @@ on_connect(TCPSocket* tcp)
 	shutdown(tcp->socket.fd, SHUT_WR); /* indicates EOF on server side */
 
 	StringBuffer* in = StringBuffer_new(1024);
-	StringBuffer_fdxload(in, tcp->socket.fd, 128, 0);
+	StringBuffer_fdload(in, tcp->socket.fd, 128);
 
 	assert(StringBuffer_equals(out, in));
 

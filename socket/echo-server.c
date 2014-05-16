@@ -5,50 +5,93 @@
 
 #define CONNECTION_BUFFER_LENGTH 1024
 
-static ssize_t
-echo_connection_data_handler(Connection* connection)
+static void
+close_connection(Connection* connection)
 {
 	StringBuffer* buffer = (StringBuffer*)connection->data;
 
-	size_t nused_before = StringBuffer_used(buffer);
-	BufferStatus status = StringBuffer_ffill(buffer, connection->fd, 0);
-
-	if (status == CX_OK)
-	{
-		size_t incremented = StringBuffer_used(buffer) - nused_before;
-		assert(incremented < SSIZE_MAX); /* application bug */
-		return (ssize_t)incremented;
-	}
-	else
-		return CX_ERR;
+	StringBuffer_free(buffer);
+	Connection_close(connection);
 }
 
-static Connection*
-echo_connection_handler(Connection* connection, ConnectionEvent event)
+static void
+echo_connection_read(Connection* conn)
 {
-	switch (event)
+	CXDBG(conn, "read data");
+	StringBuffer* buffer = (StringBuffer*)conn->data;
+
+	/* receive data until buffer is full */
+	StringBuffer_ffill(buffer, conn->fd);
+
+	CXFDBG(conn, "buffer status %d", buffer->status);
+	switch (buffer->status)
 	{
-	case CONNECTION_EVENT_DATA:
+	case STRING_BUFFER_STATUS_OK:
+		Connection_start_write(conn);
+		break;
+	case STRING_BUFFER_STATUS_EOF:
+		/* todo check if there is any data to send */
+		XDBG("received EOF - closing connection");
+		Connection_close_read(conn);
+		Connection_start_write(conn);
+		break;
+	case STRING_BUFFER_STATUS_ERROR_TO_SMALL:
+	case STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS:
+	case STRING_BUFFER_STATUS_ERROR_INVALID_READ_SIZE:
 	{
-		StringBuffer* buffer = (StringBuffer*)connection->data;
-		Connection_send_blocking(connection, buffer->string->value, buffer->string->length);
-		StringBuffer_clear(buffer);
+		CXFDBG(conn, "closing connection because of error :%d", buffer->status);
+		close_connection(conn);
 		break;
 	}
-	case CONNECTION_EVENT_CLOSE_READ:
+	case STRING_BUFFER_STATUS_ERROR_ERRNO:
 	{
-		XDBG("close read");
-		StringBuffer_free((StringBuffer*)connection->data);
-		Connection_close(connection);
+		if (buffer->error_errno == EWOULDBLOCK)
+			Connection_start_write(conn);
+		else
+		{
+			CXFDBG(conn, "closing connection because of error :%d", buffer->status);
+			close_connection(conn);
+		}
 		break;
 	}
-	case CONNECTION_EVENT_ERRNO:
-		perror("failed to accept connection");
-		break;
-	case CONNECTION_EVENT_ERROR_WRITE:
-		break;
 	}
-	return connection;
+}
+
+static void
+echo_connection_write(Connection* conn)
+{
+	CXDBG(conn, "write data");
+	StringBuffer* buffer = (StringBuffer*)conn->data;
+	size_t nused = StringBuffer_used(buffer);
+
+	if (nused == 0)
+	{
+		CXDBG(conn, "no more data available for writing");
+
+		if (buffer->status == STRING_BUFFER_STATUS_EOF)
+			close_connection(conn);
+		else
+			Connection_stop_write(conn);
+	}
+	else
+	{
+		ssize_t nwritten = write(conn->fd, StringBuffer_value(buffer), nused);
+
+		if (nwritten == -1)
+		{
+			// we should not receive EAGAIN here ?
+			assert(errno != EAGAIN);
+			// FIXME errno:32:[Broken pipe] - Connection[12] - Failed to write data
+			CXERRNO(conn, "Failed to write data");
+			// when writing fails shutdown connection, because buffer is not shifted any longer
+			Connection_close(conn);
+		}
+		else
+		{
+			CXFDBG(conn, "send %zu bytes (remaining %zu)", nwritten, StringBuffer_used(buffer));
+			StringBuffer_shift(buffer, (size_t)nwritten);
+		}
+	}
 }
 
 static Connection*
@@ -56,8 +99,8 @@ EchoConnection_new()
 {
 	Connection* connection = Connection_new(NULL, -1);
 
-	connection->f_data_handler = echo_connection_data_handler;
-	connection->f_handler = echo_connection_handler;
+	connection->f_receive_data_handler = echo_connection_read;
+	connection->f_send_data_handler = echo_connection_write;
 	connection->data = StringBuffer_new(CONNECTION_BUFFER_LENGTH);
 	return connection;
 }
