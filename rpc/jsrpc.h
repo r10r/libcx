@@ -36,7 +36,7 @@ static const char* const JSONRPC_RESPONSE_NULL = JSONRPC_HEADER JSONRPC_RESULT_N
 #define JSONRPC_ERROR "\"error\":{\"code\":%d,\"message\":\"%s\"}}"
 static const char* const JSONRPC_RESULT_ERROR = JSONRPC_ERROR;
 static const char* const JSONRPC_RESPONSE_ERROR = JSONRPC_HEADER JSONRPC_ERROR;
-static const char* JSONRPC_NULL = "null"; /* for invalid ID or null values*/
+#define JSONRPC_NULL "null" /* for invalid ID or null values*/
 
 
 /* [ complex responses ] */

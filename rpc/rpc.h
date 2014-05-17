@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>                     /* strdup */
+
 #include "string/string_buffer.h"       /* response buffer */
-#include "base/debug.h"
 #include "list/list.h"
 
 typedef union cx_rpc_param_value_t RPC_Value;
@@ -211,13 +211,17 @@ struct cx_rpc_request_list_t
 
 /* [ Method Export ] */
 
+#define RPC_define(meth) \
+	RPC_Method RPC_ns(meth) = RPC_def(meth); \
+	RPC_method(meth)
+
 #define RPC_export(meth) \
-	RPC_method(meth); \
-	static RPC_Method RPC_ns(meth) = RPC_def(meth);
+	extern RPC_Method RPC_ns(meth); \
+	RPC_method(meth)
 
 #define RPC_export_without_params(meth) \
-	RPC_method(meth); \
-	static RPC_Method RPC_ns(meth) = { #meth, RPC_method_name(meth), NULL, 0 };
+	extern RPC_method(meth); \
+	RPC_Method RPC_ns(meth) = { #meth, RPC_method_name(meth), NULL, 0 };
 
 
 /* [RPC API] */

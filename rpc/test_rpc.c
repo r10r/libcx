@@ -1,25 +1,28 @@
 #include "base/test.h"
-
 #define RPC_NS MyNamespace_
 #include "rpc.h"
 
 // protocol api implementation
-
 void
 RPC_RequestList_free_data(RPC_RequestList* request_list)
 {
+	UNUSED(request_list);
 }
 
 /* deserialize methods */
 static const char*
 get_foo_value(RPC_Request* request, RPC_Param* param)
 {
+	UNUSED(request);
+	UNUSED(param);
 	return "foo";
 }
 
 static int
 get_bar_value(RPC_Request* request, RPC_Param* param)
 {
+	UNUSED(request);
+	UNUSED(param);
 	return 666;
 }
 

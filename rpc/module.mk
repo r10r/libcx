@@ -1,8 +1,7 @@
 # cache evaluation of path
 L := $(LOCAL_DIR)
 
-TESTS += $(L)/test_params \
- $(L)/test_jsonrpc \
+TESTS += $(L)/test_jsonrpc \
  $(L)/test_rpc
 
 #PROGRAMS += 
@@ -29,7 +28,3 @@ $(L)/test_jsonrpc_OBJS := $(TEST_OBJS) \
 	$(L)/echo_service.o \
 	$(LIBCX_DIR)/string/string.o \
 	$(LIBCX_DIR)/list/list.o
-
-$(L)/test_params_FLAGS := -lyajl
-$(L)/test_params_OBJS := $(TEST_OBJS) \
-	$(L)/test_params.o

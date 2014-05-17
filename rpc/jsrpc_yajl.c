@@ -101,7 +101,7 @@ RPC_Request_get_param_value_double(RPC_Request* request, RPC_Param* param)
 }
 
 static int
-check_jsonrpc_version(RPC_Request* request, yajl_val root)
+check_jsonrpc_version(yajl_val root)
 {
 	yajl_val v = yajl_tree_get(root, JSONRPC_VERSION_PATH, yajl_t_any);
 
@@ -181,7 +181,7 @@ RPC_Request_parse(RPC_Request* request)
 	int ret;
 	yajl_val root = (yajl_val)request->data;
 
-	ret = check_jsonrpc_version(request, root);
+	ret = check_jsonrpc_version(root);
 	if (!ret)
 		return 0;
 

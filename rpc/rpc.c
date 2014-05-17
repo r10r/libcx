@@ -16,6 +16,7 @@ RPC_Method_log(RPC_Method* method)
 	for (i = 0; i < method->param_count; i++)
 	{
 		RPC_Param* param = method->signature[i];
+		UNUSED(param);
 		XFDBG("  param[%d] name:%s type:%d, flags:%d",
 		      param->pos, param->name, param->type, param->flags);
 	}
