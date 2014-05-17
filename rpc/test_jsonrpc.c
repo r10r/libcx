@@ -2,17 +2,18 @@
 #include "echo_service.h"
 
 static void
-assert_response_equals(RPC_Method methods[], StringBuffer* request, StringBuffer* response)
+assert_response_equals(RPC_Method methods[], StringBuffer* request_buffer, StringBuffer* expected_response_buffer)
 {
-	RPC_RequestList* request_list = RPC_RequestList_new(request, 2048);
+	RPC_RequestList* request_list = RPC_RequestList_new(Request_new(request_buffer), StringBuffer_value(request_buffer), 2048);
 
 	RPC_RequestList_process(request_list, methods);
 
-	TEST_ASSERT_EQUAL_STRING(StringBuffer_value(response),
+	TEST_ASSERT_EQUAL_STRING(StringBuffer_value(expected_response_buffer),
 				 StringBuffer_value(request_list->response_buffer));
 
 	RPC_RequestList_free(request_list);
-	StringBuffer_free(response);
+	StringBuffer_free(expected_response_buffer);
+	StringBuffer_free(request_buffer);
 }
 
 static void

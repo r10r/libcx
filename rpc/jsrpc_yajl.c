@@ -220,7 +220,7 @@ RPC_Request_deserialize(RPC_RequestList* request_list)
 
 	request_list->nrequests = 0;
 
-	yajl_val json_root = yajl_tree_parse(StringBuffer_value(request_list->request_buffer), errbuf, sizeof(errbuf));
+	yajl_val json_root = yajl_tree_parse((const char*)request_list->data, errbuf, sizeof(errbuf));
 
 	request_list->data = json_root;
 

@@ -8,6 +8,8 @@
 #include "string/string_buffer.h"       /* response buffer */
 #include "list/list.h"
 
+#include "socket/request.h"
+
 typedef union cx_rpc_param_value_t RPC_Value;
 typedef struct cx_rpc_param_t RPC_Param;
 typedef struct cx_rpc_method_t RPC_Method;
@@ -90,7 +92,7 @@ struct cx_rpc_request_t
 
 struct cx_rpc_request_list_t
 {
-	StringBuffer* request_buffer;
+	Request* request;
 	StringBuffer* response_buffer;
 	StringBuffer* result_buffer; /* holds either result or error message */
 
@@ -251,7 +253,7 @@ RPC_Method*
 RPC_Request_lookup_method(RPC_Request* request, RPC_Method methods[]);
 
 RPC_RequestList*
-RPC_RequestList_new(StringBuffer* request_buffer, size_t buffer_size);
+RPC_RequestList_new(Request* request, void* data, size_t buffer_size);
 
 void
 RPC_RequestList_free(RPC_RequestList* request_list);

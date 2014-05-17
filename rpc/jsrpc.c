@@ -54,9 +54,10 @@ RPC_RequestList_deserialize_method(RPC_RequestList* request_list, RPC_Request* r
 }
 
 static char*
-RPC_Request_serialize_id(RPC_Request *request)
+RPC_Request_serialize_id(RPC_Request* request)
 {
-	char *id = NULL;
+	char* id = NULL;
+
 	if (request->id == NULL)
 	{
 		id = cx_strdup(JSONRPC_NULL);
@@ -149,7 +150,7 @@ append_delimiter(RPC_RequestList* request_list, int i)
 void
 RPC_RequestList_process(RPC_RequestList* request_list, RPC_Method methods[])
 {
-	XFDBG("Dispatching request: \n<<<\n%s\n>>>", StringBuffer_value(request_list->request_buffer));
+	XFDBG("Dispatching request: \n<<<\n%s\n>>>", (const char*)request_list->data);
 
 	RPC_Request_deserialize(request_list);
 

@@ -16,6 +16,7 @@ TESTS += $(L)/test_jsonrpc \
 $(L)/test_rpc_OBJS := $(TEST_OBJS) \
 	$(L)/test_rpc.o \
 	$(L)/rpc.o \
+	$(LIBCX_DIR)/socket/request.o \
 	$(LIBCX_DIR)/string/string.o \
 	$(LIBCX_DIR)/list/list.o
 	
@@ -26,5 +27,6 @@ $(L)/test_jsonrpc_OBJS := $(TEST_OBJS) \
 	$(L)/jsrpc.o \
 	$(L)/jsrpc_yajl.o \
 	$(L)/echo_service.o \
+	$(LIBCX_DIR)/socket/request.o \
 	$(LIBCX_DIR)/string/string.o \
 	$(LIBCX_DIR)/list/list.o
