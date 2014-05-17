@@ -74,17 +74,29 @@ Connection_send_blocking(Connection* c, const char* data, size_t length);
 #define Connection_stop_write(conn) \
 	ev_io_stop(conn->worker->loop, &conn->send_data_watcher)
 
+#define Connection_start_read(conn) \
+	ev_io_start(conn->worker->loop, &conn->receive_data_watcher);
+
+#define Connection_stop_read(conn) \
+	ev_io_stop(conn->worker->loop, &conn->receive_data_watcher);
+
 #define CXDBG(con, message) \
 	XFDBG("Connection[%d] - " message, con->fd)
 
-#define CXFDBG(con, message, ...) \
-	XFDBG("Connection[%d] - " message, con->fd, __VA_ARGS__)
+#define CXFDBG(con, format, ...) \
+	XFDBG("Connection[%d] - " format, con->fd, __VA_ARGS__)
+
+#define CXERR(con, message) \
+	XFERR("Connection[%d] - " message, con->fd)
+
+#define CXFERR(con, format, ...) \
+	XFERR("Connection[%d] - " format, con->fd, __VA_ARGS__)
 
 #define CXERRNO(con, message) \
 	XFERRNO("Connection[%d] - " message, con->fd)
 
-#define CXFERRNO(con, message, ...) \
-	XFERRNO("Connection[%d] - " message, con->fd, __VA_ARGS__)
+#define CXFERRNO(con, format, ...) \
+	XFERRNO("Connection[%d] - " format, con->fd, __VA_ARGS__)
 
 
 #endif
