@@ -53,26 +53,46 @@ RPC_RequestList_deserialize_method(RPC_RequestList* request_list, RPC_Request* r
 	return rpc_method;
 }
 
+static char*
+RPC_Request_serialize_id(RPC_Request *request)
+{
+	char *id = NULL;
+	if (request->id == NULL)
+	{
+		id = cx_strdup(JSONRPC_NULL);
+	}
+	else
+	{
+		size_t max_size = (strlen(request->id) + 3) * sizeof(char);
+		id = cx_alloc(max_size);
+		if (request->id_numerical)
+			snprintf(id, max_size, "%s", request->id);
+		else
+			snprintf(id, max_size, "\"%s\"", request->id);
+	}
+	return id;
+}
+
 static void
-RPC_RequestList_process_result(RPC_RequestList* request_list,
-			       RPC_Request* request)
+RPC_RequestList_process_result(RPC_RequestList* request_list, RPC_Request* request, const char* id)
 {
 	request->response_written = 1;
+
 	/* check for execution error */
 	if (request->error)
 	{
 		StringBuffer_aprintf(request_list->response_buffer, JSONRPC_RESPONSE_ERROR,
-				     request->id, request->error,
+				     id, request->error,
 				     StringBuffer_value(request_list->result_buffer));
 	}
 	else if (StringBuffer_used(request_list->result_buffer) > 0)
 		StringBuffer_aprintf(request_list->response_buffer, JSONRPC_RESPONSE_SIMPLE,
-				     request->id, StringBuffer_value(request_list->result_buffer));
+				     id, StringBuffer_value(request_list->result_buffer));
 	else
 	{
 		/* no result value */
 		StringBuffer_aprintf(request_list->response_buffer, JSONRPC_RESPONSE_NULL,
-				     request->id);
+				     id);
 	}
 }
 
@@ -81,11 +101,13 @@ RPC_RequestList_process_request(RPC_RequestList* request_list, int nrequest, RPC
 {
 	RPC_Request* request = request_list->requests + nrequest;
 
+	char* id = RPC_Request_serialize_id(request);
+
 	/* check for deserialization errors (only invalid request) */
 	if (request->error)
 	{
 		StringBuffer_aprintf(request_list->response_buffer, JSONRPC_RESPONSE_ERROR,
-				     (request->id ? request->id : JSONRPC_NULL), request->error, jsrpc_strerror(request->error));
+				     id, request->error, jsrpc_strerror(request->error));
 		request->response_written = 1;
 	}
 	else
@@ -100,7 +122,7 @@ RPC_RequestList_process_request(RPC_RequestList* request_list, int nrequest, RPC
 
 				/* append result to response buffer if request is not a notification */
 				if (request->id)
-					RPC_RequestList_process_result(request_list, request);
+					RPC_RequestList_process_result(request_list, request, id);
 			}
 			else
 				StringBuffer_aprintf(request_list->response_buffer, JSONRPC_RESPONSE_ERROR,
@@ -111,6 +133,7 @@ RPC_RequestList_process_request(RPC_RequestList* request_list, int nrequest, RPC
 		}
 	}
 
+	cx_free(id);
 	/* clear result buffer after each request */
 	StringBuffer_clear(request_list->result_buffer);
 }

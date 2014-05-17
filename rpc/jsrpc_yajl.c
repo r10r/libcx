@@ -108,7 +108,7 @@ RPC_Request_get_param_value_double(RPC_Request* request, RPC_Param* param)
 	return 0;
 }
 
-static int
+static bool
 check_jsonrpc_version(yajl_val root)
 {
 	yajl_val v = yajl_tree_get(root, JSONRPC_VERSION_PATH, yajl_t_any);
@@ -120,7 +120,7 @@ check_jsonrpc_version(yajl_val root)
 		if (jsonrpc_version)
 		{
 			if (strcmp(jsonrpc_version, "2.0") == 0)
-				return 1;
+				return true;
 			else
 				XFERR("Unsupported jsonrpc version '%s'", jsonrpc_version);
 		}
@@ -130,41 +130,49 @@ check_jsonrpc_version(yajl_val root)
 	else
 		XERR("No 'jsonrpc' version string");
 
-	return 0;
+	return false;
 }
 
-/* @return 0 if request is malformed, 1 else */
-static int
+/* @return false if request is malformed, true else */
+static bool
 set_request_id(RPC_Request* request, yajl_val root)
 {
 	yajl_val v = yajl_tree_get(root, JSONRPC_ID_PATH, yajl_t_any);
 
 	if (v)
 	{
-		switch (v->type)
+		if (YAJL_IS_INTEGER(v))
 		{
-		case yajl_t_null:
-			XERR("Using null as id is discouraged! Request be handled as notification");
-			return 0;
-		case yajl_t_number:
 			request->id = YAJL_GET_NUMBER(v);
-			break;
-		case yajl_t_string:
+			request->id_numerical = true;
+			return true;
+		}
+		else if (YAJL_IS_STRING(v))
+		{
 			request->id = YAJL_GET_STRING(v);
-			break;
-		default:
+			request->id_numerical = false;
+			return true;
+		}
+		else if (YAJL_IS_NULL(v))
+		{
+			XERR("Using null as id is discouraged! Request be handled as notification");
+			return false;
+		}
+		else
+		{
 			XFERR("Invalid type %d for property id", v->type);
-			return 0;
+			return false;
 		}
 	}
 	else
+	{
 		XDBG("Received a notification");
-
-	return 1;
+		return true;
+	}
 }
 
 /* @return 0 if request is malformed, 1 else */
-static int
+static bool
 set_request_method(RPC_Request* request, yajl_val root)
 {
 	yajl_val v = yajl_tree_get(root, JSONRPC_METHOD_PATH, yajl_t_any);
@@ -173,35 +181,35 @@ set_request_method(RPC_Request* request, yajl_val root)
 	{
 		request->method_name = YAJL_GET_STRING(v);
 		if (request->method_name)
-			return 1;
+			return true;
 		else
 			XFDBG("Invalid type %d for parameter 'method'", v->type);
 	}
 	else
 		XDBG("Request has no parameter 'method'");
-	return 0;
+	return false;
 }
 
 /* @return 0 if request is malformed, 1 else */
-static int
+static bool
 RPC_Request_parse(RPC_Request* request)
 {
-	int ret;
+	bool success;
 	yajl_val root = (yajl_val)request->data;
 
-	ret = check_jsonrpc_version(root);
-	if (!ret)
-		return 0;
+	success = check_jsonrpc_version(root);
+	if (!success)
+		return false;
 
-	ret = set_request_id(request, root);
-	if (!ret)
-		return 0;
+	success = set_request_id(request, root);
+	if (!success)
+		return false;
 
-	ret = set_request_method(request, root);
-	if (!ret)
-		return 0;
+	success = set_request_method(request, root);
+	if (!success)
+		return false;
 
-	return 1;
+	return true;
 }
 
 int

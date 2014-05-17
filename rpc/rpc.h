@@ -78,6 +78,8 @@ struct cx_rpc_method_t
 struct cx_rpc_request_t
 {
 	const char* id;
+	bool id_numerical;
+
 	const char* method_name;
 	int error;
 	void* data;
