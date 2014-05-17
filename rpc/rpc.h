@@ -79,6 +79,7 @@ struct cx_rpc_request_t
 {
 	const char* id;
 	bool id_numerical;
+	bool notification;
 
 	const char* method_name;
 	int error;

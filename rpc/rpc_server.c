@@ -8,6 +8,8 @@ on_response_send(Connection* conn, Response* response)
 	StringBuffer_free((StringBuffer*)response->data);
 }
 
+#define RPC_RESPONSE_EMPTY_BATCH_LENGTH 2 /* [] */
+
 // FIXME make it protocol independent (websockets);
 void
 rpc_request_callback(Connection* conn, Request* request)
@@ -35,10 +37,17 @@ rpc_request_callback(Connection* conn, Request* request)
 	RPC_RequestList_process(request_list, service_methods);
 
 	// create response frame (FIXME don't duplicate response data ? (separate header from body ?))
-	StringBuffer* response_frame = WebsocketsFrame_create(WS_FRAME_TEXT,
-							      StringBuffer_value(request_list->response_buffer), StringBuffer_used(request_list->response_buffer));
-	RPC_RequestList_free(request_list);
+	if (StringBuffer_used(request_list->response_buffer) > RPC_RESPONSE_EMPTY_BATCH_LENGTH)
+	{
+		StringBuffer* response_frame = WebsocketsFrame_create(WS_FRAME_TEXT,
+											StringBuffer_value(request_list->response_buffer), StringBuffer_used(request_list->response_buffer));
+		RPC_RequestList_free(request_list);
 	// send response async
-	Response* response = Response_new(response_frame, on_response_send);
-	Connection_send(conn, response);
+		Response* response = Response_new(response_frame, on_response_send);
+		Connection_send(conn, response);
+	}
+	else
+	{
+		RPC_RequestList_free(request_list);
+	}
 }

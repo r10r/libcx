@@ -155,18 +155,19 @@ set_request_id(RPC_Request* request, yajl_val root)
 		}
 		else if (YAJL_IS_NULL(v))
 		{
-			XERR("Using null as id is discouraged! Request be handled as notification");
+			XERR("Using null as id is discouraged! Treated as invalid request");
 			return false;
 		}
 		else
 		{
-			XFERR("Invalid type %d for property id", v->type);
+			XERR("Invalid value for property id");
 			return false;
 		}
 	}
 	else
 	{
 		XDBG("Received a notification");
+		request->notification = true;
 		return true;
 	}
 }
