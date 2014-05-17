@@ -209,19 +209,19 @@ struct cx_rpc_request_list_t
 	RPC_set_param_longlong(meth, pos, name, flags) \
 	RPC_param_list_single(meth, name)
 
-/* [ Method Export ] */
-
-#define RPC_define(meth) \
-	RPC_Method RPC_ns(meth) = RPC_def(meth); \
-	RPC_method(meth)
+/* [ Method Definitions / Export ] */
 
 #define RPC_export(meth) \
 	extern RPC_Method RPC_ns(meth); \
 	RPC_method(meth)
 
-#define RPC_export_without_params(meth) \
-	extern RPC_method(meth); \
-	RPC_Method RPC_ns(meth) = { #meth, RPC_method_name(meth), NULL, 0 };
+#define RPC_define_with_params(meth) \
+	RPC_Method RPC_ns(meth) = RPC_def(meth); \
+	RPC_method(meth)
+
+#define RPC_define(meth) \
+	RPC_Method RPC_ns(meth) = { #meth, RPC_method_name(meth), NULL, 0 }; \
+	RPC_method(meth)
 
 
 /* [RPC API] */
