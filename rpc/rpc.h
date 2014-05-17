@@ -49,6 +49,7 @@ union cx_rpc_param_value_t
 typedef enum cx_rpc_param_type_t
 {
 	RPC_double,
+	RPC_int,
 	RPC_longlong,
 	RPC_string,
 	RPC_boolean,
@@ -191,22 +192,29 @@ struct cx_rpc_request_list_t
 #define RPC_set_param_double(meth, pos, name, flags) \
 	RPC_set_param(meth, pos, name, double, RPC_Request_get_param_value_double, flags)
 
+#define RPC_set_param_int(meth, pos, name, flags) \
+	RPC_set_param(meth, pos, name, int, RPC_Request_get_param_value_int, flags)
+
 #define RPC_set_param_longlong(meth, pos, name, flags) \
 	RPC_set_param(meth, pos, name, longlong, RPC_Request_get_param_value_longlong, flags)
 
 #define RPC_param_list_single(meth, name) \
 	RPC_param_list(meth) { &RPC_param(meth, name) };
 
-#define RPC_single_string_param(meth, pos, name, flags) \
-	RPC_set_param_string(meth, pos, name, flags) \
+#define RPC_single_string_param(meth, name, flags) \
+	RPC_set_param_string(meth, 0, name, flags) \
 	RPC_param_list_single(meth, name)
 
-#define RPC_single_double_param(meth, pos, name, flags) \
-	RPC_set_param_double(meth, pos, name, flags) \
+#define RPC_single_double_param(meth, name, flags) \
+	RPC_set_param_double(meth, 0, name, flags) \
 	RPC_param_list_single(meth, name)
 
-#define RPC_single_longlong_param(meth, pos, name, flags) \
-	RPC_set_param_longlong(meth, pos, name, flags) \
+#define RPC_single_longlong_param(meth, name, flags) \
+	RPC_set_param_longlong(meth, 0, name, flags) \
+	RPC_param_list_single(meth, name)
+
+#define RPC_single_int_param(meth, name, flags) \
+	RPC_set_param_int(meth, 0, name, flags) \
 	RPC_param_list_single(meth, name)
 
 /* [ Method Definitions / Export ] */
@@ -269,6 +277,9 @@ RPC_Request_deserialize(RPC_RequestList* request_list);
 
 extern const char*
 RPC_Request_get_param_value_string(RPC_Request* request, RPC_Param* param);
+
+extern int
+RPC_Request_get_param_value_int(RPC_Request* request, RPC_Param* param);
 
 extern long long
 RPC_Request_get_param_value_longlong(RPC_Request* request, RPC_Param* param);
