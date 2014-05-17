@@ -84,10 +84,10 @@ int
 RPC_Request_get_param_value_int(RPC_Request* request, RPC_Param* param)
 {
 	long long value = RPC_Request_get_param_value_longlong(request, param);
+
 	XFCHECK((value <= INT_MAX), "ERROR: Param %s is larger than INT_MAX", param->name);
 	return (int)value;
 }
-
 
 double
 RPC_Request_get_param_value_double(RPC_Request* request, RPC_Param* param)
