@@ -75,7 +75,7 @@ RPC_Request_serialize_id(RPC_Request* request)
 }
 
 static void
-RPC_RequestList_process_response(RPC_RequestList* request_list, RPC_Request* request, const char* id, Response* response)
+RPC_RequestList_process_response(RPC_RequestList* request_list, RPC_Request* request, const char* id, RPC_Result* result)
 {
 	request->response_written = 1;
 
@@ -88,9 +88,9 @@ RPC_RequestList_process_response(RPC_RequestList* request_list, RPC_Request* req
 	}
 	else
 	{
-		const char* data = NULL;
-		size_t data_len = response->f_data_get(response, &data);
-		if (data_len > 0)
+		// FIXME use to_json method here
+		const char* data = result->f_to_s(result);
+		if (strlen(data) > 0)
 			StringBuffer_aprintf(request_list->response_buffer, JSONRPC_RESPONSE_SIMPLE, id, data);
 		else
 			StringBuffer_aprintf(request_list->response_buffer, JSONRPC_RESPONSE_NULL, id);
@@ -119,14 +119,14 @@ RPC_RequestList_process_request(RPC_RequestList* request_list, int nrequest, RPC
 			RPC_Method* method = RPC_RequestList_deserialize_method(request_list, request, methods);
 			if (method)
 			{
-				Response* response = method->method(request->params);
+				RPC_Result* result = method->method(request->params);
 
 				/* append result to response buffer if request is not a notification */
 				if (request->id)
 				{
-					RPC_RequestList_process_response(request_list, request, id, response);
+					RPC_RequestList_process_response(request_list, request, id, result);
 				}
-				Response_free(response);
+				RPC_Result_free(result);
 			}
 			else
 			{

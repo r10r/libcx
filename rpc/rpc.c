@@ -71,3 +71,21 @@ RPC_RequestList_free(RPC_RequestList* request_list)
 
 	cx_free(request_list);
 }
+
+RPC_Result*
+RPC_Result_new(void* obj)
+{
+	RPC_Result* result = cx_alloc(sizeof(RPC_Result));
+
+	result->obj = obj;
+	return result;
+}
+
+void
+RPC_Result_free(RPC_Result* result)
+{
+	if (result->f_free_obj)
+		result->f_free_obj(result->obj);
+
+	cx_free(result);
+}

@@ -44,15 +44,13 @@ test_call_method_echo()
 
 	param_values[0].string_value = "hello world";
 
-	Response* response = meth->method(param_values);
-
-	const char* data = NULL;
-	response->f_data_get(response, &data);
+	RPC_Result* result = meth->method(param_values);
+	const char* data = result->f_to_s(result);
 
 	TEST_ASSERT_EQUAL_STRING("\"hello world\"", data);
 
 	cx_free(param_values);
-	Response_free(response);
+	RPC_Result_free(result);
 }
 
 static void
@@ -65,15 +63,13 @@ test_call_method_echo_longlong()
 
 	param_values[0].longlong_value = 123456;
 
-	Response* response = meth->method(param_values);
-
-	const char* data = NULL;
-	response->f_data_get(response, &data);
+	RPC_Result* result = meth->method(param_values);
+	const char* data = result->f_to_s(result);
 
 	TEST_ASSERT_EQUAL_STRING("123456", data);
 
 	cx_free(param_values);
-	Response_free(response);
+	RPC_Result_free(result);
 }
 
 static void
@@ -86,15 +82,13 @@ test_call_method_echo_double()
 
 	param_values[0].double_value = 2.666;
 
-	Response* response = meth->method(param_values);
-
-	const char* data = NULL;
-	response->f_data_get(response, &data);
+	RPC_Result* result = meth->method(param_values);
+	const char* data = result->f_to_s(result);
 
 	TEST_ASSERT_EQUAL_STRING("2.666", data);
 
 	cx_free(param_values);
-	Response_free(response);
+	RPC_Result_free(result);
 }
 
 int

@@ -16,7 +16,8 @@ typedef struct cx_rpc_param_t RPC_Param;
 typedef struct cx_rpc_method_t RPC_Method;
 typedef struct cx_rpc_request_t RPC_Request;
 typedef struct cx_rpc_request_list_t RPC_RequestList;
-typedef Response* F_RPC_Method (RPC_Value* param_values);
+typedef struct cx_rpc_result_t RPC_Result;
+typedef RPC_Result* F_RPC_Method (RPC_Value* param_values);
 typedef void F_RPC_Param_deserialize (RPC_Request* request);
 
 union cx_rpc_param_value_t
@@ -77,6 +78,23 @@ struct cx_rpc_method_t
 	RPC_Param** signature;
 	int param_count;
 };
+
+typedef void F_ResultFree (void* obj);
+typedef void* F_ResultToJSON (RPC_Result* result);
+typedef const char* F_ResultToString (RPC_Result* result);
+struct cx_rpc_result_t
+{
+	void* obj;
+	F_ResultFree* f_free_obj;
+	F_ResultToJSON* f_to_json;
+	F_ResultToString* f_to_s;
+};
+
+RPC_Result*
+RPC_Result_new(void* obj);
+
+void
+RPC_Result_free(RPC_Result* result);
 
 struct cx_rpc_request_t
 {
@@ -140,7 +158,7 @@ struct cx_rpc_request_list_t
 /* [ Method definition ] */
 
 #define RPC_method(meth) \
-	Response * RPC_ns(meth ## _method) (RPC_Value * param_values)
+	RPC_Result * RPC_ns(meth ## _method) (RPC_Value * param_values)
 
 #define RPC_params(meth) \
 	static RPC_Param RPC_ns( ## meth ## _params)[] =
