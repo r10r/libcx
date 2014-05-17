@@ -1,56 +1,100 @@
 #include "base/test.h"
-#define RPC_NS MyNamespace_
-#include "rpc.h"
+#include "echo_service.h"
+#include <jansson.h>
 
-// protocol api implementation
-void
-RPC_RequestList_free_data(RPC_RequestList* request_list)
+static RPC_Method*
+select_method(RPC_Method methods[], const char* method_name)
 {
-	UNUSED(request_list);
-}
+	RPC_Method* meth = NULL;
 
-/* deserialize methods */
-static const char*
-get_foo_value(RPC_Request* request, RPC_Param* param)
-{
-	UNUSED(request);
-	UNUSED(param);
-	return "foo";
+	while ((meth = methods++) != NULL)
+	{
+		if (strcmp(meth->name, method_name) == 0)
+			return meth;
+	}
+	return NULL;
 }
-
-static int
-get_bar_value(RPC_Request* request, RPC_Param* param)
-{
-	UNUSED(request);
-	UNUSED(param);
-	return 666;
-}
-
-/* typesafe parameter definition */
-RPC_set_param(foobar, 0, foo, string, get_foo_value, 0)
-RPC_set_param(foobar, 1, bar, longlong, get_bar_value, 0)
 
 static void
-test_parameter_definition()
+test_select_method()
 {
-	/* must be defined for RPC_get_param macro */
-	RPC_Request* request = cx_alloc(sizeof(RPC_Request));
+	RPC_Method methods[] = { EchoService_methods, RPC_Method_none };
+	RPC_Method* meth;
 
-	request->params = cx_alloc(2 * sizeof(RPC_Value));
+	meth = select_method(methods, "echo");
+	TEST_ASSERT_EQUAL_STRING(meth->name, "echo");
+	TEST_ASSERT_EQUAL_PTR(meth->method, EchoService_echo_method);
 
-	/* trigger deserialization */
-	RPC_param_deserialize(foobar, foo) (request);
-	RPC_param_deserialize(foobar, bar) (request);
+	meth = select_method(methods, "echo_double");
+	TEST_ASSERT_EQUAL_STRING(meth->name, "echo_double");
+	TEST_ASSERT_EQUAL_PTR(meth->method, EchoService_echo_double_method);
 
-	/* retrieve deserialized parameters */
-	const char* foo_value = RPC_get_param(foobar, foo);
-	long long bar_value = RPC_get_param(foobar, bar);
+	meth = select_method(methods, "echo_longlong");
+	TEST_ASSERT_EQUAL_STRING(meth->name, "echo_longlong");
+	TEST_ASSERT_EQUAL_PTR(meth->method, EchoService_echo_longlong_method);
+}
 
-	TEST_ASSERT_EQUAL(0, strcmp("foo", foo_value));
-	TEST_ASSERT_EQUAL(666, bar_value);
+static void
+test_call_method_echo()
+{
+	RPC_Method methods[] = { EchoService_methods, RPC_Method_none };
+	RPC_Method* meth = select_method(methods, "echo");
 
-	cx_free(request->params);
-	cx_free(request);
+	RPC_Value* param_values = cx_alloc(sizeof(RPC_Param) * 2);
+
+	param_values[0].string_value = "hello world";
+
+	Response* response = meth->method(param_values);
+
+	const char* data = NULL;
+	response->f_data_get(response, &data);
+
+	TEST_ASSERT_EQUAL_STRING("\"hello world\"", data);
+
+	cx_free(param_values);
+	Response_free(response);
+}
+
+static void
+test_call_method_echo_longlong()
+{
+	RPC_Method methods[] = { EchoService_methods, RPC_Method_none };
+	RPC_Method* meth = select_method(methods, "echo_longlong");
+
+	RPC_Value* param_values = cx_alloc(sizeof(RPC_Param) * 2);
+
+	param_values[0].longlong_value = 123456;
+
+	Response* response = meth->method(param_values);
+
+	const char* data = NULL;
+	response->f_data_get(response, &data);
+
+	TEST_ASSERT_EQUAL_STRING("123456", data);
+
+	cx_free(param_values);
+	Response_free(response);
+}
+
+static void
+test_call_method_echo_double()
+{
+	RPC_Method methods[] = { EchoService_methods, RPC_Method_none };
+	RPC_Method* meth = select_method(methods, "echo_double");
+
+	RPC_Value* param_values = cx_alloc(sizeof(RPC_Param) * 2);
+
+	param_values[0].double_value = 2.666;
+
+	Response* response = meth->method(param_values);
+
+	const char* data = NULL;
+	response->f_data_get(response, &data);
+
+	TEST_ASSERT_EQUAL_STRING("2.666", data);
+
+	cx_free(param_values);
+	Response_free(response);
 }
 
 int
@@ -58,7 +102,10 @@ main()
 {
 	TEST_BEGIN
 
-	RUN(test_parameter_definition);
+	RUN(test_select_method);
+	RUN(test_call_method_echo);
+	RUN(test_call_method_echo_longlong);
+	RUN(test_call_method_echo_double);
 
 	TEST_END
 }

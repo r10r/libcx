@@ -9,13 +9,14 @@
 #include "list/list.h"
 
 #include "socket/request.h"
+#include "socket/response.h"
 
 typedef union cx_rpc_param_value_t RPC_Value;
 typedef struct cx_rpc_param_t RPC_Param;
 typedef struct cx_rpc_method_t RPC_Method;
 typedef struct cx_rpc_request_t RPC_Request;
 typedef struct cx_rpc_request_list_t RPC_RequestList;
-typedef void F_RPC_Method (RPC_Request* request, StringBuffer* result_buffer);
+typedef Response* F_RPC_Method (RPC_Value* param_values);
 typedef void F_RPC_Param_deserialize (RPC_Request* request);
 
 union cx_rpc_param_value_t
@@ -122,6 +123,7 @@ struct cx_rpc_request_list_t
 #define RPC_ns_expand(prefix, token) RPC_ns_paste(prefix, token)
 #define RPC_ns(token) RPC_ns_expand(RPC_NS, token)
 
+#define RPC_init void RPC_ns(init)
 
 /* [ RPC actions ] */
 
@@ -138,7 +140,7 @@ struct cx_rpc_request_list_t
 /* [ Method definition ] */
 
 #define RPC_method(meth) \
-	void RPC_ns(meth ## _method) (RPC_Request * request, StringBuffer * result_buffer)
+	Response * RPC_ns(meth ## _method) (RPC_Value * param_values)
 
 #define RPC_params(meth) \
 	static RPC_Param RPC_ns( ## meth ## _params)[] =
@@ -172,8 +174,8 @@ struct cx_rpc_request_list_t
 
 #define RPC_param_define_get(meth, name, _type) \
 	static inline RPC_TYPE_ ## _type \
-	RPC_param_get(meth, name) (RPC_Request * request) \
-	{ return request->params[RPC_param(meth, name).pos].RPC_TYPE_ACCESSOR_ ## _type; }
+	RPC_param_get(meth, name) (RPC_Value * param_values) \
+	{ return param_values[RPC_param(meth, name).pos].RPC_TYPE_ACCESSOR_ ## _type; }
 
 #define RPC_set_param(meth, pos, name, _type, _func, flags) \
 	RPC_param_declare_serialize(meth, name) \
@@ -182,7 +184,7 @@ struct cx_rpc_request_list_t
 	RPC_param_define_get(meth, name, _type)
 
 #define RPC_get_param(meth, name) \
-	RPC_param_get(meth, name) (request)
+	RPC_param_get(meth, name) (param_values)
 
 #define RPC_param_list(meth) \
 	static RPC_Param *  RPC_ns(meth ## _params)[] =
@@ -240,14 +242,14 @@ struct cx_rpc_request_list_t
 
 extern const RPC_Method RPC_Method_none;
 
-void
-RPC_Method_log(RPC_Method* method);
-
 RPC_Request*
 RPC_Request_new(void);
 
 void
 RPC_Request_free(RPC_Request* request);
+
+void
+RPC_Method_log(RPC_Method* method);
 
 RPC_Method*
 RPC_Request_lookup_method(RPC_Request* request, RPC_Method methods[]);

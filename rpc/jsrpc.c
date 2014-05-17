@@ -75,7 +75,7 @@ RPC_Request_serialize_id(RPC_Request* request)
 }
 
 static void
-RPC_RequestList_process_result(RPC_RequestList* request_list, RPC_Request* request, const char* id)
+RPC_RequestList_process_response(RPC_RequestList* request_list, RPC_Request* request, const char* id, Response* response)
 {
 	request->response_written = 1;
 
@@ -86,14 +86,14 @@ RPC_RequestList_process_result(RPC_RequestList* request_list, RPC_Request* reque
 				     id, request->error,
 				     StringBuffer_value(request_list->result_buffer));
 	}
-	else if (StringBuffer_used(request_list->result_buffer) > 0)
-		StringBuffer_aprintf(request_list->response_buffer, JSONRPC_RESPONSE_SIMPLE,
-				     id, StringBuffer_value(request_list->result_buffer));
 	else
 	{
-		/* no result value */
-		StringBuffer_aprintf(request_list->response_buffer, JSONRPC_RESPONSE_NULL,
-				     id);
+		const char* data = NULL;
+		size_t data_len = response->f_data_get(response, &data);
+		if (data_len > 0)
+			StringBuffer_aprintf(request_list->response_buffer, JSONRPC_RESPONSE_SIMPLE, id, data);
+		else
+			StringBuffer_aprintf(request_list->response_buffer, JSONRPC_RESPONSE_NULL, id);
 	}
 }
 
@@ -113,21 +113,26 @@ RPC_RequestList_process_request(RPC_RequestList* request_list, int nrequest, RPC
 	}
 	else
 	{
-		/* deserialize the parameters */
+		/* deserialize the parameters and call the method */
 		if (request->method_name)
 		{
 			RPC_Method* method = RPC_RequestList_deserialize_method(request_list, request, methods);
 			if (method)
 			{
-				method->method(request, request_list->result_buffer);
+				Response* response = method->method(request->params);
 
 				/* append result to response buffer if request is not a notification */
 				if (request->id)
-					RPC_RequestList_process_result(request_list, request, id);
+				{
+					RPC_RequestList_process_response(request_list, request, id, response);
+				}
+				Response_free(response);
 			}
 			else
+			{
 				StringBuffer_aprintf(request_list->response_buffer, JSONRPC_RESPONSE_ERROR,
 						     request->id, request->error, StringBuffer_value(request_list->result_buffer));
+			}
 
 			/* clear params */
 			cx_free(request->params);

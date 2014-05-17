@@ -7,6 +7,18 @@ const RPC_Method RPC_Method_none =  {
 	.param_count	= 0
 };
 
+RPC_Request*
+RPC_Request_new(void)
+{
+	return cx_alloc(sizeof(RPC_Request));
+}
+
+void
+RPC_Request_free(RPC_Request* request)
+{
+	cx_free(request);
+}
+
 void
 RPC_Method_log(RPC_Method* method)
 {
