@@ -4,7 +4,7 @@
 static void
 assert_response_equals(RPC_Method methods[], StringBuffer* request, StringBuffer* response)
 {
-	RPC_RequestList* request_list = RPC_RequestList_new();
+	RPC_RequestList* request_list = RPC_RequestList_new(2048);
 
 	if (StringBuffer_used(request) > 0)
 		StringBuffer_cat(request_list->request_buffer, StringBuffer_value(request));
