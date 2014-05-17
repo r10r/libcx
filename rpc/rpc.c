@@ -54,7 +54,7 @@ RPC_RequestList_free(RPC_RequestList* request_list)
 	cx_free(request_list->requests);
 	StringBuffer_free(request_list->result_buffer);
 	StringBuffer_free(request_list->request_buffer);
-//	StringBuffer_free(request_list->response_buffer);  /* freed by SendBuffer_free */
+	StringBuffer_free(request_list->response_buffer);
 	List_free(request_list->response_list);
 
 	cx_free(request_list);
