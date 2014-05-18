@@ -17,14 +17,14 @@ typedef enum
 
 typedef enum
 {
-	ERROR_PARAM_NULL = 1,
-	ERROR_NO_PARAMS,
-	ERROR_PARAM_MISSING,
-	ERROR_PARAM_INVALID_TYPE,
-	ERROR_PARAM_UNSUPPORTED_FORMAT,
-	ERROR_METHOD_MISSING,
-	ERROR_PARAM_DESERIALIZE,
-	ERROR_RESULT_VALUE_NULL /* method has result but no result value given (internal error) */
+	ERROR_PARAM_NULL = 1,           /* a parameter that should not be null is null (precondition check in service method) */
+	ERROR_NO_PARAMS,                /* no params are available (params are NULL) */
+	ERROR_PARAM_MISSING,            /* required parameter is missing */
+	ERROR_PARAM_INVALID_TYPE,       /* parameter has another type than specified by method signature */
+	ERROR_PARAM_UNSUPPORTED_FORMAT, /* specified format unsupported (e.g no JSON deserializer) */
+	ERROR_METHOD_MISSING,           /* service does not provide given method */
+	ERROR_PARAM_DESERIALIZE,        /* a complex type can not be deserialized */
+	ERROR_RESULT_VALUE_NULL         /* method has result but no result value given (internal error) */
 } RPC_Error;
 
 
