@@ -10,7 +10,7 @@
 typedef struct value_t Value;
 typedef struct param_t Param;
 //typedef json_t* F_ValueToJSON (void* value);
-typedef void F_ValueFree (void* value);
+typedef void F_ValueFree (void* object);
 
 typedef enum
 {
@@ -24,9 +24,11 @@ enum error
 	ERROR_NO_PARAMS,
 	ERROR_PARAM_MISSING,
 	ERROR_PARAM_TYPE,
+	ERROR_PARAM_FORMAT,
 	ERROR_METHOD_MISSING,
 	ERROR_RESULT_VALUE_NULL /* method has result but no result value given (internal error) */
 };
+
 
 typedef enum
 {
@@ -39,11 +41,6 @@ typedef enum
 	TYPE_NULL,
 } ValueType;
 
-/* basic types | complex types */
-// custom serialization/deserialization of objects (structs)
-
-/* one serialization for simple types integer|floatingpoint|boolean|string|null */
-/* custom serialization methods for object types */
 
 struct value_t
 {
@@ -58,7 +55,6 @@ struct value_t
 		void* object;
 	} value;
 
-//	F_ValueToJSON* f_to_json;  /* serialize object to e.g jansson */
 	F_ValueFree* f_free;
 };
 
@@ -69,6 +65,7 @@ struct param_t
 	int position;
 	const char* name;
 };
+
 
 Value*
 Param_get(Param* params, int position, const char* name, int num_params);

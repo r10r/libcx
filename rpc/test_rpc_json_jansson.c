@@ -85,6 +85,41 @@ test_json_array_to_params()
 	json_decref(json);
 }
 
+static void
+test_call_print_person_json()
+{
+	Param params[1];
+
+	memset(params, 0, sizeof(params));
+
+	Person person = {
+		.firstname	= "Max",
+		.lastname	= "Mustermann",
+		.age		= 33
+	};
+
+	json_t* json = Person_to_json(&person);
+
+	params[0].name = "person";
+	params[0].position = 0;
+	params[0].value.type = TYPE_OBJECT;
+	params[0].value.value.object = json;
+	params[0].value.f_free = (F_ValueFree*)&json_decref;
+
+	Value result;
+	memset(&result, 0, sizeof(Value));
+
+	int status = ExampleService_call("print_person", params, 1, &result, FORMAT_JSON);
+
+	TEST_ASSERT_EQUAL_INT(0, status);
+	TEST_ASSERT_EQUAL_INT(0, cx_errno);
+	TEST_ASSERT_EQUAL(TYPE_STRING, result.type);
+	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", result.value.string);
+
+	if (result.f_free)
+		result.f_free(result.value.object);
+}
+
 int
 main()
 {
@@ -93,6 +128,7 @@ main()
 	RUN(test_json_integer_to_params);
 	RUN(test_json_array_to_params);
 	RUN(test_json_obj_param);
+	RUN(test_call_print_person_json);
 
 	TEST_END
 }

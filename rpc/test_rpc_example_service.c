@@ -79,6 +79,9 @@ test_call_has_count_true()
 	TEST_ASSERT_EQUAL_INT(0, cx_errno);
 	TEST_ASSERT_EQUAL(TYPE_BOOLEAN, result.type);
 	TEST_ASSERT_TRUE(result.value.boolean);
+
+	if (result.f_free)
+		result.f_free(result.value.object);
 }
 
 static void
@@ -105,6 +108,9 @@ test_call_has_count_false()
 	TEST_ASSERT_EQUAL_INT(0, cx_errno);
 	TEST_ASSERT_EQUAL(TYPE_BOOLEAN, result.type);
 	TEST_ASSERT_FALSE(result.value.boolean);
+
+	if (result.f_free)
+		result.f_free(result.value.object);
 }
 
 static void
@@ -129,6 +135,9 @@ test_call_has_count_error()
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
 	TEST_ASSERT_EQUAL_INT(ERROR_PARAM_NULL, cx_errno);
+
+	if (result.f_free)
+		result.f_free(result.value.object);
 }
 
 static void
@@ -151,14 +160,15 @@ test_call_print_person()
 
 	Value result;
 	memset(&result, 0, sizeof(Value));
-	int status = ExampleService_call("print_person", params, 2, &result, FORMAT_NATIVE);
+	int status = ExampleService_call("print_person", params, 1, &result, FORMAT_NATIVE);
 
 	TEST_ASSERT_EQUAL_INT(0, status);
 	TEST_ASSERT_EQUAL_INT(0, cx_errno);
 	TEST_ASSERT_EQUAL(TYPE_STRING, result.type);
 	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", result.value.string);
 
-	result.f_free(result.value.object);
+	if (result.f_free)
+		result.f_free(result.value.object);
 }
 
 static void
@@ -173,55 +183,8 @@ test_call_get_person()
 	TEST_ASSERT_EQUAL_INT(1, status);
 	TEST_ASSERT_EQUAL(TYPE_OBJECT, result.type);
 
-//	json_t* json = result.f_to_json(result.value.object);
-	result.f_free(result.value.object); /* now we can free the result */
-//
-//	char* json_string = json_dumps(json, 0);
-//	const char* expected_json = "{\"firstname\": \"Max\", \"lastname\": \"Mustermann\", \"age\": 33}";
-//	TEST_ASSERT_EQUAL_STRING(expected_json, json_string);
-//
-//	cx_free(json_string);
-//	json_decref(json);
-}
-
-static void
-test_call_print_person_json()
-{
-	Param params[1];
-
-	memset(params, 0, sizeof(params));
-
-	Person person = {
-		.firstname	= "Max",
-		.lastname	= "Mustermann",
-		.age		= 33
-	};
-
-	/*
-	 * I know the type object when getting the json.
-	 * The service wrapper knows which method to call,
-	 * it just has to know the format
-	 *
-	 *  params are deserialized in the serivce layer
-	 */
-
-	params[0].name = "person";
-	params[0].position = 0;
-	params[0].value.type = TYPE_OBJECT;
-	params[0].value.value.object = &person;
-
-
-	Value result;
-	memset(&result, 0, sizeof(Value));
-
-	int status = ExampleService_call("print_person", params, 2, &result, FORMAT_JSON);
-
-	TEST_ASSERT_EQUAL_INT(0, status);
-	TEST_ASSERT_EQUAL_INT(0, cx_errno);
-	TEST_ASSERT_EQUAL(TYPE_STRING, result.type);
-	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", result.value.string);
-
-	result.f_free(result.value.object);
+	if (result.f_free)
+		result.f_free(result.value.object);
 }
 
 int
@@ -238,7 +201,6 @@ main()
 	RUN(test_call_has_count_error);
 	RUN(test_call_print_person);
 	RUN(test_call_get_person);
-//	RUN(test_call_print_person_json);
 
 	TEST_END
 }

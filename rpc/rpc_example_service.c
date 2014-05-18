@@ -103,16 +103,15 @@ call_get_person(Param* params, int num_params, Value* result, ParamFormat format
 
 	result->type = TYPE_OBJECT;
 	result->value.object = person;
-	result->f_free = (F_ValueFree*)person->f_free;
-//	result->f_to_json = (F_ValueToJSON*)Person_to_json;
+	result->f_free = (F_ValueFree*)&Person_free;
 
 	return 1;
 }
 
 static void
-simple_free(void* val)
+simple_free(void* object)
 {
-	cx_free(val);
+	cx_free(object);
 }
 
 static int
@@ -136,11 +135,31 @@ call_print_person(Param* params, int num_params, Value* result, ParamFormat form
 		return -1;
 	}
 
-	char* person_s = print_person((Person*)p_person->value.object);
+	char* person_s = NULL;
+	switch (format)
+	{
+	case FORMAT_JSON:
+	{
+		Person person;
+		memset(&person, 0, sizeof(Person));
+		Person_from_json(&person, (json_t*)p_person->value.object);
+		person_s = print_person(&person);
+		break;
+	}
+	case FORMAT_NATIVE:
+	{
+		Person* person = (Person*)p_person->value.object;
+		person_s = print_person(person);
+		break;
+	}
+//	default:
+//		set_cx_errno(ERROR_PARAM_FORMAT);
+//		return -1;
+	}
 
 	result->type = TYPE_STRING;
 	result->value.string = person_s;
-	result->f_free = (F_ValueFree*)simple_free;
+	result->f_free = &simple_free;
 
 	return 0;
 }
@@ -171,6 +190,17 @@ ExampleService_call(const char* method_name, Param* params, int num_params, Valu
 	else
 	{
 		set_cx_errno(ERROR_METHOD_MISSING);
+	}
+
+	/* free allocated param values */
+	int i;
+	Param* param = params;
+	for (i = 0; i < num_params; i++)
+	{
+		if (param->value.f_free)
+			param->value.f_free(param->value.value.object);
+
+		param++;
 	}
 
 	if (cx_errno == 0)
