@@ -7,6 +7,8 @@
 #include <string.h> /* strcmp */
 #include "base/base.h"
 
+typedef struct json_t json_t;
+
 typedef enum
 {
 	FORMAT_NATIVE,
@@ -42,7 +44,7 @@ typedef struct cx_rpc_param_t Param;
 typedef struct cx_rpc_method_map_t MethodMap;
 
 typedef void F_ValueFree (void* object);
-typedef int RPC_Method (Param* params, int num_params, Value* result, ParamFormat format);
+typedef int RPC_MethodWrapper (Param* params, int num_params, Value* result, ParamFormat format);
 
 
 struct cx_rpc_value_t
@@ -56,9 +58,7 @@ struct cx_rpc_value_t
 		bool boolean;
 		char* string;
 		void* object;
-	}
-
-	value;
+	} value;
 
 	F_ValueFree* f_free;
 };
@@ -73,7 +73,7 @@ struct cx_rpc_param_t
 struct cx_rpc_method_map_t
 {
 	const char* name;
-	RPC_Method* method;
+	RPC_MethodWrapper* method;
 };
 
 Value*

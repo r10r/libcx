@@ -1,13 +1,35 @@
 #include "rpc_example_service.h"
 #include <jansson.h>    // FIXME service should not depend on jansson directly
 
-static void
+void
 Person_free(Person* person)
 {
 	cx_free(person->firstname);
 	cx_free(person->lastname);
 	cx_free(person);
 }
+
+json_t*
+Person_to_json(Person* person)
+{
+	json_t* json = json_object();
+
+	json_object_set_new(json, "firstname", json_string(person->firstname));
+	json_object_set_new(json, "lastname", json_string(person->lastname));
+	// FIXME requires same integer deserialization as simple params
+	json_object_set_new(json, "age", json_integer(person->age));
+	return json;
+}
+
+void
+Person_from_json(Person* person, json_t* json)
+{
+	person->firstname = json_string_value(json_object_get(json, "firstname"));
+	person->lastname = json_string_value(json_object_get(json, "lastname"));
+	person->age = (int)json_integer_value(json_object_get(json, "age"));
+}
+
+/* API methods */
 
 static Person*
 get_person()
@@ -48,11 +70,11 @@ has_count(const char* string, size_t count)
 	return result;
 }
 
+/* service wrapper */
+
 static int
 call_has_count(Param* params, int num_params, Value* result, ParamFormat format)
 {
-	UNUSED(format); // FIXME
-
 	/* typesafe parameter deserialization with error checking */
 	Value* p_string = Param_get(params, 0, "string", num_params);
 
@@ -82,6 +104,15 @@ call_has_count(Param* params, int num_params, Value* result, ParamFormat format)
 		return -1;
 	}
 
+	switch (format)
+	{
+	case FORMAT_NATIVE:
+		break;
+	default:
+		set_cx_errno(ERROR_PARAM_FORMAT);
+		return -1;
+	}
+
 	/* call method */
 	bool out = has_count(p_string->value.string, (size_t)p_count->value.integer);
 
@@ -95,8 +126,8 @@ call_has_count(Param* params, int num_params, Value* result, ParamFormat format)
 static int
 call_get_person(Param* params, int num_params, Value* result, ParamFormat format)
 {
+	/* method has no params */
 	UNUSED(params);
-	UNUSED(format); // FIXME
 	UNUSED(num_params);
 
 	Person* person = get_person();
@@ -104,6 +135,15 @@ call_get_person(Param* params, int num_params, Value* result, ParamFormat format
 	result->type = TYPE_OBJECT;
 	result->value.object = person;
 	result->f_free = (F_ValueFree*)&Person_free;
+
+	switch (format)
+	{
+	case FORMAT_NATIVE:
+		break;
+	default:
+		set_cx_errno(ERROR_PARAM_FORMAT);
+		return -1;
+	}
 
 	return 1;
 }
@@ -118,7 +158,6 @@ static int
 call_print_person(Param* params, int num_params, Value* result, ParamFormat format)
 {
 	UNUSED(result);
-	UNUSED(format); // FIXME
 
 	/* typesafe parameter deserialization with error checking */
 	Value* p_person = Param_get(params, 0, "person", num_params);
@@ -152,9 +191,6 @@ call_print_person(Param* params, int num_params, Value* result, ParamFormat form
 		person_s = print_person(person);
 		break;
 	}
-//	default:
-//		set_cx_errno(ERROR_PARAM_FORMAT);
-//		return -1;
 	}
 
 	result->type = TYPE_STRING;
@@ -171,25 +207,3 @@ MethodMap EXAMPLE_SERVICE_METHODS[] =
 	{ "print_person", call_print_person },
 	{ NULL, NULL }
 };
-
-
-
-json_t*
-Person_to_json(Person* person)
-{
-	json_t* json = json_object();
-
-	json_object_set_new(json, "firstname", json_string(person->firstname));
-	json_object_set_new(json, "lastname", json_string(person->lastname));
-	// FIXME requires same integer deserialization as simple params
-	json_object_set_new(json, "age", json_integer(person->age));
-	return json;
-}
-
-void
-Person_from_json(Person* person, json_t* json)
-{
-	person->firstname = json_string_value(json_object_get(json, "firstname"));
-	person->lastname = json_string_value(json_object_get(json, "lastname"));
-	person->age = (int)json_integer_value(json_object_get(json, "age"));
-}
