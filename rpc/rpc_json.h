@@ -3,7 +3,8 @@
 
 #include "rpc.h"
 
-void
+/* @return -1 on error, else number of parameters */
+int
 Params_from_json(Param** params, json_t* json);
 
 json_t*

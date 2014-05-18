@@ -32,7 +32,7 @@ deserialize_param(Param* param, int position, const char* key, json_t* value)
 	}
 }
 
-static void
+static int
 params_from_object(Param** params, json_t* json)
 {
 	size_t num_params = json_object_size(json);
@@ -52,9 +52,10 @@ params_from_object(Param** params, json_t* json)
 		param++;
 		index++;
 	}
+	return (int)num_params;
 }
 
-static void
+static int
 params_from_array(Param** params, json_t* json)
 {
 	size_t num_params = json_array_size(json);
@@ -69,18 +70,25 @@ params_from_array(Param** params, json_t* json)
 		deserialize_param(param, (int)index, NULL, value);
 		param++;
 	}
+
+	return (int)num_params;
 }
 
-void
+int
 Params_from_json(Param** params, json_t* json)
 {
 	if (json_is_object(json))
 	{
-		params_from_object(params, json);
+		return params_from_object(params, json);
 	}
 	else if (json_is_array(json))
 	{
-		params_from_array(params, json);
+		return params_from_array(params, json);
+	}
+	else
+	{
+		set_cx_errno(ERROR_PARAM_UNSUPPORTED_FORMAT);
+		return -1;
 	}
 }
 
