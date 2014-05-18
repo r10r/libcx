@@ -22,7 +22,7 @@ Person_free(Person* person);
 json_t*
 Person_to_json(Person* person);
 
-void
+int
 Person_from_json(Person* person, json_t* json);
 
 extern MethodMap EXAMPLE_SERVICE_METHODS[];

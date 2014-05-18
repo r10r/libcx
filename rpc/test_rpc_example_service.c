@@ -52,7 +52,7 @@ test_call_error_param_type()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, "has_count", params, 1, NULL, FORMAT_NATIVE);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(ERROR_PARAM_TYPE, cx_errno);
+	TEST_ASSERT_EQUAL_INT(ERROR_PARAM_INVALID_TYPE, cx_errno);
 }
 
 static void

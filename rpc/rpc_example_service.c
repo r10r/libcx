@@ -21,12 +21,42 @@ Person_to_json(Person* person)
 	return json;
 }
 
-void
+/*
+ * @return -1 on failure, 1 on success
+ */
+int
 Person_from_json(Person* person, json_t* json)
 {
-	person->firstname = json_string_value(json_object_get(json, "firstname"));
-	person->lastname = json_string_value(json_object_get(json, "lastname"));
-	person->age = (int)json_integer_value(json_object_get(json, "age"));
+	json_t* obj = NULL;
+
+	obj = json_object_get(json, "firstname");
+	if (obj)
+		person->firstname = json_string_value(obj);
+	else
+	{
+		set_cx_errno(ERROR_PARAM_DESERIALIZE);
+		return -1;
+	}
+
+	obj = json_object_get(json, "lastname");
+	if (obj)
+		person->lastname = json_string_value(obj);
+	else
+	{
+		set_cx_errno(ERROR_PARAM_DESERIALIZE);
+		return -1;
+	}
+
+	obj = json_object_get(json, "age");
+	if (obj)
+		person->age = (int)json_integer_value(obj);
+	else
+	{
+		set_cx_errno(ERROR_PARAM_DESERIALIZE);
+		return -1;
+	}
+
+	return 1;
 }
 
 /* API methods */
@@ -86,7 +116,7 @@ call_has_count(Param* params, int num_params, Value* result, ParamFormat format)
 
 	if (p_string->type != TYPE_STRING)
 	{
-		set_cx_errno(ERROR_PARAM_TYPE);
+		set_cx_errno(ERROR_PARAM_INVALID_TYPE);
 		return -1;
 	}
 
@@ -100,7 +130,7 @@ call_has_count(Param* params, int num_params, Value* result, ParamFormat format)
 
 	if (p_count->type != TYPE_INTEGER)
 	{
-		set_cx_errno(ERROR_PARAM_TYPE);
+		set_cx_errno(ERROR_PARAM_INVALID_TYPE);
 		return -1;
 	}
 
@@ -109,7 +139,7 @@ call_has_count(Param* params, int num_params, Value* result, ParamFormat format)
 	case FORMAT_NATIVE:
 		break;
 	default:
-		set_cx_errno(ERROR_PARAM_FORMAT);
+		set_cx_errno(ERROR_PARAM_UNSUPPORTED_FORMAT);
 		return -1;
 	}
 
@@ -141,7 +171,7 @@ call_get_person(Param* params, int num_params, Value* result, ParamFormat format
 	case FORMAT_NATIVE:
 		break;
 	default:
-		set_cx_errno(ERROR_PARAM_FORMAT);
+		set_cx_errno(ERROR_PARAM_UNSUPPORTED_FORMAT);
 		return -1;
 	}
 
@@ -170,7 +200,7 @@ call_print_person(Param* params, int num_params, Value* result, ParamFormat form
 
 	if (p_person->type != TYPE_OBJECT)
 	{
-		set_cx_errno(ERROR_PARAM_TYPE);
+		set_cx_errno(ERROR_PARAM_INVALID_TYPE);
 		return -1;
 	}
 
@@ -181,8 +211,10 @@ call_print_person(Param* params, int num_params, Value* result, ParamFormat form
 	{
 		Person person;
 		memset(&person, 0, sizeof(Person));
-		Person_from_json(&person, (json_t*)p_person->value.object);
-		person_s = print_person(&person);
+		if (Person_from_json(&person, (json_t*)p_person->value.object) == 1)
+			person_s = print_person(&person);
+		else
+			return -1;
 		break;
 	}
 	case FORMAT_NATIVE:
