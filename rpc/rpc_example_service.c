@@ -22,41 +22,24 @@ Person_to_json(Person* person)
 }
 
 /*
- * @return -1 on failure, 1 on success
+ * @return -1 on failure, 0 on success
  */
 int
 Person_from_json(Person* person, json_t* json)
 {
-	json_t* obj = NULL;
+	json_error_t json_error;
+	int status = json_unpack_ex(json, &json_error, JSON_STRICT, "{s:s, s:s, s:i}",
+				    "firstname", &person->firstname,
+				    "lastname", &person->lastname,
+				    "age", &person->age);
 
-	obj = json_object_get(json, "firstname");
-	if (obj)
-		person->firstname = json_string_value(obj);
-	else
+	if (status == -1)
 	{
+		XFERR("JSON deserialize error: %s", json_error.text);
 		set_cx_errno(ERROR_PARAM_DESERIALIZE);
-		return -1;
 	}
 
-	obj = json_object_get(json, "lastname");
-	if (obj)
-		person->lastname = json_string_value(obj);
-	else
-	{
-		set_cx_errno(ERROR_PARAM_DESERIALIZE);
-		return -1;
-	}
-
-	obj = json_object_get(json, "age");
-	if (obj)
-		person->age = (int)json_integer_value(obj);
-	else
-	{
-		set_cx_errno(ERROR_PARAM_DESERIALIZE);
-		return -1;
-	}
-
-	return 1;
+	return status;
 }
 
 /* API methods */
@@ -219,9 +202,9 @@ call_print_person(Param* params, int num_params, Value* result, ParamFormat form
 	{
 		Person person;
 		memset(&person, 0, sizeof(Person));
-		if (Person_from_json(&person, (json_t*)p_person->value.object) == 1)
+		if (Person_from_json(&person, (json_t*)p_person->value.object) == 0)
 			person_s = print_person(&person);
-		else
+		else            /* conversion failed (see cx_errno for details) */
 			return -1;
 		break;
 	}
