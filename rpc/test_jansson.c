@@ -146,6 +146,103 @@ test_create_jsonrpc_request()
 	json_decref(json);
 }
 
+static void
+test_unpack()
+{
+//	const char* request = "{\"jsonrpc\": \"2.0\", \"id\": 66, \"method\": \"play\", \"params\" : [\"Nice\"]}";
+
+//	const char* request = "{\"jsonrpc\": \"2.0\", \"id\": 66, \"method\": \"play\"}";
+//	const char* request = "{\"id\": 66, \"method\": \"play\", \"jsonrpc\": \"2.0\"}";
+	const char* request = "{\"jsonrpc\": \"2.0\", \"method\": 1234 }";
+	json_error_t error;
+
+	memset(&error, 0, sizeof(json_error_t));
+
+
+	// deserialize JSON
+	json_t* root = json_loads(request, JSON_DECODE_ANY, &error);
+
+	if (!root)
+	{
+		XFDBG("JSON PARSE error: %s", error.text);
+	}
+	else
+	{
+		const char* version = NULL;
+		const char* method = NULL;
+		json_t* id = NULL;
+		json_t* params = NULL;
+
+		const char* format = "{s:s, s?:o, s:s, s?:o}";
+		int status = json_unpack_ex(root, &error, JSON_DECODE_ANY, format,
+					    "jsonrpc", &version,
+					    "id", &id,
+					    "method", &method,
+					    "params", &params);
+
+		if (status == 0) /* success */
+		{
+			/* check jsonrpc version */
+			if (strcmp(version, "2.0") != 0)
+			{
+				XFERR("Invalid jsonrpc version[%s]", version);
+				// FIXME error (return and free root);
+			}
+
+			/* check id format */
+			if (!id)
+			{
+				// notification
+				XDBG("is notification");
+			}
+			else
+			{
+				if (json_is_integer(id))
+				{
+					XFDBG("id:%lld", json_integer_value(id));
+				}
+				else if (json_is_string(id))
+				{
+					XFDBG("id:%s", json_string_value(id));
+				}
+				else
+				{
+					XERR("parameter 'id': invalid format (expected integer or string)");
+					// FIXME error (return and free root);
+				}
+			}
+
+			if (!params)
+			{
+				XDBG("no params given");
+			}
+			else
+			{
+				// params must be array or object
+				if (json_is_array(params))
+				{
+					// extract by position
+				}
+				else if (json_is_object(id))
+				{
+					// extract by name
+				}
+				else
+				{
+					XERR("parameter 'params': invalid format (expected array or object)");
+					// FIXME error (return and free root);
+				}
+			}
+
+			XFDBG("version:%s method:%s", version, method);
+		}
+		else if (status == -1) /* failure */
+		{
+			XFERR("JSON PARSE error: %s", error.text);
+		}
+	}
+}
+
 int
 main()
 {
@@ -156,6 +253,7 @@ main()
 	RUN(test_pack_nested);
 	RUN(test_dump_callback);
 	RUN(test_create_jsonrpc_request);
+	RUN(test_unpack);
 
 	TEST_END
 }
