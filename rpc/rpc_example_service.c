@@ -233,7 +233,7 @@ call_print_person(Param* params, int num_params, Value* result, ParamFormat form
 	return 0;
 }
 
-MethodMap EXAMPLE_SERVICE_METHODS[] =
+MethodTable EXAMPLE_SERVICE_METHODS[] =
 {
 	{ "has_count", call_has_count },
 	{ "get_person", call_get_person },

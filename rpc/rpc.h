@@ -42,7 +42,7 @@ typedef enum
 
 typedef struct cx_rpc_value_t Value;
 typedef struct cx_rpc_param_t Param;
-typedef struct cx_rpc_method_map_t MethodMap;
+typedef struct cx_rpc_method_map_t MethodTable;
 
 /*
  * @param object the param object of the union value
@@ -91,6 +91,6 @@ Param_get(Param* params, int position, const char* name, int num_params);
 
 /* TODO move parameters into Request struct */
 int
-Service_call(MethodMap* method_map, const char* method_name, Param* params, int num_params, Value* result, ParamFormat format);
+Service_call(MethodTable* method_map, const char* method_name, Param* params, int num_params, Value* result, ParamFormat format);
 
 #endif

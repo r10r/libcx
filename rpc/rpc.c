@@ -28,12 +28,12 @@ Param_get(Param* params, int position, const char* name, int num_params)
  *      1 if return values is valid
  */
 int
-Service_call(MethodMap* method_map, const char* method_name, Param* params, int num_params, Value* result, ParamFormat format)
+Service_call(MethodTable* method_map, const char* method_name, Param* params, int num_params, Value* result, ParamFormat format)
 {
 	set_cx_errno(0); /* clear previous errors */
 	int status = 1;
 
-	MethodMap* mapped_method = method_map;
+	MethodTable* mapped_method = method_map;
 	bool method_missing = true;
 
 	while (mapped_method->name)
