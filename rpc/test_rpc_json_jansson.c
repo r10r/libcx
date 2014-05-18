@@ -9,9 +9,9 @@ static void
 test_json_obj_param()
 {
 	Person person = {
-		.firstname	= "Max",
-		.lastname	= "Mustermann",
-		.age		= 33
+		.firstname      = "Max",
+		.lastname       = "Mustermann",
+		.age            = 33
 	};
 
 	json_t* json = Person_to_json(&person);
@@ -93,9 +93,9 @@ test_call_print_person_json()
 	memset(params, 0, sizeof(params));
 
 	Person person = {
-		.firstname	= "Max",
-		.lastname	= "Mustermann",
-		.age		= 33
+		.firstname      = "Max",
+		.lastname       = "Mustermann",
+		.age            = 33
 	};
 
 	json_t* json = Person_to_json(&person);
@@ -109,7 +109,7 @@ test_call_print_person_json()
 	Value result;
 	memset(&result, 0, sizeof(Value));
 
-	int status = ExampleService_call("print_person", params, 1, &result, FORMAT_JSON);
+	int status = Service_call(EXAMPLE_SERVICE_METHODS, "print_person", params, 1, &result, FORMAT_JSON);
 
 	TEST_ASSERT_EQUAL_INT(0, status);
 	TEST_ASSERT_EQUAL_INT(0, cx_errno);

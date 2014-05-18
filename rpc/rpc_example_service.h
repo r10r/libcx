@@ -25,4 +25,6 @@ Person_to_json(Person* person);
 void
 Person_from_json(Person* person, json_t* json);
 
+extern MethodMap EXAMPLE_SERVICE_METHODS[];
+
 #endif

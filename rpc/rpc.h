@@ -7,18 +7,13 @@
 #include <string.h> /* strcmp */
 #include "base/base.h"
 
-typedef struct value_t Value;
-typedef struct param_t Param;
-//typedef json_t* F_ValueToJSON (void* value);
-typedef void F_ValueFree (void* object);
-
 typedef enum
 {
 	FORMAT_NATIVE,
 	FORMAT_JSON
 } ParamFormat;
 
-enum error
+typedef enum
 {
 	ERROR_PARAM_NULL = 1,
 	ERROR_NO_PARAMS,
@@ -27,7 +22,7 @@ enum error
 	ERROR_PARAM_FORMAT,
 	ERROR_METHOD_MISSING,
 	ERROR_RESULT_VALUE_NULL /* method has result but no result value given (internal error) */
-};
+} RPC_Error;
 
 
 typedef enum
@@ -42,7 +37,15 @@ typedef enum
 } ValueType;
 
 
-struct value_t
+typedef struct cx_rpc_value_t Value;
+typedef struct cx_rpc_param_t Param;
+typedef struct cx_rpc_method_map_t MethodMap;
+
+typedef void F_ValueFree (void* object);
+typedef int RPC_Method (Param* params, int num_params, Value* result, ParamFormat format);
+
+
+struct cx_rpc_value_t
 {
 	ValueType type;
 	union
@@ -53,21 +56,31 @@ struct value_t
 		bool boolean;
 		char* string;
 		void* object;
-	} value;
+	}
+
+	value;
 
 	F_ValueFree* f_free;
 };
 
-
-struct param_t
+struct cx_rpc_param_t
 {
 	Value value;
 	int position;
 	const char* name;
 };
 
+struct cx_rpc_method_map_t
+{
+	const char* name;
+	RPC_Method* method;
+};
 
 Value*
 Param_get(Param* params, int position, const char* name, int num_params);
+
+/* TODO move parameters into Request struct */
+int
+Service_call(MethodMap* method_map, const char* method_name, Param* params, int num_params, Value* result, ParamFormat format);
 
 #endif

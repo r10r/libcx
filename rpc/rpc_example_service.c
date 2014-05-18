@@ -164,14 +164,7 @@ call_print_person(Param* params, int num_params, Value* result, ParamFormat form
 	return 0;
 }
 
-typedef int RPC_Method (Param* params, int num_params, Value* result, ParamFormat format);
-typedef struct cx_rpc_method_map_t
-{
-	const char* name;
-	RPC_Method* method;
-} MethodMap;
-
-static MethodMap METHOD_MAP[] =
+MethodMap EXAMPLE_SERVICE_METHODS[] =
 {
 	{ "has_count", call_has_count },
 	{ "get_person", call_get_person },
@@ -179,55 +172,7 @@ static MethodMap METHOD_MAP[] =
 	{ NULL, NULL }
 };
 
-/* @return
- *      -1 on error see cx_errno
- *      0 method has void return,
- *      1 if return values is valid
- */
-int
-ExampleService_call(const char* method_name, Param* params, int num_params, Value* result, ParamFormat format)
-{
-	set_cx_errno(0); /* clear previous errors */
-	int status = 1;
 
-	MethodMap* method_map = METHOD_MAP;
-	bool method_missing = true;
-
-	while (method_map->name)
-	{
-		if (strcmp(method_map->name, method_name) == 0)
-		{
-			XFDBG("Calling method[%s] (wrapper:%p, params:%d, format:%d)",
-			      method_name, (void*)method_map->method, num_params, format);
-			status = method_map->method(params, num_params, result, format);
-			method_missing = false;
-			break;
-		}
-		method_map++;
-	}
-
-	if (method_missing)
-		set_cx_errno(ERROR_METHOD_MISSING);
-
-	/* free allocated param values */
-	int i;
-	Param* param = params;
-	for (i = 0; i < num_params; i++)
-	{
-		if (param->value.f_free)
-			param->value.f_free(param->value.value.object);
-
-		param++;
-	}
-
-	if (cx_errno == 0)
-		return status;
-	else
-	{
-		XFERR("ERROR calling method '%s' (cx_errno %d)", method_name, cx_errno);
-		return -1;
-	}
-}
 
 json_t*
 Person_to_json(Person* person)
