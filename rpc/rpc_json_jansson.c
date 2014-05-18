@@ -83,3 +83,29 @@ Params_from_json(Param** params, json_t* json)
 		params_from_array(params, json);
 	}
 }
+
+json_t*
+Value_to_json(Value* value)
+{
+	switch (value->type)
+	{
+	case TYPE_INTEGER:
+		return json_integer(value->value.integer);
+	case TYPE_LONGLONG:
+		return json_integer(value->value.longlong);
+	case TYPE_DOUBLE:
+		return json_real(value->value.floatingpoint);
+	case TYPE_STRING:
+		return json_string(value->value.string);
+	case TYPE_BOOLEAN:
+		return json_boolean(value->value.boolean);
+	case TYPE_NULL:
+		return json_null();
+	case TYPE_OBJECT:
+		if (value->f_to_json)
+			return value->f_to_json(value->value.object);
+		else
+			set_cx_errno(ERROR_METHOD_MISSING);
+	}
+	return NULL;
+}

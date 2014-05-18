@@ -6,4 +6,7 @@
 void
 Params_from_json(Param** params, json_t* json);
 
+json_t*
+Value_to_json(Value* value);
+
 #endif

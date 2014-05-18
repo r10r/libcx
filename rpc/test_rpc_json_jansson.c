@@ -92,7 +92,7 @@ test_call_print_person_json()
 
 	memset(params, 0, sizeof(params));
 
-	Person person = {
+	static Person person = {
 		.firstname      = "Max",
 		.lastname       = "Mustermann",
 		.age            = 33
@@ -120,6 +120,31 @@ test_call_print_person_json()
 		result.f_free(result.value.object);
 }
 
+static void
+test_call_get_person_json()
+{
+	Value result;
+
+	memset(&result, 0, sizeof(result));
+
+	int status = Service_call(EXAMPLE_SERVICE_METHODS, "get_person", NULL, 0, &result, FORMAT_NATIVE);
+
+	TEST_ASSERT_EQUAL_INT(1, status);
+	TEST_ASSERT_EQUAL(TYPE_OBJECT, result.type);
+
+	Person* person = (Person*)result.value.object;
+	json_t* person_json = Value_to_json(&result);
+
+	TEST_ASSERT_EQUAL(3, json_object_size(person_json));
+	TEST_ASSERT_EQUAL_STRING(person->firstname, json_string_value(json_object_get(person_json, "firstname")));
+	TEST_ASSERT_EQUAL_STRING(person->lastname, json_string_value(json_object_get(person_json, "lastname")));
+	TEST_ASSERT_EQUAL_INT(person->age, json_integer_value(json_object_get(person_json, "age")));
+
+	json_decref(person_json);
+	if (result.f_free)
+		result.f_free(result.value.object);
+}
+
 int
 main()
 {
@@ -129,6 +154,7 @@ main()
 	RUN(test_json_array_to_params);
 	RUN(test_json_obj_param);
 	RUN(test_call_print_person_json);
+	RUN(test_call_get_person_json);
 
 	TEST_END
 }

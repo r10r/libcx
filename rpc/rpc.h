@@ -35,8 +35,8 @@ typedef enum
 	TYPE_DOUBLE,
 	TYPE_STRING,
 	TYPE_BOOLEAN,
-	TYPE_OBJECT,
 	TYPE_NULL,
+	TYPE_OBJECT,
 } ValueType;
 
 
@@ -44,7 +44,15 @@ typedef struct cx_rpc_value_t Value;
 typedef struct cx_rpc_param_t Param;
 typedef struct cx_rpc_method_map_t MethodMap;
 
+/*
+ * @param object the param object of the union value
+ */
 typedef void F_ValueFree (void* object);
+
+/*
+ * @param deserialize function only set/used when type is object
+ */
+typedef json_t* F_ValueToJSON (void* object);
 typedef int RPC_MethodWrapper (Param* params, int num_params, Value* result, ParamFormat format);
 
 
@@ -62,6 +70,7 @@ struct cx_rpc_value_t
 	} value;
 
 	F_ValueFree* f_free;
+	F_ValueToJSON* f_to_json;
 };
 
 struct cx_rpc_param_t
