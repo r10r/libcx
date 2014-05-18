@@ -164,6 +164,21 @@ call_print_person(Param* params, int num_params, Value* result, ParamFormat form
 	return 0;
 }
 
+typedef int RPC_Method (Param* params, int num_params, Value* result, ParamFormat format);
+typedef struct cx_rpc_method_map_t
+{
+	const char* name;
+	RPC_Method* method;
+} MethodMap;
+
+static MethodMap METHOD_MAP[] =
+{
+	{ "has_count", call_has_count },
+	{ "get_person", call_get_person },
+	{ "print_person", call_print_person },
+	{ NULL, NULL }
+};
+
 /* @return
  *      -1 on error see cx_errno
  *      0 method has void return,
@@ -175,22 +190,24 @@ ExampleService_call(const char* method_name, Param* params, int num_params, Valu
 	set_cx_errno(0); /* clear previous errors */
 	int status = 1;
 
-	if (strcmp(method_name, "has_count") == 0)
+	MethodMap* method_map = METHOD_MAP;
+	bool method_missing = true;
+
+	while (method_map->name)
 	{
-		status = call_has_count(params, num_params, result, format);
+		if (strcmp(method_map->name, method_name) == 0)
+		{
+			XFDBG("Calling method[%s] (wrapper:%p, params:%d, format:%d)",
+			      method_name, (void*)method_map->method, num_params, format);
+			status = method_map->method(params, num_params, result, format);
+			method_missing = false;
+			break;
+		}
+		method_map++;
 	}
-	else if (strcmp(method_name, "get_person") == 0)
-	{
-		status = call_get_person(params, num_params, result, format);
-	}
-	else if (strcmp(method_name, "print_person") == 0)
-	{
-		status = call_print_person(params, num_params, result, format);
-	}
-	else
-	{
+
+	if (method_missing)
 		set_cx_errno(ERROR_METHOD_MISSING);
-	}
 
 	/* free allocated param values */
 	int i;
