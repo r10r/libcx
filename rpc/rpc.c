@@ -28,25 +28,25 @@ Param_get(Param* params, int position, const char* name, int num_params)
  *      1 if return values is valid
  */
 int
-Service_call(MethodTable* method_map, const char* method_name, Param* params, int num_params, Value* result, ParamFormat format)
+Service_call(MethodTable* service_methods, const char* method_name, Param* params, int num_params, Value* result, ParamFormat format)
 {
 	set_cx_errno(0); /* clear previous errors */
 	int status = 1;
 
-	MethodTable* mapped_method = method_map;
+	MethodTable* wrapped_method = service_methods;
 	bool method_missing = true;
 
-	while (mapped_method->name)
+	while (wrapped_method->method_name)
 	{
-		if (strcmp(mapped_method->name, method_name) == 0)
+		if (strcmp(wrapped_method->method_name, method_name) == 0)
 		{
 			XFDBG("Calling method[%s] (wrapper:%p, params:%d, format:%d)",
-			      method_name, (void*)mapped_method->method, num_params, format);
-			status = mapped_method->method(params, num_params, result, format);
+			      method_name, (void*)wrapped_method->method_wrapper, num_params, format);
+			status = wrapped_method->method_wrapper(params, num_params, result, format);
 			method_missing = false;
 			break;
 		}
-		mapped_method++;
+		wrapped_method++;
 	}
 
 	if (method_missing)
@@ -67,7 +67,7 @@ Service_call(MethodTable* method_map, const char* method_name, Param* params, in
 		return status;
 	else
 	{
-		XFERR("ERROR calling method '%s' (cx_errno %d)", method_name, cx_errno);
+		XFERR("ERROR while calling method '%s' (cx_errno %d)", method_name, cx_errno);
 		return -1;
 	}
 }

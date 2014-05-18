@@ -42,7 +42,7 @@ typedef enum
 
 typedef struct cx_rpc_value_t Value;
 typedef struct cx_rpc_param_t Param;
-typedef struct cx_rpc_method_map_t MethodTable;
+typedef struct cx_rpc_method_table_t MethodTable;
 
 /*
  * @param object the param object of the union value
@@ -80,10 +80,12 @@ struct cx_rpc_param_t
 	const char* name;
 };
 
-struct cx_rpc_method_map_t
+struct cx_rpc_method_table_t
 {
-	const char* name;
-	RPC_MethodWrapper* method;
+	const char* method_name;
+	/* extracts/validates parameters, calls method, creates result value */
+	RPC_MethodWrapper* method_wrapper;
+};
 };
 
 Value*

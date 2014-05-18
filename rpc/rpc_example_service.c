@@ -205,9 +205,16 @@ call_print_person(Param* params, int num_params, Value* result, ParamFormat form
 		return -1;
 	}
 
+	/* conversion of parameters in non-native format e.g json */
 	char* person_s = NULL;
 	switch (format)
 	{
+	case FORMAT_NATIVE:
+	{
+		Person* person = (Person*)p_person->value.object;
+		person_s = print_person(person);
+		break;
+	}
 	case FORMAT_JSON:
 	{
 		Person person;
@@ -216,12 +223,6 @@ call_print_person(Param* params, int num_params, Value* result, ParamFormat form
 			person_s = print_person(&person);
 		else
 			return -1;
-		break;
-	}
-	case FORMAT_NATIVE:
-	{
-		Person* person = (Person*)p_person->value.object;
-		person_s = print_person(person);
 		break;
 	}
 	}
