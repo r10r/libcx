@@ -59,11 +59,11 @@ StringBuffer_shift(StringBuffer* buffer, size_t nshift)
 		if (nremaining > 0)
 		{
 			memmove(buf_start, buf_start + nshift, nremaining);
-			STRING_BUFFER_FDBG(buffer, "shifted %zu byte", nshift);
+			STRING_BUFFER_FDBG(buffer, "shifted (%zu bytes)", nshift);
 		}
 		else
 		{
-			STRING_BUFFER_DBG(buffer, "cleared");
+			STRING_BUFFER_FDBG(buffer, "cleared (%zu bytes)", nshift);
 		}
 
 		/* zero unused data */
@@ -226,7 +226,7 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, ssize_t read_size
 			}
 			else
 			{
-				STRING_BUFFER_FDBG(buffer, "read %zu byte (read size %zu)", nread, read_size);
+				STRING_BUFFER_FDBG(buffer, "read %zu bytes (read size %zu)", nread, read_size);
 				if (nread > 0)
 				{
 					buffer->string->length = offset + (size_t)nread;
