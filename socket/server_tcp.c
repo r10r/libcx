@@ -56,6 +56,8 @@ tcp_server_handler(Server* server, ServerEvent event)
 			Socket_print_status((Socket*)socket);
 			exit(1);
 		}
+
+		XFLOG("Listening to socket: %s:%d", socket->ip, socket->port);
 		// TODO start worker supervisor
 		ev_timer* timer = cx_alloc(sizeof(ev_timer));
 		ev_timer_init(timer, timer_cb, 0., 15.);
