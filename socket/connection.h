@@ -41,6 +41,22 @@ struct cx_connection_t
 	void* data;
 };
 
+typedef struct cx_send_buffer_t SendBuffer;
+typedef void F_SendFinished (Connection* conn, SendBuffer* unit);
+
+struct cx_send_buffer_t
+{
+	StringBuffer* buffer;
+	F_SendFinished* f_send_finished;
+	size_t ntransmitted;
+};
+
+SendBuffer*
+SendBuffer_new(StringBuffer* buffer, F_SendFinished* f_finished);
+
+void
+SendBuffer_free(SendBuffer* unit);
+
 Connection*
 Connection_new(Worker* worker, int fd);
 

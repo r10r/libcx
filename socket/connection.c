@@ -147,8 +147,21 @@ Connection_send_blocking(Connection* c, const char* data, size_t length)
 
 	if (c->f_send_data_handler)
 		c->f_send_data_handler(c);
+}
 
+SendBuffer*
+SendBuffer_new(StringBuffer* buffer, F_SendFinished* f_finished)
+{
+	SendBuffer* unit = cx_alloc(sizeof(SendBuffer));
 
-//	ev_io_init(&c->send_data_watcher, send_data_callback, c->connection_fd, EV_WRITE);
-//	ev_io_start(c->loop, &c->send_data_watcher);
+	unit->buffer = buffer;
+	unit->f_send_finished = f_finished;
+	return unit;
+}
+
+void
+SendBuffer_free(SendBuffer* unit)
+{
+	StringBuffer_free(unit->buffer);
+	cx_free(unit);
 }
