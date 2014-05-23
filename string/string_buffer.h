@@ -67,8 +67,8 @@ StringBuffer_from_string(String* string);
 void
 StringBuffer_free(StringBuffer* buffer);
 
-void
-StringBuffer_free_members(StringBuffer* buffer);
+#define StringBuffer_free_members(buffer) \
+	S_free(buffer->string)
 
 bool
 StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);

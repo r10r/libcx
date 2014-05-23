@@ -1,4 +1,4 @@
-#include "string_buffer.h" /* TODO move StringBuffer* to separate compilation unit */
+#include "string_buffer.h"      /* TODO move StringBuffer* to separate compilation unit */
 
 /* @return the string or NULL when memory allocation fails or string length was exceeded */
 String*
@@ -6,7 +6,7 @@ String_init(const char* source, size_t nchars)
 {
 	if (nchars > STRING_MAX_LENGTH)
 	{
-		XFERR("Maximum string length (%llu) exceeded: %zu", STRING_MAX_LENGTH, nchars);
+		XFERR("Maximum string length (%llu) exceeded: %zu", (long long unsigned int)STRING_MAX_LENGTH, nchars);
 		return NULL;
 	}
 
@@ -103,12 +103,6 @@ StringBuffer_from_string(String* string)
 
 	buf->string = string;
 	return buf;
-}
-
-inline void
-StringBuffer_free_members(StringBuffer* buffer)
-{
-	S_free(buffer->string);
 }
 
 void
@@ -409,6 +403,7 @@ StringBuffer_write_bytes_into(StringBuffer* buf, const char* const format, const
 	}
 }
 
+#ifdef _CX_DEBUG
 void
 StringBuffer_print_bytes_hex(StringBuffer* in, size_t nbytes, const char* message)
 {
@@ -420,6 +415,8 @@ StringBuffer_print_bytes_hex(StringBuffer* in, size_t nbytes, const char* messag
 	XFDBG("%s [%zu of %zu]: %s", message, nbytes_max, StringBuffer_used(in), StringBuffer_value(buf));
 	StringBuffer_free(buf);
 }
+
+#endif
 
 const char*
 cx_strstatus(StringBufferStatus status)
@@ -433,6 +430,7 @@ cx_strstatus(StringBufferStatus status)
 	case STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS: return "ERROR_INVALID_ACCESS";
 	case STRING_BUFFER_STATUS_ERROR_INVALID_READ_SIZE: return "ERROR_INVALID_READ_SIZE";
 	}
+	return NULL; /* make gcc happy */
 }
 
 /* string pointer methods */
