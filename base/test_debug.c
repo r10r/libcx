@@ -30,13 +30,6 @@ test_XERR()
 	errno = EPERM;
 	char* err = strerror(errno);
 	XERR(err);
-
-//	reported by valgrind: (on OSX)
-//	String allocated by strerror must be freed,
-//	although manpage says it should be 'const'.
-#if (!defined(__linux))
-	cx_free(err);
-#endif
 }
 
 static void

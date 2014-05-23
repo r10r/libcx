@@ -3,8 +3,7 @@ L := $(LOCAL_DIR)
 
 #CFLAGS += -D_LIST_DISABLE_LOCKING
 
-TESTS += $(L)/test_list \
-	$(L)/test_array \
+TESTS += $(L)/test_list
 
 
 # -- executables --
@@ -17,8 +16,3 @@ $(L)/test_list_FLAGS := -Wno-incompatible-pointer-types-discards-qualifiers
 $(L)/test_list_OBJS := $(TEST_OBJS) \
 	$(L)/test_list.o \
 	$(L)/list.o
-
-$(L)/test_array_FLAGS := -Wno-incompatible-pointer-types-discards-qualifiers
-$(L)/test_array_OBJS := $(TEST_OBJS) \
-	$(L)/test_array.o \
-	$(L)/array.o

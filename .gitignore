@@ -5,5 +5,4 @@ coverage.info
 # generated executables
 src/server
 test/unit/test_list
-
-.format
+base/mleaks
