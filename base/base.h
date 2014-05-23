@@ -54,6 +54,9 @@
 #define EACH(__iter, __elem, __next) \
 	for (; __iter && (__elem = __iter); __iter = __iter->__next)
 
+#define EACH_WITH_INDEX(__iter, __elem, __next, __index) \
+	for (; __iter && (__elem = __iter); __iter = __iter->__next, __index++)
+
 /* for safely printing NULL values */
 #define NULLS(val) \
 	(val ? val : "(null)")

@@ -31,6 +31,9 @@ struct cx_list_t
 #define LIST_EACH(head, node) \
 	EACH(head, node, next)
 
+#define LIST_EACH_WITH_INDEX(head, node, index) \
+	EACH_WITH_INDEX(head, node, next, index)
+
 Node*
 Node_new(void);
 

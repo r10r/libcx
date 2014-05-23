@@ -22,11 +22,11 @@ test_List_append()
 
 	list->f_node_data_free = node_free;
 
-	TEST_ASSERT_EQUAL_INT(0, List_append(list, strdup("node 1")));
+	TEST_ASSERT_EQUAL_INT(0, List_append(list, cx_strdup("node 1")));
 	TEST_ASSERT_EQUAL_STRING("node 1", list->last->data);
-	TEST_ASSERT_EQUAL_INT(1, List_append(list, strdup("node 2")));
+	TEST_ASSERT_EQUAL_INT(1, List_append(list, cx_strdup("node 2")));
 	TEST_ASSERT_EQUAL_STRING("node 2", list->last->data);
-	TEST_ASSERT_EQUAL_INT(2, List_append(list, strdup("node 3")));
+	TEST_ASSERT_EQUAL_INT(2, List_append(list, cx_strdup("node 3")));
 	TEST_ASSERT_EQUAL_STRING("node 3", list->last->data);
 
 	TEST_ASSERT_EQUAL_INT(3, list->length);
@@ -46,11 +46,11 @@ test_List_push()
 
 	list->f_node_data_free = node_free;
 
-	TEST_ASSERT_EQUAL_INT(0, List_push(list, strdup("node 1")));
+	TEST_ASSERT_EQUAL_INT(0, List_push(list, cx_strdup("node 1")));
 	TEST_ASSERT_EQUAL_STRING("node 1", list->last->data);
-	TEST_ASSERT_EQUAL_INT(1, List_push(list, strdup("node 2")));
+	TEST_ASSERT_EQUAL_INT(1, List_push(list, cx_strdup("node 2")));
 	TEST_ASSERT_EQUAL_STRING("node 2", list->last->data);
-	TEST_ASSERT_EQUAL_INT(2, List_push(list, strdup("node 3")));
+	TEST_ASSERT_EQUAL_INT(2, List_push(list, cx_strdup("node 3")));
 	TEST_ASSERT_EQUAL_STRING("node 3", list->last->data);
 
 	TEST_ASSERT_EQUAL_INT(3, list->length);
@@ -72,9 +72,9 @@ test_List_match()
 
 	TEST_ASSERT_NULL(List_match(list, "node 1", data_strcmp));
 
-	List_push(list, strdup("node 1"));
-	List_push(list, strdup("node 2"));
-	List_push(list, strdup("node 3"));
+	List_push(list, cx_strdup("node 1"));
+	List_push(list, cx_strdup("node 2"));
+	List_push(list, cx_strdup("node 3"));
 
 	TEST_ASSERT_NULL(List_match(list, "node", data_strcmp));
 
@@ -101,9 +101,9 @@ test_List_each()
 
 	List_each(list, test_iterator); /* test empty list */
 
-	List_push(list, strdup("node 1"));
-	List_push(list, strdup("node 2"));
-	List_push(list, strdup("node 3"));
+	List_push(list, cx_strdup("node 1"));
+	List_push(list, cx_strdup("node 2"));
+	List_push(list, cx_strdup("node 3"));
 
 	List_each(list, test_iterator);
 
@@ -246,6 +246,71 @@ test_List_get()
 	List_free(list);
 }
 
+static void
+test_List_free_empty_list()
+{
+	List* list = List_new();
+
+	list->f_node_data_free = free;
+	List_free(list);
+}
+
+static void
+test_LIST_EACH_WITH_INDEX()
+{
+	List* list = List_new();
+
+	list->f_node_data_free = node_free;
+	List_push(list, cx_strdup("foo"));
+	List_push(list, cx_strdup("bar"));
+	List_push(list, cx_strdup("baz"));
+
+	Node* head = list->first;
+	Node* tail = NULL;
+	unsigned int index = 0;
+	LIST_EACH_WITH_INDEX(head, tail, index)
+	{
+		if (index == 0)
+			TEST_ASSERT_EQUAL_STRING("foo", (char*)tail->data);
+		if (index == 1)
+			TEST_ASSERT_EQUAL_STRING("bar", (char*)tail->data);
+		if (index == 2)
+			TEST_ASSERT_EQUAL_STRING("baz", (char*)tail->data);
+
+		TEST_ASSERT_TRUE(index < 3);
+	}
+
+	List_free(list);
+}
+
+static void
+test_List_delete()
+{
+	List* list = List_new();
+
+	list->f_node_data_free = node_free;
+	List_push(list, cx_strdup("foo"));
+	List_push(list, cx_strdup("bar"));
+	List_push(list, cx_strdup("baz"));
+
+	TEST_ASSERT_EQUAL_INT(3, list->length);
+	List_delete(list, 1);
+	TEST_ASSERT_EQUAL_INT(2, list->length);
+	TEST_ASSERT_EQUAL_STRING("foo", (char*)List_get(list, 0));
+	TEST_ASSERT_EQUAL_STRING("baz", (char*)List_get(list, 1));
+
+	List_delete(list, 0);
+	TEST_ASSERT_EQUAL_INT(1, list->length);
+	TEST_ASSERT_EQUAL_STRING("baz", (char*)List_get(list, 0));
+
+	List_delete(list, 0);
+	TEST_ASSERT_EQUAL_INT(0, list->length);
+	List_delete(list, 0);
+	TEST_ASSERT_EQUAL_INT(0, list->length);
+
+	List_free(list);
+}
+
 int
 main()
 {
@@ -260,5 +325,8 @@ main()
 	RUN(test_List_unshift);
 	RUN(test_List_userdata_);
 	RUN(test_List_get);
+	RUN(test_List_free_empty_list);
+	RUN(test_LIST_EACH_WITH_INDEX);
+	RUN(test_List_delete);
 	TEST_END
 }

@@ -249,9 +249,17 @@ List_detach(List* list, unsigned int index)
 	{
 		if (node->previous)
 			node->previous->next = node->next;
+		else
+			list->first = node->next;
+
 		if (node->next)
 			node->next->previous = node->previous;
+		else
+			list->last = node->previous;
+
+		list->length--;
 	}
+
 	return node;
 }
 
