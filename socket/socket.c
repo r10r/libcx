@@ -39,7 +39,7 @@ Socket_serve(Socket* sock)
 	if (Socket_create(sock) != SOCKET_CREATED)
 		return sock->status;
 
-#if (!defined (__linux__) && defined(__unix__)) || (defined(__APPLE__) && defined(__MACH__))
+#ifdef _DARWIN_C_SOURCE
 	// http://stackoverflow.com/questions/108183/how-to-prevent-sigpipes-or-handle-them-properly
 	// http://nadeausoftware.com/articles/2012/01/c_c_tip_how_use_compiler_predefined_macros_detect_operating_system
 	// both server and client socket must be protected against SIGPIPE
@@ -66,7 +66,7 @@ Socket_use(Socket* sock)
 	if (Socket_create(sock) != SOCKET_CREATED)
 		return sock->status;
 
-#if (!defined (__linux__) && defined(__unix__)) || (defined(__APPLE__) && defined(__MACH__))
+#ifdef _DARWIN_C_SOURCE
 	// http://stackoverflow.com/questions/108183/how-to-prevent-sigpipes-or-handle-them-properly
 	// http://nadeausoftware.com/articles/2012/01/c_c_tip_how_use_compiler_predefined_macros_detect_operating_system
 	// both server and client socket must be protected against SIGPIPE

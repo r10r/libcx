@@ -47,7 +47,7 @@ unix_connection_watcher(ev_loop* loop, ev_io* w, int revents)
 		XFERRNO("worker[%lu] failed to accept connection", worker->id);
 	else
 	{
-#if (!defined (__linux__) && defined(__unix__)) || (defined(__APPLE__) && defined(__MACH__))
+#ifdef _DARWIN_C_SOURCE
 		/* do not send SIGIPIPE on EPIPE */
 		enable_so_opt(client_fd, SO_NOSIGPIPE);
 #endif
