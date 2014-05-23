@@ -1,12 +1,11 @@
 #include <stdio.h>      /* stdin, fopen */
-//#include <string.h> /* memset */
+#include <string.h>     /* strdup */
 #include <stdlib.h>     /* calloc */
 #include <limits.h>
 #include <stdbool.h>
 
+#undef _CX_DEBUG_MEM
 #include "list/list.h"
-
-/* FIXME does not detect */
 
 typedef enum cx_alloc_method_t
 {

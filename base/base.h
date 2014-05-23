@@ -1,4 +1,3 @@
-/* IMPORTANT must be included as last import */
 #ifndef _CX_BASE_H
 #define _CX_BASE_H
 
@@ -6,13 +5,7 @@
 #include <limits.h>
 
 #include "debug.h"
-
-#ifdef _CX_ASSERT
-#define assert
-#else
-#include <assert.h>
-#endif
-
+#include "assert.h"
 #include "mem.h"
 
 #ifndef SSIZE_MAX

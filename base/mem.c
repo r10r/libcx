@@ -1,4 +1,4 @@
-#include "debug_mem.h"
+#include "mem.h"
 
 void*
 malloc(size_t eltsize);
