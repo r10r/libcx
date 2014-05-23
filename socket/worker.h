@@ -6,8 +6,15 @@
 #include "list/list.h"
 #include "base/ev.h"
 
-typedef struct cx_worker_t Worker;
+#ifdef PTHREAD_STACK_MIN
+#define WORKER_THREAD_STACK_SIZE PTHREAD_STACK_MIN * 2
+#else
+/* FIXME only on OSX __DARWIN_C_LEVEL not defined properly ? */
+#define WORKER_THREAD_STACK_SIZE 8192 * 2
+#endif
 
+
+typedef struct cx_worker_t Worker;
 typedef void F_WorkerHandler (Worker* worker);
 
 struct cx_worker_t
