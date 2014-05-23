@@ -30,6 +30,10 @@ TCPServer_free(Server* server)
 static void
 timer_cb(ev_loop* loop, ev_timer* timer, int revents)
 {
+	UNUSED(loop);
+	UNUSED(timer);
+	UNUSED(revents);
+
 	XLOG("Hello from the manager");
 }
 

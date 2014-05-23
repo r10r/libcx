@@ -121,4 +121,6 @@
 /* assertions for safe type narrowing */
 #define ASSERT_LONG(val) assert((long long val) < LONG_MAX && (long long)val > LONG_MIN)
 
+#define UNUSED(x) (void)(x)
+
 #endif

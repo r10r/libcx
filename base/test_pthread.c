@@ -38,17 +38,21 @@ mylog(const char* message)
 static void*
 pthread_foo_run(void* arg)
 {
+	UNUSED(arg);
+
 	FooBar f = { .foo = "hello", .bar = NULL };
 
 	TLC_set(foobar, &f);
 	mylog("with foobar");
 
-	return NULL;
+	pthread_exit(NULL);
 }
 
 static void*
 pthread_bar_run(void* arg)
 {
+	UNUSED(arg);
+
 	mylog("without foobar");
 	return NULL;
 }
@@ -61,7 +65,7 @@ test_Something()
 
 	TLC_init(foobar);
 
-	PROFILE_BEGIN("100000000 times pthread_setspecific/getspecific")
+	PROFILE_BEGIN("100000000 times pthread_setspecific/getspecific");
 	pthread_create(&foo_thread, NULL, pthread_foo_run, NULL);
 	pthread_create(&bar_thread, NULL, pthread_bar_run, NULL);
 

@@ -38,7 +38,8 @@ static StringBuffer* buf;
 static void
 event_handler(RagelParser* parser, int event)
 {
-	XDBG("Received Event");
+	UNUSED(event);
+	XFDBG("Received Event %d", event);
 	StringBuffer_ncat(buf, Marker_get(parser), parser->marker_length);
 }
 

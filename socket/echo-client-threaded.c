@@ -31,6 +31,8 @@ on_connect(TCPSocket* tcp)
 static void*
 thread_send_data(void* data)
 {
+	UNUSED(data);
+
 	F_Connected* callback = on_connect;
 
 	int i;

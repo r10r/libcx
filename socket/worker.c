@@ -59,6 +59,8 @@ _Worker_run(void* data)
 void
 Worker_stop(Worker* worker)
 {
+	UNUSED(worker);
+
 	XDBG("Not implemented");
 	// FIXME must signal worker to close all connections (using async_send ?)
 //	XASSERT("Task list should be empty", worker->tasks->length == 0)

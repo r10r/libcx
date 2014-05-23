@@ -1,5 +1,5 @@
 #include "server_unix.h"
-#include "worker_unix.h" /* FIXME circular inclusion */
+#include "worker_unix.h"        /* FIXME circular inclusion */
 
 static void
 unix_server_handler(Server* server, ServerEvent event);
@@ -31,6 +31,10 @@ UnixServer_free(Server* server)
 static void
 supervisor_watcher_cb(ev_loop* loop, ev_timer* timer, int revents)
 {
+	UNUSED(loop);
+	UNUSED(timer);
+	UNUSED(revents);
+
 	XDBG("Hello from the supervisor");
 }
 

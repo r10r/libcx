@@ -19,6 +19,8 @@ Connection_init(Connection* connection, Worker* worker, int fd)
 static void
 receive_data_callback(ev_loop* loop, ev_io* w, int revents)
 {
+	UNUSED(loop);
+
 	Connection* conn = container_of(w, Connection, receive_data_watcher);
 
 	assert(revents & EV_READ);  /* application bug */
@@ -30,6 +32,8 @@ receive_data_callback(ev_loop* loop, ev_io* w, int revents)
 static void
 send_data_callback(ev_loop* loop, ev_io* w, int revents)
 {
+	UNUSED(loop);
+
 	Connection* conn = container_of(w, Connection, send_data_watcher);
 
 	assert(revents & EV_WRITE);  /* application bug */
@@ -88,7 +92,9 @@ Connection_close(Connection* connection)
 void
 Connection_send_buffer(Connection* c, StringBuffer* buf)
 {
+#ifdef _CX_DEBUG
 	StringBuffer_print_bytes_hex(buf, 16, "send buffer");
+#endif
 	Connection_send_blocking(c, StringBuffer_value(buf), StringBuffer_used(buf));
 	StringBuffer_free(buf);
 }

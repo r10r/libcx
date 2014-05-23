@@ -1,5 +1,5 @@
 #include "server_unix.h"
-#include "worker_unix.h" /* FIXME circular inclusion */
+#include "worker_unix.h"        /* FIXME circular inclusion */
 
 void
 UnixWorker_init(UnixWorker* worker)
@@ -35,6 +35,9 @@ UnixWorker_run(Worker* worker)
 void
 unix_connection_watcher(ev_loop* loop, ev_io* w, int revents)
 {
+	UNUSED(loop);
+	UNUSED(revents);
+
 	UnixWorker* unix_worker = container_of(w, UnixWorker, connection_watcher);
 	Worker* worker = (Worker*)unix_worker;
 

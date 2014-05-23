@@ -1,4 +1,4 @@
-#include "server.h" /* FIXME circular inclusion */
+#include "server.h"             /* FIXME circular inclusion */
 #include "worker.h"
 
 static void
@@ -82,6 +82,8 @@ Server_shutdown(Server* server)
 static void
 shutdown_watcher(ev_loop* loop, ev_timer* w, int revents)
 {
+	UNUSED(revents);
+
 	Server* server = container_of(w, Server, shutdown_watcher);
 
 	XDBG("Waiting for workers to shut down");
@@ -95,6 +97,9 @@ shutdown_watcher(ev_loop* loop, ev_timer* w, int revents)
 static void
 sigint_watcher(ev_loop* loop, ev_signal* w, int revents)
 {
+	UNUSED(loop);
+	UNUSED(revents);
+
 	Server* server = container_of(w, Server, sigint_watcher);
 
 	XDBG("Received SIGINT.");
