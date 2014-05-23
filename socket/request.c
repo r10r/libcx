@@ -45,9 +45,3 @@ Request_stop(Request* request)
 
 	XASSERT(ret == 0, "gettimeofday should return 0");
 }
-
-void
-Request_log(Request* request)
-{
-	XFDBG("Request[%p] duration:%f msec", (void*)request, timeval_diff(request->started_at, request->finished_at));
-}

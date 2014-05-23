@@ -45,7 +45,7 @@ Request_free(Request* request);
 void
 Request_stop(Request* request);
 
-void
-Request_log(Request* request);
+#define Request_log(request) \
+	XFDBG("Request[%p] duration:%f msec", (void*)request, timeval_diff(request->started_at, request->finished_at))
 
 #endif

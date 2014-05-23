@@ -13,11 +13,11 @@
  * - to emphasize surround element with brackets '()'
  */
 
-#ifdef NDEBUG
-#define XDBG(message)
-#define XFDBG(format, ...)
-#define XFLOG(fmt, ...)
-#define XLOG(message)
+#ifndef _CX_DEBUG
+#define XDBG(message) UNUSED(message)
+#define XFDBG(format, ...) UNUSED(format)
+#define XFLOG(format, ...)  UNUSED(format)
+#define XLOG(message) UNUSED(message)
 #else
 
 /*
@@ -67,12 +67,14 @@
 	fprintf(stderr, "XWARN:(%s):%s:%d - " format "\n", \
 		__func__, __FILE__, __LINE__, __VA_ARGS__)
 
-#ifdef NASSERT
-#define XCHECK(condition, message)
-#define XCHECK_EQUALS_INT(expected, actual, message)
-#define XFCHECK(condition, format, ...)
-#define XASSERT(condition, message)
-#define XFASSERT(condition, format, ...)
+#ifndef _CX_ASSERT
+
+#define XCHECK(condition, message) UNUSED(condition)
+#define XCHECK_EQUALS_INT(expected, actual, message) UNUSED(expected)
+#define XFCHECK(condition, format, ...) UNUSED(condition)
+#define XASSERT(condition, message) UNUSED(condition)
+#define XFASSERT(condition, format, ...) UNUSED(condition)
+
 #else
 
 /*

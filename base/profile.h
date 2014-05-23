@@ -6,11 +6,11 @@
 #ifndef _CX_PROFILE_H
 #define _CX_PROFILE_H
 
-#ifdef NPROFILE
+#ifndef _CX_DEBUG_PROFILE
 
 #define PROFILE_INIT
-#define PROFILE_BEGIN
-#define PROFILE_BEGIN_FMT
+#define PROFILE_BEGIN(message) UNUSED(message)
+#define PROFILE_BEGIN_FMT(format, ...) UNUSED(format);
 #define PROFILE_END
 
 #else
