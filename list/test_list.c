@@ -1,6 +1,5 @@
 #include "base/test.h"
 #include "list.h"
-#include <unistd.h> /* sleep */
 
 static
 int

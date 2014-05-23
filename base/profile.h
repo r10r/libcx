@@ -15,10 +15,9 @@
 
 #else
 
-#include <sys/time.h> /* clock, gettimeofday, CLOCKS_PER_SEC */
+#include <time.h>       /* clock_t, CLOCKS_PER_SEC */
+#include <sys/time.h>   /* gettimeofday */
 #include <stdio.h>
-
-#include "base.h"
 
 #ifndef CLOCKS_PER_SEC
 /* (on linux CLOCKS_PER_SEC is undefined, see man 3 clock */

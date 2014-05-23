@@ -1,7 +1,5 @@
-#include "base/test.h"
-#include "base/profile.h"
-#include "base/base.h"
 #include <pthread.h>
+#include "base/test.h"
 
 #define TLC_PREFIX TLC_
 

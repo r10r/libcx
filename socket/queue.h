@@ -3,10 +3,12 @@
 
 #include <stdio.h>
 #include <pthread.h>
+#include <stdbool.h>
+
 #include "list/list.h"
 #include "server.h" /* FIXME circular inclusion */
 #include "worker.h"
-#include <stdbool.h>
+
 
 typedef struct cx_queue_t
 {

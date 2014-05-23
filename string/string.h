@@ -9,15 +9,15 @@
  * methods that append to a string should be able to append to a string of zero length
  */
 
-#include "stddef.h"     /* size_t */
+#include <stddef.h>     /* size_t */
 #include <stdlib.h>     /* free */
 #include <string.h>     /* memcpy */
 #include <strings.h>    /* strcasecmp */
 #include <unistd.h>     /* write */
-#include <stdio.h>      /* fileno */
+#include <stdio.h>      /* fileno, vsnprintf */
 #include <limits.h>     /* LONG_MAX */
 
-#include "base/debug.h"
+#include "base/base.h"
 
 #ifndef STRING_MAX_LENGTH
 // 1 GiB = 2^30

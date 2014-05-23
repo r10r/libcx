@@ -1,5 +1,4 @@
-#include "base/test.h"
-#include "base.h"
+#include "test.h"
 
 struct foo
 {

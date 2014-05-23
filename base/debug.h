@@ -5,8 +5,6 @@
 #include <errno.h>
 #include <stdio.h>      /* fprintf */
 
-#include "base.h"
-
 /*
  * debug message convetions:
  * - first level separator => ' - '

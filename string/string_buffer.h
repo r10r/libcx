@@ -1,10 +1,11 @@
 #ifndef _CX_STRING_BUFFER_H
 #define _CX_STRING_BUFFER_H
 
-#include "string.h"
-#include <stdarg.h>     /* vsnprintf, va_* */
+#include <stdarg.h>     /* va_* */
 #include <stdint.h>     /* uint*_t */
 #include <stdbool.h>    /* bool */
+
+#include "string.h"
 
 /* READ_SIZE_MAX must be <= SSIZE_MAX */
 #define READ_SIZE_MAX SSIZE_MAX

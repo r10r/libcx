@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <fcntl.h>      /* fcntl, to make socket non-blocking */
 
 #include "base/ev.h"
 #include "base/base.h"
@@ -10,8 +11,6 @@
 #include "request.h"
 #include "server.h" /* FIXME circular inclusion */
 #include "worker.h"
-
-#include <fcntl.h>      /* fcntl, to make socket non-blocking */
 
 // TODO move to socket.h
 /* set given file descriptor as non-blocking */

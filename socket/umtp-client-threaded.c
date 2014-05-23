@@ -1,8 +1,6 @@
 #include <pthread.h>
 
 #include "client.h"
-#include "base/debug.h"
-#include "base/profile.h"
 
 PROFILE_INIT;
 

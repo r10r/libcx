@@ -1,26 +1,26 @@
+/* IMPORTANT must be included as last import */
 #ifndef _CX_BASE_H
 #define _CX_BASE_H
 
 #include <stddef.h>     /* offsetoff */
-#include <stdlib.h>     /* malloc */
 #include <limits.h>
+
+#include "debug.h"
+
+#ifdef _CX_ASSERT
+#define assert
+#else
+#include <assert.h>
+#endif
+
+#include "mem.h"
 
 #ifndef SSIZE_MAX
 #define SSIZE_MAX LONG_MAX
 //typedef unsigned long ssize_t;
 #endif
 
-#ifdef NASSERT
-#define assert
-#else
-#include <assert.h>
-#endif
-
 /* [ memory management ] */
-
-#define cx_alloc(size) calloc(1, size)
-#define cx_free(ptr) free(ptr)
-
 
 
 /* see http://www.kroah.com/log/linux/container_of.html */

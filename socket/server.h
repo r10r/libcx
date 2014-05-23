@@ -3,16 +3,13 @@
 
 #include <stdio.h>      /* puts ... */
 #include <unistd.h>     /* STDIN_FILENO */
-
 #include <stdlib.h>     /* exit */
 #include <string.h>     /* strlen */
-
 #include <pthread.h>
 
-#include "base/base.h"
 #include "base/ev.h"
-#include "base/debug.h"
 #include "list/list.h"
+#include "base/base.h"
 #include "socket.h"
 
 typedef struct cx_server_t Server;

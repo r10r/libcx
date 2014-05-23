@@ -4,7 +4,6 @@
 #include <stdio.h>
 
 #include "base/base.h"
-#include "base/debug.h"
 
 typedef struct cx_node_t Node;
 typedef struct cx_list_t List;

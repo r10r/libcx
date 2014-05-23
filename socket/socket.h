@@ -2,8 +2,8 @@
 #define _CX_SOCKET_H
 
 #include <sys/socket.h> /* guess what ;) */
+
 #include "base/base.h"
-#include "base/debug.h"
 
 #define SOCK_BACKLOG 512
 

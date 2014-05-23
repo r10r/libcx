@@ -3,7 +3,6 @@
 
 #include <pthread.h>
 
-#include "base/debug.h"
 #include "list/list.h"
 #include "base/ev.h"
 

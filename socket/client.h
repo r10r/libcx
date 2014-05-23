@@ -14,8 +14,6 @@
 #include "socket_tcp.h"
 #include "socket_unix.h"
 
-#include "base/debug.h"
-
 void
 send_data(int fd, const char* data);
 

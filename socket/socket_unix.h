@@ -1,8 +1,9 @@
 #ifndef _CX_SOCKET_UNIX_H
 #define _CX_SOCKET_UNIX_H
 
-#include "socket.h"
 #include <sys/un.h>
+
+#include "socket.h"
 
 #define UNIX_PATH_MAX 108
 
