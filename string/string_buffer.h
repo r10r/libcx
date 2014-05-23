@@ -5,11 +5,22 @@
 #include <stdarg.h>     /* vsnprintf, va_* */
 #include <stdint.h>     /* uint*_t */
 
+/* READ_MAX must be <= SSIZE_MAX */
+#define READ_MAX SSIZE_MAX
+
+typedef enum cx_string_buffer_error_t
+{
+	STRING_ERROR_ERRNO = 1,
+	STRING_ERROR_TO_SMALL,
+	STRING_ERROR_INVALID_OFFSET
+} StringBufferError;
+
 // should the string contain data type information ?
 typedef struct cx_string_buffer_t
 {
-	size_t length;  /* total buffer length */
-	String* string; /* we can now grow the string data */
+	size_t length;                  /* total buffer length */
+	String* string;                 /* we can now grow the string data */
+	StringBufferError error;        /* error while processing input */
 } StringBuffer;
 
 StringBuffer*
@@ -30,6 +41,11 @@ StringBuffer_free_members(StringBuffer* buffer);
 int
 StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
 
+void
+StringBuffer_set_error(StringBuffer* buffer, StringBufferError error);
+
+#define StringBuffer_error(buffer) \
+	((buffer)->error != 0)
 
 /* [ utility macros ] */
 
@@ -66,7 +82,7 @@ StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nchars);
 
 /* [ append from char* ] */
 
-ssize_t
+int
 StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars);
 
 #define StringBuffer_cat(buffer, chars) \
@@ -81,7 +97,7 @@ StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, siz
 
 /* [ append from number ] */
 
-ssize_t
+int
 StringBuffer_append_number(StringBuffer* buffer, size_t offset, uint64_t num, size_t nbytes);
 
 #define StringBuffer_cat_number(buffer, num, nbytes) \
@@ -90,8 +106,10 @@ StringBuffer_append_number(StringBuffer* buffer, size_t offset, uint64_t num, si
 
 /* [ append from FD or stream ] */
 
+/* single pass reading, maximum read length == SSIZE_MAX */
+
 ssize_t
-StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars);
+StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, ssize_t nchars);
 
 #define StringBuffer_fdcat(buffer, fd) \
 	StringBuffer_read(buffer, StringBuffer_index_append(buffer), fd, StringBuffer_length(buffer))
@@ -105,14 +123,22 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars);
 #define StringBuffer_fncat(buffer, file, nchars) \
 	StringBuffer_read(buffer, StringBuffer_index_append(buffer), fileno(file), nchars)
 
+
+/* multi pass reading, maximum read length == SIZE_MAX */
+
+int
+StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int blocking);
+
 #define StringBuffer_fdload(buffer, fd, chunk_size) \
 	StringBuffer_fdxload(buffer, fd, chunk_size, 1)
 
-ssize_t
-StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int blocking);
-
 #define StringBuffer_fload(buffer, file,  chunk_size) \
 	StringBuffer_fdload(buffer, fileno(file), chunk_size)
+
+/* read until buffer is full */
+
+int
+StringBuffer_ffill(StringBuffer* buffer, int fd, int blocking);
 
 
 /* [ writing ] */
@@ -130,11 +156,11 @@ StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int blocki
  * [vsnprintf - Format String checking](http://goo.gl/aL1X57)
  */
 __attribute__((__format__(__printf__, 3, 0)))
-ssize_t
+int
 StringBuffer_vsnprintf(StringBuffer* buffer, size_t offset, const char* format, va_list args);
 
 __attribute__((__format__(__printf__, 3, 0)))
-ssize_t
+int
 StringBuffer_sprintf(StringBuffer* buffer, size_t offset, const char* format, ...);
 
 __attribute__((__format__(__printf__, 2, 0)))

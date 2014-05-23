@@ -79,10 +79,10 @@ RagelParser_parse_file(RagelParser* parser, const char* file_path, size_t chunk_
 }
 
 ssize_t
-RagelParser_fdparse(RagelParser* parser, int fd, size_t chunk_size)
+RagelParser_fdparse(RagelParser* parser, int fd, ssize_t chunk_size)
 {
 	ssize_t total_read = 0;
-	StringBuffer* buffer = StringBuffer_new(chunk_size);
+	StringBuffer* buffer = StringBuffer_new((size_t)chunk_size);
 
 	parser->buffer = buffer;
 

@@ -25,10 +25,10 @@ test_StringBuffer_cat()
 
 	TEST_ASSERT_BUFFER(buf, "", 1024, 0, 1024);
 
-	TEST_ASSERT_EQUAL_INT(3, StringBuffer_cat(buf, "foo"));
+	TEST_ASSERT_EQUAL_INT(1, StringBuffer_cat(buf, "foo"));
 	TEST_ASSERT_BUFFER(buf, "foo", 1024, 3, 1024 - 3);
 
-	TEST_ASSERT_EQUAL_INT(3, StringBuffer_cat(buf, "bar"));
+	TEST_ASSERT_EQUAL_INT(1, StringBuffer_cat(buf, "bar"));
 	TEST_ASSERT_BUFFER(buf, "foobar", 1024, 6, 1024 - 6);
 
 	TEST_ASSERT_EQUAL_INT('f', *S_get(buf->string, 0));
@@ -95,7 +95,7 @@ test_StringBuffer_fcat()
 	/* write string without \0 terminator */
 	fwrite(data, 1, 3, tmpfile);
 
-	size_t read_size = 32;
+	ssize_t read_size = 32;
 
 	// buffer is extended to maximum read size each time before reading
 
@@ -143,33 +143,6 @@ test_StringBuffer_append_grow_offset()
 	TEST_ASSERT_BUFFER(buf, "fofoo", 5, 5, 0);
 
 	StringBuffer_free(buf);
-}
-
-static void
-test_limits()
-{
-	String* s = String_init(NULL, STRING_MAX_LENGTH + 1);
-
-	TEST_ASSERT_NULL(s);
-
-	StringBuffer* b = StringBuffer_new(STRING_MAX_LENGTH + 1);
-	TEST_ASSERT_NULL(b);
-
-	b = StringBuffer_new(STRING_MAX_LENGTH);
-	TEST_ASSERT_NOT_NULL(b);
-
-	unsigned int i;
-	unsigned int iterations = 500;
-	const char* pattern = "foobar";
-	size_t pattern_length = strlen(pattern) - 1;
-
-	for (i = 0; i < iterations; i++)
-		StringBuffer_ncat(b, pattern, pattern_length);
-
-	TEST_ASSERT_EQUAL(pattern_length * iterations, b->string->length);
-
-	S_free(s);
-	StringBuffer_free(b);
 }
 
 static void
@@ -276,7 +249,8 @@ test_StringBuffer_append_nullbytes()
 
 	const char data[] = { 0x0, 0x0 };
 
-	TEST_ASSERT_EQUAL_INT(2, StringBuffer_ncat(buffer, data, 2));
+	TEST_ASSERT_EQUAL_INT(CX_OK, StringBuffer_ncat(buffer, data, 2));
+	TEST_ASSERT_EQUAL_INT(2, StringBuffer_used(buffer));
 	TEST_ASSERT_EQUAL_INT(0x0, *S_get(buffer->string, 0));
 	TEST_ASSERT_EQUAL_INT(0x0, *S_get(buffer->string, 1));
 
@@ -295,7 +269,6 @@ main()
 	RUN(test_StringBuffer_scat);
 	RUN(test_StringBuffer_fcat);
 	RUN(test_StringBuffer_append_grow_offset);
-	RUN(test_limits);
 	RUN(test_StringBuffer_shift);
 	RUN(test_StringBuffer_clear);
 	RUN(test_StringBuffer_printf);

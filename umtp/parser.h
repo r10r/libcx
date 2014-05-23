@@ -109,7 +109,7 @@ RagelParser_shift_buffer(RagelParser* parser);
  * @return number of bytes read or < 0 on error
  */
 ssize_t
-RagelParser_fdparse(RagelParser* parser, int fd, size_t chunk_size);
+RagelParser_fdparse(RagelParser* parser, int fd, ssize_t chunk_size);
 
 /* number of unparsed tokens */
 size_t

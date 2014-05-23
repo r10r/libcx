@@ -15,12 +15,13 @@
 #include <strings.h>    /* strcasecmp */
 #include <unistd.h>     /* write */
 #include <stdio.h>      /* fileno */
+#include <limits.h>     /* LONG_MAX */
 
 #include "base/debug.h"
 
 #ifndef STRING_MAX_LENGTH
 // 1 GiB = 2^30
-#define STRING_MAX_LENGTH (1024 * 1024 * 1024)
+#define STRING_MAX_LENGTH SIZE_MAX
 #endif
 
 typedef struct cx_string_t
@@ -76,12 +77,6 @@ String_shift(String* s, size_t count);
 
 #define S_alloc(length) \
 	cx_alloc(S_size(length))
-
-/* to grow or shrink a string */
-// TODO @security better use calloc and memcpy to avoid memory exposure
-// since realloc doesn't guarantee that additional memory is zero filled
-#define S_realloc(s, length) \
-	realloc(s, S_size(length));
 
 #define S_dup(value) \
 	String_init(value, strlen(value))

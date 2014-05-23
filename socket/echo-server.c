@@ -10,7 +10,7 @@ echo_connection_data_handler(Connection* connection)
 {
 	StringBuffer* buffer = (StringBuffer*)connection->data;
 
-	return StringBuffer_read(buffer, 0, connection->fd, buffer->length);
+	return StringBuffer_fdxload(buffer, connection->fd, READ_MAX, 0);
 }
 
 static Connection*

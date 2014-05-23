@@ -1,49 +1,62 @@
 #include "string_buffer.h" /* TODO move StringBuffer* to separate compilation unit */
 
+/* @return the string or NULL when memory allocation fails or string length was exceeded */
 String*
 String_init(const char* source, size_t nchars)
 {
 	if (nchars > STRING_MAX_LENGTH)
+	{
+		XFERR("Maximum string length (%llu) exceeded: %zu", STRING_MAX_LENGTH, nchars);
 		return NULL;
+	}
 
 	String* s;
 
 	if (source)
 	{
 		s = S_alloc(nchars);
+		if (s == NULL)
+			return NULL;   /* memory allocation failure */
 		memcpy(s->value, source, nchars);
 		s->length = nchars;
 	}
 	else
 	{
 		s = S_alloc(nchars);
+		if (s == NULL)
+			return NULL;            /* memory allocation failure */
 		s->length = 0;
 	}
 
+	XFDBG("Created string of length %zu (used %zu)", nchars, s->length);
 	S_nullterm(s);
 	return s;
 }
 
+/* @return CX_OK on success, CX_ERR on failure */
 int
 String_shift(String* s, size_t count)
 {
-	XFDBG("shift count:%zu, string length:%zu", count, s->length);
+	XFDBG("Shifting %zu tokens of string with length:%zu", count, s->length);
 
-	if (count == 0)
-		return 0;
 	if (count > s->length)
-		return -1;
-
-	if (count == s->length)
-		s->length = 0;
+	{
+		XFERR("Shift count %zu exceed string length %zu", count, s->length);
+		return CX_ERR;
+	}
 	else
 	{
-		size_t remaining = s->length - count;
-		memcpy(s->value, s->value + count, remaining);
-		s->length = remaining;
+		size_t nremaining = s->length - count;
+		if (nremaining > 0)
+			memcpy(s->value, s->value + count, nremaining);
+		/* zero unused data */
+		size_t nunused = s->length - nremaining;
+		memset(s->value + nremaining, nunused, 0);
+		s->length = nremaining;
 	}
+
 	S_nullterm(s);
-	return 1;
+	return CX_OK;
 }
 
 inline void
@@ -51,15 +64,15 @@ StringBuffer_init(StringBuffer* buffer, size_t length)
 {
 	buffer->length = length;
 	buffer->string = String_init(NULL, length);
+	if (buffer->string == NULL)
+		StringBuffer_set_error(buffer, STRING_ERROR_ERRNO);
 }
 
 StringBuffer*
 StringBuffer_new(size_t length)
 {
-	if (length > STRING_MAX_LENGTH)
-		return NULL;
-
 	StringBuffer* buf = cx_alloc(sizeof(StringBuffer));
+
 	StringBuffer_init(buf, length);
 	return buf;
 }
@@ -89,46 +102,62 @@ StringBuffer_free(StringBuffer* buffer)
 	}
 }
 
+void
+StringBuffer_set_error(StringBuffer* buffer, StringBufferError error)
+{
+	if (buffer->error == STRING_ERROR_ERRNO)
+		XERRNO("Error in string buffer");
+	else
+		XFERRNO("Error %d in string buffer", buffer->error);
+
+	buffer->error = error;
+}
+
 /*
- * @return 0 if room is available, -1 on error, or > 0 (new length) if buffer was expanded
+ * @return CX_OK on succes, CX_ERR on failure
  */
 int
 StringBuffer_make_room(StringBuffer* buffer, size_t offset, size_t nlength_requested)
 {
-	// index must be within range
-	if (offset > buffer->string->length)
-		return -1;
+	String* old_string = buffer->string;
+	size_t old_length = buffer->length;
+
+	/* offset index must be within range */
+	if (offset > old_length)
+	{
+		StringBuffer_set_error(buffer, STRING_ERROR_INVALID_OFFSET);
+		return CX_ERR;
+	}
 
 	size_t new_length = offset + nlength_requested;
 
-	/* enough unused bytes available */
-	if (new_length <= buffer->length)
-		return 0;
+	/* check if we have to grow */
+	if (new_length > old_length)
+	{
+		String* new_string = String_init(NULL, new_length);
 
-	if (new_length > STRING_MAX_LENGTH)
-		return -1;
+		/* memory allocation failure */
+		if (new_string == NULL)
+			return CX_ERR;
 
-	String* new_string = S_realloc(buffer->string, new_length);
-	if (new_string == NULL)
-		return -1;
+		buffer->string = new_string;
+		buffer->length = new_length;
+		StringBuffer_ncat(buffer, old_string->value, old_string->length);
+		S_free(old_string);
 
-#ifdef STRING_DEBUG
-	XFDBG("Incremented buffer size %zu -> %zu", buffer->length, new_length);
-#endif
+		XFDBG("Resized buffer from %zu -> %zu", old_length, new_length);
+	}
 
-
-	buffer->string = new_string;
-	buffer->length = new_length;
-	return (int)new_length;
+	return CX_OK;
 }
 
-ssize_t
+int
 StringBuffer_append_number(StringBuffer* buffer, size_t offset, uint64_t num, size_t nbytes)
 {
 	return StringBuffer_append(buffer, offset, (char*)&num, nbytes);
 }
 
-ssize_t
+int
 StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, size_t nchars)
 {
 	XFDBG("\n	buffer[length:%zu, used:%zu, unused:%zu] source[nchars:%zu]",
@@ -136,29 +165,37 @@ StringBuffer_append(StringBuffer* buffer, size_t offset, const char* source, siz
 
 	XFDBG("append nchars:%zu at offset:%zu", nchars, offset);
 
-	if (StringBuffer_make_room(buffer, offset, nchars) == -1)
-		return -1;
+	if (StringBuffer_make_room(buffer, offset, nchars) < 0)
+		return CX_ERR;
 
 	memcpy(StringBuffer_value(buffer) + offset, source, nchars);
 	buffer->string->length = offset + nchars;
 	S_nullterm(buffer->string);
 
-	return (ssize_t)nchars;
+	return CX_OK;
 }
 
+/* @return the number of bytes read or CX_ERR on error */
 ssize_t
-StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars)
+StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, ssize_t nchars)
 {
-	if (StringBuffer_make_room(buffer, offset, nchars) == -1)
-		return -1;
+	assert(nchars > 0); /* application bug */
 
-	ssize_t nread = read(fd, S_term(buffer->string), nchars);
+	if (StringBuffer_make_room(buffer, offset, (size_t)nchars) < 0)
+		return CX_ERR;
+
+	ssize_t nread = read(fd, S_term(buffer->string), (size_t)nchars);
 
 #ifdef STRING_DEBUG
 	XFDBG("Read %zd (read size %zu) chars into buffer", nread, nchars);
 #endif
 
-	if (nread > 0)
+	if (nread < 0)
+	{
+		StringBuffer_set_error(buffer, STRING_ERROR_ERRNO);
+		return CX_ERR;
+	}
+	else if (nread > 0)
 	{
 		buffer->string->length = offset + (size_t)nread;
 		S_nullterm(buffer->string);
@@ -167,28 +204,47 @@ StringBuffer_read(StringBuffer* buffer, size_t offset, int fd, size_t nchars)
 	return nread;
 }
 
-ssize_t
+/* read until EOF or when blocking is set to 0 until EWOULDBLOCK,
+ * @ return CX_ERR on error or CX_OK on success
+ */
+int
 StringBuffer_fdxload(StringBuffer* buffer, int fd, size_t chunk_size, int blocking)
 {
-	ssize_t total_read = 0;
+	ssize_t nread;
+	size_t ntotal = 0;
 
-	while (1)
+	while ((nread = StringBuffer_fdncat(buffer, fd, chunk_size % READ_MAX)) > 0)
+		ntotal += (size_t)nread;
+
+	XFDBG("Loaded %zu bytes", ntotal);
+
+	if (nread < 0)
+		if (blocking || errno != EWOULDBLOCK)
+			return CX_ERR;
+
+	return CX_OK;
+}
+
+/*
+ * Load data until buffer is full, the input blocks or an error occurs.
+ * @return the number of unused bytes available in the buffer, or -1 on error (see errno)
+ */
+int
+StringBuffer_ffill(StringBuffer* buffer, int fd, int blocking)
+{
+	size_t nunused;
+	int status = CX_OK;
+
+	while ((nunused = StringBuffer_unused(buffer)) > 0)
 	{
-		ssize_t nread = StringBuffer_fdncat(buffer, fd, chunk_size);
+		/* multipass read */
+		status = StringBuffer_fdxload(buffer, fd, nunused % READ_MAX, blocking);
 
-		if (nread == 0)
+		if (status == CX_ERR)
 			break;
-		if (nread < 0)
-		{
-			if (!blocking && errno == EWOULDBLOCK)
-				return total_read;
-			else
-				return nread;
-		}
-
-		total_read += nread;
 	}
-	return total_read;
+
+	return status;
 }
 
 StringBuffer*
@@ -203,47 +259,72 @@ StringBuffer_from_printf(size_t length, const char* format, ...)
 	return buffer;
 }
 
-ssize_t
+/* @see StringBuffer_vsnprintf */
+int
 StringBuffer_sprintf(StringBuffer* buffer, size_t offset, const char* format, ...)
 {
 	va_list ap;
 
 	va_start(ap, format);
-	ssize_t chars_printed = StringBuffer_vsnprintf(buffer, offset, format, ap);
+	int chars_printed = StringBuffer_vsnprintf(buffer, offset, format, ap);
 	va_end(ap);
 	return chars_printed;
 }
 
-/* -1 on error, >= 0 for count of printed characters */
-ssize_t
+/*
+ * CX_ERR if an error occured, or >= 0 for count of printed characters
+ */
+int
 StringBuffer_vsnprintf(StringBuffer* buffer, size_t offset, const char* format, va_list args)
 {
 	/* check that offset is within within range */
 	if (offset > buffer->length)
-		return -1;
-
-	char* string_start = S_get(buffer->string, offset);
-	size_t nchars_available = (buffer->length - offset) + 1 /* \0 */;
-	size_t nchars_printed; /* number of chars printed (excluding \0) */
-	va_list ap;
-	va_copy(ap, args);
-	nchars_printed = (size_t)vsnprintf(string_start, nchars_available, format, ap);
-	va_end(ap);
-
-	/* check if buffer was large enough */
-	if (nchars_printed >= nchars_available)
 	{
-		StringBuffer_make_room(buffer, offset, nchars_printed);
-		va_copy(ap, args);
-		string_start = S_get(buffer->string, offset);
-		nchars_available = (buffer->length - offset) + 1 /* \0 */;
-		vsnprintf(string_start, nchars_available, format, ap);
-		va_end(ap);
+		StringBuffer_set_error(buffer, STRING_ERROR_INVALID_OFFSET);
+		return CX_ERR;
 	}
 
-	buffer->string->length = offset + nchars_printed;
+	char* string_start = S_get(buffer->string, offset);
+	size_t nchars_available = buffer->length - offset;
+	int nchars_printed; /* number of chars printed (excluding \0) */
+	va_list ap;
+	va_copy(ap, args);
 
-	return (ssize_t)nchars_printed;
+	nchars_printed = vsnprintf(string_start, nchars_available + 1, format, ap);
+	va_end(ap);
+
+	/*
+	 * vsnprintf never returns a negative value, instead
+	 * it returns the number of characters that would have been printed
+	 * if buffer would have been large enough.
+	 *
+	 * snprintf/vsnprintf maximum output size is restricted by the integer return type
+	 * but the upper limit might be smaller.
+	 * TODO check what happens when the output exceeds INT_MAX
+	 * http://stackoverflow.com/questions/8119914/printf-fprintf-maximum-size-according-to-c99
+	 */
+	assert(nchars_printed >= 0); /* c library bug */
+
+	/* check if buffer was to small */
+	if ((size_t)nchars_printed > nchars_available)
+	{
+		/* expand string buffer */
+		if (StringBuffer_make_room(buffer, offset, (size_t)nchars_printed) != 1)
+			return CX_ERR;
+
+		va_copy(ap, args);
+		string_start = S_get(buffer->string, offset);
+		nchars_available = buffer->length - offset;
+		nchars_printed = vsnprintf(string_start, nchars_available + 1, format, ap);
+		va_end(ap);
+
+		XFDBG("nchars printed: %d, nchars available: %zu", nchars_printed, nchars_available);
+		assert((size_t)nchars_printed == nchars_available); /* application bug */
+	}
+
+	buffer->string->length = offset + (size_t)nchars_printed;
+
+	return nchars_printed;
 }
 
 void
