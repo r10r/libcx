@@ -68,7 +68,8 @@ StringBuffer_shift(StringBuffer* buffer, size_t nshift)
 
 		/* zero unused data */
 		size_t nunused = nused - nremaining;
-		memset(buf_start + nremaining, nunused, 0);
+		assert(nunused < INT_MAX);
+		memset(buf_start + nremaining, (int)nunused, 0);
 	}
 
 	S_nullterm(buffer->string);
