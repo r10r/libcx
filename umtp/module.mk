@@ -5,6 +5,11 @@ L := $(LOCAL_DIR)
 PROGRAMS += $(L)/message-parser
 TESTS += $(L)/test_message \
 	$(L)/test_body_parser
+	
+ifeq ($(OS),Darwin)
+$(L)/message_fsm.o: CFLAGS += -Wno-error=unused-const-variable
+$(L)/body_fsm.o: CFLAGS += -Wno-error=unused-const-variable
+endif
 
 # -- executables --
 $(L)/message-parser_OBJS := $(L)/message-parser.o \

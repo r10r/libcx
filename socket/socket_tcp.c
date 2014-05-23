@@ -12,7 +12,7 @@ TCPSocket_new(const char* ip, uint16_t port)
 	sock->backlog = SOCK_BACKLOG;
 
 	tcp_sock->port = port;
-	tcp_sock->ip = strdup(ip);
+	tcp_sock->ip = cx_strdup(ip);
 
 	struct sockaddr_in* address = cx_alloc(sizeof(struct sockaddr_in));
 	sock->address = (struct sockaddr*)address;

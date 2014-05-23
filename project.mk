@@ -1,4 +1,5 @@
 LIBCX_DIR := $(LOCAL_DIR)
+TEST_RUNNER := $(SMAKE_DIR)/bin/mleaks-testrunner.sh
 
 # FIXME 
 # * do not run decover.sh / coverage script  when coverage is disabled
@@ -19,11 +20,7 @@ MODULES := base \
 # TODO ignore parameter/functions/values/variables with a macro
 # #define UNUSED(x) (void)(x)
 
-CFLAGS += -Werror -Wall -pedantic -std=c99 \
-	-Wno-error=unused-parameter \
-	-Wno-error=unused-function \
-	-Wno-error=unused-variable \
-	-Wno-error=unused-value \
+CFLAGS += -Werror -Wall -pedantic -std=c99 -D_POSIX_C_SOURCE -D_C99_SOURCE\
 	-Wno-error=padded \
 	-Wno-error=cast-align \
 	-Wno-error=switch-enum
@@ -39,9 +36,9 @@ profile ?= debug
 # TODO Check whether autoconf is of use here ?
 
 ifeq ($(profile),release)
-	CFLAGS += -Os -DNDEBUG -DNTRACE
+	CFLAGS += -Os
 else ifeq ($(profile),debug)
-	CFLAGS += -O0 -g -fno-inline --coverage
+	CFLAGS += -O0 -g -fno-inline --coverage -D_CX_DEBUG -D_CX_TRACE -D_CX_DEBUG_MEM
 	ifeq ($(OS),Darwin)
 		CFLAGS += -gdwarf-2
 		# when clang is installed through homebrew
@@ -57,6 +54,9 @@ else ifeq ($(profile),debug)
 	endif
 endif
 
+ifeq ($(OS),Darwin)
+	CFLAGS += -D_DARWIN_C_SOURCE
+endif
 
 # [ compiler specific settings ]
 
@@ -83,16 +83,12 @@ ifeq ($(OS),Linux)
 	endif
 	
 	ifeq ($(ARCH),armv6l)
-		# valgrind is not yet available on armv6l 
-		TEST_RUNNER :=
 		# reduce maximum string size to 100Mb
 		CFLAGS += -DSTRING_MAX_LENGTH=104857600  
 	endif
 endif
 
-
-TEST_OBJS := $(LIBCX_DIR)/base/unity.o \
-	$(LIBCX_DIR)/base/xmalloc.o 
+TEST_OBJS := $(LIBCX_DIR)/base/unity.o
 
 # ignore unity errors
 UNITY_FLAGS += \
@@ -100,6 +96,8 @@ UNITY_FLAGS += \
 	-Wno-sign-conversion \
 	-Wno-float-equal \
 	-Wno-missing-field-initializers \
-	-Wno-missing-braces
+	-Wno-missing-braces \
+	-Wno-unused-variable \
+	-Wno-cast-align
 
 $(LIBCX_DIR)/base/unity.o: CFLAGS += $(UNITY_FLAGS)

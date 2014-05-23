@@ -68,7 +68,7 @@ start_consumer(void* data)
 		}
 	}
 	XFDBG("Consumer[%d] Leaving inactive queue", consumer->id);
-	return NULL;
+	pthread_exit(NULL);
 }
 
 static Consumer*
