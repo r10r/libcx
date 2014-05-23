@@ -43,6 +43,7 @@ Connection_close(Connection* connection)
 void
 Connection_send_buffer(Connection* c, StringBuffer* buf)
 {
+	StringBuffer_print_bytes_hex(buf, 16, "send buffer");
 	Connection_send_blocking(c, StringBuffer_value(buf), StringBuffer_used(buf));
 	StringBuffer_free(buf);
 }
@@ -94,6 +95,8 @@ Connection_send_blocking(Connection* c, const char* data, size_t length)
 			processed += (size_t)nsend;
 		}
 	}
+
+	XDBG("send finished");
 
 // @from write function documentation
 //	This function returns the number of bytes transmitted, or -1 on failure. If the socket is nonblocking, then
