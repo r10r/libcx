@@ -43,6 +43,7 @@ struct cx_connection_t
 
 	/* watch for incomming data*/
 	ev_io receive_data_watcher;
+	ev_io send_data_watcher;
 
 	// set the buffer to receive the data (function ?)
 	F_ConnectionDataHandler* f_data_handler;
@@ -74,9 +75,11 @@ void
 Connection_close(Connection* c);
 
 void
-Connection_send(Connection* c, const char* data, size_t length);
+Connection_send_buffer(Connection* c, StringBuffer* buf);
 
-#define Connection_send_buffer(c, buffer) \
-	Connection_send(c, (buffer)->string->value, (buffer)->string->length)
+void
+Connection_send_blocking(Connection* c, const char* data, size_t length);
+
+
 
 #endif

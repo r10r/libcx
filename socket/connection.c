@@ -40,10 +40,39 @@ Connection_close(Connection* connection)
 	Connection_free(connection);
 }
 
-/* sends data immediately */
 void
-Connection_send(Connection* c, const char* data, size_t length)
+Connection_send_buffer(Connection* c, StringBuffer* buf)
 {
+	Connection_send_blocking(c, StringBuffer_value(buf), StringBuffer_used(buf));
+	StringBuffer_free(buf);
+}
+
+//#define WRITE_SIZE SSIZE_MAX
+
+/*
+ * - shift what's written ?, or maintain pointer ?
+ * - what if output buffer is appended ?
+ * - what if data length is really big ?
+ *
+ * the buffer that is send must be detached !!!!
+ * (it can be pooled for performance reasons / to avoid memory fragmentation)
+ */
+
+/*
+ * sends data immediately (blocks !!!)
+ *
+ * - when sending blocks process other connections
+ * -
+ */
+void
+Connection_send_blocking(Connection* c, const char* data, size_t length)
+{
+	if (length == 0)
+	{
+		XWARN("Attempting to send data with length 0");
+		return;
+	}
+
 	/* FIXME this is inefficient brute force sending using busy waiting - use the event loop instead */
 	size_t remaining = length;
 	size_t processed = 0;
@@ -82,13 +111,6 @@ Connection_send(Connection* c, const char* data, size_t length)
 //	ev_io_start(c->loop, &c->send_data_watcher);
 }
 
-/*
- * @see man 1 read
- * A value of zero indicates end-of-file
- * (except if the value of the size argument is also zero).
- * This is not considered an error. If you keep calling read while at end-of-file,
- * it will keep returning zero and doing nothing else.
- */
 void
 receive_data_callback(ev_loop* loop, ev_io* w, int revents)
 {

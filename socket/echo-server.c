@@ -31,7 +31,7 @@ echo_connection_handler(Connection* connection, ConnectionEvent event)
 	case CONNECTION_EVENT_DATA:
 	{
 		StringBuffer* buffer = (StringBuffer*)connection->data;
-		Connection_send(connection, buffer->string->value, buffer->string->length);
+		Connection_send_blocking(connection, buffer->string->value, buffer->string->length);
 		StringBuffer_clear(buffer);
 		break;
 	}
