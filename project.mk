@@ -20,7 +20,7 @@ MODULES := base \
 # TODO ignore parameter/functions/values/variables with a macro
 # #define UNUSED(x) (void)(x)
 
-CFLAGS += -Werror -Wall -pedantic -std=c99 -D_POSIX_C_SOURCE -D_C99_SOURCE\
+CFLAGS += -Werror -Wall -pedantic -std=c99 -D_POSIX_C_SOURCE=200809L -D_C99_SOURCE -D_CX_ASSERT \
 	-Wno-error=padded \
 	-Wno-error=cast-align \
 	-Wno-error=switch-enum
@@ -54,6 +54,7 @@ else ifeq ($(profile),debug)
 	endif
 endif
 
+
 ifeq ($(OS),Darwin)
 	CFLAGS += -D_DARWIN_C_SOURCE
 endif
@@ -78,10 +79,6 @@ endif
 # [ os / arch specific settings ]
 
 ifeq ($(OS),Linux)
-	ifeq ($(compiler),gcc)
-		CFLAGS += -D_GNU_SOURCE=1
-	endif
-	
 	ifeq ($(ARCH),armv6l)
 		# reduce maximum string size to 100Mb
 		CFLAGS += -DSTRING_MAX_LENGTH=104857600  
@@ -101,3 +98,13 @@ UNITY_FLAGS += \
 	-Wno-cast-align
 
 $(LIBCX_DIR)/base/unity.o: CFLAGS += $(UNITY_FLAGS)
+
+# filter out unsupported compiler flags
+
+# system: armv6l GNU/Linux
+# compiler: GCC (GCC) 4.8.2 20131219
+ifeq ($(OS),Linux)
+ifeq ($(compiler),gcc)
+	CFLAGS_UNSUPPORTED := -Wno-error=unused-const-variable
+endif
+endif
