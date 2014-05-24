@@ -5,9 +5,9 @@
 
 /* @return -1 on error, else number of parameters */
 int
-Params_from_json(Param** params, json_t* json);
+Params_from_json(RPC_Param** params, json_t* json);
 
 json_t*
-Value_to_json(Value* value);
+Value_to_json(RPC_Value* value);
 
 #endif

@@ -13,38 +13,40 @@ typedef enum
 {
 	FORMAT_NATIVE = 0,
 	FORMAT_JSON
-} ParamFormat;
+} RPC_Format;
 
 /* FIXME cx_errno reserved for RPC calls ?, what about jsonrpc status codes ? */
 typedef enum cx_rpc_error_t
 {
 	RPC_ERROR_OK = 0,                       /* no error */
-	RPC_ERROR_PARAM_NULL,                   /* a parameter that should not be null is null (precondition check in service method) */
-	RPC_ERROR_NO_PARAMS,                    /* no params are available (params are NULL) */
-	RPC_ERROR_PARAM_MISSING,                /* required parameter is missing */
-	RPC_ERROR_PARAM_INVALID_TYPE,           /* parameter has another type than specified by method signature */
-	RPC_ERROR_PARAM_UNSUPPORTED_FORMAT,     /* specified format unsupported (e.g no JSON deserializer) */
+	RPC_ERROR_FORMAT_INVALID,               /* request data has an invalid format */
+	RPC_ERROR_FORMAT_UNSUPPORTED,           /* specified format not implemented in method (e.g no JSON deserializer) */
 	RPC_ERROR_METHOD_MISSING,               /* service does not provide given method */
-	RPC_ERROR_PARAM_DESERIALIZE,            /* a complex type can not be deserialized */
-	RPC_ERROR_RESULT_VALUE_NULL             /* method has result but no result value given (internal error) */
+	RPC_ERROR_NO_PARAMS,                    /* method has params but no params are available (params are NULL) */
+	RPC_ERROR_PARAM_MISSING,                /* a required parameter is missing */
+	RPC_ERROR_PARAM_NULL,                   /* a required parameter has null value (precondition check in service method) */
+	RPC_ERROR_PARAM_INVALID_TYPE,           /* a required parameter has another type than specified by method signature */
+	RPC_ERROR_PARAM_INVALID_VALUE,          /* a required parameter has an invalid value */
+	RPC_ERROR_PARAM_DESERIALIZE,            /* deserizliation of a parameter with RPC_TYPE_OBJECT failed */
+	RPC_ERROR_RESULT_VALUE_NULL,            /* method has result but no result value given (internal error) */
 } RPC_Error;
 
 typedef enum
 {
-	TYPE_INTEGER,
-	TYPE_LONGLONG,
-	TYPE_DOUBLE,
-	TYPE_STRING,
-	TYPE_BOOLEAN,
-	TYPE_NULL,
-	TYPE_OBJECT,
-} ValueType;
+	RPC_TYPE_INTEGER,
+	RPC_TYPE_LONGLONG,
+	RPC_TYPE_DOUBLE,
+	RPC_TYPE_STRING,
+	RPC_TYPE_BOOLEAN,
+	RPC_TYPE_NULL,
+	RPC_TYPE_OBJECT,
+} RPC_Type;
 
 // FIXME prefix every type with RPC_ ?
 
-typedef struct cx_rpc_value_t Value;
-typedef struct cx_rpc_param_t Param;
-typedef struct cx_rpc_method_table_t MethodTable;
+typedef struct cx_rpc_value_t RPC_Value;
+typedef struct cx_rpc_param_t RPC_Param;
+typedef struct cx_rpc_method_table_t RPC_MethodTable;
 typedef struct cx_rpc_request_t RPC_Request;
 
 /*
@@ -56,12 +58,12 @@ typedef void F_ValueFree (void* object);
  * @param deserialize function only set/used when type is object
  */
 typedef json_t* F_ValueToJSON (void* object);
-typedef int RPC_MethodWrapper (Param* params, int num_params, Value* result, ParamFormat format);
+typedef int RPC_MethodWrapper (RPC_Param* params, int num_params, RPC_Value* result, RPC_Format format);
 
 
 struct cx_rpc_value_t
 {
-	ValueType type;
+	RPC_Type type;
 	union
 	{
 		int integer;
@@ -78,7 +80,7 @@ struct cx_rpc_value_t
 
 struct cx_rpc_param_t
 {
-	Value value;
+	RPC_Value value;
 	int position;
 	const char* name;
 };
@@ -90,30 +92,37 @@ struct cx_rpc_method_table_t
 	RPC_MethodWrapper* method_wrapper;
 };
 
+typedef enum
+{
+	RPC_ID_NUMBER,
+	RPC_ID_STRING,
+	RPC_ID_NONE,
+} RPC_ID_Type;
+
 struct cx_rpc_request_t
 {
-	ValueType id_type;
-	int error;
+	RPC_Error error;
+	RPC_ID_Type id_type;
 	union
 	{
-		long long longlong;
+		long long number;
 		char* string;
 	} id;
 
 	char* method_name;
 
-	Param* params;
+	RPC_Param* params;
 	int num_params;
-	ParamFormat format;
-	Value result;
+	RPC_Format format;
+	RPC_Value result;
 
 	void* data; /* hold deserialized JSON ? */
 
 	// TODO add f_free method
 };
 
-Value*
-Param_get(Param* params, int position, const char* name, int num_params);
+RPC_Value*
+Param_get(RPC_Param* params, int position, const char* name, int num_params);
 
 /*
  * @return
@@ -122,6 +131,6 @@ Param_get(Param* params, int position, const char* name, int num_params);
  *      1 on success if method has non-void return type
  */
 int
-Service_call(MethodTable* method_map, RPC_Request* request);
+Service_call(RPC_MethodTable* method_map, RPC_Request* request);
 
 #endif

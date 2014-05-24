@@ -86,10 +86,10 @@ has_count(const char* string, size_t count)
 /* service wrapper */
 
 static int
-call_has_count(Param* params, int num_params, Value* result, ParamFormat format)
+call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format format)
 {
 	/* typesafe parameter deserialization with error checking */
-	Value* p_string = Param_get(params, 0, "string", num_params);
+	RPC_Value* p_string = Param_get(params, 0, "string", num_params);
 
 	if (p_string == NULL)
 	{
@@ -97,13 +97,13 @@ call_has_count(Param* params, int num_params, Value* result, ParamFormat format)
 		return -1;
 	}
 
-	if (p_string->type != TYPE_STRING)
+	if (p_string->type != RPC_TYPE_STRING)
 	{
 		set_cx_errno(RPC_ERROR_PARAM_INVALID_TYPE);
 		return -1;
 	}
 
-	Value* p_count = Param_get(params, 1, "count", num_params);
+	RPC_Value* p_count = Param_get(params, 1, "count", num_params);
 
 	if (p_count == NULL)
 	{
@@ -111,7 +111,7 @@ call_has_count(Param* params, int num_params, Value* result, ParamFormat format)
 		return -1;
 	}
 
-	if (p_count->type != TYPE_INTEGER)
+	if (p_count->type != RPC_TYPE_INTEGER)
 	{
 		set_cx_errno(RPC_ERROR_PARAM_INVALID_TYPE);
 		return -1;
@@ -122,7 +122,7 @@ call_has_count(Param* params, int num_params, Value* result, ParamFormat format)
 	case FORMAT_NATIVE:
 		break;
 	default:
-		set_cx_errno(RPC_ERROR_PARAM_UNSUPPORTED_FORMAT);
+		set_cx_errno(RPC_ERROR_FORMAT_UNSUPPORTED);
 		return -1;
 	}
 
@@ -130,14 +130,14 @@ call_has_count(Param* params, int num_params, Value* result, ParamFormat format)
 	bool out = has_count(p_string->value.string, (size_t)p_count->value.integer);
 
 	/* prepare result */
-	result->type = TYPE_BOOLEAN;
+	result->type = RPC_TYPE_BOOLEAN;
 	result->value.boolean = out;
 
 	return 1;
 }
 
 static int
-call_get_person(Param* params, int num_params, Value* result, ParamFormat format)
+call_get_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format format)
 {
 	/* method has no params */
 	UNUSED(params);
@@ -145,7 +145,7 @@ call_get_person(Param* params, int num_params, Value* result, ParamFormat format
 
 	Person* person = get_person();
 
-	result->type = TYPE_OBJECT;
+	result->type = RPC_TYPE_OBJECT;
 	result->value.object = person;
 	result->f_to_json = (F_ValueToJSON*)&Person_to_json;
 	result->f_free = (F_ValueFree*)&Person_free;
@@ -155,7 +155,7 @@ call_get_person(Param* params, int num_params, Value* result, ParamFormat format
 	case FORMAT_NATIVE:
 		break;
 	default:
-		set_cx_errno(RPC_ERROR_PARAM_UNSUPPORTED_FORMAT);
+		set_cx_errno(RPC_ERROR_FORMAT_UNSUPPORTED);
 		return -1;
 	}
 
@@ -169,12 +169,12 @@ simple_free(void* object)
 }
 
 static int
-call_print_person(Param* params, int num_params, Value* result, ParamFormat format)
+call_print_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format format)
 {
 	UNUSED(result);
 
 	/* typesafe parameter deserialization with error checking */
-	Value* p_person = Param_get(params, 0, "person", num_params);
+	RPC_Value* p_person = Param_get(params, 0, "person", num_params);
 
 	if (p_person == NULL)
 	{
@@ -182,7 +182,7 @@ call_print_person(Param* params, int num_params, Value* result, ParamFormat form
 		return -1;
 	}
 
-	if (p_person->type != TYPE_OBJECT)
+	if (p_person->type != RPC_TYPE_OBJECT)
 	{
 		set_cx_errno(RPC_ERROR_PARAM_INVALID_TYPE);
 		return -1;
@@ -210,14 +210,14 @@ call_print_person(Param* params, int num_params, Value* result, ParamFormat form
 	}
 	}
 
-	result->type = TYPE_STRING;
+	result->type = RPC_TYPE_STRING;
 	result->value.string = person_s;
 	result->f_free = &simple_free;
 
 	return 0;
 }
 
-MethodTable EXAMPLE_SERVICE_METHODS[] =
+RPC_MethodTable EXAMPLE_SERVICE_METHODS[] =
 {
 	{ "has_count", call_has_count },
 	{ "get_person", call_get_person },

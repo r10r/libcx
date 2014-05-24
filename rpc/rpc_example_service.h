@@ -25,6 +25,6 @@ Person_to_json(Person* person);
 int
 Person_from_json(Person* person, json_t* json);
 
-extern MethodTable EXAMPLE_SERVICE_METHODS[];
+extern RPC_MethodTable EXAMPLE_SERVICE_METHODS[];
 
 #endif

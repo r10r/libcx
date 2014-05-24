@@ -32,12 +32,12 @@ test_call_error_param_missing()
 static void
 test_call_error_param_missing2()
 {
-	Param params[1];
+	RPC_Param params[1];
 
 	memset(params, 0, sizeof(params));
 
 	params[0].name = "string";
-	params[0].value.type = TYPE_STRING;
+	params[0].value.type = RPC_TYPE_STRING;
 	params[0].value.value.string = "foobar";
 
 	RPC_Request request = {
@@ -55,12 +55,12 @@ test_call_error_param_missing2()
 static void
 test_call_error_param_type()
 {
-	Param params[1];
+	RPC_Param params[1];
 
 	memset(params, 0, sizeof(params));
 
 	params[0].name = "string";
-	params[0].value.type = TYPE_INTEGER;
+	params[0].value.type = RPC_TYPE_INTEGER;
 	params[0].value.value.integer = 66;
 
 	RPC_Request request = {
@@ -78,16 +78,16 @@ test_call_error_param_type()
 static void
 test_call_has_count_true()
 {
-	Param params[2];
+	RPC_Param params[2];
 
 	memset(params, 0, sizeof(params));
 
 	params[0].name = "string";
-	params[0].value.type = TYPE_STRING;
+	params[0].value.type = RPC_TYPE_STRING;
 	params[0].value.value.string = "foobar";
 
 	params[1].name = "count";
-	params[1].value.type = TYPE_INTEGER;
+	params[1].value.type = RPC_TYPE_INTEGER;
 	params[1].value.value.integer = 6;
 
 	RPC_Request request = {
@@ -100,7 +100,7 @@ test_call_has_count_true()
 
 	TEST_ASSERT_EQUAL_INT(1, status);
 	TEST_ASSERT_EQUAL_INT(0, request.error);
-	TEST_ASSERT_EQUAL(TYPE_BOOLEAN, request.result.type);
+	TEST_ASSERT_EQUAL(RPC_TYPE_BOOLEAN, request.result.type);
 	TEST_ASSERT_TRUE(request.result.value.boolean);
 
 	if (request.result.f_free)
@@ -110,16 +110,16 @@ test_call_has_count_true()
 static void
 test_call_has_count_false()
 {
-	Param params[2];
+	RPC_Param params[2];
 
 	memset(params, 0, sizeof(params));
 
 	params[0].name = "string";
-	params[0].value.type = TYPE_STRING;
+	params[0].value.type = RPC_TYPE_STRING;
 	params[0].value.value.string = "foobar";
 
 	params[1].name = "count";
-	params[1].value.type = TYPE_INTEGER;
+	params[1].value.type = RPC_TYPE_INTEGER;
 	params[1].value.value.integer = 1;
 
 	RPC_Request request = {
@@ -132,7 +132,7 @@ test_call_has_count_false()
 
 	TEST_ASSERT_EQUAL_INT(1, status);
 	TEST_ASSERT_EQUAL_INT(0, request.error);
-	TEST_ASSERT_EQUAL(TYPE_BOOLEAN, request.result.type);
+	TEST_ASSERT_EQUAL(RPC_TYPE_BOOLEAN, request.result.type);
 	TEST_ASSERT_FALSE(request.result.value.boolean);
 
 	if (request.result.f_free)
@@ -142,16 +142,16 @@ test_call_has_count_false()
 static void
 test_call_has_count_error()
 {
-	Param params[2];
+	RPC_Param params[2];
 
 	memset(params, 0, sizeof(params));
 
 	params[0].name = "string";
-	params[0].value.type = TYPE_STRING;
+	params[0].value.type = RPC_TYPE_STRING;
 	params[0].value.value.string = NULL;
 
 	params[1].name = "count";
-	params[1].value.type = TYPE_INTEGER;
+	params[1].value.type = RPC_TYPE_INTEGER;
 	params[1].value.value.integer = 1;
 
 	RPC_Request request = {
@@ -172,7 +172,7 @@ test_call_has_count_error()
 static void
 test_call_print_person()
 {
-	Param params[1];
+	RPC_Param params[1];
 
 	memset(params, 0, sizeof(params));
 
@@ -184,7 +184,7 @@ test_call_print_person()
 
 	params[0].name = "person";
 	params[0].position = 0;
-	params[0].value.type = TYPE_OBJECT;
+	params[0].value.type = RPC_TYPE_OBJECT;
 	params[0].value.value.object = &person;
 
 	RPC_Request request = {
@@ -197,7 +197,7 @@ test_call_print_person()
 
 	TEST_ASSERT_EQUAL_INT(0, status);
 	TEST_ASSERT_EQUAL_INT(0, request.error);
-	TEST_ASSERT_EQUAL(TYPE_STRING, request.result.type);
+	TEST_ASSERT_EQUAL(RPC_TYPE_STRING, request.result.type);
 	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", request.result.value.string);
 
 	if (request.result.f_free)
@@ -214,7 +214,7 @@ test_call_get_person()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(1, status);
-	TEST_ASSERT_EQUAL(TYPE_OBJECT, request.result.type);
+	TEST_ASSERT_EQUAL(RPC_TYPE_OBJECT, request.result.type);
 
 	if (request.result.f_free)
 		request.result.f_free(request.result.value.object);

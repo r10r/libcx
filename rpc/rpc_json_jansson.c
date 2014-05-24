@@ -2,26 +2,26 @@
 #include <jansson.h>
 
 static void
-deserialize_param_int(Param* param, json_t* value)
+deserialize_param_int(RPC_Param* param, json_t* value)
 {
 	long long long_val = json_integer_value(value);
 
 	if (long_val <= INT_MAX && long_val >= INT_MIN)
 	{
 //		XFDBG("[%d](%s): (int)%d", index, key, (int)long_val);
-		param->value.type = TYPE_INTEGER;
+		param->value.type = RPC_TYPE_INTEGER;
 		param->value.value.integer = (int)long_val;
 	}
 	else
 	{
 //		XFDBG("[%d](%s): (long long)%lld", index, key, long_val);
-		param->value.type = TYPE_LONGLONG;
+		param->value.type = RPC_TYPE_LONGLONG;
 		param->value.value.longlong = long_val;
 	}
 }
 
 static void
-deserialize_param(Param* param, int position, const char* key, json_t* value)
+deserialize_param(RPC_Param* param, int position, const char* key, json_t* value)
 {
 	param->position = position;
 	param->name = key;
@@ -33,13 +33,13 @@ deserialize_param(Param* param, int position, const char* key, json_t* value)
 }
 
 static int
-params_from_object(Param** params, json_t* json)
+params_from_object(RPC_Param** params, json_t* json)
 {
 	size_t num_params = json_object_size(json);
 
-	*params = cx_alloc(num_params * sizeof(Param));
+	*params = cx_alloc(num_params * sizeof(RPC_Param));
 	void* iter = json_object_iter(json);
-	Param* param = params[0];
+	RPC_Param* param = params[0];
 	size_t index = 0;
 	while (iter != NULL)
 	{
@@ -56,13 +56,13 @@ params_from_object(Param** params, json_t* json)
 }
 
 static int
-params_from_array(Param** params, json_t* json)
+params_from_array(RPC_Param** params, json_t* json)
 {
 	size_t num_params = json_array_size(json);
 
-	*params = cx_alloc(num_params * sizeof(Param));
+	*params = cx_alloc(num_params * sizeof(RPC_Param));
 
-	Param* param = params[0];
+	RPC_Param* param = params[0];
 	json_t* value = NULL;
 	size_t index;
 	json_array_foreach(json, index, value)
@@ -75,7 +75,7 @@ params_from_array(Param** params, json_t* json)
 }
 
 int
-Params_from_json(Param** params, json_t* json)
+Params_from_json(RPC_Param** params, json_t* json)
 {
 	if (json_is_object(json))
 	{
@@ -87,29 +87,30 @@ Params_from_json(Param** params, json_t* json)
 	}
 	else
 	{
-		set_cx_errno(RPC_ERROR_PARAM_UNSUPPORTED_FORMAT);
+		XERR("parameter 'params': invalid format (expected array or object)");
+		set_cx_errno(RPC_ERROR_PARAM_INVALID_TYPE);
 		return -1;
 	}
 }
 
 json_t*
-Value_to_json(Value* value)
+Value_to_json(RPC_Value* value)
 {
 	switch (value->type)
 	{
-	case TYPE_INTEGER:
+	case RPC_TYPE_INTEGER:
 		return json_integer(value->value.integer);
-	case TYPE_LONGLONG:
+	case RPC_TYPE_LONGLONG:
 		return json_integer(value->value.longlong);
-	case TYPE_DOUBLE:
+	case RPC_TYPE_DOUBLE:
 		return json_real(value->value.floatingpoint);
-	case TYPE_STRING:
+	case RPC_TYPE_STRING:
 		return json_string(value->value.string);
-	case TYPE_BOOLEAN:
+	case RPC_TYPE_BOOLEAN:
 		return json_boolean(value->value.boolean);
-	case TYPE_NULL:
+	case RPC_TYPE_NULL:
 		return json_null();
-	case TYPE_OBJECT:
+	case RPC_TYPE_OBJECT:
 		if (value->f_to_json)
 			return value->f_to_json(value->value.object);
 		else

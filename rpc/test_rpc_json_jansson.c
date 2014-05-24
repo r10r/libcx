@@ -39,18 +39,18 @@ test_json_integer_to_params()
 {
 	json_t* json = json_pack("{s:i,s:I}", "int_val", INT_MAX, "long_val", INT_MAX + 1);
 
-	Param* params = NULL;
+	RPC_Param* params = NULL;
 
 	Params_from_json(&params, json);
 
 	TEST_ASSERT_EQUAL_STRING("int_val", params[0].name);
 	TEST_ASSERT_EQUAL_INT(-1, params[0].position);
-	TEST_ASSERT_EQUAL(TYPE_INTEGER, params[0].value.type);
+	TEST_ASSERT_EQUAL(RPC_TYPE_INTEGER, params[0].value.type);
 	TEST_ASSERT_EQUAL_INT(INT_MAX, params[0].value.value.integer);
 
 	TEST_ASSERT_EQUAL_STRING("long_val", params[1].name);
 	TEST_ASSERT_EQUAL_INT(-1, params[1].position);
-	TEST_ASSERT_EQUAL(TYPE_LONGLONG, params[1].value.type);
+	TEST_ASSERT_EQUAL(RPC_TYPE_LONGLONG, params[1].value.type);
 	TEST_ASSERT_EQUAL_INT((long long)INT_MAX + 1, params[1].value.value.longlong);
 
 	cx_free(params);
@@ -62,23 +62,23 @@ test_json_array_to_params()
 {
 	json_t* json = json_pack("[i,i,i]", 11, 22, 33);
 
-	Param* params = NULL;
+	RPC_Param* params = NULL;
 
 	Params_from_json(&params, json);
 
 	TEST_ASSERT_EQUAL_STRING(NULL, params[0].name);
 	TEST_ASSERT_EQUAL_INT(0, params[0].position);
-	TEST_ASSERT_EQUAL(TYPE_INTEGER, params[0].value.type);
+	TEST_ASSERT_EQUAL(RPC_TYPE_INTEGER, params[0].value.type);
 	TEST_ASSERT_EQUAL_INT(11, params[0].value.value.integer);
 
 	TEST_ASSERT_EQUAL_STRING(NULL, params[1].name);
 	TEST_ASSERT_EQUAL_INT(1, params[1].position);
-	TEST_ASSERT_EQUAL(TYPE_INTEGER, params[1].value.type);
+	TEST_ASSERT_EQUAL(RPC_TYPE_INTEGER, params[1].value.type);
 	TEST_ASSERT_EQUAL_INT(22, params[1].value.value.integer);
 
 	TEST_ASSERT_EQUAL_STRING(NULL, params[2].name);
 	TEST_ASSERT_EQUAL_INT(2, params[2].position);
-	TEST_ASSERT_EQUAL(TYPE_INTEGER, params[2].value.type);
+	TEST_ASSERT_EQUAL(RPC_TYPE_INTEGER, params[2].value.type);
 	TEST_ASSERT_EQUAL_INT(33, params[2].value.value.integer);
 
 	cx_free(params);
@@ -88,7 +88,7 @@ test_json_array_to_params()
 static void
 test_call_print_person_json()
 {
-	Param params[1];
+	RPC_Param params[1];
 
 	memset(params, 0, sizeof(params));
 
@@ -102,7 +102,7 @@ test_call_print_person_json()
 
 	params[0].name = "person";
 	params[0].position = 0;
-	params[0].value.type = TYPE_OBJECT;
+	params[0].value.type = RPC_TYPE_OBJECT;
 	params[0].value.value.object = json;
 	params[0].value.f_free = (F_ValueFree*)&json_decref;
 
@@ -117,7 +117,7 @@ test_call_print_person_json()
 
 	TEST_ASSERT_EQUAL_INT(0, status);
 	TEST_ASSERT_EQUAL_INT(0, request.error);
-	TEST_ASSERT_EQUAL(TYPE_STRING, request.result.type);
+	TEST_ASSERT_EQUAL(RPC_TYPE_STRING, request.result.type);
 	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", request.result.value.string);
 
 	if (request.result.f_free)
@@ -134,7 +134,7 @@ test_call_get_person_json()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(1, status);
-	TEST_ASSERT_EQUAL(TYPE_OBJECT, request.result.type);
+	TEST_ASSERT_EQUAL(RPC_TYPE_OBJECT, request.result.type);
 
 	Person* person = (Person*)request.result.value.object;
 	json_t* person_json = Value_to_json(&request.result);
