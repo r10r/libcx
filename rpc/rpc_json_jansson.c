@@ -87,7 +87,7 @@ Params_from_json(Param** params, json_t* json)
 	}
 	else
 	{
-		set_cx_errno(ERROR_PARAM_UNSUPPORTED_FORMAT);
+		set_cx_errno(RPC_ERROR_PARAM_UNSUPPORTED_FORMAT);
 		return -1;
 	}
 }
@@ -113,7 +113,7 @@ Value_to_json(Value* value)
 		if (value->f_to_json)
 			return value->f_to_json(value->value.object);
 		else
-			set_cx_errno(ERROR_METHOD_MISSING);
+			set_cx_errno(RPC_ERROR_METHOD_MISSING);
 	}
 	return NULL;
 }

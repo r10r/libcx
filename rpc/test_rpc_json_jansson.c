@@ -116,7 +116,7 @@ test_call_print_person_json()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(0, status);
-	TEST_ASSERT_EQUAL_INT(0, cx_errno);
+	TEST_ASSERT_EQUAL_INT(0, request.error);
 	TEST_ASSERT_EQUAL(TYPE_STRING, request.result.type);
 	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", request.result.value.string);
 

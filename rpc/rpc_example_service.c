@@ -36,7 +36,7 @@ Person_from_json(Person* person, json_t* json)
 	if (status == -1)
 	{
 		XFERR("JSON deserialize error: %s", json_error.text);
-		set_cx_errno(ERROR_PARAM_DESERIALIZE);
+		set_cx_errno(RPC_ERROR_PARAM_DESERIALIZE);
 	}
 
 	return status;
@@ -77,7 +77,7 @@ has_count(const char* string, size_t count)
 	}
 	else
 	{
-		set_cx_errno(ERROR_PARAM_NULL);
+		set_cx_errno(RPC_ERROR_PARAM_NULL);
 	}
 
 	return result;
@@ -93,13 +93,13 @@ call_has_count(Param* params, int num_params, Value* result, ParamFormat format)
 
 	if (p_string == NULL)
 	{
-		set_cx_errno(ERROR_PARAM_MISSING);
+		set_cx_errno(RPC_ERROR_PARAM_MISSING);
 		return -1;
 	}
 
 	if (p_string->type != TYPE_STRING)
 	{
-		set_cx_errno(ERROR_PARAM_INVALID_TYPE);
+		set_cx_errno(RPC_ERROR_PARAM_INVALID_TYPE);
 		return -1;
 	}
 
@@ -107,13 +107,13 @@ call_has_count(Param* params, int num_params, Value* result, ParamFormat format)
 
 	if (p_count == NULL)
 	{
-		set_cx_errno(ERROR_PARAM_MISSING);
+		set_cx_errno(RPC_ERROR_PARAM_MISSING);
 		return -1;
 	}
 
 	if (p_count->type != TYPE_INTEGER)
 	{
-		set_cx_errno(ERROR_PARAM_INVALID_TYPE);
+		set_cx_errno(RPC_ERROR_PARAM_INVALID_TYPE);
 		return -1;
 	}
 
@@ -122,7 +122,7 @@ call_has_count(Param* params, int num_params, Value* result, ParamFormat format)
 	case FORMAT_NATIVE:
 		break;
 	default:
-		set_cx_errno(ERROR_PARAM_UNSUPPORTED_FORMAT);
+		set_cx_errno(RPC_ERROR_PARAM_UNSUPPORTED_FORMAT);
 		return -1;
 	}
 
@@ -155,7 +155,7 @@ call_get_person(Param* params, int num_params, Value* result, ParamFormat format
 	case FORMAT_NATIVE:
 		break;
 	default:
-		set_cx_errno(ERROR_PARAM_UNSUPPORTED_FORMAT);
+		set_cx_errno(RPC_ERROR_PARAM_UNSUPPORTED_FORMAT);
 		return -1;
 	}
 
@@ -178,13 +178,13 @@ call_print_person(Param* params, int num_params, Value* result, ParamFormat form
 
 	if (p_person == NULL)
 	{
-		set_cx_errno(ERROR_PARAM_MISSING);
+		set_cx_errno(RPC_ERROR_PARAM_MISSING);
 		return -1;
 	}
 
 	if (p_person->type != TYPE_OBJECT)
 	{
-		set_cx_errno(ERROR_PARAM_INVALID_TYPE);
+		set_cx_errno(RPC_ERROR_PARAM_INVALID_TYPE);
 		return -1;
 	}
 

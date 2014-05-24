@@ -5,7 +5,7 @@ Param_get(Param* params, int position, const char* name, int num_params)
 {
 	if (!params)
 	{
-		set_cx_errno(ERROR_NO_PARAMS);
+		set_cx_errno(RPC_ERROR_NO_PARAMS);
 	}
 	else
 	{
@@ -22,11 +22,6 @@ Param_get(Param* params, int position, const char* name, int num_params)
 	return NULL;
 }
 
-/* @return
- *      -1 on error see cx_errno
- *      0 method has void return,
- *      1 if return values is valid
- */
 int
 Service_call(MethodTable* service_methods, RPC_Request* request)
 {
@@ -50,7 +45,7 @@ Service_call(MethodTable* service_methods, RPC_Request* request)
 	}
 
 	if (method_missing)
-		set_cx_errno(ERROR_METHOD_MISSING);
+		set_cx_errno(RPC_ERROR_METHOD_MISSING);
 
 	/* free allocated param values */
 	int i;
@@ -67,6 +62,7 @@ Service_call(MethodTable* service_methods, RPC_Request* request)
 		return status;
 	else
 	{
+		request->error = cx_errno;
 		XFERR("ERROR while calling method '%s' (cx_errno %d)", request->method_name, cx_errno);
 		return -1;
 	}

@@ -13,7 +13,7 @@ test_call_error_method_missing()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(ERROR_METHOD_MISSING, cx_errno);
+	TEST_ASSERT_EQUAL_INT(RPC_ERROR_METHOD_MISSING, request.error);
 }
 
 static void
@@ -26,7 +26,7 @@ test_call_error_param_missing()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(ERROR_PARAM_MISSING, cx_errno);
+	TEST_ASSERT_EQUAL_INT(RPC_ERROR_PARAM_MISSING, request.error);
 }
 
 static void
@@ -49,7 +49,7 @@ test_call_error_param_missing2()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(ERROR_PARAM_MISSING, cx_errno);
+	TEST_ASSERT_EQUAL_INT(RPC_ERROR_PARAM_MISSING, request.error);
 }
 
 static void
@@ -72,7 +72,7 @@ test_call_error_param_type()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(ERROR_PARAM_INVALID_TYPE, cx_errno);
+	TEST_ASSERT_EQUAL_INT(RPC_ERROR_PARAM_INVALID_TYPE, request.error);
 }
 
 static void
@@ -99,7 +99,7 @@ test_call_has_count_true()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(1, status);
-	TEST_ASSERT_EQUAL_INT(0, cx_errno);
+	TEST_ASSERT_EQUAL_INT(0, request.error);
 	TEST_ASSERT_EQUAL(TYPE_BOOLEAN, request.result.type);
 	TEST_ASSERT_TRUE(request.result.value.boolean);
 
@@ -131,7 +131,7 @@ test_call_has_count_false()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(1, status);
-	TEST_ASSERT_EQUAL_INT(0, cx_errno);
+	TEST_ASSERT_EQUAL_INT(0, request.error);
 	TEST_ASSERT_EQUAL(TYPE_BOOLEAN, request.result.type);
 	TEST_ASSERT_FALSE(request.result.value.boolean);
 
@@ -163,7 +163,7 @@ test_call_has_count_error()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(ERROR_PARAM_NULL, cx_errno);
+	TEST_ASSERT_EQUAL_INT(RPC_ERROR_PARAM_NULL, request.error);
 
 	if (request.result.f_free)
 		request.result.f_free(request.result.value.object);
@@ -196,7 +196,7 @@ test_call_print_person()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(0, status);
-	TEST_ASSERT_EQUAL_INT(0, cx_errno);
+	TEST_ASSERT_EQUAL_INT(0, request.error);
 	TEST_ASSERT_EQUAL(TYPE_STRING, request.result.type);
 	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", request.result.value.string);
 
