@@ -11,7 +11,7 @@ typedef struct json_t json_t;
 
 typedef enum
 {
-	FORMAT_NATIVE,
+	FORMAT_NATIVE = 0,
 	FORMAT_JSON
 } ParamFormat;
 
@@ -39,10 +39,12 @@ typedef enum
 	TYPE_OBJECT,
 } ValueType;
 
+// FIXME prefix every type with RPC_ ?
 
 typedef struct cx_rpc_value_t Value;
 typedef struct cx_rpc_param_t Param;
 typedef struct cx_rpc_method_table_t MethodTable;
+typedef struct cx_rpc_request_t RPC_Request;
 
 /*
  * @param object the param object of the union value
@@ -86,13 +88,32 @@ struct cx_rpc_method_table_t
 	/* extracts/validates parameters, calls method, creates result value */
 	RPC_MethodWrapper* method_wrapper;
 };
+
+struct cx_rpc_request_t
+{
+	ValueType id_type;
+	union
+	{
+		long long longlong;
+		char* string;
+	} id;
+
+	char* method_name;
+
+	Param* params;
+	int num_params;
+	ParamFormat format;
+	Value result;
+
+	void* data; /* hold deserialized JSON ? */
+
+	// TODO add f_free method
 };
 
 Value*
 Param_get(Param* params, int position, const char* name, int num_params);
 
-/* TODO move parameters into Request struct */
 int
-Service_call(MethodTable* method_map, const char* method_name, Param* params, int num_params, Value* result, ParamFormat format);
+Service_call(MethodTable* method_map, RPC_Request* request);
 
 #endif

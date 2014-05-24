@@ -106,34 +106,38 @@ test_call_print_person_json()
 	params[0].value.value.object = json;
 	params[0].value.f_free = (F_ValueFree*)&json_decref;
 
-	Value result;
-	memset(&result, 0, sizeof(Value));
+	RPC_Request request = {
+		.method_name = "print_person",
+		.params = params,
+		.num_params = 1,
+		.format = FORMAT_JSON
+	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, "print_person", params, 1, &result, FORMAT_JSON);
+	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(0, status);
 	TEST_ASSERT_EQUAL_INT(0, cx_errno);
-	TEST_ASSERT_EQUAL(TYPE_STRING, result.type);
-	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", result.value.string);
+	TEST_ASSERT_EQUAL(TYPE_STRING, request.result.type);
+	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", request.result.value.string);
 
-	if (result.f_free)
-		result.f_free(result.value.object);
+	if (request.result.f_free)
+		request.result.f_free(request.result.value.object);
 }
 
 static void
 test_call_get_person_json()
 {
-	Value result;
+	RPC_Request request = {
+		.method_name = "get_person"
+	};
 
-	memset(&result, 0, sizeof(result));
-
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, "get_person", NULL, 0, &result, FORMAT_NATIVE);
+	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(1, status);
-	TEST_ASSERT_EQUAL(TYPE_OBJECT, result.type);
+	TEST_ASSERT_EQUAL(TYPE_OBJECT, request.result.type);
 
-	Person* person = (Person*)result.value.object;
-	json_t* person_json = Value_to_json(&result);
+	Person* person = (Person*)request.result.value.object;
+	json_t* person_json = Value_to_json(&request.result);
 
 	TEST_ASSERT_EQUAL(3, json_object_size(person_json));
 	TEST_ASSERT_EQUAL_STRING(person->firstname, json_string_value(json_object_get(person_json, "firstname")));
@@ -141,8 +145,8 @@ test_call_get_person_json()
 	TEST_ASSERT_EQUAL_INT(person->age, json_integer_value(json_object_get(person_json, "age")));
 
 	json_decref(person_json);
-	if (result.f_free)
-		result.f_free(result.value.object);
+	if (request.result.f_free)
+		request.result.f_free(request.result.value.object);
 }
 
 int

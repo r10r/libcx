@@ -6,7 +6,11 @@
 static void
 test_call_error_method_missing()
 {
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, "unknown_method", NULL, 0, NULL, FORMAT_NATIVE);
+	RPC_Request request = {
+		.method_name = "unknown_method"
+	};
+
+	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
 	TEST_ASSERT_EQUAL_INT(ERROR_METHOD_MISSING, cx_errno);
@@ -15,7 +19,11 @@ test_call_error_method_missing()
 static void
 test_call_error_param_missing()
 {
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, "has_count", NULL, 0, NULL, FORMAT_NATIVE);
+	RPC_Request request = {
+		.method_name = "has_count"
+	};
+
+	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
 	TEST_ASSERT_EQUAL_INT(ERROR_PARAM_MISSING, cx_errno);
@@ -32,7 +40,13 @@ test_call_error_param_missing2()
 	params[0].value.type = TYPE_STRING;
 	params[0].value.value.string = "foobar";
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, "has_count", params, 1, NULL, FORMAT_NATIVE);
+	RPC_Request request = {
+		.method_name = "has_count",
+		.params = params,
+		.num_params = 1
+	};
+
+	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
 	TEST_ASSERT_EQUAL_INT(ERROR_PARAM_MISSING, cx_errno);
@@ -49,7 +63,13 @@ test_call_error_param_type()
 	params[0].value.type = TYPE_INTEGER;
 	params[0].value.value.integer = 66;
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, "has_count", params, 1, NULL, FORMAT_NATIVE);
+	RPC_Request request = {
+		.method_name = "has_count",
+		.params = params,
+		.num_params = 1
+	};
+
+	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
 	TEST_ASSERT_EQUAL_INT(ERROR_PARAM_INVALID_TYPE, cx_errno);
@@ -70,18 +90,21 @@ test_call_has_count_true()
 	params[1].value.type = TYPE_INTEGER;
 	params[1].value.value.integer = 6;
 
-	Value result;
-	memset(&result, 0, sizeof(result));
+	RPC_Request request = {
+		.method_name = "has_count",
+		.params = params,
+		.num_params = 2
+	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, "has_count", params, 2, &result, FORMAT_NATIVE);
+	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(1, status);
 	TEST_ASSERT_EQUAL_INT(0, cx_errno);
-	TEST_ASSERT_EQUAL(TYPE_BOOLEAN, result.type);
-	TEST_ASSERT_TRUE(result.value.boolean);
+	TEST_ASSERT_EQUAL(TYPE_BOOLEAN, request.result.type);
+	TEST_ASSERT_TRUE(request.result.value.boolean);
 
-	if (result.f_free)
-		result.f_free(result.value.object);
+	if (request.result.f_free)
+		request.result.f_free(request.result.value.object);
 }
 
 static void
@@ -99,18 +122,21 @@ test_call_has_count_false()
 	params[1].value.type = TYPE_INTEGER;
 	params[1].value.value.integer = 1;
 
-	Value result;
-	memset(&result, 0, sizeof(result));
+	RPC_Request request = {
+		.method_name = "has_count",
+		.params = params,
+		.num_params = 2
+	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, "has_count", params, 2, &result, FORMAT_NATIVE);
+	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(1, status);
 	TEST_ASSERT_EQUAL_INT(0, cx_errno);
-	TEST_ASSERT_EQUAL(TYPE_BOOLEAN, result.type);
-	TEST_ASSERT_FALSE(result.value.boolean);
+	TEST_ASSERT_EQUAL(TYPE_BOOLEAN, request.result.type);
+	TEST_ASSERT_FALSE(request.result.value.boolean);
 
-	if (result.f_free)
-		result.f_free(result.value.object);
+	if (request.result.f_free)
+		request.result.f_free(request.result.value.object);
 }
 
 static void
@@ -128,16 +154,19 @@ test_call_has_count_error()
 	params[1].value.type = TYPE_INTEGER;
 	params[1].value.value.integer = 1;
 
-	Value result;
-	memset(&result, 0, sizeof(result));
+	RPC_Request request = {
+		.method_name = "has_count",
+		.params = params,
+		.num_params = 2
+	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, "has_count", params, 2, &result, FORMAT_NATIVE);
+	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
 	TEST_ASSERT_EQUAL_INT(ERROR_PARAM_NULL, cx_errno);
 
-	if (result.f_free)
-		result.f_free(result.value.object);
+	if (request.result.f_free)
+		request.result.f_free(request.result.value.object);
 }
 
 static void
@@ -158,33 +187,37 @@ test_call_print_person()
 	params[0].value.type = TYPE_OBJECT;
 	params[0].value.value.object = &person;
 
-	Value result;
-	memset(&result, 0, sizeof(Value));
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, "print_person", params, 1, &result, FORMAT_NATIVE);
+	RPC_Request request = {
+		.method_name = "print_person",
+		.params = params,
+		.num_params = 1
+	};
+
+	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(0, status);
 	TEST_ASSERT_EQUAL_INT(0, cx_errno);
-	TEST_ASSERT_EQUAL(TYPE_STRING, result.type);
-	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", result.value.string);
+	TEST_ASSERT_EQUAL(TYPE_STRING, request.result.type);
+	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", request.result.value.string);
 
-	if (result.f_free)
-		result.f_free(result.value.object);
+	if (request.result.f_free)
+		request.result.f_free(request.result.value.object);
 }
 
 static void
 test_call_get_person()
 {
-	Value result;
+	RPC_Request request = {
+		.method_name = "get_person"
+	};
 
-	memset(&result, 0, sizeof(result));
-
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, "get_person", NULL, 0, &result, FORMAT_NATIVE);
+	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(1, status);
-	TEST_ASSERT_EQUAL(TYPE_OBJECT, result.type);
+	TEST_ASSERT_EQUAL(TYPE_OBJECT, request.result.type);
 
-	if (result.f_free)
-		result.f_free(result.value.object);
+	if (request.result.f_free)
+		request.result.f_free(request.result.value.object);
 }
 
 int

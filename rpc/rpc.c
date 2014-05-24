@@ -28,7 +28,7 @@ Param_get(Param* params, int position, const char* name, int num_params)
  *      1 if return values is valid
  */
 int
-Service_call(MethodTable* service_methods, const char* method_name, Param* params, int num_params, Value* result, ParamFormat format)
+Service_call(MethodTable* service_methods, RPC_Request* request)
 {
 	set_cx_errno(0); /* clear previous errors */
 	int status = 1;
@@ -38,11 +38,11 @@ Service_call(MethodTable* service_methods, const char* method_name, Param* param
 
 	while (wrapped_method->method_name)
 	{
-		if (strcmp(wrapped_method->method_name, method_name) == 0)
+		if (strcmp(wrapped_method->method_name, request->method_name) == 0)
 		{
 			XFDBG("Calling method[%s] (wrapper:%p, params:%d, format:%d)",
-			      method_name, (void*)wrapped_method->method_wrapper, num_params, format);
-			status = wrapped_method->method_wrapper(params, num_params, result, format);
+			      request->method_name, (void*)wrapped_method->method_wrapper, request->num_params, request->format);
+			status = wrapped_method->method_wrapper(request->params, request->num_params, &request->result, request->format);
 			method_missing = false;
 			break;
 		}
@@ -54,8 +54,8 @@ Service_call(MethodTable* service_methods, const char* method_name, Param* param
 
 	/* free allocated param values */
 	int i;
-	Param* param = params;
-	for (i = 0; i < num_params; i++)
+	Param* param = request->params;
+	for (i = 0; i < request->num_params; i++)
 	{
 		if (param->value.f_free)
 			param->value.f_free(param->value.value.object);
@@ -67,7 +67,7 @@ Service_call(MethodTable* service_methods, const char* method_name, Param* param
 		return status;
 	else
 	{
-		XFERR("ERROR while calling method '%s' (cx_errno %d)", method_name, cx_errno);
+		XFERR("ERROR while calling method '%s' (cx_errno %d)", request->method_name, cx_errno);
 		return -1;
 	}
 }
