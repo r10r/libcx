@@ -148,7 +148,7 @@ call_get_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format
 	result->type = RPC_TYPE_OBJECT;
 	result->value.object = person;
 	result->f_to_json = (F_ValueToJSON*)&Person_to_json;
-	result->f_free = (F_ValueFree*)&Person_free;
+	result->f_free = (F_RPC_ValueFree*)&Person_free;
 
 	switch (format)
 	{

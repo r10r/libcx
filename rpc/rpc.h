@@ -19,7 +19,8 @@ typedef enum
 typedef enum cx_rpc_error_t
 {
 	RPC_ERROR_OK = 0,                       /* no error */
-	RPC_ERROR_FORMAT_INVALID,               /* request data has an invalid format */
+	RPC_ERROR_REQUEST_PARSE,                /* failed to parse request format */
+	RPC_ERROR_REQUEST_INVALID,              /* failed to unpack request */
 	RPC_ERROR_FORMAT_UNSUPPORTED,           /* specified format not implemented in method (e.g no JSON deserializer) */
 	RPC_ERROR_METHOD_MISSING,               /* service does not provide given method */
 	RPC_ERROR_NO_PARAMS,                    /* method has params but no params are available (params are NULL) */
@@ -39,7 +40,7 @@ typedef enum
 	RPC_TYPE_STRING,
 	RPC_TYPE_BOOLEAN,
 	RPC_TYPE_NULL,
-	RPC_TYPE_OBJECT,
+	RPC_TYPE_OBJECT,        // FIXME rename to RPC_TYPE_COMPLEX ?
 } RPC_Type;
 
 // FIXME prefix every type with RPC_ ?
@@ -52,7 +53,8 @@ typedef struct cx_rpc_request_t RPC_Request;
 /*
  * @param object the param object of the union value
  */
-typedef void F_ValueFree (void* object);
+typedef void F_RPC_ValueFree (void* object);
+typedef void F_RPC_RequestFree (RPC_Request* request);
 
 /*
  * @param deserialize function only set/used when type is object
@@ -74,7 +76,7 @@ struct cx_rpc_value_t
 		void* object;
 	} value;
 
-	F_ValueFree* f_free;
+	F_RPC_ValueFree* f_free;
 	F_ValueToJSON* f_to_json;
 };
 
@@ -94,9 +96,9 @@ struct cx_rpc_method_table_t
 
 typedef enum
 {
+	RPC_ID_NONE = 0,
 	RPC_ID_NUMBER,
 	RPC_ID_STRING,
-	RPC_ID_NONE,
 } RPC_ID_Type;
 
 struct cx_rpc_request_t
@@ -116,7 +118,8 @@ struct cx_rpc_request_t
 	RPC_Format format;
 	RPC_Value result;
 
-	void* data; /* hold deserialized JSON ? */
+	void* data; /* contains deserialized JSON */
+	F_RPC_RequestFree* f_free;
 
 	// TODO add f_free method
 };
