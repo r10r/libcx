@@ -142,6 +142,7 @@ call_get_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format
 	/* method has no params */
 	UNUSED(params);
 	UNUSED(num_params);
+	UNUSED(format);
 
 	Person* person = get_person();
 
@@ -149,15 +150,6 @@ call_get_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format
 	result->value.object = person;
 	result->f_to_json = (F_ValueToJSON*)&Person_to_json;
 	result->f_free = (F_RPC_ValueFree*)&Person_free;
-
-	switch (format)
-	{
-	case FORMAT_NATIVE:
-		break;
-	default:
-		set_cx_errno(RPC_ERROR_FORMAT_UNSUPPORTED);
-		return -1;
-	}
 
 	return 1;
 }

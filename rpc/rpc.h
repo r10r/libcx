@@ -9,6 +9,7 @@
 
 typedef struct json_t json_t;
 
+/* parameter encoding format */
 typedef enum
 {
 	FORMAT_NATIVE = 0,

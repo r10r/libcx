@@ -390,12 +390,16 @@ main()
 {
 	TEST_BEGIN
 
+	/* RPC parameter decoding in JSON format */
 	RUN(test_json_integer_to_params);
 	RUN(test_json_array_to_params);
 	RUN(test_json_obj_param);
+
+	/* RPC method calls with JSON encoded parameters */
 	RUN(test_call_print_person_json);
 	RUN(test_call_get_person_json);
 
+	/* JSON RPC 2.0 request decoding tests */
 	RUN(test_deserialize_error_request_parse);
 	RUN(test_deserialize_error_request_invalid);
 	RUN(test_deserialize_error_request_invalid__jsonrpc_type);
