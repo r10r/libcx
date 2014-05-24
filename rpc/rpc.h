@@ -21,14 +21,17 @@ typedef enum cx_rpc_error_t
 {
 	RPC_ERROR_OK = 0,                       /* no error */
 	RPC_ERROR_REQUEST_PARSE,                /* failed to parse request format */
-	RPC_ERROR_REQUEST_INVALID,              /* failed to unpack request */
+	RPC_ERROR_INVALID_VERSION,
+	RPC_ERROR_INVALID_ID,
+	RPC_ERROR_INVALID_METHOD,
+	RPC_ERROR_INVALID_REQUEST,              /* failed to unpack request */
 	RPC_ERROR_FORMAT_UNSUPPORTED,           /* specified format not implemented in method (e.g no JSON deserializer) */
 	RPC_ERROR_METHOD_MISSING,               /* service does not provide given method */
 	RPC_ERROR_NO_PARAMS,                    /* method has params but no params are available (params are NULL) */
+	RPC_ERROR_INVALID_PARAMS,
 	RPC_ERROR_PARAM_MISSING,                /* a required parameter is missing */
 	RPC_ERROR_PARAM_NULL,                   /* a required parameter has null value (precondition check in service method) */
 	RPC_ERROR_PARAM_INVALID_TYPE,           /* a required parameter has another type than specified by method signature */
-	RPC_ERROR_PARAM_INVALID_VALUE,          /* a required parameter has an invalid value */
 	RPC_ERROR_PARAM_DESERIALIZE,            /* deserizliation of a parameter with RPC_TYPE_OBJECT failed */
 	RPC_ERROR_RESULT_VALUE_NULL,            /* method has result but no result value given (internal error) */
 } RPC_Error;
@@ -100,6 +103,7 @@ typedef enum
 	RPC_ID_NONE = 0,
 	RPC_ID_NUMBER,
 	RPC_ID_STRING,
+	RPC_ID_INVALID,
 } RPC_ID_Type;
 
 struct cx_rpc_request_t
