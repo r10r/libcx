@@ -1,6 +1,24 @@
 #include "rpc_json.h"
 #include <jansson.h>
 
+static const char*
+jsonrpc_strerror(JSON_RPC_Error err)
+{
+	switch (err)
+	{
+	case JSON_RPC_ERROR_PARSE_ERROR:
+		return "Parse error";
+	case JSON_RPC_ERROR_INVALID_REQUEST:
+		return "Invalid Request";
+	case JSON_RPC_ERROR_METHOD_NOT_FOUND:
+		return "Method not found";
+	case JSON_RPC_ERROR_INVALID_PARAMS:
+		return "Invalid params";
+	case JSON_RPC_ERROR_INTERNAL:
+		return "Internal error";
+	}
+}
+
 static void
 deserialize_param_int(RPC_Param* param, json_t* json)
 {
@@ -195,7 +213,7 @@ request_id_to_json(RPC_Request* request)
 }
 
 static json_t*
-rpc_error_to_response(RPC_Request* request, JSON_RPC_Error json_rpc_error)
+rpc_error_to_response(RPC_Request* request, JSON_RPC_Error err)
 {
 	json_t* id_json = request_id_to_json(request);
 
@@ -211,14 +229,14 @@ rpc_error_to_response(RPC_Request* request, JSON_RPC_Error json_rpc_error)
 	{
 		json = json_pack_ex(&error_pack, 0, "{s:s,s:o,s:{s:i,s:s,s:{s:s}}}",
 				    "jsonrpc", "2.0", "id", id_json,
-				    "error", "code", json_rpc_error, "message", "FIXME {implement strerror}",
+				    "error", "code", err, "message", jsonrpc_strerror(err),
 				    "data", "reason", request->error_reason);
 	}
 	else
 	{
 		json = json_pack_ex(&error_pack, 0, "{s:s,s:o,s:{s:i,s:s}}",
 				    "jsonrpc", "2.0", "id", id_json,
-				    "error", "code", json_rpc_error, "message", "FIXME {implement strerror}");
+				    "error", "code", err, "message", jsonrpc_strerror(err));
 	}
 
 	if (!json)

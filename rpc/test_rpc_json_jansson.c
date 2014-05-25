@@ -544,7 +544,7 @@ test_Request_create_json_response_error()
 	TEST_ASSERT_EQUAL_INT(0, status);
 	TEST_ASSERT_EQUAL_STRING(JSONRPC_VERSION, jsonrpc_version);
 	TEST_ASSERT_EQUAL_INT(JSON_RPC_ERROR_PARSE_ERROR, error_code);
-	TEST_ASSERT_EQUAL_STRING("FIXME {implement strerror}", error_message);
+	TEST_ASSERT_EQUAL_STRING("Parse error", error_message);
 	TEST_ASSERT_EQUAL_STRING("My error reason", error_reason);
 	TEST_ASSERT_TRUE(json_is_null(id_json));
 
@@ -581,7 +581,7 @@ test_Request_create_json_response_error__no_reason()
 	TEST_ASSERT_EQUAL_INT(0, status);
 	TEST_ASSERT_EQUAL_STRING(JSONRPC_VERSION, jsonrpc_version);
 	TEST_ASSERT_EQUAL_INT(JSON_RPC_ERROR_PARSE_ERROR, error_code);
-	TEST_ASSERT_EQUAL_STRING("FIXME {implement strerror}", error_message);
+	TEST_ASSERT_EQUAL_STRING("Parse error", error_message);
 	TEST_ASSERT_NULL(error_reason);
 	TEST_ASSERT_EQUAL_STRING("myid", json_string_value(id_json));
 
