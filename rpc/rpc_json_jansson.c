@@ -181,15 +181,13 @@ request_id_to_json(RPC_Request* request)
 
 	switch (request->id_type)
 	{
-	case RPC_ID_NONE:
-		assert(false); // application error;
-		break;
 	case RPC_ID_NUMBER:
 		id = json_integer(request->id.number);
 		break;
 	case RPC_ID_STRING:
 		id = json_string(request->id.string);
 		break;
+	case RPC_ID_NONE:                       /* ID can be none here if json was parsed properly but request is still invalid */
 	case RPC_ID_INVALID:
 		id = json_null();
 	}
@@ -201,20 +199,35 @@ rpc_error_to_response(RPC_Request* request, JSON_RPC_Error json_rpc_error)
 {
 	json_t* id_json = request_id_to_json(request);
 
+	json_t* json = NULL;
+	json_error_t error_pack;
+
+	memset(&error_pack, 0, sizeof(json_error_t));
+
+	assert(id_json); /* application bug */
+
 	// FIXME id must be set to request even if other validation failed !!!
 	if (request->error_reason)
 	{
-		return json_pack("{s:s,s:o,s:{s:i,s:s,s:{s:s}}}",
-				 "jsonrpc", "2.0", "id", id_json,
-				 "error", "code", json_rpc_error, "message", "FIXME {implement strerror}",
-				 "data", "reason", request->error_reason);
+		json = json_pack_ex(&error_pack, 0, "{s:s,s:o,s:{s:i,s:s,s:{s:s}}}",
+				    "jsonrpc", "2.0", "id", id_json,
+				    "error", "code", json_rpc_error, "message", "FIXME {implement strerror}",
+				    "data", "reason", request->error_reason);
 	}
 	else
 	{
-		return json_pack("{s:s,s:o,s:{s:i,s:s}}",
-				 "jsonrpc", "2.0", "id", id_json,
-				 "error", "code", json_rpc_error, "message", "FIXME {implement strerror}");
+		json = json_pack_ex(&error_pack, 0, "{s:s,s:o,s:{s:i,s:s}}",
+				    "jsonrpc", "2.0", "id", id_json,
+				    "error", "code", json_rpc_error, "message", "FIXME {implement strerror}");
 	}
+
+	if (!json)
+	{
+		XFERR("Error creating error response (request %p): %s", (void*)request, error_pack.text);
+		assert(false);  /* application bug */
+	}
+
+	return json;
 }
 
 static json_t*
@@ -222,6 +235,9 @@ create_json_rpc_error(RPC_Request* request)
 {
 	switch (request->error)
 	{
+	case RPC_ERROR_OK:
+		assert(false); /* application bug */
+		break;
 	case RPC_ERROR_REQUEST_PARSE:
 		return rpc_error_to_response(request, JSON_RPC_ERROR_PARSE_ERROR);
 	case RPC_ERROR_INVALID_REQUEST:
@@ -241,7 +257,6 @@ create_json_rpc_error(RPC_Request* request)
 	case RPC_ERROR_PARAM_DESERIALIZE:
 		return rpc_error_to_response(request, JSON_RPC_ERROR_INVALID_PARAMS);
 	case RPC_ERROR_RESULT_VALUE_NULL:
-	default:
 		return rpc_error_to_response(request, JSON_RPC_ERROR_INTERNAL);
 	}
 	return NULL;
@@ -286,6 +301,101 @@ Request_create_json_response(RPC_Request* request)
 	{
 		// FIXME only enable this if in debug mode
 		json_dumpf(response_json, stderr, JSON_INDENT(2));
+	}
+
+	return response_json;
+}
+
+static json_t*
+process_request(RPC_MethodTable* rpc_methods, RPC_Request* request, json_t* request_json)
+{
+	/* single request */
+	int status = Request_from_json(request, request_json);
+
+	if (status == 0)
+	{
+		status = Service_call(rpc_methods, request);
+		XFLOG("RPC method(%s) executed (with return value)", request->method_name);
+	}
+	json_t* response_json = Request_create_json_response(request);
+	RPC_Request_json_free(request);
+	return response_json;
+}
+
+static json_t*
+process_batch_request(RPC_MethodTable* rpc_methods, RPC_Request* request, json_t* batch_request_json)
+{
+	json_t* response_json = NULL;
+
+	/* batch request */
+	if (json_array_size(batch_request_json) > 0)
+	{
+		response_json = json_array();
+
+		size_t index;
+		json_t* request_json = NULL;
+		json_array_foreach(batch_request_json, index, request_json)
+		{
+			json_t* json = process_request(rpc_methods, request, request_json);
+
+			json_array_append(response_json, json);
+		}
+	}
+	else
+	{
+		RPC_Request_set_error(request, RPC_ERROR_INVALID_REQUEST, "Batch request is empty");
+		response_json = create_json_rpc_error(request);
+		RPC_Request_json_free(request);
+	}
+	return response_json;
+}
+
+json_t*
+RPC_process(RPC_MethodTable* rpc_methods, const char* payload, size_t payload_len)
+{
+	/* initialize error */
+	json_error_t error;
+
+	memset(&error, 0, sizeof(json_error_t));
+
+	/* initialize request */
+	RPC_Request request;
+	memset(&request, 0, sizeof(RPC_Request));
+	request.f_free = RPC_Request_json_free;
+
+	json_t* response_json = NULL;
+
+	json_t* root_json = json_loadb(payload, payload_len, JSON_DECODE_ANY | JSON_REJECT_DUPLICATES, &error);
+
+	if (!root_json)
+	{
+		/* invalid JSON */
+		// FIXME use formatted message (using snprintf into the error buffer);
+//		XFERR("JSON PARSE error: %s", error.text);
+		RPC_Request_set_error(&request, RPC_ERROR_REQUEST_PARSE, error.text);
+		response_json = create_json_rpc_error(&request);
+		RPC_Request_json_free(&request);
+	}
+	else
+	{
+		/* valid JSON */
+		if (json_is_object(root_json))
+		{
+			/* single request */
+			response_json = process_request(rpc_methods, &request, root_json);
+		}
+		else if (json_is_array(root_json))
+		{
+			/* batch request */
+			response_json = process_batch_request(rpc_methods, &request, root_json);
+		}
+		else
+		{
+			/* valid JSON but neither an object nor an array */
+			RPC_Request_set_error(&request, RPC_ERROR_INVALID_REQUEST, "Invalid request value (expected array or object)");
+			response_json = create_json_rpc_error(&request);
+			RPC_Request_json_free(&request);
+		}
 	}
 
 	return response_json;

@@ -33,22 +33,15 @@ on_request(Connection* conn, Request* request)
 	char* payload = NULL;
 	size_t payload_len = request->f_get_payload(request, &payload);
 
-	RPC_Request rpc_request;
-	int status = Request_json_parse(&rpc_request, payload, payload_len);
-	if (status == 0)
-	{
-		status = Service_call(EXAMPLE_SERVICE_METHODS, &rpc_request);
-		XFLOG("RPC method(%s) executed (with return value)", rpc_request.method_name);
-	}
+	json_t* json = RPC_process(EXAMPLE_SERVICE_METHODS, payload, payload_len);
 
-	json_t* json = Request_create_json_response(&rpc_request);
+	// FIXME pass function to websockets create to gather data (using the jansson write callback)
 	char* json_string = json_dumps(json, JSON_INDENT(2));
 	StringBuffer* buffer = WebsocketsFrame_create(WS_FRAME_TEXT, json_string, strlen(json_string));
 	cx_free(json_string);
 	json_decref(json);
 	conn->f_send(conn, Response_new(buffer), NULL);
 
-	RPC_Request_json_free(&rpc_request);
 	Request_free(request);
 }
 

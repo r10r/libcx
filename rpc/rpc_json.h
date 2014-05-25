@@ -41,4 +41,8 @@ Request_create_json_response(RPC_Request* request);
 void
 RPC_Request_json_free(RPC_Request* request);
 
+json_t*
+RPC_process(RPC_MethodTable* rpc_methods, const char* payload, size_t payload_len);
+
+
 #endif
