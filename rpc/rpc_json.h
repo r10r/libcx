@@ -8,6 +8,9 @@
 #define JSONRPC_RESERVED_METHOD_PREFIX "rpc."
 #define JSONRPC_RESERVED_METHOD_PREFIX_LEN 4
 
+#define JSONRPC_INTERNAL_ERROR \
+	"{\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32603, \"message\": \"Internal error\"}, \"id\": null}"
+
 typedef enum cx_json_rpc_error_t
 {
 	JSON_RPC_ERROR_PARSE_ERROR = -32700,

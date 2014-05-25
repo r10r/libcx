@@ -35,13 +35,22 @@ on_request(Connection* conn, Request* request)
 
 	json_t* json = RPC_process(EXAMPLE_SERVICE_METHODS, payload, payload_len);
 
-	// FIXME pass function to websockets create to gather data (using the jansson write callback)
-	char* json_string = json_dumps(json, JSON_INDENT(2));
-	StringBuffer* buffer = WebsocketsFrame_create(WS_FRAME_TEXT, json_string, strlen(json_string));
-	cx_free(json_string);
-	json_decref(json);
-	conn->f_send(conn, Response_new(buffer), NULL);
+	StringBuffer* buffer = NULL;
+	if (!json)
+	{
+		XERR("An internal error occured while generating the response");
+		buffer = WebsocketsFrame_create(WS_FRAME_TEXT, JSONRPC_INTERNAL_ERROR, strlen(JSONRPC_INTERNAL_ERROR));
+	}
+	else
+	{
+		// FIXME pass function to websockets create to gather data (using the jansson write callback)
+		char* json_string = json_dumps(json, JSON_INDENT(2));
+		buffer = WebsocketsFrame_create(WS_FRAME_TEXT, json_string, strlen(json_string));
+		cx_free(json_string);
+		json_decref(json);
+	}
 
+	conn->f_send(conn, Response_new(buffer), NULL);
 	Request_free(request);
 }
 
