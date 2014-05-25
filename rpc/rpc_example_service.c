@@ -33,10 +33,10 @@ Person_from_json(Person* person, json_t* json)
 				    "lastname", &person->lastname,
 				    "age", &person->age);
 
+
 	if (status == -1)
 	{
-		XFERR("JSON deserialize error: %s", json_error.text);
-		cx_errno_set(RPC_ERROR_PARAM_DESERIALIZE);
+		cx_ferr_set(CX_RPC_ERROR_INVALID_PARAMS, "Failed to deserialize parameter 'person' : %s", json_error.text);
 	}
 
 	return status;
@@ -61,7 +61,13 @@ print_person(Person* person)
 {
 	char buf[1024];
 
-	snprintf(buf, sizeof(buf), "%s %s (age %d)", person->firstname, person->lastname, person->age);
+	int num_printed = snprintf(buf, sizeof(buf), "%s %s (age %d)", person->firstname, person->lastname, person->age);
+
+	if (num_printed >= (int)sizeof(buf))
+	{
+		// FIXME set error BUFFER_TO_SMALL
+	}
+
 	return cx_strdup(buf);
 }
 
@@ -77,7 +83,7 @@ has_count(const char* string, size_t count)
 	}
 	else
 	{
-		cx_errno_set(RPC_ERROR_PARAM_NULL);
+		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "Parameter 'string' is null");
 	}
 
 	return result;
@@ -93,13 +99,13 @@ call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format 
 
 	if (p_string == NULL)
 	{
-		cx_errno_set(RPC_ERROR_PARAM_MISSING);
+		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "Parameter 'string' unavailable");
 		return -1;
 	}
 
 	if (p_string->type != RPC_TYPE_STRING)
 	{
-		cx_errno_set(RPC_ERROR_PARAM_INVALID_TYPE);
+		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "Parameter 'string' has invalid type (expected string)");
 		return -1;
 	}
 
@@ -107,13 +113,13 @@ call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format 
 
 	if (p_count == NULL)
 	{
-		cx_errno_set(RPC_ERROR_PARAM_MISSING);
+		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "Parameter 'count' unavailable");
 		return -1;
 	}
 
 	if (p_count->type != RPC_TYPE_INTEGER)
 	{
-		cx_errno_set(RPC_ERROR_PARAM_INVALID_TYPE);
+		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "Parameter 'count' has invalid type (expected integer)");
 		return -1;
 	}
 
@@ -122,7 +128,7 @@ call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format 
 	case FORMAT_NATIVE:
 		break;
 	case FORMAT_JSON:
-		cx_errno_set(RPC_ERROR_FORMAT_UNSUPPORTED);
+		cx_err_set(CX_RPC_ERROR_INTERNAL, "Output format 'JSON' is not suppported by this method.");
 		return -1;
 	}
 
@@ -170,13 +176,13 @@ call_print_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Form
 
 	if (p_person == NULL)
 	{
-		cx_errno_set(RPC_ERROR_PARAM_MISSING);
+		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "Parameter 'person' missing");
 		return -1;
 	}
 
 	if (p_person->type != RPC_TYPE_OBJECT)
 	{
-		cx_errno_set(RPC_ERROR_PARAM_INVALID_TYPE);
+		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "Parameter 'person' has invalid type (expected object)");
 		return -1;
 	}
 
@@ -196,8 +202,10 @@ call_print_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Form
 		memset(&person, 0, sizeof(Person));
 		if (Person_from_json(&person, (json_t*)p_person->value.object) == 0)
 			person_s = print_person(&person);
-		else            /* conversion failed (see cx_errno for details) */
+		else
+		{
 			return -1;
+		}
 		break;
 	}
 	}

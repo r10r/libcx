@@ -11,19 +11,6 @@
 #define JSONRPC_INTERNAL_ERROR \
 	"{\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32603, \"message\": \"Internal error\"}, \"id\": null}"
 
-#define JSON_RPC_ERROR_MIN      -32768
-#define JSON_RPC_ERROR_MAX      -32000
-
-typedef enum cx_json_rpc_error_t
-{
-	JSON_RPC_ERROR_PARSE_ERROR = -32700,
-	JSON_RPC_ERROR_INVALID_REQUEST = -32600,
-	JSON_RPC_ERROR_METHOD_NOT_FOUND = -32601,
-	JSON_RPC_ERROR_INVALID_PARAMS = -32602,
-	JSON_RPC_ERROR_INTERNAL = -32603,
-	/* -32000 to -32099 Server error, implementation defined */
-} JSON_RPC_Error;
-
 /* @return -1 on error, else number of parameters */
 int
 Params_from_json(RPC_Param** params, json_t* json);

@@ -1,11 +1,25 @@
 #include "rpc.h"
 
+const char*
+cx_rpc_strerror(RPC_Error err)
+{
+	switch (err)
+	{
+	case CX_RPC_ERROR_OK: return "OK";
+	case CX_RPC_ERROR_PARSE: return "Parse error";
+	case CX_RPC_ERROR_INVALID_REQUEST: return "Invalid Request";
+	case CX_RPC_ERROR_METHOD_NOT_FOUND: return "Method not found";
+	case CX_RPC_ERROR_INVALID_PARAMS: return "Invalid params";
+	case CX_RPC_ERROR_INTERNAL: return "Internal error";
+	}
+}
+
 RPC_Value*
 Param_get(RPC_Param* params, int position, const char* name, int num_params)
 {
 	if (!params)
 	{
-		cx_errno_set(RPC_ERROR_NO_PARAMS);
+		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "No parameters available.");
 	}
 	else
 	{
@@ -25,12 +39,13 @@ Param_get(RPC_Param* params, int position, const char* name, int num_params)
 int
 Service_call(RPC_MethodTable* service_methods, RPC_Request* request)
 {
-	cx_errno_set(0); /* clear previous errors */
+	cx_err_clear(); /* clear previous errors */
 	int status = 1;
 
 	RPC_MethodTable* wrapped_method = service_methods;
 	bool method_missing = true;
 
+	/* stop when method name is NULL */
 	while (wrapped_method->method_name)
 	{
 		if (strcmp(wrapped_method->method_name, request->method_name) == 0)
@@ -44,8 +59,16 @@ Service_call(RPC_MethodTable* service_methods, RPC_Request* request)
 		wrapped_method++;
 	}
 
+	if (cx_err_code != CX_ERR_OK)
+	{
+		return -1;
+	}
+
 	if (method_missing)
-		cx_errno_set(RPC_ERROR_METHOD_MISSING);
+	{
+		request->error = CX_RPC_ERROR_METHOD_NOT_FOUND;
+		return -1;
+	}
 
 	/* free allocated param values */
 	int i;
@@ -57,13 +80,5 @@ Service_call(RPC_MethodTable* service_methods, RPC_Request* request)
 
 		param++;
 	}
-
-	if (cx_errno == 0)
-		return status;
-	else
-	{
-		request->error = (RPC_Error)cx_errno;   // FIXME ensure only RPC errors are written to cx_errno, use a wrapper macro
-		XFERR("ERROR while calling method '%s' (cx_errno %d)", request->method_name, cx_errno);
-		return -1;
-	}
+	return 1;
 }

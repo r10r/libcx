@@ -7,6 +7,21 @@
 #include <string.h> /* strcmp */
 #include "base/base.h"
 
+#define JSON_RPC_ERROR_MIN      -32768
+#define JSON_RPC_ERROR_MAX      -32000
+
+typedef enum cx_json_rpc_error_t
+{
+	CX_RPC_ERROR_OK = CX_ERR_OK,
+	CX_RPC_ERROR_PARSE = -32700,
+	CX_RPC_ERROR_INVALID_REQUEST = -32600,
+	CX_RPC_ERROR_METHOD_NOT_FOUND = -32601,
+	CX_RPC_ERROR_INVALID_PARAMS = -32602,
+	CX_RPC_ERROR_INTERNAL = -32603,
+	/* -32000 to -32099 Server error, implementation defined */
+} RPC_Error;
+
+
 typedef struct json_t json_t;
 
 /* parameter encoding format */
@@ -15,26 +30,6 @@ typedef enum
 	FORMAT_NATIVE = 0,
 	FORMAT_JSON
 } RPC_Format;
-
-/* FIXME cx_errno reserved for RPC calls ?, what about jsonrpc status codes ? */
-typedef enum cx_rpc_error_t
-{
-	RPC_ERROR_OK = 0,                       /* no error */
-	RPC_ERROR_REQUEST_PARSE,                /* failed to parse request format */
-	RPC_ERROR_INVALID_VERSION,
-	RPC_ERROR_INVALID_ID,
-	RPC_ERROR_INVALID_METHOD,
-	RPC_ERROR_INVALID_REQUEST,              /* failed to unpack request */
-	RPC_ERROR_FORMAT_UNSUPPORTED,           /* specified format not implemented in method (e.g no JSON deserializer) */
-	RPC_ERROR_METHOD_MISSING,               /* service does not provide given method */
-	RPC_ERROR_NO_PARAMS,                    /* method has params but no params are available (params are NULL) */
-	RPC_ERROR_INVALID_PARAMS,
-	RPC_ERROR_PARAM_MISSING,                /* a required parameter is missing */
-	RPC_ERROR_PARAM_NULL,                   /* a required parameter has null value (precondition check in service method) */
-	RPC_ERROR_PARAM_INVALID_TYPE,           /* a required parameter has another type than specified by method signature */
-	RPC_ERROR_PARAM_DESERIALIZE,            /* deserizliation of a parameter with RPC_TYPE_OBJECT failed */
-	RPC_ERROR_RESULT_VALUE_NULL,            /* method has result but no result value given (internal error) */
-} RPC_Error;
 
 typedef enum
 {
@@ -47,8 +42,6 @@ typedef enum
 	RPC_TYPE_BOOLEAN,
 	RPC_TYPE_OBJECT,        // FIXME rename to RPC_TYPE_COMPLEX ?
 } RPC_Type;
-
-// FIXME prefix every type with RPC_ ?
 
 typedef struct cx_rpc_value_t RPC_Value;
 typedef struct cx_rpc_param_t RPC_Param;
@@ -112,7 +105,7 @@ typedef enum
 struct cx_rpc_request_t
 {
 	RPC_Error error;
-	char* error_reason;
+	char* error_reason;     /* preallocate the error message buffer ? */
 
 	RPC_ID_Type id_type;
 	union
@@ -135,7 +128,7 @@ struct cx_rpc_request_t
 };
 
 void
-RPC_Request_set_error(RPC_Request* request, RPC_Error err, const char* message);
+RPC_Request_set_error(RPC_Request* request, int err, const char* message);
 
 RPC_Value*
 Param_get(RPC_Param* params, int position, const char* name, int num_params);
@@ -148,5 +141,8 @@ Param_get(RPC_Param* params, int position, const char* name, int num_params);
  */
 int
 Service_call(RPC_MethodTable* method_map, RPC_Request* request);
+
+const char*
+cx_rpc_strerror(int err);
 
 #endif

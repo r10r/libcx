@@ -13,7 +13,7 @@ test_call_error_method_missing()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(RPC_ERROR_METHOD_MISSING, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_METHOD_NOT_FOUND, request.error);
 }
 
 static void
@@ -26,7 +26,7 @@ test_call_error_param_missing()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(RPC_ERROR_PARAM_MISSING, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.error);
 }
 
 static void
@@ -49,7 +49,7 @@ test_call_error_param_missing2()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(RPC_ERROR_PARAM_MISSING, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.error);
 }
 
 static void
@@ -72,7 +72,7 @@ test_call_error_param_type()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(RPC_ERROR_PARAM_INVALID_TYPE, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.error);
 }
 
 static void
@@ -163,11 +163,12 @@ test_call_has_count_error()
 	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(RPC_ERROR_PARAM_NULL, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INTERNAL, request.error);
 
 	if (request.result.f_free)
 		request.result.f_free(request.result.value.object);
 }
+
 
 static void
 test_call_print_person()

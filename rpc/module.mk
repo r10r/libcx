@@ -21,8 +21,7 @@ $(L)/test_rpc_example_service_FLAGS := -ljansson
 $(L)/test_rpc_example_service_OBJS := $(TEST_OBJS) \
 	$(L)/test_rpc_example_service.o \
 	$(L)/rpc.o \
-	$(L)/rpc_example_service.o \
-	$(LIBCX_DIR)/base/errno.o
+	$(L)/rpc_example_service.o
 
 $(L)/test_jansson_FLAGS := -ljansson
 $(L)/test_jansson_OBJS := $(TEST_OBJS) \
@@ -34,8 +33,7 @@ $(L)/test_rpc_json_jansson_OBJS := $(TEST_OBJS) \
 	$(L)/test_rpc_json_jansson.o \
 	$(L)/rpc.o \
 	$(L)/rpc_json_jansson.o \
-	$(L)/rpc_example_service.o \
-	$(LIBCX_DIR)/base/errno.o
+	$(L)/rpc_example_service.o
 
 $(L)/example-server_FLAGS := -I$(L) -lev -lpthread -ljansson
 $(L)/example-server_OBJS := $(L)/example-server.o \
