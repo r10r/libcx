@@ -538,65 +538,91 @@ test_deserialize_request()
 }
 
 static void
-test_Request_create_json_response__parse_error()
+test_Request_create_json_response_error()
 {
-	;
 	RPC_Request request = {
-		.error = RPC_ERROR_REQUEST_PARSE,
 		.id_type = RPC_ID_INVALID
 	};
 
+	RPC_Request_set_error(&request, RPC_ERROR_REQUEST_PARSE, "My error reason");
+
 	json_t* response = Request_create_json_response(&request);
 
-//	json_dumpf(response, stdout, 0);
-
-	const char* jsonrpc_version;
+	const char* jsonrpc_version = NULL;
+	json_t* id_json = NULL;
 	int error_code;
-	const char* error_message;
+	const char* error_message = NULL;
+	const char* error_reason = NULL;
 
 	json_error_t error;
 	memset(&error, 0, sizeof(json_error_t));
 
-	int status = json_unpack_ex(response, &error, 0, "{s:s,s:{s:i,s:s}}",
+	int status = json_unpack_ex(response, &error, 0, "{s:s,s?:o,s:{s:i,s:s,s?:{s:s}}}",
 				    "jsonrpc", &jsonrpc_version,
-				    "error", "code", &error_code, "message", &error_message);
+				    "id", &id_json,
+				    "error", "code", &error_code, "message", &error_message,
+				    "data", "reason", &error_reason);
 
-	TEST_ASSERT_EQUAL_STRING(JSONRPC_VERSION, jsonrpc_version);
 	TEST_ASSERT_EQUAL_INT(0, status);
+	TEST_ASSERT_EQUAL_STRING(JSONRPC_VERSION, jsonrpc_version);
 	TEST_ASSERT_EQUAL_INT(JSON_RPC_ERROR_PARSE_ERROR, error_code);
-	TEST_ASSERT_EQUAL_STRING("hello world", error_message);
-
-	json_decref(response);
+	TEST_ASSERT_EQUAL_STRING("FIXME {implement strerror}", error_message);
+	TEST_ASSERT_EQUAL_STRING("My error reason", error_reason);
+	TEST_ASSERT_TRUE(json_is_null(id_json));
 }
 
 static void
-test_Request_create_json_response2()
+test_Request_create_json_response_error__no_reason()
 {
 	;
 	RPC_Request request = {
-		.error = RPC_ERROR_REQUEST_PARSE,
 		.id_type = RPC_ID_STRING,
 		.id.string = "myid"
 	};
 
+	RPC_Request_set_error(&request, RPC_ERROR_REQUEST_PARSE, NULL);
 	json_t* response = Request_create_json_response(&request);
 
-	json_dumpf(response, stdout, JSON_INDENT(2));
+	const char* jsonrpc_version = NULL;
+	json_t* id_json = NULL;
+	int error_code;
+	const char* error_message = NULL;
+	const char* error_reason = NULL;
+
+	json_error_t error;
+	memset(&error, 0, sizeof(json_error_t));
+
+	int status = json_unpack_ex(response, &error, 0, "{s:s,s?:o,s:{s:i,s:s,s?:{s:s}}}",
+				    "jsonrpc", &jsonrpc_version,
+				    "id", &id_json,
+				    "error", "code", &error_code, "message", &error_message,
+				    "data", "reason", &error_reason);
+
+	TEST_ASSERT_EQUAL_INT(0, status);
+	TEST_ASSERT_EQUAL_STRING(JSONRPC_VERSION, jsonrpc_version);
+	TEST_ASSERT_EQUAL_INT(JSON_RPC_ERROR_PARSE_ERROR, error_code);
+	TEST_ASSERT_EQUAL_STRING("FIXME {implement strerror}", error_message);
+	TEST_ASSERT_NULL(error_reason);
+	TEST_ASSERT_EQUAL_STRING("myid", json_string_value(id_json));
+
+	RPC_Request_json_free(&request);
 	json_decref(response);
 }
+
+// TODO test setting the ID
 
 static void
 test_Request_create_json_response3()
 {
 	RPC_Request request = {
-		.error = RPC_ERROR_INVALID_VERSION,
 		.id_type = RPC_ID_STRING,
-		.id.string = "myid"
+		.id.string = "myid",
 	};
 
+	RPC_Request_set_error(&request, RPC_ERROR_INVALID_VERSION, "No real error reason");
 	json_t* response = Request_create_json_response(&request);
 
-	json_dumpf(response, stdout, JSON_INDENT(2));
+	RPC_Request_json_free(&request);
 	json_decref(response);
 }
 
@@ -630,9 +656,8 @@ main()
 	RUN(test_deserialize_request);
 
 	/* JSON RPC 2.0 method calls */
-	RUN(test_Request_create_json_response__parse_error);
-	RUN(test_Request_create_json_response2);
-	RUN(test_Request_create_json_response3);
+	RUN(test_Request_create_json_response_error);
+	RUN(test_Request_create_json_response_error__no_reason);
 
 
 	TEST_END

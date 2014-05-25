@@ -106,9 +106,13 @@ typedef enum
 	RPC_ID_INVALID,
 } RPC_ID_Type;
 
+#define RPC_ERROR_MESSAGE_LENGTH_MAX 128
+
 struct cx_rpc_request_t
 {
 	RPC_Error error;
+	char* error_reason;
+
 	RPC_ID_Type id_type;
 	union
 	{
@@ -128,6 +132,9 @@ struct cx_rpc_request_t
 
 	// TODO add f_free method
 };
+
+void
+RPC_Request_set_error(RPC_Request* request, RPC_Error err, const char* message);
 
 RPC_Value*
 Param_get(RPC_Param* params, int position, const char* name, int num_params);

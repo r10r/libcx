@@ -35,4 +35,7 @@ Value_to_json(RPC_Value* value);
 json_t*
 Request_create_json_response(RPC_Request* request);
 
+void
+RPC_Request_json_free(RPC_Request* request);
+
 #endif
