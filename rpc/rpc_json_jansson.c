@@ -149,8 +149,6 @@ Value_to_json(RPC_Value* value)
 	return NULL;
 }
 
-#define JSONRPC_VERSION "2.0"
-
 static void
 RPC_Request_json_free(RPC_Request* request)
 {
@@ -261,6 +259,128 @@ Request_json_parse(RPC_Request* request, const char* data, size_t data_len)
 	return 0;
 }
 
+static int
+deserialize_id(RPC_Request* request, json_t* id_json)
+{
+	if (!id_json)
+	{
+		/* notification */
+		request->id_type = RPC_ID_NONE;
+	}
+	else
+	{
+		if (json_is_integer(id_json))
+		{
+			request->id_type = RPC_ID_NUMBER;
+			request->id.number = json_integer_value(id_json);
+		}
+		else if (json_is_string(id_json))
+		{
+			request->id_type = RPC_ID_STRING;
+			request->id.string = json_string_value(id_json);
+		}
+		else
+		{
+			XERR("parameter 'id': invalid format (expected integer or string)");
+			request->id_type = RPC_ID_INVALID;
+			request->error = RPC_ERROR_INVALID_ID;
+			return -1;
+		}
+	}
+	return 0;
+}
+
+static int
+deserialize_version(RPC_Request* request, json_t* jsonrpc_version_json)
+{
+	if (jsonrpc_version_json)
+	{
+		if (json_is_string(jsonrpc_version_json))
+		{
+			const char* jsonrpc_version = json_string_value(jsonrpc_version_json);
+			if (strcmp(jsonrpc_version, JSONRPC_VERSION) != 0)
+			{
+				XFERR("Parameter 'jsonrpc' - invalid value [%s] (expected  '%s')", jsonrpc_version, JSONRPC_VERSION);
+				request->error = RPC_ERROR_INVALID_VERSION;
+				return -1;
+			}
+		}
+		else
+		{
+			XERR("Parameter 'method' - is not a string value");
+			request->error = RPC_ERROR_INVALID_VERSION;
+			return -1;
+		}
+	}
+	else
+	{
+		XERR("Parameter 'jsonrpc' - not available");
+		request->error = RPC_ERROR_INVALID_VERSION;
+		return -1;
+	}
+	return 0;
+}
+
+static int
+deserialize_method_name(RPC_Request* request, json_t* method_name_json)
+{
+	if (method_name_json)
+	{
+		if (json_is_string(method_name_json))
+		{
+			const char* method_name = json_string_value(method_name_json);
+			if (strlen(method_name) > 0)
+			{
+				request->method_name = method_name;
+				return 0;
+			}
+			else
+			{
+				XERR("Parameter 'method' - is empty");
+				request->error = RPC_ERROR_INVALID_METHOD;
+				return -1;
+			}
+		}
+		else
+		{
+			XERR("Parameter 'method' - is not a string value");
+			request->error = RPC_ERROR_INVALID_METHOD;
+			return -1;
+		}
+	}
+	else
+	{
+		XERR("Parameter 'method' - is unavailable");
+		request->error = RPC_ERROR_INVALID_METHOD;
+		return -1;
+	}
+}
+
+static int
+deserialize_params(RPC_Request* request, json_t* params_json)
+{
+	if (params_json)
+	{
+		int num_params = Params_from_json(&request->params, params_json);
+
+		if (num_params == -1)
+		{
+			XERR("Failed to set request parameters");
+			request->error = (RPC_Error)cx_errno;
+			return -1;
+		}
+		else
+		{
+			request->num_params = num_params;
+		}
+	}
+	else
+	{
+		XDBG("No params");
+	}
+	return 0;
+}
+
 int
 Request_from_json(RPC_Request* request, json_t* request_json)
 {
@@ -292,114 +412,23 @@ Request_from_json(RPC_Request* request, json_t* request_json)
 	}
 	else
 	{
-		/* check {id} parameter */
-
-		/* ID must be checked first. If other checks fail we have at least a valid id to reference in the error */
-		if (!id_json)
-		{
-			/* notification */
-			request->id_type = RPC_ID_NONE;
-		}
-		else
-		{
-			if (json_is_integer(id_json))
-			{
-				request->id_type = RPC_ID_NUMBER;
-				request->id.number = json_integer_value(id_json);
-			}
-			else if (json_is_string(id_json))
-			{
-				request->id_type = RPC_ID_STRING;
-				request->id.string = json_string_value(id_json);
-			}
-			else
-			{
-				XERR("parameter 'id': invalid format (expected integer or string)");
-				request->id_type = RPC_ID_INVALID;
-				request->error = RPC_ERROR_INVALID_ID;
-				return -1;
-			}
-		}
+		/* check {id} parameter first
+		 * If other checks fail we have at least a valid id to reference in the error
+		 */
+		if (deserialize_id(request, id_json) == -1)
+			return -1;
 
 		/* check {jsonrpc} version parameter */
-		if (jsonrpc_version_json)
-		{
-			if (json_is_string(jsonrpc_version_json))
-			{
-				const char* jsonrpc_version = json_string_value(jsonrpc_version_json);
-				if (strcmp(jsonrpc_version, JSONRPC_VERSION) != 0)
-				{
-					XFERR("Parameter 'jsonrpc' - invalid value [%s] (expected  '%s')", jsonrpc_version, JSONRPC_VERSION);
-					request->error = RPC_ERROR_INVALID_VERSION;
-					return -1;
-				}
-			}
-			else
-			{
-				XERR("Parameter 'method' - is not a string value");
-				request->error = RPC_ERROR_INVALID_VERSION;
-				return -1;
-			}
-		}
-		else
-		{
-			XERR("Parameter 'jsonrpc' - not available");
-			request->error = RPC_ERROR_INVALID_VERSION;
+		if (deserialize_version(request, jsonrpc_version_json) == -1)
 			return -1;
-		}
 
 		/* check {method} parameter */
-		if (method_name_json)
-		{
-			if (json_is_string(method_name_json))
-			{
-				const char* method_name = json_string_value(method_name_json);
-				if (strlen(method_name) > 0)
-				{
-					request->method_name = method_name;
-					XFDBG("XXXX : %s", request->method_name);
-				}
-				else
-				{
-					XERR("Parameter 'method' - is empty");
-					request->error = RPC_ERROR_INVALID_METHOD;
-					return -1;
-				}
-			}
-			else
-			{
-				XERR("Parameter 'method' - is not a string value");
-				request->error = RPC_ERROR_INVALID_METHOD;
-				return -1;
-			}
-		}
-		else
-		{
-			XERR("Parameter 'method' - is unavailable");
-			request->error = RPC_ERROR_INVALID_METHOD;
+		if (deserialize_method_name(request, method_name_json) == -1)
 			return -1;
-		}
 
 		/* check and deserialize {params} parameter */
-		if (params_json)
-		{
-			int num_params = Params_from_json(&request->params, params_json);
-
-			if (num_params == -1)
-			{
-				XERR("Failed to set request parameters");
-				request->error = (RPC_Error)cx_errno;
-				return -1;
-			}
-			else
-			{
-				request->num_params = num_params;
-			}
-		}
-		else
-		{
-			XDBG("No params");
-		}
+		if (deserialize_params(request, params_json) == -1)
+			return -1;
 	}
 	return 0;
 }

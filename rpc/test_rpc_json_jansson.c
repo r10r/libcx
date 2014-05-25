@@ -390,6 +390,9 @@ test_deserialize_request__extraneous_attributes()
 	TEST_ASSERT_EQUAL_INT(66, request.id.number);
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
+
+	if (request.f_free)
+		request.f_free(&request);
 }
 
 static void
@@ -534,10 +537,75 @@ test_deserialize_request()
 		request.f_free(&request);
 }
 
+static void
+test_Request_create_json_response__parse_error()
+{
+	;
+	RPC_Request request = {
+		.error = RPC_ERROR_REQUEST_PARSE,
+		.id_type = RPC_ID_INVALID
+	};
+
+	json_t* response = Request_create_json_response(&request);
+
+//	json_dumpf(response, stdout, 0);
+
+	const char* jsonrpc_version;
+	int error_code;
+	const char* error_message;
+
+	json_error_t error;
+	memset(&error, 0, sizeof(json_error_t));
+
+	int status = json_unpack_ex(response, &error, 0, "{s:s,s:{s:i,s:s}}",
+				    "jsonrpc", &jsonrpc_version,
+				    "error", "code", &error_code, "message", &error_message);
+
+	TEST_ASSERT_EQUAL_STRING(JSONRPC_VERSION, jsonrpc_version);
+	TEST_ASSERT_EQUAL_INT(0, status);
+	TEST_ASSERT_EQUAL_INT(JSON_RPC_ERROR_PARSE_ERROR, error_code);
+	TEST_ASSERT_EQUAL_STRING("hello world", error_message);
+
+	json_decref(response);
+}
+
+static void
+test_Request_create_json_response2()
+{
+	;
+	RPC_Request request = {
+		.error = RPC_ERROR_REQUEST_PARSE,
+		.id_type = RPC_ID_STRING,
+		.id.string = "myid"
+	};
+
+	json_t* response = Request_create_json_response(&request);
+
+	json_dumpf(response, stdout, JSON_INDENT(2));
+	json_decref(response);
+}
+
+static void
+test_Request_create_json_response3()
+{
+	RPC_Request request = {
+		.error = RPC_ERROR_INVALID_VERSION,
+		.id_type = RPC_ID_STRING,
+		.id.string = "myid"
+	};
+
+	json_t* response = Request_create_json_response(&request);
+
+	json_dumpf(response, stdout, JSON_INDENT(2));
+	json_decref(response);
+}
+
 int
 main()
 {
 	TEST_BEGIN
+
+	// FIXME rename test methods to test_Request_json_parse_*
 
 	/* RPC parameter decoding in JSON format */
 	RUN(test_json_integer_to_params);
@@ -562,6 +630,9 @@ main()
 	RUN(test_deserialize_request);
 
 	/* JSON RPC 2.0 method calls */
+	RUN(test_Request_create_json_response__parse_error);
+	RUN(test_Request_create_json_response2);
+	RUN(test_Request_create_json_response3);
 
 
 	TEST_END
