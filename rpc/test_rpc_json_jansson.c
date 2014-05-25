@@ -46,12 +46,12 @@ test_json_integer_to_params()
 	TEST_ASSERT_EQUAL_STRING("int_val", params[0].name);
 	TEST_ASSERT_EQUAL_INT(-1, params[0].position);
 	TEST_ASSERT_EQUAL(RPC_TYPE_INTEGER, params[0].value.type);
-	TEST_ASSERT_EQUAL_INT(INT_MAX, params[0].value.value.integer);
+	TEST_ASSERT_EQUAL_INT(INT_MAX, params[0].value.data.integer);
 
 	TEST_ASSERT_EQUAL_STRING("long_val", params[1].name);
 	TEST_ASSERT_EQUAL_INT(-1, params[1].position);
 	TEST_ASSERT_EQUAL(RPC_TYPE_LONGLONG, params[1].value.type);
-	TEST_ASSERT_EQUAL_INT((long long)INT_MAX + 1, params[1].value.value.longlong);
+	TEST_ASSERT_EQUAL_INT((long long)INT_MAX + 1, params[1].value.data.longlong);
 
 	cx_free(params);
 	json_decref(json);
@@ -69,17 +69,17 @@ test_json_array_to_params()
 	TEST_ASSERT_EQUAL_STRING(NULL, params[0].name);
 	TEST_ASSERT_EQUAL_INT(0, params[0].position);
 	TEST_ASSERT_EQUAL(RPC_TYPE_INTEGER, params[0].value.type);
-	TEST_ASSERT_EQUAL_INT(11, params[0].value.value.integer);
+	TEST_ASSERT_EQUAL_INT(11, params[0].value.data.integer);
 
 	TEST_ASSERT_EQUAL_STRING(NULL, params[1].name);
 	TEST_ASSERT_EQUAL_INT(1, params[1].position);
 	TEST_ASSERT_EQUAL(RPC_TYPE_INTEGER, params[1].value.type);
-	TEST_ASSERT_EQUAL_INT(22, params[1].value.value.integer);
+	TEST_ASSERT_EQUAL_INT(22, params[1].value.data.integer);
 
 	TEST_ASSERT_EQUAL_STRING(NULL, params[2].name);
 	TEST_ASSERT_EQUAL_INT(2, params[2].position);
 	TEST_ASSERT_EQUAL(RPC_TYPE_INTEGER, params[2].value.type);
-	TEST_ASSERT_EQUAL_INT(33, params[2].value.value.integer);
+	TEST_ASSERT_EQUAL_INT(33, params[2].value.data.integer);
 
 	cx_free(params);
 	json_decref(json);
@@ -103,7 +103,7 @@ test_call_print_person_json()
 	params[0].name = "person";
 	params[0].position = 0;
 	params[0].value.type = RPC_TYPE_OBJECT;
-	params[0].value.value.object = json;
+	params[0].value.data.object = json;
 	params[0].value.f_free = (F_RPC_ValueFree*)&json_decref;
 
 	RPC_Request request = {
@@ -115,12 +115,12 @@ test_call_print_person_json()
 
 	Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
-	TEST_ASSERT_EQUAL_INT(CX_ERR_OK, request.error);
-	TEST_ASSERT_EQUAL(RPC_TYPE_STRING, request.result.type);
-	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", request.result.value.string);
+	TEST_ASSERT_EQUAL_INT(CX_ERR_OK, request.result.error);
+	TEST_ASSERT_EQUAL(RPC_TYPE_STRING, request.result.value.type);
+	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", request.result.value.data.string);
 
-	if (request.result.f_free)
-		request.result.f_free(request.result.value.object);
+	if (request.result.value.f_free)
+		request.result.value.f_free(request.result.value.data.object);
 }
 
 static void
@@ -132,10 +132,10 @@ test_call_get_person_json()
 
 	Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
-	TEST_ASSERT_EQUAL(RPC_TYPE_OBJECT, request.result.type);
+	TEST_ASSERT_EQUAL(RPC_TYPE_OBJECT, request.result.value.type);
 
-	Person* person = (Person*)request.result.value.object;
-	json_t* person_json = Value_to_json(&request.result);
+	Person* person = (Person*)request.result.value.data.object;
+	json_t* person_json = Value_to_json((RPC_Value*)&request.result);
 
 	TEST_ASSERT_EQUAL(3, json_object_size(person_json));
 	TEST_ASSERT_EQUAL_STRING(person->firstname, json_string_value(json_object_get(person_json, "firstname")));
@@ -143,8 +143,8 @@ test_call_get_person_json()
 	TEST_ASSERT_EQUAL_INT(person->age, json_integer_value(json_object_get(person_json, "age")));
 
 	json_decref(person_json);
-	if (request.result.f_free)
-		request.result.f_free(request.result.value.object);
+	if (request.result.value.f_free)
+		request.result.value.f_free(request.result.value.data.object);
 }
 
 static void
@@ -156,7 +156,7 @@ test_deserialize_error_request_parse()
 	int status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_PARSE, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_PARSE, request.result.error);
 
 	TEST_ASSERT_NULL(request.method_name);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_INVALID, request.id_type);
@@ -176,7 +176,7 @@ test_deserialize_error_request_invalid()
 	int status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.result.error);
 	TEST_ASSERT_EQUAL_INT(66, request.id.number);
 	TEST_ASSERT_EQUAL_STRING(NULL, request.method_name);
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
@@ -195,7 +195,7 @@ test_deserialize_error_request_invalid__jsonrpc_type()
 	int status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.result.error);
 	TEST_ASSERT_EQUAL_INT(66, request.id.number);
 	TEST_ASSERT_NULL(request.method_name);
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
@@ -214,7 +214,7 @@ test_deserialize_error_param_invalid_value__jsonrpc()
 	int status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.result.error);
 	TEST_ASSERT_EQUAL_INT(66, request.id.number);
 	TEST_ASSERT_NULL(request.method_name);
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
@@ -235,7 +235,7 @@ test_deserialize_error_param_invalid_type__id()
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.result.error);
 	TEST_ASSERT_EQUAL_INT(0, request.id.number);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_INVALID, request.id_type);
 	TEST_ASSERT_NULL(request.method_name);
@@ -249,7 +249,7 @@ test_deserialize_error_param_invalid_type__id()
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.result.error);
 	TEST_ASSERT_EQUAL_INT(0, request.id.number);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_INVALID, request.id_type);
 	TEST_ASSERT_NULL(request.method_name);
@@ -263,7 +263,7 @@ test_deserialize_error_param_invalid_type__id()
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.result.error);
 	TEST_ASSERT_EQUAL_INT(0, request.id.number);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_INVALID, request.id_type);
 	TEST_ASSERT_NULL(request.method_name);
@@ -277,7 +277,7 @@ test_deserialize_error_param_invalid_type__id()
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.result.error);
 	TEST_ASSERT_EQUAL_INT(0, request.id.number);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_INVALID, request.id_type);
 	TEST_ASSERT_NULL(request.method_name);
@@ -297,7 +297,7 @@ test_deserialize_error_request_invalid__missing_method_param()
 	int status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_REQUEST, request.result.error);
 	TEST_ASSERT_EQUAL_INT(66, request.id.number);
 	TEST_ASSERT_NULL(request.method_name);
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
@@ -317,7 +317,7 @@ test_deserialize_request__id()
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(0, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_OK, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_OK, request.result.error);
 	TEST_ASSERT_EQUAL_STRING("play", request.method_name);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_NUMBER, request.id_type);
 	TEST_ASSERT_EQUAL_INT(66, request.id.number);
@@ -331,7 +331,7 @@ test_deserialize_request__id()
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(0, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_OK, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_OK, request.result.error);
 	TEST_ASSERT_EQUAL_STRING("play", request.method_name);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_STRING, request.id_type);
 	TEST_ASSERT_EQUAL_STRING("66", request.id.string);
@@ -345,7 +345,7 @@ test_deserialize_request__id()
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(0, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_OK, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_OK, request.result.error);
 	TEST_ASSERT_EQUAL_STRING("play", request.method_name);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_NONE, request.id_type);
 	TEST_ASSERT_NULL(request.id.string);
@@ -369,7 +369,7 @@ test_deserialize_request__extraneous_attributes()
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(0, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_OK, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_OK, request.result.error);
 	TEST_ASSERT_EQUAL_STRING("play", request.method_name);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_NUMBER, request.id_type);
 	TEST_ASSERT_EQUAL_INT(66, request.id.number);
@@ -390,7 +390,7 @@ test_deserialize_error_param_deserialize()
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.result.error);
 	TEST_ASSERT_EQUAL_STRING("play", request.method_name);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_STRING, request.id_type);
 	TEST_ASSERT_EQUAL_STRING("foobar", request.id.string);
@@ -404,7 +404,7 @@ test_deserialize_error_param_deserialize()
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.result.error);
 	TEST_ASSERT_EQUAL_STRING("play", request.method_name);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_STRING, request.id_type);
 	TEST_ASSERT_EQUAL_STRING("foobar", request.id.string);
@@ -419,7 +419,7 @@ test_deserialize_error_param_deserialize()
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.result.error);
 	TEST_ASSERT_EQUAL_STRING("play", request.method_name);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_STRING, request.id_type);
 	TEST_ASSERT_EQUAL_STRING("foobar", request.id.string);
@@ -434,7 +434,7 @@ test_deserialize_error_param_deserialize()
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.result.error);
 	TEST_ASSERT_EQUAL_STRING("play", request.method_name);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_STRING, request.id_type);
 	TEST_ASSERT_EQUAL_STRING("foobar", request.id.string);
@@ -449,7 +449,7 @@ test_deserialize_error_param_deserialize()
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.result.error);
 	TEST_ASSERT_EQUAL_STRING("play", request.method_name);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_STRING, request.id_type);
 	TEST_ASSERT_EQUAL_STRING("foobar", request.id.string);
@@ -501,7 +501,7 @@ test_deserialize_request()
 	int status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(0, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_OK, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_OK, request.result.error);
 	TEST_ASSERT_EQUAL_STRING("play", request.method_name);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_NUMBER, request.id_type);
 	TEST_ASSERT_EQUAL_INT(66, request.id.number);
@@ -510,9 +510,9 @@ test_deserialize_request()
 	TEST_ASSERT_NULL(request.params[0].name);
 	TEST_ASSERT_EQUAL_INT(0, request.params[0].position);
 	TEST_ASSERT_EQUAL(RPC_TYPE_STRING, request.params[0].value.type);
-	TEST_ASSERT_EQUAL_STRING("hello world", request.params[0].value.value.string);
+	TEST_ASSERT_EQUAL_STRING("hello world", request.params[0].value.data.string);
 
-	TEST_ASSERT_EQUAL_INT(request.error, CX_RPC_ERROR_OK);
+	TEST_ASSERT_EQUAL_INT(request.result.error, CX_RPC_ERROR_OK);
 
 	RPC_Request_json_free(&request);
 }
@@ -524,7 +524,7 @@ test_Request_create_json_response_error()
 		.id_type = RPC_ID_INVALID
 	};
 
-	RPC_Request_set_error(&request, CX_RPC_ERROR_PARSE, "My error reason");
+	RPC_Result_set_error(&request.result, CX_RPC_ERROR_PARSE, "My error reason");
 
 	json_t* response = Request_create_json_response(&request);
 
@@ -537,11 +537,11 @@ test_Request_create_json_response_error()
 	json_error_t error;
 	memset(&error, 0, sizeof(json_error_t));
 
-	int status = json_unpack_ex(response, &error, 0, "{s:s,s?:o,s:{s:i,s:s,s?:{s:s}}}",
+	int status = json_unpack_ex(response, &error, 0, "{s:s,s?:o,s:{s:i,s:s,s?:s}}",
 				    "jsonrpc", &jsonrpc_version,
 				    "id", &id_json,
 				    "error", "code", &error_code, "message", &error_message,
-				    "data", "reason", &error_reason);
+				    "data", &error_reason);
 
 	TEST_ASSERT_EQUAL_INT(0, status);
 	TEST_ASSERT_EQUAL_STRING(JSONRPC_VERSION, jsonrpc_version);
@@ -562,7 +562,7 @@ test_Request_create_json_response_error__no_reason()
 		.id.string = "myid"
 	};
 
-	RPC_Request_set_error(&request, CX_RPC_ERROR_PARSE, NULL);
+	RPC_Result_set_error(&request.result, CX_RPC_ERROR_PARSE, NULL);
 	json_t* response = Request_create_json_response(&request);
 
 	const char* jsonrpc_version = NULL;
@@ -604,13 +604,15 @@ test_Request_create_response()
 
 	RPC_Request request = {
 		.method_name = "print_person",
-		.error = CX_RPC_ERROR_OK,
 		.id_type = RPC_ID_STRING,
 		.id.string = "myid",
 		.result = {
-			.type = RPC_TYPE_OBJECT,
-			.value.object = &person,
-			.f_to_json = (F_ValueToJSON*)&Person_to_json
+			.error = CX_RPC_ERROR_OK,
+			.value = {
+				.type = RPC_TYPE_OBJECT,
+				.data.object = &person,
+				.f_to_json = (F_ValueToJSON*)&Person_to_json
+			}
 		}
 	};
 

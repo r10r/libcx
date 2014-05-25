@@ -44,7 +44,7 @@ Person_from_json(Person* person, json_t* json)
 
 /* API methods */
 
-static Person*
+CX_ALLOC static Person*
 get_person()
 {
 	Person* person = cx_alloc(sizeof(Person));
@@ -56,7 +56,7 @@ get_person()
 	return person;
 }
 
-static char*
+CX_ALLOC static char*
 print_person(Person* person)
 {
 	char buf[1024];
@@ -92,7 +92,7 @@ has_count(const char* string, size_t count)
 /* service wrapper */
 
 static void
-call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format format)
+call_has_count(RPC_Param* params, int num_params, RPC_Result* result, RPC_Format format)
 {
 	/* typesafe parameter deserialization with error checking */
 	RPC_Value* p_string = Param_get(params, 0, "string", num_params);
@@ -133,15 +133,18 @@ call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format 
 	}
 
 	/* call method */
-	bool out = has_count(p_string->value.string, (size_t)p_count->value.integer);
+	bool out = has_count(p_string->data.string, (size_t)p_count->data.integer);
 
-	/* prepare result */
-	result->type = RPC_TYPE_BOOLEAN;
-	result->value.boolean = out;
+	if (cx_err_code == CX_RPC_ERROR_OK)
+	{
+		/* prepare result */
+		result->value.type = RPC_TYPE_BOOLEAN;
+		result->value.data.boolean = out;
+	}
 }
 
 static void
-call_get_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format format)
+call_get_person(RPC_Param* params, int num_params, RPC_Result* result, RPC_Format format)
 {
 	/* method has no params */
 	UNUSED(params);
@@ -150,20 +153,17 @@ call_get_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format
 
 	Person* person = get_person();
 
-	result->type = RPC_TYPE_OBJECT;
-	result->value.object = person;
-	result->f_to_json = (F_ValueToJSON*)&Person_to_json;
-	result->f_free = (F_RPC_ValueFree*)&Person_free;
+	if (cx_err_code == CX_RPC_ERROR_OK)
+	{
+		result->value.type = RPC_TYPE_OBJECT;
+		result->value.data.object = person;
+		result->value.f_to_json = (F_ValueToJSON*)&Person_to_json;
+		result->value.f_free = (F_RPC_ValueFree*)&Person_free;
+	}
 }
 
 static void
-simple_free(void* object)
-{
-	cx_free(object);
-}
-
-static void
-call_print_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format format)
+call_print_person(RPC_Param* params, int num_params, RPC_Result* result, RPC_Format format)
 {
 	UNUSED(result);
 
@@ -188,7 +188,7 @@ call_print_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Form
 	{
 	case FORMAT_NATIVE:
 	{
-		Person* person = (Person*)p_person->value.object;
+		Person* person = (Person*)p_person->data.object;
 		person_s = print_person(person);
 		break;
 	}
@@ -196,7 +196,7 @@ call_print_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Form
 	{
 		Person person;
 		memset(&person, 0, sizeof(Person));
-		if (Person_from_json(&person, (json_t*)p_person->value.object) == 0)
+		if (Person_from_json(&person, (json_t*)p_person->data.object) == 0)
 			person_s = print_person(&person);
 		else
 			return;
@@ -204,9 +204,12 @@ call_print_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Form
 	}
 	}
 
-	result->type = RPC_TYPE_STRING;
-	result->value.string = person_s;
-	result->f_free = &simple_free;
+	if (cx_err_code == CX_RPC_ERROR_OK)
+	{
+		result->value.type = RPC_TYPE_STRING;
+		result->value.data.string = person_s;
+		result->value.f_free = &cx_rpc_free_simple;
+	}
 }
 
 RPC_MethodTable EXAMPLE_SERVICE_METHODS[] =

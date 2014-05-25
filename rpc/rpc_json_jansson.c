@@ -10,13 +10,13 @@ deserialize_param_int(RPC_Param* param, json_t* json)
 	{
 //		XFDBG("[%d](%s): (int)%d", index, key, (int)long_val);
 		param->value.type = RPC_TYPE_INTEGER;
-		param->value.value.integer = (int)long_val;
+		param->value.data.integer = (int)long_val;
 	}
 	else
 	{
 //		XFDBG("[%d](%s): (long long)%lld", index, key, long_val);
 		param->value.type = RPC_TYPE_LONGLONG;
-		param->value.value.longlong = long_val;
+		param->value.data.longlong = long_val;
 	}
 }
 
@@ -37,22 +37,22 @@ deserialize_param(RPC_Param* param, int position, const char* key, json_t* json)
 	else if (json_is_boolean(json))
 	{
 		param->value.type = RPC_TYPE_BOOLEAN;
-		param->value.value.boolean = json_is_true(json) ? true : false;
+		param->value.data.boolean = json_is_true(json) ? true : false;
 	}
 	else if (json_is_real(json))
 	{
 		param->value.type = RPC_TYPE_DOUBLE;
-		param->value.value.floatingpoint = json_real_value(json);
+		param->value.data.floatingpoint = json_real_value(json);
 	}
 	else if (json_is_string(json))
 	{
 		param->value.type = RPC_TYPE_STRING;
-		param->value.value.string = json_string_value(json);
+		param->value.data.string = json_string_value(json);
 	}
 	else if (json_is_array(json) || json_is_object(json))
 	{
 		param->value.type = RPC_TYPE_OBJECT;
-		param->value.value.object = json;
+		param->value.data.object = json;
 	}
 }
 
@@ -134,21 +134,21 @@ Value_to_json(RPC_Value* value)
 	switch (value->type)
 	{
 	case RPC_TYPE_INTEGER:
-		return json_integer(value->value.integer);
+		return json_integer(value->data.integer);
 	case RPC_TYPE_LONGLONG:
-		return json_integer(value->value.longlong);
+		return json_integer(value->data.longlong);
 	case RPC_TYPE_DOUBLE:
-		return json_real(value->value.floatingpoint);
+		return json_real(value->data.floatingpoint);
 	case RPC_TYPE_STRING:
-		return json_string(value->value.string);
+		return json_string(value->data.string);
 	case RPC_TYPE_BOOLEAN:
-		return json_boolean(value->value.boolean);
+		return json_boolean(value->data.boolean);
 	case RPC_TYPE_NULL:
 	case RPC_TYPE_VOID:
 		return json_null();
 	case RPC_TYPE_OBJECT:
 		if (value->f_to_json)
-			return value->f_to_json(value->value.object);
+			return value->f_to_json(value->data.object);
 		else
 			cx_err_set(CX_RPC_ERROR_INTERNAL, "Failed to convert value to JSON");
 	}
@@ -158,19 +158,10 @@ Value_to_json(RPC_Value* value)
 void
 RPC_Request_json_free(RPC_Request* request)
 {
-	if (request->result.f_free)
-		request->result.f_free(request->result.value.object);
-
 	if (request->data)
 		json_decref((json_t*)request->data);
 
-	if (request->error_reason)
-		cx_free(request->error_reason);
-
-	if (request->params)
-		cx_free(request->params);
-
-	memset(request, 0, sizeof(RPC_Request));
+	RPC_Request_free(request);
 }
 
 static json_t*
@@ -206,18 +197,18 @@ create_json_rpc_response_error(RPC_Request* request)
 	assert(id_json); /* application bug */
 
 	// FIXME id must be set to request even if other validation failed !!!
-	if (request->error_reason)
+	if (request->result.value.type != RPC_TYPE_VOID)
 	{
-		json = json_pack_ex(&error_pack, 0, "{s:s,s:o,s:{s:i,s:s,s:{s:s}}}",
+		json = json_pack_ex(&error_pack, 0, "{s:s,s:o,s:{s:i,s:s,s:o}}",
 				    "jsonrpc", "2.0", "id", id_json,
-				    "error", "code", request->error, "message", cx_rpc_strerror(request->error),
-				    "data", "reason", request->error_reason);
+				    "error", "code", request->result.error, "message", cx_rpc_strerror(request->result.error),
+				    "data", Value_to_json((RPC_Value*)&request->result));
 	}
 	else
 	{
 		json = json_pack_ex(&error_pack, 0, "{s:s,s:o,s:{s:i,s:s}}",
 				    "jsonrpc", "2.0", "id", id_json,
-				    "error", "code", request->error, "message", cx_rpc_strerror(request->error));
+				    "error", "code", request->result.error, "message",  cx_rpc_strerror(request->result.error));
 	}
 
 	if (!json)
@@ -237,7 +228,7 @@ create_json_rpc_response(RPC_Request* request)
 
 	/* can method methods only receive notifications ? */
 	/* what should we return for void methods (result is required)  true, null, 0, {}, 42 ? */
-	result_json = Value_to_json(&request->result);
+	result_json = Value_to_json((RPC_Value*)&request->result);
 
 	return json_pack("{s:s,s:o,s:o}",
 			 "jsonrpc", "2.0", "id", id_json,
@@ -249,7 +240,7 @@ Request_create_json_response(RPC_Request* request)
 {
 	json_t* response_json = NULL;
 
-	if (request->error == CX_ERR_OK)
+	if (request->result.error == CX_ERR_OK)
 		response_json = create_json_rpc_response(request);
 	else
 		response_json = create_json_rpc_response_error(request);
@@ -308,7 +299,7 @@ process_batch_request(RPC_MethodTable* rpc_methods, RPC_Request* request, json_t
 	}
 	else
 	{
-		RPC_Request_set_error(request, CX_RPC_ERROR_INVALID_REQUEST, "Batch request is empty");
+		RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST, "Batch request is empty");
 		response_json = create_json_rpc_response_error(request);
 		RPC_Request_json_free(request);
 	}
@@ -337,7 +328,7 @@ RPC_process(RPC_MethodTable* rpc_methods, const char* payload, size_t payload_le
 		/* invalid JSON */
 		// FIXME use formatted message (using snprintf into the error buffer);
 //		XFERR("JSON PARSE error: %s", error.text);
-		RPC_Request_set_error(&request, CX_RPC_ERROR_PARSE, error.text);
+		RPC_Result_set_error(&request.result, CX_RPC_ERROR_PARSE, error.text);
 		response_json = create_json_rpc_response_error(&request);
 		RPC_Request_json_free(&request);
 	}
@@ -357,7 +348,7 @@ RPC_process(RPC_MethodTable* rpc_methods, const char* payload, size_t payload_le
 		else
 		{
 			/* valid JSON but neither an object nor an array */
-			RPC_Request_set_error(&request, CX_RPC_ERROR_INVALID_REQUEST, "Invalid request value (expected array or object)");
+			RPC_Result_set_error(&request.result, CX_RPC_ERROR_INVALID_REQUEST, "Invalid request value (expected array or object)");
 			response_json = create_json_rpc_response_error(&request);
 			RPC_Request_json_free(&request);
 		}
@@ -379,7 +370,7 @@ Request_json_parse(RPC_Request* request, const char* data, size_t data_len)
 	{
 		memset(request, 0, sizeof(RPC_Request));
 		request->f_free = RPC_Request_json_free;
-		RPC_Request_set_error(request, CX_RPC_ERROR_PARSE, error.text);
+		RPC_Result_set_error(&request->result, CX_RPC_ERROR_PARSE, error.text);
 		return -1;
 	}
 	else
@@ -414,8 +405,8 @@ deserialize_id(RPC_Request* request, json_t* id_json)
 		}
 		else
 		{
-			RPC_Request_set_error(request, CX_RPC_ERROR_INVALID_REQUEST,
-					      "parameter 'id': invalid format (expected integer or string)");
+			RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+					     "parameter 'id': invalid format (expected integer or string)");
 			request->id_type = RPC_ID_INVALID;
 			return -1;
 		}
@@ -436,22 +427,22 @@ deserialize_version(RPC_Request* request, json_t* jsonrpc_version_json)
 			{
 				// FIXME use formatted message (using snprintf into the error buffer);
 //				XFERR("Parameter 'jsonrpc' - invalid value [%s] (expected  '%s')", jsonrpc_version, JSONRPC_VERSION);
-				RPC_Request_set_error(request, CX_RPC_ERROR_INVALID_REQUEST,
-						      "Parameter 'jsonrpc' - invalid value (expected string \"2.0\")");
+				RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+						     "Parameter 'jsonrpc' - invalid value (expected string \"2.0\")");
 				return -1;
 			}
 		}
 		else
 		{
-			RPC_Request_set_error(request, CX_RPC_ERROR_INVALID_REQUEST,
-					      "Parameter 'jsonrpc' - invalid value (expected string \"2.0\")");
+			RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+					     "Parameter 'jsonrpc' - invalid value (expected string \"2.0\")");
 			return -1;
 		}
 	}
 	else
 	{
-		RPC_Request_set_error(request, CX_RPC_ERROR_INVALID_REQUEST,
-				      "Parameter 'jsonrpc' - not available");
+		RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+				     "Parameter 'jsonrpc' - not available");
 		return -1;
 	}
 	return 0;
@@ -470,8 +461,8 @@ deserialize_method_name(RPC_Request* request, json_t* method_name_json)
 				if (strncasecmp(JSONRPC_RESERVED_METHOD_PREFIX, method_name,
 						JSONRPC_RESERVED_METHOD_PREFIX_LEN) == 0)
 				{
-					RPC_Request_set_error(request, CX_RPC_ERROR_INVALID_REQUEST,
-							      "Parameter 'method' begins with the reserved prefix 'rpc.' (internal use only).");
+					RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+							     "Parameter 'method' begins with the reserved prefix 'rpc.' (internal use only).");
 					return -1;
 				}
 				else
@@ -482,22 +473,22 @@ deserialize_method_name(RPC_Request* request, json_t* method_name_json)
 			}
 			else
 			{
-				RPC_Request_set_error(request, CX_RPC_ERROR_INVALID_REQUEST,
-						      "Empty 'method' parameter");
+				RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+						     "Empty 'method' parameter");
 				return -1;
 			}
 		}
 		else
 		{
-			RPC_Request_set_error(request, CX_RPC_ERROR_INVALID_REQUEST,
-					      "Parameter 'method' - is not a string value");
+			RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+					     "Parameter 'method' - is not a string value");
 			return -1;
 		}
 	}
 	else
 	{
-		RPC_Request_set_error(request, CX_RPC_ERROR_INVALID_REQUEST,
-				      "Parameter 'method' - is unavailable");
+		RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+				     "Parameter 'method' - is unavailable");
 		return -1;
 	}
 }
@@ -511,7 +502,7 @@ deserialize_params(RPC_Request* request, json_t* params_json)
 
 		if (num_params == -1)
 		{
-			RPC_Request_set_error(request, cx_err_code, cx_rpc_strerror(cx_err_code));
+			RPC_Result_set_error(&request->result, cx_err_code, cx_rpc_strerror(cx_err_code));
 			return -1;
 		}
 		else
@@ -551,7 +542,7 @@ Request_from_json(RPC_Request* request, json_t* request_json)
 	{
 		XFERR("JSON unpack error: %s", error.text);
 		// FIXME print to buffer with detailed information ?
-		RPC_Request_set_error(request, CX_RPC_ERROR_INVALID_REQUEST, error.text);
+		RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST, error.text);
 		return -1;
 	}
 	else
@@ -575,18 +566,4 @@ Request_from_json(RPC_Request* request, json_t* request_json)
 			return -1;
 	}
 	return 0;
-}
-
-/* FIXME convert to macro ? */
-void
-RPC_Request_set_error(RPC_Request* request, int err, const char* error_reason)
-{
-	assert(request->error == 0);
-
-	XFERR("Set error to request : [%d]{%s}", err, error_reason ? error_reason : "");
-	request->error = err;
-	if (error_reason)
-	{
-		request->error_reason = cx_strndup(error_reason, RPC_ERROR_MESSAGE_LENGTH_MAX);
-	}
 }

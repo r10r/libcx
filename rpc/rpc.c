@@ -1,5 +1,27 @@
 #include "rpc.h"
 
+void
+cx_rpc_free_simple(void* object)
+{
+	cx_free(object);
+}
+
+void
+RPC_Result_set_error(RPC_Result* result, RPC_Error err_code, const char* err_message)
+{
+	assert(result->error == CX_RPC_ERROR_OK);
+	assert(err_code != CX_RPC_ERROR_OK);
+
+	result->error = err_code;
+	if (err_message)
+	{
+		assert(result->value.type == RPC_TYPE_VOID);
+		result->value.type = RPC_TYPE_STRING;
+		result->value.data.string = cx_strndup(err_message, RPC_ERROR_MESSAGE_LENGTH_MAX);
+		result->value.f_free = &cx_rpc_free_simple;
+	}
+}
+
 const char*
 cx_rpc_strerror(RPC_Error err)
 {
@@ -60,13 +82,35 @@ Service_call(RPC_MethodTable* service_methods, RPC_Request* request)
 	for (i = 0; i < request->num_params; i++)
 	{
 		if (param->value.f_free)
-			param->value.f_free(param->value.value.object);
+			param->value.f_free(param->value.data.object);
 
 		param++;
 	}
 
 	if (method_missing)
-		request->error = CX_RPC_ERROR_METHOD_NOT_FOUND;
-	else if (cx_err_code != CX_ERR_OK)
-		request->error = cx_err_code;
+		RPC_Result_set_error(&request->result, CX_RPC_ERROR_METHOD_NOT_FOUND, NULL);
+
+	if (cx_err_code)
+	{
+		if (cx_err_code < JSON_RPC_ERROR_MIN || cx_err_code > JSON_RPC_ERROR_MAX)
+		{
+			RPC_Result_set_error(&request->result, CX_RPC_ERROR_INTERNAL, cx_uid());
+		}
+		else
+		{
+			RPC_Result_set_error(&request->result, cx_err_code, cx_uid());
+		}
+	}
+}
+
+void
+RPC_Request_free(RPC_Request* request)
+{
+	if (request->result.value.f_free)
+		request->result.value.f_free(request->result.value.data.object);
+
+	if (request->params)
+		cx_free(request->params);
+
+	memset(request, 0, sizeof(RPC_Request));
 }

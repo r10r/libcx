@@ -7,6 +7,8 @@
 #include <string.h> /* strcmp */
 #include "base/base.h"
 
+#define RPC_ERROR_MESSAGE_LENGTH_MAX 128
+
 #define JSON_RPC_ERROR_MIN      -32768
 #define JSON_RPC_ERROR_MAX      -32000
 
@@ -40,13 +42,14 @@ typedef enum
 	RPC_TYPE_DOUBLE,
 	RPC_TYPE_STRING,
 	RPC_TYPE_BOOLEAN,
-	RPC_TYPE_OBJECT,        // FIXME rename to RPC_TYPE_COMPLEX ?
+	RPC_TYPE_OBJECT
 } RPC_Type;
 
 typedef struct cx_rpc_value_t RPC_Value;
 typedef struct cx_rpc_param_t RPC_Param;
 typedef struct cx_rpc_method_table_t RPC_MethodTable;
 typedef struct cx_rpc_request_t RPC_Request;
+typedef struct cx_rpc_result_t RPC_Result;
 
 /*
  * @param object the param object of the union value
@@ -58,7 +61,7 @@ typedef void F_RPC_RequestFree (RPC_Request* request);
  * @param deserialize function only set/used when type is object
  */
 typedef json_t* F_ValueToJSON (void* object);
-typedef void RPC_MethodWrapper (RPC_Param* params, int num_params, RPC_Value* result, RPC_Format format);
+typedef void RPC_MethodWrapper (RPC_Param* params, int num_params, RPC_Result* result, RPC_Format format);
 
 
 struct cx_rpc_value_t
@@ -72,7 +75,7 @@ struct cx_rpc_value_t
 		bool boolean;
 		char* string;
 		void* object;
-	} value;
+	} data;
 
 	F_RPC_ValueFree* f_free;
 	F_ValueToJSON* f_to_json;
@@ -83,6 +86,13 @@ struct cx_rpc_param_t
 	RPC_Value value;
 	int position;
 	const char* name;
+};
+
+/* result value */
+struct cx_rpc_result_t
+{
+	RPC_Value value;
+	RPC_Error error;
 };
 
 struct cx_rpc_method_table_t
@@ -100,13 +110,8 @@ typedef enum
 	RPC_ID_STRING,
 } RPC_ID_Type;
 
-#define RPC_ERROR_MESSAGE_LENGTH_MAX 128
-
 struct cx_rpc_request_t
 {
-	RPC_Error error;
-	char* error_reason;     /* preallocate the error message buffer ? */
-
 	RPC_ID_Type id_type;
 	union
 	{
@@ -119,7 +124,7 @@ struct cx_rpc_request_t
 	RPC_Param* params;
 	int num_params;
 	RPC_Format format;
-	RPC_Value result;
+	RPC_Result result;
 
 	void* data; /* contains deserialized JSON */
 	F_RPC_RequestFree* f_free;
@@ -128,7 +133,7 @@ struct cx_rpc_request_t
 };
 
 void
-RPC_Request_set_error(RPC_Request* request, int err, const char* message);
+RPC_Result_set_error(RPC_Result* request, int err, const char* message);
 
 RPC_Value*
 Param_get(RPC_Param* params, int position, const char* name, int num_params);
@@ -137,6 +142,12 @@ void
 Service_call(RPC_MethodTable* method_map, RPC_Request* request);
 
 const char*
-cx_rpc_strerror(int err);
+cx_rpc_strerror(RPC_Error err);
+
+void
+RPC_Request_free(RPC_Request* request);
+
+void
+cx_rpc_free_simple(void* object);
 
 #endif
