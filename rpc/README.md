@@ -34,3 +34,58 @@ Request object (e.g. Parse error/Invalid Request), it MUST be Null.
 	 SO_SNDBUF       set buffer size for output
 	 SO_RCVBUF       set buffer size for input
  
+ 
+## JSON Schema
+
+* complex parameter type description / structs
+
+http://json-schema.org/examples.html
+http://www.simple-is-better.org/json-rpc/jsonrpc20-schema-service-descriptor.html
+
+Struct <-> JSON Object conversion
+
+* document return value (same as parameter macros ?)
+
+## GObject
+
+* https://developer.gnome.org/gobject/stable/index.html
+* http://stef.thewalter.net/2010/10/this-arent-benchmarks-youre-looking-for.html
+
+
+		{ "name", type, method_used_for_deserialization, flags }
+		
+		{ "name", typeinfo, flags }
+		{ "name", { type, method_used_for_deserialization}, flags }
+
+
+### Typesafe Parameter retrieval
+
+### Debugging
+
+	clang -E rpc/hello_service.c | uncrustify -c ~/.uncrustify.cfg  | less
+
+### Batch Requests
+
+
+* option for the service to multiplex multiple requests ?
+* pass a list of requests to the service ?
+* service generates a deferable response that returns data when all requests have been handled.
+
+* MPD for example can multiplex commands (with mpd_command_list_begin/end)
+
+## TODO 
+
+* test-suite (like autobahn test suite for websockets) to test protocol implementation
+
+
+### Test Requests
+
+
+{"jsonrpc": "2.0", "id": 66, "method": "play", "params" : ["Nice"]}
+{"jsonrpc": "2.0", "id": 66, "method": "get_person"}
+{"jsonrpc": "2.0", "id": null, "error": "get_person"}
+{ "firstname": "Max", "lastname": "Mustermann", "age": 33 }
+
+[1, {"jsonrpc": "2.0", "id": 66, "method": "print_person", "params": [{ "firstname": "Max", "lastname": "Mustermann", "age": 33 }]}]
+
+
