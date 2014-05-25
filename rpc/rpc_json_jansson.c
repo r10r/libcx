@@ -263,7 +263,7 @@ create_json_rpc_error(RPC_Request* request)
 }
 
 static json_t*
-rpc_result_to_json(RPC_Request* request)
+create_json_rpc_response(RPC_Request* request)
 {
 	json_t* id_json = request_id_to_json(request);
 	json_t* result_json = NULL;
@@ -282,25 +282,23 @@ Request_create_json_response(RPC_Request* request)
 {
 	json_t* response_json = NULL;
 
-	switch (request->error)
-	{
-	case RPC_ERROR_OK:
-		response_json = rpc_result_to_json(request);
-		break;
-	default:
+	if (request->error == RPC_ERROR_OK)
+		response_json = create_json_rpc_response(request);
+	else
 		response_json = create_json_rpc_error(request);
-		break;
-	}
 
 	if (!response_json)
 	{
+		/* could happen because of an internal error in jansson
+		 * (e.g memory allocation failed) ...
+		 */
 		XERR("Failed to create JSON RPC 2.0 response");
-		// FIXME if json is null return static response string (internal error) ?
 	}
 	else
 	{
-		// FIXME only enable this if in debug mode
+#ifdef _CX_DEBUG
 		json_dumpf(response_json, stderr, JSON_INDENT(2));
+#endif
 	}
 
 	return response_json;

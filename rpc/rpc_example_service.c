@@ -121,7 +121,7 @@ call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format 
 	{
 	case FORMAT_NATIVE:
 		break;
-	default:
+	case FORMAT_JSON:
 		set_cx_errno(RPC_ERROR_FORMAT_UNSUPPORTED);
 		return -1;
 	}
