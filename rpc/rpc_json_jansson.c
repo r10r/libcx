@@ -394,13 +394,23 @@ deserialize_method_name(RPC_Request* request, json_t* method_name_json)
 			const char* method_name = json_string_value(method_name_json);
 			if (strlen(method_name) > 0)
 			{
-				request->method_name = method_name;
-				return 0;
+				if (strncasecmp(JSONRPC_RESERVED_METHOD_PREFIX, method_name,
+						JSONRPC_RESERVED_METHOD_PREFIX_LEN) == 0)
+				{
+					RPC_Request_set_error(request, RPC_ERROR_INVALID_METHOD,
+							      "Parameter 'method' begins with the reserved prefix 'rpc.' (internal use only).");
+					return -1;
+				}
+				else
+				{
+					request->method_name = method_name;
+					return 0;
+				}
 			}
 			else
 			{
 				RPC_Request_set_error(request, RPC_ERROR_INVALID_METHOD,
-						      "Parameter 'method' - is empty");
+						      "Empty 'method' parameter");
 				return -1;
 			}
 		}
