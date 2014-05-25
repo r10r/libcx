@@ -34,59 +34,22 @@ on_request(Connection* conn, Request* request)
 	size_t payload_len = request->f_get_payload(request, &payload);
 
 	RPC_Request rpc_request;
-	int status = Request_from_json(&rpc_request, payload, payload_len);
+	int status = Request_json_parse(&rpc_request, payload, payload_len);
 	if (status == 0)
 	{
 		status = Service_call(EXAMPLE_SERVICE_METHODS, &rpc_request);
-
-		// FIXME What should a request for a method that returns nothing (void method) return ?
-		// (null, true) ?
-
-		/* ignore notifications */
-		if (rpc_request.id_type == RPC_ID_NONE)
-		{
-			XLOG("RPC request is a notification");
-		}
-		else
-		{
-			if (status == -1) /* error */
-			{
-				XFERR("RPC execution error: %d", rpc_request.error);
-				/* TODO send error */
-			}
-			else if (status == 0) /* success no return value (empty array | empty object ?) */
-			{
-				XFLOG("RPC method(%s) executed (void method)", rpc_request.method_name);
-				// TODO send response with result set to null ? (result is required on success !!)
-			}
-			else if (status == 1) /* success with return value */
-			{
-				XFLOG("RPC method(%s) executed (with return value)", rpc_request.method_name);
-				json_t* json = rpc_request.result.f_to_json(rpc_request.result.value.object);
-				char* json_string = json_dumps(json, JSON_INDENT(2));
-				StringBuffer* buffer = WebsocketsFrame_create(WS_FRAME_TEXT, json_string, strlen(json_string));
-				cx_free(json_string);
-				json_decref(json);
-				conn->f_send(conn, Response_new(buffer), NULL);
-			}
-		}
-	}
-	else
-	{
-		XFERR("Error processing JSON RPC 2.0 request: RPC Error %d", rpc_request.error)
+		XFLOG("RPC method(%s) executed (with return value)", rpc_request.method_name);
 	}
 
-	if (rpc_request.result.f_free)
-		rpc_request.result.f_free(rpc_request.result.value.object);
+	json_t* json = Request_create_json_response(&rpc_request);
+	char* json_string = json_dumps(json, JSON_INDENT(2));
+	StringBuffer* buffer = WebsocketsFrame_create(WS_FRAME_TEXT, json_string, strlen(json_string));
+	cx_free(json_string);
+	json_decref(json);
+	conn->f_send(conn, Response_new(buffer), NULL);
 
-	if (rpc_request.f_free)
-		rpc_request.f_free(&rpc_request);
-
-	// call method
-
+	RPC_Request_json_free(&rpc_request);
 	Request_free(request);
-//	StringBuffer* buffer = WebsocketsFrame_create(WS_FRAME_TEXT, payload, payload_len);
-//	conn->f_send(conn, Response_new(buffer), NULL);
 }
 
 static void

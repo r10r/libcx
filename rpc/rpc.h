@@ -38,12 +38,13 @@ typedef enum cx_rpc_error_t
 
 typedef enum
 {
+	RPC_TYPE_VOID,
+	RPC_TYPE_NULL,
 	RPC_TYPE_INTEGER,
 	RPC_TYPE_LONGLONG,
 	RPC_TYPE_DOUBLE,
 	RPC_TYPE_STRING,
 	RPC_TYPE_BOOLEAN,
-	RPC_TYPE_NULL,
 	RPC_TYPE_OBJECT,        // FIXME rename to RPC_TYPE_COMPLEX ?
 } RPC_Type;
 
@@ -100,10 +101,10 @@ struct cx_rpc_method_table_t
 
 typedef enum
 {
-	RPC_ID_NONE = 0,
+	RPC_ID_INVALID = 0,
+	RPC_ID_NONE,
 	RPC_ID_NUMBER,
 	RPC_ID_STRING,
-	RPC_ID_INVALID,
 } RPC_ID_Type;
 
 #define RPC_ERROR_MESSAGE_LENGTH_MAX 128
