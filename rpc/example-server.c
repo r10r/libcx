@@ -43,7 +43,7 @@ on_request(Connection* conn, Request* request)
 	}
 	else
 	{
-		// FIXME pass function to websockets create to gather data (using the jansson write callback)
+		// FIXME pass function to websockets create to gather data (using the jansson dump callback)
 		char* json_string = json_dumps(json, JSON_INDENT(2));
 		buffer = WebsocketsFrame_create(WS_FRAME_TEXT, json_string, strlen(json_string));
 		cx_free(json_string);
