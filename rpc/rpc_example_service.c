@@ -91,7 +91,7 @@ has_count(const char* string, size_t count)
 
 /* service wrapper */
 
-static int
+static void
 call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format format)
 {
 	/* typesafe parameter deserialization with error checking */
@@ -100,13 +100,13 @@ call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format 
 	if (p_string == NULL)
 	{
 		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "Parameter 'string' unavailable");
-		return -1;
+		return;
 	}
 
 	if (p_string->type != RPC_TYPE_STRING)
 	{
 		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "Parameter 'string' has invalid type (expected string)");
-		return -1;
+		return;
 	}
 
 	RPC_Value* p_count = Param_get(params, 1, "count", num_params);
@@ -114,13 +114,13 @@ call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format 
 	if (p_count == NULL)
 	{
 		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "Parameter 'count' unavailable");
-		return -1;
+		return;
 	}
 
 	if (p_count->type != RPC_TYPE_INTEGER)
 	{
 		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "Parameter 'count' has invalid type (expected integer)");
-		return -1;
+		return;
 	}
 
 	switch (format)
@@ -129,7 +129,7 @@ call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format 
 		break;
 	case FORMAT_JSON:
 		cx_err_set(CX_RPC_ERROR_INTERNAL, "Output format 'JSON' is not suppported by this method.");
-		return -1;
+		return;
 	}
 
 	/* call method */
@@ -138,11 +138,9 @@ call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format 
 	/* prepare result */
 	result->type = RPC_TYPE_BOOLEAN;
 	result->value.boolean = out;
-
-	return 1;
 }
 
-static int
+static void
 call_get_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format format)
 {
 	/* method has no params */
@@ -156,8 +154,6 @@ call_get_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format
 	result->value.object = person;
 	result->f_to_json = (F_ValueToJSON*)&Person_to_json;
 	result->f_free = (F_RPC_ValueFree*)&Person_free;
-
-	return 1;
 }
 
 static void
@@ -166,7 +162,7 @@ simple_free(void* object)
 	cx_free(object);
 }
 
-static int
+static void
 call_print_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format format)
 {
 	UNUSED(result);
@@ -177,13 +173,13 @@ call_print_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Form
 	if (p_person == NULL)
 	{
 		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "Parameter 'person' missing");
-		return -1;
+		return;
 	}
 
 	if (p_person->type != RPC_TYPE_OBJECT)
 	{
 		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "Parameter 'person' has invalid type (expected object)");
-		return -1;
+		return;
 	}
 
 	/* conversion of parameters in non-native format e.g json */
@@ -203,9 +199,7 @@ call_print_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Form
 		if (Person_from_json(&person, (json_t*)p_person->value.object) == 0)
 			person_s = print_person(&person);
 		else
-		{
-			return -1;
-		}
+			return;
 		break;
 	}
 	}
@@ -213,8 +207,6 @@ call_print_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Form
 	result->type = RPC_TYPE_STRING;
 	result->value.string = person_s;
 	result->f_free = &simple_free;
-
-	return 0;
 }
 
 RPC_MethodTable EXAMPLE_SERVICE_METHODS[] =

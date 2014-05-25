@@ -10,9 +10,8 @@ test_call_error_method_missing()
 		.method_name = "unknown_method"
 	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
+	Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
-	TEST_ASSERT_EQUAL_INT(-1, status);
 	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_METHOD_NOT_FOUND, request.error);
 }
 
@@ -23,9 +22,8 @@ test_call_error_param_missing()
 		.method_name = "has_count"
 	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
+	Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
-	TEST_ASSERT_EQUAL_INT(-1, status);
 	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.error);
 }
 
@@ -46,9 +44,8 @@ test_call_error_param_missing2()
 		.num_params = 1
 	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
+	Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
-	TEST_ASSERT_EQUAL_INT(-1, status);
 	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.error);
 }
 
@@ -69,9 +66,8 @@ test_call_error_param_type()
 		.num_params = 1
 	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
+	Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
-	TEST_ASSERT_EQUAL_INT(-1, status);
 	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.error);
 }
 
@@ -96,10 +92,9 @@ test_call_has_count_true()
 		.num_params = 2
 	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
+	Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
-	TEST_ASSERT_EQUAL_INT(1, status);
-	TEST_ASSERT_EQUAL_INT(0, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_ERR_OK, request.error);
 	TEST_ASSERT_EQUAL(RPC_TYPE_BOOLEAN, request.result.type);
 	TEST_ASSERT_TRUE(request.result.value.boolean);
 
@@ -128,10 +123,9 @@ test_call_has_count_false()
 		.num_params = 2
 	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
+	Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
-	TEST_ASSERT_EQUAL_INT(1, status);
-	TEST_ASSERT_EQUAL_INT(0, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_ERR_OK, request.error);
 	TEST_ASSERT_EQUAL(RPC_TYPE_BOOLEAN, request.result.type);
 	TEST_ASSERT_FALSE(request.result.value.boolean);
 
@@ -160,15 +154,13 @@ test_call_has_count_error()
 		.num_params = 2
 	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
+	Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
-	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INTERNAL, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.error);
 
 	if (request.result.f_free)
 		request.result.f_free(request.result.value.object);
 }
-
 
 static void
 test_call_print_person()
@@ -194,10 +186,9 @@ test_call_print_person()
 		.num_params = 1
 	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
+	Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
-	TEST_ASSERT_EQUAL_INT(0, status);
-	TEST_ASSERT_EQUAL_INT(0, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_ERR_OK, request.error);
 	TEST_ASSERT_EQUAL(RPC_TYPE_STRING, request.result.type);
 	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", request.result.value.string);
 
@@ -212,9 +203,9 @@ test_call_get_person()
 		.method_name = "get_person"
 	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
+	Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
-	TEST_ASSERT_EQUAL_INT(1, status);
+	TEST_ASSERT_EQUAL_INT(CX_ERR_OK, request.error);
 	TEST_ASSERT_EQUAL(RPC_TYPE_OBJECT, request.result.type);
 
 	if (request.result.f_free)

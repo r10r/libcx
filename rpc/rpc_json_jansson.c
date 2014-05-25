@@ -279,7 +279,7 @@ process_request(RPC_MethodTable* rpc_methods, RPC_Request* request, json_t* requ
 
 	if (status == 0)
 	{
-		status = Service_call(rpc_methods, request);
+		Service_call(rpc_methods, request);
 		XFLOG("RPC method(%s) executed (with return value)", request->method_name);
 	}
 	json_t* response_json = Request_create_json_response(request);

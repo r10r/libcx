@@ -17,11 +17,7 @@ cx_rpc_strerror(RPC_Error err)
 RPC_Value*
 Param_get(RPC_Param* params, int position, const char* name, int num_params)
 {
-	if (!params)
-	{
-		cx_err_set(CX_RPC_ERROR_INVALID_PARAMS, "No parameters available.");
-	}
-	else
+	if (params)
 	{
 		int index;
 		for (index = 0; index < num_params; index++)
@@ -36,11 +32,10 @@ Param_get(RPC_Param* params, int position, const char* name, int num_params)
 	return NULL;
 }
 
-int
+void
 Service_call(RPC_MethodTable* service_methods, RPC_Request* request)
 {
 	cx_err_clear(); /* clear previous errors */
-	int status = 1;
 
 	RPC_MethodTable* wrapped_method = service_methods;
 	bool method_missing = true;
@@ -52,22 +47,11 @@ Service_call(RPC_MethodTable* service_methods, RPC_Request* request)
 		{
 			XFDBG("Calling method[%s] (wrapper:%p, params:%d, format:%d)",
 			      request->method_name, (void*)wrapped_method->method_wrapper, request->num_params, request->format);
-			status = wrapped_method->method_wrapper(request->params, request->num_params, &request->result, request->format);
+			wrapped_method->method_wrapper(request->params, request->num_params, &request->result, request->format);
 			method_missing = false;
 			break;
 		}
 		wrapped_method++;
-	}
-
-	if (cx_err_code != CX_ERR_OK)
-	{
-		return -1;
-	}
-
-	if (method_missing)
-	{
-		request->error = CX_RPC_ERROR_METHOD_NOT_FOUND;
-		return -1;
 	}
 
 	/* free allocated param values */
@@ -80,5 +64,9 @@ Service_call(RPC_MethodTable* service_methods, RPC_Request* request)
 
 		param++;
 	}
-	return 1;
+
+	if (method_missing)
+		request->error = CX_RPC_ERROR_METHOD_NOT_FOUND;
+	else if (cx_err_code != CX_ERR_OK)
+		request->error = cx_err_code;
 }

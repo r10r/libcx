@@ -58,7 +58,7 @@ typedef void F_RPC_RequestFree (RPC_Request* request);
  * @param deserialize function only set/used when type is object
  */
 typedef json_t* F_ValueToJSON (void* object);
-typedef int RPC_MethodWrapper (RPC_Param* params, int num_params, RPC_Value* result, RPC_Format format);
+typedef void RPC_MethodWrapper (RPC_Param* params, int num_params, RPC_Value* result, RPC_Format format);
 
 
 struct cx_rpc_value_t
@@ -133,13 +133,7 @@ RPC_Request_set_error(RPC_Request* request, int err, const char* message);
 RPC_Value*
 Param_get(RPC_Param* params, int position, const char* name, int num_params);
 
-/*
- * @return
- *     -1 on error (see request->error for error code)
- *      0 on success if method has void return type
- *      1 on success if method has non-void return type
- */
-int
+void
 Service_call(RPC_MethodTable* method_map, RPC_Request* request);
 
 const char*

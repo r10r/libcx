@@ -113,10 +113,9 @@ test_call_print_person_json()
 		.format = FORMAT_JSON
 	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
+	Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
-	TEST_ASSERT_EQUAL_INT(0, status);
-	TEST_ASSERT_EQUAL_INT(0, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_ERR_OK, request.error);
 	TEST_ASSERT_EQUAL(RPC_TYPE_STRING, request.result.type);
 	TEST_ASSERT_EQUAL_STRING("Max Mustermann (age 33)", request.result.value.string);
 
@@ -131,9 +130,8 @@ test_call_get_person_json()
 		.method_name = "get_person"
 	};
 
-	int status = Service_call(EXAMPLE_SERVICE_METHODS, &request);
+	Service_call(EXAMPLE_SERVICE_METHODS, &request);
 
-	TEST_ASSERT_EQUAL_INT(1, status);
 	TEST_ASSERT_EQUAL(RPC_TYPE_OBJECT, request.result.type);
 
 	Person* person = (Person*)request.result.value.object;
@@ -451,7 +449,7 @@ test_deserialize_error_param_deserialize()
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
-	TEST_ASSERT_EQUAL_INT(RPC_ERROR_INVALID_PARAMS, request.error);
+	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_INVALID_PARAMS, request.error);
 	TEST_ASSERT_EQUAL_STRING("play", request.method_name);
 	TEST_ASSERT_EQUAL_INT(RPC_ID_STRING, request.id_type);
 	TEST_ASSERT_EQUAL_STRING("foobar", request.id.string);
