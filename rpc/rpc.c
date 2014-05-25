@@ -5,7 +5,7 @@ Param_get(RPC_Param* params, int position, const char* name, int num_params)
 {
 	if (!params)
 	{
-		set_cx_errno(RPC_ERROR_NO_PARAMS);
+		cx_errno_set(RPC_ERROR_NO_PARAMS);
 	}
 	else
 	{
@@ -25,7 +25,7 @@ Param_get(RPC_Param* params, int position, const char* name, int num_params)
 int
 Service_call(RPC_MethodTable* service_methods, RPC_Request* request)
 {
-	set_cx_errno(0); /* clear previous errors */
+	cx_errno_set(0); /* clear previous errors */
 	int status = 1;
 
 	RPC_MethodTable* wrapped_method = service_methods;
@@ -45,7 +45,7 @@ Service_call(RPC_MethodTable* service_methods, RPC_Request* request)
 	}
 
 	if (method_missing)
-		set_cx_errno(RPC_ERROR_METHOD_MISSING);
+		cx_errno_set(RPC_ERROR_METHOD_MISSING);
 
 	/* free allocated param values */
 	int i;

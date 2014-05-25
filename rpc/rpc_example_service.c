@@ -36,7 +36,7 @@ Person_from_json(Person* person, json_t* json)
 	if (status == -1)
 	{
 		XFERR("JSON deserialize error: %s", json_error.text);
-		set_cx_errno(RPC_ERROR_PARAM_DESERIALIZE);
+		cx_errno_set(RPC_ERROR_PARAM_DESERIALIZE);
 	}
 
 	return status;
@@ -77,7 +77,7 @@ has_count(const char* string, size_t count)
 	}
 	else
 	{
-		set_cx_errno(RPC_ERROR_PARAM_NULL);
+		cx_errno_set(RPC_ERROR_PARAM_NULL);
 	}
 
 	return result;
@@ -93,13 +93,13 @@ call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format 
 
 	if (p_string == NULL)
 	{
-		set_cx_errno(RPC_ERROR_PARAM_MISSING);
+		cx_errno_set(RPC_ERROR_PARAM_MISSING);
 		return -1;
 	}
 
 	if (p_string->type != RPC_TYPE_STRING)
 	{
-		set_cx_errno(RPC_ERROR_PARAM_INVALID_TYPE);
+		cx_errno_set(RPC_ERROR_PARAM_INVALID_TYPE);
 		return -1;
 	}
 
@@ -107,13 +107,13 @@ call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format 
 
 	if (p_count == NULL)
 	{
-		set_cx_errno(RPC_ERROR_PARAM_MISSING);
+		cx_errno_set(RPC_ERROR_PARAM_MISSING);
 		return -1;
 	}
 
 	if (p_count->type != RPC_TYPE_INTEGER)
 	{
-		set_cx_errno(RPC_ERROR_PARAM_INVALID_TYPE);
+		cx_errno_set(RPC_ERROR_PARAM_INVALID_TYPE);
 		return -1;
 	}
 
@@ -122,7 +122,7 @@ call_has_count(RPC_Param* params, int num_params, RPC_Value* result, RPC_Format 
 	case FORMAT_NATIVE:
 		break;
 	case FORMAT_JSON:
-		set_cx_errno(RPC_ERROR_FORMAT_UNSUPPORTED);
+		cx_errno_set(RPC_ERROR_FORMAT_UNSUPPORTED);
 		return -1;
 	}
 
@@ -170,13 +170,13 @@ call_print_person(RPC_Param* params, int num_params, RPC_Value* result, RPC_Form
 
 	if (p_person == NULL)
 	{
-		set_cx_errno(RPC_ERROR_PARAM_MISSING);
+		cx_errno_set(RPC_ERROR_PARAM_MISSING);
 		return -1;
 	}
 
 	if (p_person->type != RPC_TYPE_OBJECT)
 	{
-		set_cx_errno(RPC_ERROR_PARAM_INVALID_TYPE);
+		cx_errno_set(RPC_ERROR_PARAM_INVALID_TYPE);
 		return -1;
 	}
 

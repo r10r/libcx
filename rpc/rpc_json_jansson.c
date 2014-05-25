@@ -136,7 +136,7 @@ Params_from_json(RPC_Param** params, json_t* json)
 	else
 	{
 		XERR("parameter 'params': invalid format (expected array or object)");
-		set_cx_errno(RPC_ERROR_INVALID_PARAMS);
+		cx_errno_set(RPC_ERROR_INVALID_PARAMS);
 		return -1;
 	}
 }
@@ -169,7 +169,7 @@ Value_to_json(RPC_Value* value)
 		if (value->f_to_json)
 			return value->f_to_json(value->value.object);
 		else
-			set_cx_errno(RPC_ERROR_METHOD_MISSING);
+			cx_errno_set(RPC_ERROR_METHOD_MISSING);
 	}
 	return NULL;
 }

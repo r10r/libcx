@@ -11,6 +11,9 @@
 #define JSONRPC_INTERNAL_ERROR \
 	"{\"jsonrpc\": \"2.0\", \"error\": {\"code\": -32603, \"message\": \"Internal error\"}, \"id\": null}"
 
+#define JSON_RPC_ERROR_MIN      -32768
+#define JSON_RPC_ERROR_MAX      -32000
+
 typedef enum cx_json_rpc_error_t
 {
 	JSON_RPC_ERROR_PARSE_ERROR = -32700,
