@@ -54,9 +54,6 @@ unix_server_handler(Server* server, ServerEvent event)
 		// ignore SIGPIPE if on linux
 		// TODO check if required because libev already blocks signals
 		// TODO check if workers are protected from SIGPIPE signals
-#if defined(__linux__)
-		signal(SIGPIPE, SIG_IGN);
-#endif
 		// connect to socket
 		if (Socket_serve((Socket*)socket) != SOCKET_LISTEN)
 		{

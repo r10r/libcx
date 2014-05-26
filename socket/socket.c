@@ -38,6 +38,9 @@ Socket_serve(Socket* sock)
 	if (Socket_create(sock) != SOCKET_CREATED)
 		return sock->status;
 
+	XDBG("Ignoring SIGPIPE");
+
+	signal(SIGPIPE, SIG_IGN);
 #ifdef _DARWIN_C_SOURCE
 	// http://stackoverflow.com/questions/108183/how-to-prevent-sigpipes-or-handle-them-properly
 	// http://nadeausoftware.com/articles/2012/01/c_c_tip_how_use_compiler_predefined_macros_detect_operating_system
@@ -65,6 +68,7 @@ Socket_use(Socket* sock)
 	if (Socket_create(sock) != SOCKET_CREATED)
 		return sock->status;
 
+	signal(SIGPIPE, SIG_IGN);
 #ifdef _DARWIN_C_SOURCE
 	// http://stackoverflow.com/questions/108183/how-to-prevent-sigpipes-or-handle-them-properly
 	// http://nadeausoftware.com/articles/2012/01/c_c_tip_how_use_compiler_predefined_macros_detect_operating_system
@@ -135,6 +139,7 @@ Socket_listen(Socket* sock)
 void
 enable_so_opt(int fd, int option)
 {
+	XFDBG("Enable option %d on socket %d", fd, option);
 	int enable = 1;
 
 	setsockopt(fd, SOL_SOCKET, option, (void*)&enable, sizeof(enable));
