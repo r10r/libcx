@@ -26,10 +26,8 @@ test_XFCHECK()
 static void
 test_XERR()
 {
-	XERR("You should not see this");
 	errno = EPERM;
-	char* err = strerror(errno);
-	XERR(err);
+	XERRNO("I've set errno to EPERM");
 }
 
 static void

@@ -44,15 +44,17 @@
  * Prints the given message to stderr with debug information if errno is not 0.
  */
 // FIXME rename to XERRNO
-#define XERR(message) \
-	if (errno != 0) \
+#define XERRNO(message) \
 		fprintf(stderr, "XERR:(%s):%s:%d - %s - errno:%d:[%s]\n", \
 			__func__, __FILE__, __LINE__, message, errno, strerror(errno))
 
 #define XFERRNO(format, ...) \
-	if (errno != 0) \
 		fprintf(stderr, "XERR:(%s):%s:%d - errno:%d:[%s] - " format "\n", \
 			__func__, __FILE__, __LINE__, errno, strerror(errno), __VA_ARGS__)
+
+#define XERR(message) \
+	fprintf(stderr, "XERR:(%s):%s:%d - " message "\n", \
+		__func__, __FILE__, __LINE__)
 
 #define XFERR(format, ...) \
 	fprintf(stderr, "XERR:(%s):%s:%d - " format "\n", \

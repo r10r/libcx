@@ -5,7 +5,6 @@ Socket_print_status(Socket* sock)
 {
 	switch (sock->status)
 	{
-	// FIXME print socket address (path or IP)
 	case SOCKET_INITIALIZED:
 		XDBG("Socket initialized");
 		break;
@@ -22,10 +21,10 @@ Socket_print_status(Socket* sock)
 		XDBG("Socket connected");
 		break;
 	case SOCKET_ERROR_INVALID_ADDRESS:
-		XFERR("Invalid socket address: %s", ""); // FIXME print socket address
+		XFERRNO("Invalid socket address: %s", ""); // FIXME print socket address
 		break;
 	case SOCKET_ERROR_ERRNO:
-		XERR("Internal socket error");
+		XERRNO("Internal socket error");
 		break;
 	}
 }
