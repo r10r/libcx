@@ -13,6 +13,9 @@
 //typedef unsigned long ssize_t;
 #endif
 
+#define MILLION 1000000
+#define THOUSAND 1000
+
 /* [ memory management ] */
 
 

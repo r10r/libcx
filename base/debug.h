@@ -45,12 +45,12 @@
  */
 // FIXME rename to XERRNO
 #define XERRNO(message) \
-		fprintf(stderr, "XERR:(%s):%s:%d - %s - errno:%d:[%s]\n", \
-			__func__, __FILE__, __LINE__, message, errno, strerror(errno))
+	fprintf(stderr, "XERR:(%s):%s:%d - %s - errno:%d:[%s]\n", \
+		__func__, __FILE__, __LINE__, message, errno, strerror(errno))
 
 #define XFERRNO(format, ...) \
-		fprintf(stderr, "XERR:(%s):%s:%d - errno:%d:[%s] - " format "\n", \
-			__func__, __FILE__, __LINE__, errno, strerror(errno), __VA_ARGS__)
+	fprintf(stderr, "XERR:(%s):%s:%d - errno:%d:[%s] - " format "\n", \
+		__func__, __FILE__, __LINE__, errno, strerror(errno), __VA_ARGS__)
 
 #define XERR(message) \
 	fprintf(stderr, "XERR:(%s):%s:%d - " message "\n", \

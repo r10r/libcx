@@ -139,3 +139,32 @@ enable_so_opt(int fd, int option)
 
 	setsockopt(fd, SOL_SOCKET, option, (void*)&enable, sizeof(enable));
 }
+
+/*
+ * @param millis timeout in milliseconds (> 0)
+ * @param optname SO_RCVTIMEO | SO_SNDTIMEO
+ * @param name the string version of SO_RCVTIMEO | SO_SNDTIMEO
+ */
+void
+Socket_set_timeout(Socket* sock, long millis, int optname, const char* name)
+{
+	if (millis > 0)
+	{
+		struct timeval timeout;
+		timeout.tv_sec = millis / THOUSAND;
+		timeout.tv_usec = millis % THOUSAND;
+
+		if (setsockopt(sock->fd, SOL_SOCKET, optname, (char*)&timeout, sizeof(timeout)) == 0)
+		{
+			XFDBG("%s timeout on socket %d: %ld millis", name, sock->fd, millis);
+		}
+		else
+		{
+			XFERRNO("Failed to set %s timeout on socket %d to: %ld millis ", name, sock->fd, millis);
+		}
+	}
+	else
+	{
+		XFDBG("Invalid %s timeout for socket %d: %ld millis", name, sock->fd, millis);
+	}
+}

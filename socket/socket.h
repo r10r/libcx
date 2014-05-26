@@ -73,4 +73,17 @@ Socket_print_status(Socket* socket);
 void
 enable_so_opt(int fd, int option);
 
+void
+Socket_set_timeout(Socket* sock, long millis, int optname, const char* name);
+
+#define Socket_set_timeout_receive(sock, millis) \
+	Socket_set_timeout(sock, millis, SO_RCVTIMEO, "SO_RCVTIMEO")
+
+#define Socket_set_timeout_send(sock, millis) \
+	Socket_set_timeout(sock, millis, SO_SNDTIMEO, "SO_SNDTIMEO")
+
+#define Socket_set_timeouts(sock, millis_rcvtimeo, millis_sndtimeo) \
+	Socket_set_timeout_receive(sock, millis_rcvtimeo); \
+	Socket_set_timeout_send(sock, millis_sndtimeo)
+
 #endif
