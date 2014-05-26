@@ -17,6 +17,8 @@
 #define ALLOC_TOKEN '+'
 #define FREE_TOKEN '-'
 
+// TODO (benchmark) use write as long as written data is slower than PIPE_BUF
+
 static inline void
 cx_mem_dbg(void* ptr, char token, const char* file, int line, const char* func, size_t count, size_t eltsize)
 {
