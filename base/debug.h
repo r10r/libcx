@@ -1,9 +1,11 @@
 #ifndef _CX_DEBUG_H
 #define _CX_DEBUG_H
 
-#include <string.h>     /* strerror */
+#include <string.h>             /* strerror */
 #include <errno.h>
-#include <stdio.h>      /* fprintf */
+#include <stdio.h>              /* fprintf */
+
+#define DFMT ":(%s) %s %d - "   /* function, method, line */
 
 /*
  * debug message convetions:
@@ -22,11 +24,11 @@
  * Prints the given message to stderr with debug information if errno is not 0.
  */
 #define XDBG(message) \
-	fprintf(stderr, "XDBG:(%s):%s:%d - " message "\n", \
+	fprintf(stderr, "XDBG" DFMT message "\n", \
 		__func__, __FILE__, __LINE__)
 
 #define XFDBG(format, ...) \
-	fprintf(stderr, "(%s):%s:%d - " format "\n", \
+	fprintf(stderr, "XDBG" DFMT format "\n", \
 		__func__, __FILE__, __LINE__, __VA_ARGS__)
 
 #endif
@@ -45,27 +47,27 @@
  */
 // FIXME rename to XERRNO
 #define XERRNO(message) \
-	fprintf(stderr, "XERR:(%s):%s:%d - %s - errno:%d:[%s]\n", \
+	fprintf(stderr, "XERR" DFMT "%s errno:%d:[%s]\n", \
 		__func__, __FILE__, __LINE__, message, errno, strerror(errno))
 
 #define XFERRNO(format, ...) \
-	fprintf(stderr, "XERR:(%s):%s:%d - errno:%d:[%s] - " format "\n", \
+	fprintf(stderr, "XERR" DFMT "errno:%d:[%s] - " format "\n", \
 		__func__, __FILE__, __LINE__, errno, strerror(errno), __VA_ARGS__)
 
 #define XERR(message) \
-	fprintf(stderr, "XERR:(%s):%s:%d - " message "\n", \
+	fprintf(stderr, "XERR" DFMT message "\n", \
 		__func__, __FILE__, __LINE__)
 
 #define XFERR(format, ...) \
-	fprintf(stderr, "XERR:(%s):%s:%d - " format "\n", \
+	fprintf(stderr, "XERR" DFMT format "\n", \
 		__func__, __FILE__, __LINE__, __VA_ARGS__)
 
 #define XWARN(message) \
-	fprintf(stderr, "XWARN:(%s):%s:%d - %s \n", \
+	fprintf(stderr, "XWARN" DFMT "%s \n", \
 		__func__, __FILE__, __LINE__, message)
 
 #define XFWARN(format, ...) \
-	fprintf(stderr, "XWARN:(%s):%s:%d - " format "\n", \
+	fprintf(stderr, "XWARN" DFMT format "\n", \
 		__func__, __FILE__, __LINE__, __VA_ARGS__)
 
 #endif
