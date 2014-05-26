@@ -44,9 +44,9 @@ unix_connection_watcher(ev_loop* loop, ev_io* w, int revents)
 	int client_fd = accept(unix_worker->server_fd, NULL, NULL);
 
 	if (client_fd == -1)
-    {
+	{
 		XFERRNO("worker[%lu] failed to accept connection", worker->id);
-    }
+	}
 	else
 	{
 #ifdef _DARWIN_C_SOURCE

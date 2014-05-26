@@ -5,9 +5,9 @@
 #include <sys/socket.h>
 #include <fcntl.h>      /* fcntl, to make socket non-blocking */
 
-#include "base/ev.h"
-#include "base/base.h"
-#include "string/string_buffer.h"
+#include "../base/ev.h"
+#include "../base/base.h"
+#include "../string/string_buffer.h"
 #include "request.h"
 #include "server.h" /* FIXME circular inclusion */
 #include "worker.h"

@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <sys/time.h> // gettimeofday
 
-#include "umtp/message.h"
+#include "../umtp/message.h"
 
 typedef enum cx_request_status_t
 {

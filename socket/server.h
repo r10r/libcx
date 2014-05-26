@@ -7,9 +7,9 @@
 #include <string.h>     /* strlen */
 #include <pthread.h>
 
-#include "base/ev.h"
-#include "list/list.h"
-#include "base/base.h"
+#include "../base/base.h"
+#include "../base/ev.h"
+#include "../list/list.h"
 #include "socket.h"
 
 typedef struct cx_server_t Server;

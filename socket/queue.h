@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 
-#include "list/list.h"
+#include "../list/list.h"
 #include "server.h" /* FIXME circular inclusion */
 #include "worker.h"
 

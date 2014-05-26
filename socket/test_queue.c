@@ -3,7 +3,7 @@
 #include <signal.h>
 #endif
 
-#include "base/test.h"
+#include "../base/test.h"
 #include "queue.h"
 
 /*

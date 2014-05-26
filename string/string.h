@@ -17,7 +17,7 @@
 #include <stdio.h>      /* fileno, vsnprintf */
 #include <limits.h>     /* LONG_MAX */
 
-#include "base/base.h"
+#include "../base/base.h"
 
 #ifndef STRING_MAX_LENGTH
 // 1 GiB = 2^30

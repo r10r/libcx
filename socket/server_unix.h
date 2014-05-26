@@ -1,7 +1,7 @@
 #ifndef _CX_SERVER_UNIX_H
 #define _CX_SERVER_UNIX_H
 
-#include "umtp/message_parser.h"
+#include "../umtp/message_parser.h"
 #include "server.h"
 #include "socket_unix.h"
 #include "worker_unix.h"

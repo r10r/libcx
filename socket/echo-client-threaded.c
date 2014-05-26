@@ -1,8 +1,8 @@
 #include <pthread.h>
 
-#include "string/string_buffer.h"
+#include "../base/profile.h"
+#include "../string/string_buffer.h"
 #include "client.h"
-#include "base/profile.h"
 
 typedef void F_Connected (TCPSocket* sock);
 

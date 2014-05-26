@@ -1,7 +1,7 @@
 #ifndef _CX_PARSER_H
 #define _CX_PARSER_H
 
-#include "string/string_buffer.h"
+#include "../string/string_buffer.h"
 
 #define ParserDebug(parser, msg) \
 	printf("-- parse event [%s] --\n", msg); \

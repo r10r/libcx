@@ -5,9 +5,9 @@
 #include <stdio.h>      /* fprintf, feof, fopen, FILE */
 #include <stdbool.h>    /* true, false */
 
-#include "list/list.h"
-#include "string/string_buffer.h"
-#include "string/pair.h"
+#include "../list/list.h"
+#include "../string/string_buffer.h"
+#include "../string/pair.h"
 #include "parser.h"
 
 typedef struct cx_message_t Message;
