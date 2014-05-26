@@ -1,5 +1,3 @@
-/* FIXME circular inclusion */
-#include "server.h"
 #include "worker.h"
 
 static void*

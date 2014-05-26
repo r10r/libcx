@@ -1,5 +1,4 @@
-#include "server.h"             /* FIXME circular inclusion */
-#include "worker.h"
+#include "server.h"
 
 static void
 shutdown_watcher(ev_loop* loop, ev_timer* w, int revents);

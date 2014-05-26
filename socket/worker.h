@@ -5,6 +5,7 @@
 
 #include "../base/ev.h"
 #include "../list/list.h"
+#include "server.h"
 
 #ifdef PTHREAD_STACK_MIN
 #define WORKER_THREAD_STACK_SIZE PTHREAD_STACK_MIN * 2

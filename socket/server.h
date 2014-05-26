@@ -14,6 +14,9 @@
 
 typedef struct cx_server_t Server;
 
+/* worker requires server typedef */
+#include "worker.h"
+
 typedef enum cx_server_event_t
 {
 	SERVER_START,

@@ -1,5 +1,4 @@
 #include "server_unix.h"
-#include "worker_unix.h"        /* FIXME circular inclusion */
 
 static void
 unix_server_handler(Server* server, ServerEvent event);
