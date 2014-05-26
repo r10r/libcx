@@ -14,7 +14,7 @@ TESTS += $(L)/test_queue
 ifeq ($(compiler),gcc)
 $(L)/server.o : CFLAGS += -Wno-error=strict-aliasing
 $(L)/connection.o : CFLAGS += -Wno-error=strict-aliasing
-$(L)/worker_unix.o : CFLAGS += -Wno-error=strict-aliasing
+$(L)/connection_worker.o : CFLAGS += -Wno-error=strict-aliasing
 endif
 
 $(L)/echo-client-threaded_FLAGS := -lpthread
@@ -35,7 +35,7 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/socket_tcp.o \
 	$(L)/connection.o \
 	$(L)/worker.o \
-	$(L)/worker_unix.o \
+	$(L)/connection_worker.o \
 	$(L)/request.o \
 	$(LIBCX_DIR)/list/list.o \
 	$(LIBCX_DIR)/string/string.o \

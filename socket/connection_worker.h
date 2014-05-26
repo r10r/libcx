@@ -9,24 +9,24 @@
 typedef Connection* F_CreateConnection ();
 
 void
-unix_connection_watcher(ev_loop* loop, ev_io* w, int revents);
+connection_watcher(ev_loop* loop, ev_io* w, int revents);
 
 
-typedef struct cx_unix_worker_t
+typedef struct cx_connection_worker_t
 {
 	Worker worker;
 	int server_fd;
 	ev_io connection_watcher;
 	F_CreateConnection* f_create_connection;
-} UnixWorker;
+} ConnectionWorker;
 
-UnixWorker*
-UnixWorker_new(void);
-
-void
-UnixWorker_init(UnixWorker* worker);
+ConnectionWorker*
+ConnectionWorker_new(void);
 
 void
-UnixWorker_run(Worker* worker);
+ConnectionWorker_init(ConnectionWorker* worker);
+
+void
+ConnectionWorker_run(Worker* worker);
 
 #endif

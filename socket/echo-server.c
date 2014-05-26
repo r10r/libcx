@@ -105,10 +105,10 @@ EchoConnection_new()
 	return connection;
 }
 
-static UnixWorker*
+static ConnectionWorker*
 EchoWorker_new()
 {
-	UnixWorker* worker = UnixWorker_new();
+	ConnectionWorker* worker = ConnectionWorker_new();
 
 	worker->f_create_connection = EchoConnection_new;
 	return worker;
