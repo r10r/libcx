@@ -1,8 +1,7 @@
 #include <pthread.h>
 
+#include "../base/profile.h"
 #include "client.h"
-
-PROFILE_INIT;
 
 struct client_data_t
 {
@@ -45,7 +44,7 @@ int main(int argc, char** argv)
 	  .connections	= connections,
 	  .data		= data };
 
-	PROFILE_BEGIN_FMT("threads:%d requests/thread:%d\n", thread_count, connections);
+	PROFILE_BEGIN_FMT("threads:%d requests/thread:%d\n", thread_count, connections)
 
 	int i;
 	for (i = 0; i < thread_count; i++)
@@ -54,7 +53,7 @@ int main(int argc, char** argv)
 		pthread_join(threads[i], NULL);
 	}
 
-	PROFILE_END;
+	PROFILE_END
 
 	cx_free(threads);
 	return 0;

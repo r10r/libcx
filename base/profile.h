@@ -6,7 +6,7 @@
 #ifndef _CX_PROFILE_H
 #define _CX_PROFILE_H
 
-#ifndef _CX_DEBUG_PROFILE
+#ifndef _CX_PROFILE
 
 #define PROFILE_INIT
 #define PROFILE_BEGIN(message) UNUSED(message)

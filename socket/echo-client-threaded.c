@@ -84,7 +84,7 @@ main(int argc, char** argv)
 		pthread_join(threads[i], NULL);
 
 
-	PROFILE_END;
+	PROFILE_END
 
 	cx_free(threads);
 	return 0;
