@@ -48,12 +48,8 @@ unix_server_handler(Server* server, ServerEvent event)
 	case SERVER_START:
 	{
 		XDBG("server event start");
-		// unlink existing socket
+		/* unlink existing socket */
 		unlink(socket->path);
-		// ignore SIGPIPE if on linux
-		// TODO check if required because libev already blocks signals
-		// TODO check if workers are protected from SIGPIPE signals
-		// connect to socket
 		if (Socket_serve((Socket*)socket) != SOCKET_LISTEN)
 		{
 			Socket_print_status((Socket*)socket);

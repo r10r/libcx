@@ -36,7 +36,6 @@ Worker_start(Worker* worker)
 	pthread_attr_init(&attr);
 	pthread_attr_setstacksize(&attr, WORKER_THREAD_STACK_SIZE);
 	int rc = pthread_create(worker->thread, &attr, _Worker_run, worker);
-
 //	int rc = pthread_create(worker->thread, NULL, _Worker_run, worker);
 
 	if ( rc != 0 )

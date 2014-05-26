@@ -38,16 +38,6 @@ Socket_serve(Socket* sock)
 	if (Socket_create(sock) != SOCKET_CREATED)
 		return sock->status;
 
-	XDBG("Ignoring SIGPIPE");
-
-	signal(SIGPIPE, SIG_IGN);
-#ifdef _DARWIN_C_SOURCE
-	// http://stackoverflow.com/questions/108183/how-to-prevent-sigpipes-or-handle-them-properly
-	// http://nadeausoftware.com/articles/2012/01/c_c_tip_how_use_compiler_predefined_macros_detect_operating_system
-	// both server and client socket must be protected against SIGPIPE
-	Socket_enable_option(sock, SO_NOSIGPIPE);       /* do not send SIGIPIPE on EPIPE */
-#endif
-
 	Socket_enable_option(sock, SO_REUSEADDR);       /* avoid address in use after termination */
 
 	if (Socket_bind(sock) != SOCKET_BIND)
@@ -67,16 +57,6 @@ Socket_use(Socket* sock)
 
 	if (Socket_create(sock) != SOCKET_CREATED)
 		return sock->status;
-
-	signal(SIGPIPE, SIG_IGN);
-#ifdef _DARWIN_C_SOURCE
-	// http://stackoverflow.com/questions/108183/how-to-prevent-sigpipes-or-handle-them-properly
-	// http://nadeausoftware.com/articles/2012/01/c_c_tip_how_use_compiler_predefined_macros_detect_operating_system
-	// both server and client socket must be protected against SIGPIPE
-	Socket_enable_option(sock, SO_NOSIGPIPE);       /* do not send SIGIPIPE on EPIPE */
-#endif
-
-	Socket_enable_option(sock, SO_REUSEADDR);       /* avoid address in use after termination */
 
 	if (Socket_connect(sock) != SOCKET_CONNECTED)
 		return sock->status;
@@ -142,7 +122,16 @@ enable_so_opt(int fd, int option)
 	XFDBG("Enable option %d on socket %d", fd, option);
 	int enable = 1;
 
-	setsockopt(fd, SOL_SOCKET, option, (void*)&enable, sizeof(enable));
+	int result = setsockopt(fd, SOL_SOCKET, option, (void*)&enable, sizeof(enable));
+
+	if (result == 0)
+	{
+		XFDBG("Enabled socket option %d on socket #%d ", option, fd);
+	}
+	else
+	{
+		XFERRNO("Failed to enable socket option %d on socket #%d ", option, fd);
+	}
 }
 
 /*
@@ -159,7 +148,9 @@ Socket_set_timeout(Socket* sock, long millis, int optname, const char* name)
 		timeout.tv_sec = millis / THOUSAND;
 		timeout.tv_usec = millis % THOUSAND;
 
-		if (setsockopt(sock->fd, SOL_SOCKET, optname, (char*)&timeout, sizeof(timeout)) == 0)
+		int result = setsockopt(sock->fd, SOL_SOCKET, optname, (char*)&timeout, sizeof(timeout));
+
+		if (result == 0)
 		{
 			XFDBG("%s timeout on socket %d: %ld millis", name, sock->fd, millis);
 		}

@@ -44,7 +44,20 @@ Server_start(Server* server)
 {
 	server->f_server_handler(server, SERVER_START);
 
-	// start workers
+	/* ignore signals before spawning workers */
+	/* ignore SIGPIPE -  write will return SIGPIPE */
+	signal(SIGPIPE, SIG_IGN);
+	/* ignore SIGINT - shutdown handler is attached to SIGINT */
+	signal(SIGINT, SIG_IGN);
+
+	/* handle SIGINT in a callback */
+	ev_signal_init(&server->sigint_watcher, sigint_watcher, SIGINT);
+	ev_signal_start(server->loop, &server->sigint_watcher);
+
+	/* initialize shutdown timer */
+	ev_init(&server->shutdown_watcher, shutdown_watcher);
+
+	/* start workers */
 	unsigned int i;
 	for (i = 0; i < (unsigned int)server->workers->length; i++)
 	{
@@ -54,16 +67,8 @@ Server_start(Server* server)
 		Worker_start(worker);
 	}
 
-	/* shutdown server on SIGINT */
-	signal(SIGINT, SIG_IGN); /* SIGINT is handled by a callback */
-	ev_signal_init(&server->sigint_watcher, sigint_watcher, SIGINT);
-	ev_signal_start(server->loop, &server->sigint_watcher);
-
-	/* initialize shutdown timer */
-	ev_init(&server->shutdown_watcher, shutdown_watcher);
-
+	 /* blocks until SIGINT handler fires and initiates the shutdown process */
 	ev_run(server->loop, 0);
-
 	return 0;
 }
 

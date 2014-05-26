@@ -27,13 +27,18 @@ typedef struct cx_socket_t
 	int namespace;
 	int style;
 	int protocol;
-	const char* error_message; /* TODO define string errors (like strerror) */
 	SocketStatus status;
 	int fd;
 	struct sockaddr* address;
 	socklen_t address_size;
 	int backlog;
 } Socket;
+
+#define Socket_new \
+	cx_alloc(sizeof(Socket))
+
+#define Socket_free(sock) \
+	cx_free(sock)
 
 /* [ server ] */
 
@@ -45,6 +50,9 @@ Socket_bind(Socket* socket);
 
 SocketStatus
 Socket_listen(Socket* socket);
+
+Socket*
+Socket_accept(Socket* sock);
 
 
 /* [ client ] */
@@ -85,5 +93,8 @@ Socket_set_timeout(Socket* sock, long millis, int optname, const char* name);
 #define Socket_set_timeouts(sock, millis_rcvtimeo, millis_sndtimeo) \
 	Socket_set_timeout_receive(sock, millis_rcvtimeo); \
 	Socket_set_timeout_send(sock, millis_sndtimeo)
+
+void
+Socket_ignore_sigpipe(Socket *sock);
 
 #endif
