@@ -119,6 +119,17 @@ test_unsigned_arithmetic()
 	TEST_ASSERT_EQUAL_INT(-2, c);
 }
 
+static void
+test_TIMEVAL_SET_MILLIS()
+{
+	struct timeval t;
+
+	TIMEVAL_SET_MILLIS(t, 2003);
+
+	TEST_ASSERT_EQUAL_INT(2, t.tv_sec);
+	TEST_ASSERT_EQUAL_INT(3000, t.tv_usec);
+}
+
 int
 main()
 {
@@ -129,6 +140,7 @@ main()
 	RUN(test_unsigned_minus_signed);
 	RUN(test_EACH);
 	RUN(test_unsigned_arithmetic);
+	RUN(test_TIMEVAL_SET_MILLIS);
 
 	TEST_END
 }

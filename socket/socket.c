@@ -145,8 +145,7 @@ Socket_set_timeout(Socket* sock, long millis, int optname, const char* name)
 	if (millis > 0)
 	{
 		struct timeval timeout;
-		timeout.tv_sec = millis / THOUSAND;
-		timeout.tv_usec = millis % THOUSAND;
+		TIMEVAL_SET_MILLIS(timeout, millis);
 
 		int result = setsockopt(sock->fd, SOL_SOCKET, optname, (char*)&timeout, sizeof(timeout));
 

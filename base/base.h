@@ -16,6 +16,10 @@
 #define MILLION 1000000
 #define THOUSAND 1000
 
+#define TIMEVAL_SET_MILLIS(_timeval, millis) \
+	_timeval.tv_sec = (millis / THOUSAND); \
+	_timeval.tv_usec = (millis % THOUSAND) * THOUSAND
+
 /* [ memory management ] */
 
 
