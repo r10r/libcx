@@ -15,9 +15,20 @@ close_connection(Connection* connection)
 }
 
 static void
+connection_close(Connection* conn, SendBuffer* buffer)
+{
+	UNUSED(buffer);
+	Connection_close(conn);
+}
+
+static void
 echo_connection_read(Connection* conn)
 {
 	CXDBG(conn, "read data");
+
+	if (!conn->data)
+		conn->data = StringBuffer_new(CONNECTION_BUFFER_LENGTH);
+
 	StringBuffer* buffer = (StringBuffer*)conn->data;
 
 	/* receive data until buffer is full */
@@ -27,13 +38,14 @@ echo_connection_read(Connection* conn)
 	switch (buffer->status)
 	{
 	case STRING_BUFFER_STATUS_OK:
-		Connection_start_write(conn);
+		Connection_send(conn, buffer, NULL);
+		conn->data = NULL;
 		break;
 	case STRING_BUFFER_STATUS_EOF:
 		/* todo check if there is any data to send */
 		XDBG("received EOF - closing connection");
 		Connection_close_read(conn);
-		Connection_start_write(conn);
+		Connection_send(conn, buffer, connection_close);
 		break;
 	case STRING_BUFFER_STATUS_ERROR_TO_SMALL:
 	case STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS:
@@ -46,7 +58,10 @@ echo_connection_read(Connection* conn)
 	case STRING_BUFFER_STATUS_ERROR_ERRNO:
 	{
 		if (buffer->error_errno == EWOULDBLOCK)
-			Connection_start_write(conn);
+		{
+			Connection_send(conn, buffer, NULL);
+			conn->data = NULL;
+		}
 		else
 		{
 			CXFDBG(conn, "closing connection because of error :%d", buffer->status);
@@ -57,50 +72,13 @@ echo_connection_read(Connection* conn)
 	}
 }
 
-static void
-echo_connection_write(Connection* conn)
-{
-	CXDBG(conn, "write data");
-	StringBuffer* buffer = (StringBuffer*)conn->data;
-	size_t nused = StringBuffer_used(buffer);
-
-	if (nused == 0)
-	{
-		CXDBG(conn, "no more data available for writing");
-
-		if (buffer->status == STRING_BUFFER_STATUS_EOF)
-			close_connection(conn);
-		else
-			Connection_stop_write(conn);
-	}
-	else
-	{
-		ssize_t nwritten = write(conn->fd, StringBuffer_value(buffer), nused);
-
-		if (nwritten == -1)
-		{
-			// we should not receive EAGAIN here ?
-			assert(errno != EAGAIN);
-			// FIXME errno:32:[Broken pipe] - Connection[12] - Failed to write data
-			CXERRNO(conn, "Failed to write data");
-			// when writing fails shutdown connection, because buffer is not shifted any longer
-			Connection_close(conn);
-		}
-		else
-		{
-			CXFDBG(conn, "send %zu bytes (remaining %zu)", nwritten, StringBuffer_used(buffer));
-			StringBuffer_shift(buffer, (size_t)nwritten);
-		}
-	}
-}
-
 static Connection*
 EchoConnection_new()
 {
 	Connection* connection = Connection_new(NULL, -1);
 
 	connection->f_receive_data_handler = echo_connection_read;
-	connection->f_send_data_handler = echo_connection_write;
+	connection->f_on_write_error = Connection_close;
 	connection->data = StringBuffer_new(CONNECTION_BUFFER_LENGTH);
 	return connection;
 }
