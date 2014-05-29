@@ -1,5 +1,8 @@
 #include "connection.h"
 
+static void
+connection_write(Connection* conn);
+
 Connection*
 Connection_new(Worker* worker, int fd)
 {
@@ -22,6 +25,8 @@ Connection_init(Connection* connection, Worker* worker, int fd)
 	connection->fd = fd;
 	connection->send_buffers = List_new();
 	connection->send_buffers->f_node_data_free = send_buffer_node_free;
+
+	connection->f_send_data_handler = connection_write;
 }
 
 static void
@@ -98,73 +103,6 @@ Connection_close(Connection* connection)
 	Connection_free(connection);
 }
 
-void
-Connection_send(Connection* conn, StringBuffer* buf, F_SendFinished* f_send_finished)
-{
-#ifdef _CX_DEBUG
-	StringBuffer_print_bytes_hex(buf, 16, "send buffer");
-#endif
-	SendBuffer* unit = SendBuffer_new(buf, f_send_finished);
-	List_push(conn->send_buffers, unit);
-	Connection_start_write(conn);
-}
-
-//#define WRITE_SIZE SSIZE_MAX
-
-/*
- * - shift what's written ?, or maintain pointer ?
- * - what if output buffer is appended ?
- * - what if data length is really big ?
- *
- * the buffer that is send must be detached !!!!
- * (it can be pooled for performance reasons / to avoid memory fragmentation)
- */
-
-/*
-   // @from write function documentation
-   //	This function returns the number of bytes transmitted, or -1 on failure. If the socket is nonblocking, then
-   //	 send (like write) can return after sending just part of the data. , for information about nonblocking mode.
-   //
-   //	Note, however, that a successful return value merely indicates that the message has been sent without
-   //	 error, not necessarily that it has been received without error.
- */
-void
-Connection_send_blocking(Connection* c, const char* data, size_t length)
-{
-	if (length == 0)
-	{
-		XWARN("Attempting to send data with length 0");
-		return;
-	}
-
-	/* FIXME this is inefficient brute force sending using busy waiting - use the event loop instead */
-	size_t remaining = length;
-	size_t processed = 0;
-	ssize_t nsend = 0;
-
-	while (remaining > 0)
-	{
-		nsend = send(c->fd, data + processed, remaining, 0);
-
-		if (nsend == -1)
-		{
-			if (errno != EWOULDBLOCK || errno != EAGAIN)
-				break;
-		}
-		else
-		{
-			XFDBG("Sent bytes (%zu of %zu)", nsend, length);
-			remaining -= (size_t)nsend;
-			processed += (size_t)nsend;
-		}
-	}
-
-	XDBG("send finished");
-
-	if (c->f_send_data_handler)
-		c->f_send_data_handler(c);
-}
-
 SendBuffer*
 SendBuffer_new(StringBuffer* buffer, F_SendFinished* f_finished)
 {
@@ -180,4 +118,59 @@ SendBuffer_free(SendBuffer* unit)
 {
 	StringBuffer_free(unit->buffer);
 	cx_free(unit);
+}
+
+static void
+connection_write(Connection* conn)
+{
+	SendBuffer* unit = (SendBuffer*)List_get(conn->send_buffers, 0);
+
+	if (!unit)
+	{
+		CXDBG(conn, "no more units available for sending");
+		Connection_stop_write(conn);
+		return;
+	}
+
+	CXFDBG(conn, "write data [%p]", (void*)unit->buffer);
+	size_t ntransmit = StringBuffer_used(unit->buffer) - unit->ntransmitted;
+	if (ntransmit == 0)
+	{
+		CXDBG(conn, "no more data available for writing");
+		List_shift(conn->send_buffers); /* remove from list */
+		unit->f_send_finished(conn, unit);
+	}
+	else
+	{
+		char* start = StringBuffer_value(unit->buffer) + unit->ntransmitted;
+		ssize_t nwritten = write(conn->fd, start, ntransmit);
+
+		if (nwritten == -1)
+		{
+			/* we should never receive EAGAIN here */
+			assert(errno != EAGAIN);
+			CXERRNO(conn, "Failed to write data");
+			if (conn->f_on_write_error)
+				conn->f_on_write_error(conn);
+		}
+		else
+		{
+#ifdef _CX_DEBUG
+			StringBuffer_print_bytes_hex(unit->buffer, 16, "bytes send");
+#endif
+			CXFDBG(conn, "send %zu bytes (%zu remaining)", nwritten, ntransmit - (size_t)nwritten);
+			unit->ntransmitted += (size_t)nwritten;
+		}
+	}
+}
+
+void
+Connection_send(Connection* conn, StringBuffer* buf, F_SendFinished* f_send_finished)
+{
+#ifdef _CX_DEBUG
+	StringBuffer_print_bytes_hex(buf, 16, "send buffer");
+#endif
+	SendBuffer* unit = SendBuffer_new(buf, f_send_finished);
+	List_push(conn->send_buffers, unit);
+	Connection_start_write(conn);
 }

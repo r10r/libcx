@@ -35,6 +35,7 @@ struct cx_connection_t
 	// set the buffer to receive the data (function ?)
 	F_ConnectionDataHandler* f_receive_data_handler;
 	F_ConnectionDataHandler* f_send_data_handler;
+	F_ConnectionDataHandler* f_on_write_error;
 
 	Worker* worker;
 
