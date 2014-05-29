@@ -123,26 +123,28 @@ SendBuffer_free(SendBuffer* unit)
 static void
 connection_write(Connection* conn)
 {
-	SendBuffer* unit = (SendBuffer*)List_get(conn->send_buffers, 0);
+	SendBuffer* send_buffer = (SendBuffer*)List_get(conn->send_buffers, 0);
 
-	if (!unit)
+	if (!send_buffer)
 	{
 		CXDBG(conn, "no more units available for sending");
 		Connection_stop_write(conn);
 		return;
 	}
 
-	CXFDBG(conn, "write data [%p]", (void*)unit->buffer);
-	size_t ntransmit = StringBuffer_used(unit->buffer) - unit->ntransmitted;
+	CXFDBG(conn, "write data [%p]", (void*)send_buffer->buffer);
+	size_t ntransmit = StringBuffer_used(send_buffer->buffer) - send_buffer->ntransmitted;
 	if (ntransmit == 0)
 	{
 		CXDBG(conn, "no more data available for writing");
 		List_shift(conn->send_buffers); /* remove from list */
-		unit->f_send_finished(conn, unit);
+		if (send_buffer->f_send_finished)
+			send_buffer->f_send_finished(conn, send_buffer);
+		SendBuffer_free(send_buffer);
 	}
 	else
 	{
-		char* start = StringBuffer_value(unit->buffer) + unit->ntransmitted;
+		char* start = StringBuffer_value(send_buffer->buffer) + send_buffer->ntransmitted;
 		ssize_t nwritten = write(conn->fd, start, ntransmit);
 
 		if (nwritten == -1)
@@ -156,10 +158,10 @@ connection_write(Connection* conn)
 		else
 		{
 #ifdef _CX_DEBUG
-			StringBuffer_print_bytes_hex(unit->buffer, 16, "bytes send");
+			StringBuffer_print_bytes_hex(send_buffer->buffer, 16, "bytes send");
 #endif
 			CXFDBG(conn, "send %zu bytes (%zu remaining)", nwritten, ntransmit - (size_t)nwritten);
-			unit->ntransmitted += (size_t)nwritten;
+			send_buffer->ntransmitted += (size_t)nwritten;
 		}
 	}
 }
