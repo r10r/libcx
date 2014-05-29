@@ -9,7 +9,6 @@
 #include "../base/base.h"
 #include "../string/string_buffer.h"
 #include "request.h"
-#include "server.h" /* FIXME circular inclusion */
 #include "worker.h"
 
 // TODO move to socket.h
@@ -30,6 +29,8 @@ struct cx_connection_t
 	/* watch for incomming data*/
 	ev_io receive_data_watcher;
 	ev_io send_data_watcher;
+
+	List* send_buffers; /* list of send buffers */
 
 	// set the buffer to receive the data (function ?)
 	F_ConnectionDataHandler* f_receive_data_handler;
@@ -78,7 +79,7 @@ void
 Connection_close(Connection* c);
 
 void
-Connection_send_buffer(Connection* c, StringBuffer* buf);
+Connection_send(Connection* c, StringBuffer* buf, F_SendFinished* f_send_finished);
 
 void
 Connection_send_blocking(Connection* c, const char* data, size_t length);

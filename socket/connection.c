@@ -9,11 +9,19 @@ Connection_new(Worker* worker, int fd)
 	return connection;
 }
 
+static void
+send_buffer_node_free(void* data)
+{
+	SendBuffer_free((SendBuffer*)data);
+}
+
 void
 Connection_init(Connection* connection, Worker* worker, int fd)
 {
 	connection->worker = worker;
 	connection->fd = fd;
+	connection->send_buffers = List_new();
+	connection->send_buffers->f_node_data_free = send_buffer_node_free;
 }
 
 static void
@@ -43,9 +51,10 @@ send_data_callback(ev_loop* loop, ev_io* w, int revents)
 }
 
 void
-Connection_free(Connection* connection)
+Connection_free(Connection* conn)
 {
-	cx_free(connection);
+	List_free(conn->send_buffers);
+	cx_free(conn);
 }
 
 void
@@ -90,13 +99,14 @@ Connection_close(Connection* connection)
 }
 
 void
-Connection_send_buffer(Connection* c, StringBuffer* buf)
+Connection_send(Connection* conn, StringBuffer* buf, F_SendFinished* f_send_finished)
 {
 #ifdef _CX_DEBUG
 	StringBuffer_print_bytes_hex(buf, 16, "send buffer");
 #endif
-	Connection_send_blocking(c, StringBuffer_value(buf), StringBuffer_used(buf));
-	StringBuffer_free(buf);
+	SendBuffer* unit = SendBuffer_new(buf, f_send_finished);
+	List_push(conn->send_buffers, unit);
+	Connection_start_write(conn);
 }
 
 //#define WRITE_SIZE SSIZE_MAX
