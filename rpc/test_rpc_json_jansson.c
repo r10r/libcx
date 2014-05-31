@@ -520,7 +520,13 @@ test_deserialize_request()
 static void
 test_Request_create_json_response_error()
 {
+	Request r;
+
+	memset(&r, 0, sizeof(Request));
+	Request_init(&r);
+
 	RPC_Request request = {
+		.request = &r,
 		.id_type = RPC_ID_INVALID
 	};
 
@@ -551,13 +557,19 @@ test_Request_create_json_response_error()
 	TEST_ASSERT_TRUE(json_is_null(id_json));
 
 	RPC_Request_json_free(&request);
+	Request_free_members(&r);
 }
 
 static void
 test_Request_create_json_response_error__no_reason()
 {
-	;
+	Request r;
+
+	memset(&r, 0, sizeof(Request));
+	Request_init(&r);
+
 	RPC_Request request = {
+		.request = &r,
 		.id_type = RPC_ID_STRING,
 		.id.string = "myid"
 	};
@@ -588,6 +600,7 @@ test_Request_create_json_response_error__no_reason()
 	TEST_ASSERT_EQUAL_STRING("myid", json_string_value(id_json));
 
 	RPC_Request_json_free(&request);
+	Request_free_members(&r);
 	json_decref(response);
 }
 

@@ -94,11 +94,11 @@ Service_call(RPC_MethodTable* service_methods, RPC_Request* request)
 	{
 		if (cx_err_code < JSON_RPC_ERROR_MIN || cx_err_code > JSON_RPC_ERROR_MAX)
 		{
-			RPC_Result_set_error(&request->result, CX_RPC_ERROR_INTERNAL, cx_uid());
+			RPC_Result_set_error(&request->result, CX_RPC_ERROR_INTERNAL, NULL);
 		}
 		else
 		{
-			RPC_Result_set_error(&request->result, cx_err_code, cx_uid());
+			RPC_Result_set_error(&request->result, cx_err_code, NULL);
 		}
 	}
 }

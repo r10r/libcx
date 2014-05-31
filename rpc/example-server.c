@@ -3,8 +3,8 @@
 
 #include "socket/ws/ws_connection.h"
 
-#include "rpc_json.h"
 #include "rpc_example_service.h"
+#include <jansson.h>
 
 static void
 print_usage(const char* message) __attribute__((noreturn));
@@ -24,16 +24,12 @@ on_error(Connection* conn)
 	CXDBG(conn, "Connection error");
 }
 
-#include <jansson.h>
-
 static void
 on_request(Connection* conn, Request* request)
 {
 	CXDBG(conn, "ON REQUEST");
-	char* payload = NULL;
-	size_t payload_len = request->f_get_payload(request, &payload);
 
-	json_t* json = RPC_process(EXAMPLE_SERVICE_METHODS, payload, payload_len);
+	json_t* json = RPC_process(EXAMPLE_SERVICE_METHODS, request);
 
 	StringBuffer* buffer = NULL;
 	if (!json)

@@ -33,7 +33,9 @@ $(L)/test_rpc_json_jansson_OBJS := $(TEST_OBJS) \
 	$(L)/test_rpc_json_jansson.o \
 	$(L)/rpc.o \
 	$(L)/rpc_json_jansson.o \
-	$(L)/rpc_example_service.o
+	$(L)/rpc_example_service.o \
+	$(LIBCX_DIR)/socket/request.o \
+	$(LIBCX_DIR)/base/uid.o
 
 $(L)/example-server_FLAGS := -I$(L) -lev -lpthread -ljansson
 $(L)/example-server_OBJS := $(L)/example-server.o \
@@ -65,4 +67,5 @@ $(L)/example-server_OBJS := $(L)/example-server.o \
 	$(LIBCX_DIR)/list/list.o \
 	$(LIBCX_DIR)/list/queue.o \
 	$(LIBCX_DIR)/string/string.o \
-	$(LIBCX_DIR)/string/pair.o
+	$(LIBCX_DIR)/string/pair.o \
+	$(LIBCX_DIR)/base/uid.o

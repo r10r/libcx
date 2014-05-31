@@ -3,9 +3,14 @@
 
 #include <limits.h>
 #include <stdbool.h>
-#include "base/errno.h"
 #include <string.h> /* strcmp */
+
+#include "base/errno.h"
 #include "base/base.h"
+#include "socket/request.h"
+
+/* opaque JSON type declaration (implemented by jansson) */
+typedef struct json_t json_t;
 
 #define RPC_ERROR_MESSAGE_LENGTH_MAX 128
 
@@ -22,9 +27,6 @@ typedef enum cx_json_rpc_error_t
 	CX_RPC_ERROR_INTERNAL = -32603,
 	/* -32000 to -32099 Server error, implementation defined */
 } RPC_Error;
-
-
-typedef struct json_t json_t;
 
 /* parameter encoding format */
 typedef enum
@@ -112,6 +114,7 @@ typedef enum
 
 struct cx_rpc_request_t
 {
+	Request* request;
 	RPC_ID_Type id_type;
 	union
 	{
@@ -128,8 +131,6 @@ struct cx_rpc_request_t
 
 	void* data; /* contains deserialized JSON */
 	F_RPC_RequestFree* f_free;
-
-	// TODO add f_free method
 };
 
 void

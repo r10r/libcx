@@ -199,16 +199,17 @@ create_json_rpc_response_error(RPC_Request* request)
 	// FIXME id must be set to request even if other validation failed !!!
 	if (request->result.value.type != RPC_TYPE_VOID)
 	{
-		json = json_pack_ex(&error_pack, 0, "{s:s,s:o,s:{s:i,s:s,s:o}}",
+		json = json_pack_ex(&error_pack, 0, "{s:s,s:o,s:{s:i,s:s,s:{s,o,s:s}}}",
 				    "jsonrpc", "2.0", "id", id_json,
 				    "error", "code", request->result.error, "message", cx_rpc_strerror(request->result.error),
-				    "data", Value_to_json((RPC_Value*)&request->result));
+				    "data", "details", Value_to_json((RPC_Value*)&request->result), "token", request->request->id);
 	}
 	else
 	{
-		json = json_pack_ex(&error_pack, 0, "{s:s,s:o,s:{s:i,s:s}}",
+		json = json_pack_ex(&error_pack, 0, "{s:s,s:o,s:{s:i,s:s,s:{s:s}}}",
 				    "jsonrpc", "2.0", "id", id_json,
-				    "error", "code", request->result.error, "message",  cx_rpc_strerror(request->result.error));
+				    "error", "code", request->result.error, "message", cx_rpc_strerror(request->result.error),
+				    "data", "token", request->request->id);
 	}
 
 	if (!json)
@@ -307,17 +308,21 @@ process_batch_request(RPC_MethodTable* rpc_methods, RPC_Request* request, json_t
 }
 
 json_t*
-RPC_process(RPC_MethodTable* rpc_methods, const char* payload, size_t payload_len)
+RPC_process(RPC_MethodTable* rpc_methods, Request* request)
 {
+	char* payload = NULL;
+	size_t payload_len = request->f_get_payload(request, &payload);
+
 	/* initialize error */
 	json_error_t error;
 
 	memset(&error, 0, sizeof(json_error_t));
 
-	/* initialize request */
-	RPC_Request request;
-	memset(&request, 0, sizeof(RPC_Request));
-	request.f_free = RPC_Request_json_free;
+	/* initialize rpc */
+	RPC_Request rpc_request;
+	memset(&rpc_request, 0, sizeof(RPC_Request));
+	rpc_request.f_free = RPC_Request_json_free;
+	rpc_request.request = request;
 
 	json_t* response_json = NULL;
 
@@ -326,31 +331,29 @@ RPC_process(RPC_MethodTable* rpc_methods, const char* payload, size_t payload_le
 	if (!root_json)
 	{
 		/* invalid JSON */
-		// FIXME use formatted message (using snprintf into the error buffer);
-//		XFERR("JSON PARSE error: %s", error.text);
-		RPC_Result_set_error(&request.result, CX_RPC_ERROR_PARSE, error.text);
-		response_json = create_json_rpc_response_error(&request);
-		RPC_Request_json_free(&request);
+		RPC_Result_set_error(&rpc_request.result, CX_RPC_ERROR_PARSE, error.text);
+		response_json = create_json_rpc_response_error(&rpc_request);
+		RPC_Request_json_free(&rpc_request);
 	}
 	else
 	{
 		/* valid JSON */
 		if (json_is_object(root_json))
 		{
-			/* single request */
-			response_json = process_request(rpc_methods, &request, root_json);
+			/* single rpc */
+			response_json = process_request(rpc_methods, &rpc_request, root_json);
 		}
 		else if (json_is_array(root_json))
 		{
-			/* batch request */
-			response_json = process_batch_request(rpc_methods, &request, root_json);
+			/* batch rpc */
+			response_json = process_batch_request(rpc_methods, &rpc_request, root_json);
 		}
 		else
 		{
 			/* valid JSON but neither an object nor an array */
-			RPC_Result_set_error(&request.result, CX_RPC_ERROR_INVALID_REQUEST, "Invalid request value (expected array or object)");
-			response_json = create_json_rpc_response_error(&request);
-			RPC_Request_json_free(&request);
+			RPC_Result_set_error(&rpc_request.result, CX_RPC_ERROR_INVALID_REQUEST, "Invalid request value (expected array or object)");
+			response_json = create_json_rpc_response_error(&rpc_request);
+			RPC_Request_json_free(&rpc_request);
 		}
 	}
 
@@ -368,7 +371,7 @@ Request_json_parse(RPC_Request* request, const char* data, size_t data_len)
 
 	if (!root)
 	{
-		memset(request, 0, sizeof(RPC_Request));
+//		memset(request, 0, sizeof(RPC_Request));
 		request->f_free = RPC_Request_json_free;
 		RPC_Result_set_error(&request->result, CX_RPC_ERROR_PARSE, error.text);
 		return -1;
@@ -519,7 +522,7 @@ int
 Request_from_json(RPC_Request* request, json_t* request_json)
 {
 	/* clear request */
-	memset(request, 0, sizeof(RPC_Request));
+//	memset(request, 0, sizeof(RPC_Request));
 
 	request->format = FORMAT_JSON;
 	request->f_free = RPC_Request_json_free;
