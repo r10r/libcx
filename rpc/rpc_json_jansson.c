@@ -304,7 +304,8 @@ process_batch_request(RPC_MethodTable* rpc_methods, Request* request, json_t* ba
 	size_t num_requests = json_array_size(batch_request_json);
 
 	XFDBG("Batch request[%s] has %zu elements", request->id, num_requests);
-	if (json_array_size(batch_request_json) > 0)
+
+	if (num_requests > 0)
 	{
 		json_t* batch_response_json = json_array();
 
