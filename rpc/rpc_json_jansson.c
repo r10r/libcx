@@ -1,5 +1,6 @@
-#include "rpc_json.h"
 #include <jansson.h>
+
+#include "rpc_json.h"
 
 static void
 deserialize_param_int(RPC_Param* param, json_t* json)

@@ -1,6 +1,7 @@
-#include "base/test.h"
 #include <jansson.h>
-#include "string/string_buffer.h"
+
+#include <libcx/base/test.h>
+#include <libcx/string/string_buffer.h>
 
 static void
 test_manual_building()

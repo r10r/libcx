@@ -5,9 +5,9 @@
 #include <stdbool.h>
 #include <string.h> /* strcmp */
 
-#include "base/errno.h"
-#include "base/base.h"
-#include "socket/request.h"
+#include <libcx/base/errno.h>
+#include <libcx/base/base.h>
+#include <libcx/socket/request.h>
 
 /* opaque JSON type declaration (implemented by jansson) */
 typedef struct json_t json_t;

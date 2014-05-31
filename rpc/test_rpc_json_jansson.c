@@ -1,9 +1,10 @@
-#include "base/base.h"
-#include "base/test.h"
+#include <jansson.h>
+
+#include <libcx/base/base.h>
+#include <libcx/base/test.h>
+
 #include "rpc_json.h"
 #include "rpc_example_service.h"
-
-#include <jansson.h>
 
 static int
 Request_json_parse(RPC_Request* request, const char* data, size_t data_len)

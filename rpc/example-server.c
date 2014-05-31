@@ -1,10 +1,11 @@
-#include "socket/server_unix.h"
-#include "socket/server_tcp.h"
+#include <jansson.h>
 
-#include "socket/ws/ws_connection.h"
+#include <libcx/socket/server_unix.h>
+#include <libcx/socket/server_tcp.h>
+
+#include <libcx/socket/ws/ws_connection.h>
 
 #include "rpc_example_service.h"
-#include <jansson.h>
 
 static void
 print_usage(const char* message) __attribute__((noreturn));

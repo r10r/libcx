@@ -1,5 +1,6 @@
-#include "rpc_example_service.h"
 #include <jansson.h>    // FIXME service should not depend on jansson directly
+
+#include "rpc_example_service.h"
 
 void
 Person_free(Person* person)
