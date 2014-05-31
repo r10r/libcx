@@ -3,7 +3,7 @@
 #include <libcx/socket/server_unix.h>
 #include <libcx/socket/server_tcp.h>
 
-#include <libcx/socket/ws/ws_connection.h>
+#include <libcx/socket/echo_connection.h>
 
 #include "rpc_example_service.h"
 
@@ -36,7 +36,8 @@ on_request(Connection* conn, Request* request)
 	{
 		// FIXME pass function to websockets create to gather data (using the jansson dump callback)
 		char* json_string = json_dumps(json, JSON_INDENT(2));
-		StringBuffer* buffer  = WebsocketsFrame_create(WS_FRAME_TEXT, json_string, strlen(json_string));
+		StringBuffer* buffer  = StringBuffer_new(strlen(json_string));
+		StringBuffer_cat(buffer, json_string);
 		cx_free(json_string);
 		json_decref(json);
 		conn->f_send(conn, Response_new(buffer), NULL);
@@ -73,18 +74,12 @@ main(int argc, char** argv)
 		print_usage("Invalid parameter count");
 
 	Server* server = NULL;
-
-//	if (strcmp(argv[1], "unix") == 0)
-//		server = (Server*)UnixServer_new("/tmp/echo.sock");
-//	else if (strcmp(argv[1], "tcp") == 0)
 	server = (Server*)TCPServer_new("0.0.0.0", (uint16_t)atoi(argv[1]));
-//	else
-//		print_usage("Invalid server type");
 
-	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
-	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
-	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
-	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
+	List_push(server->workers, ConnectionWorker_new(EchoConnection_new, &ws_echo_handler));
+	List_push(server->workers, ConnectionWorker_new(EchoConnection_new, &ws_echo_handler));
+	List_push(server->workers, ConnectionWorker_new(EchoConnection_new, &ws_echo_handler));
+	List_push(server->workers, ConnectionWorker_new(EchoConnection_new, &ws_echo_handler));
 
 	Server_start(server);         // blocks
 }

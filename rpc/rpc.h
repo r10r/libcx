@@ -77,9 +77,7 @@ struct cx_rpc_value_t
 		bool boolean;
 		const char* string;
 		void* object;
-	}
-
-	data;
+	} data;
 
 	F_RPC_ValueFree* f_free;
 	F_ValueToJSON* f_to_json;
@@ -122,9 +120,7 @@ struct cx_rpc_request_t
 	{
 		long long number;
 		const char* string;
-	}
-
-	id;
+	} id;
 
 	const char* method_name;
 

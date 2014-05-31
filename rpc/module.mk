@@ -43,12 +43,6 @@ $(L)/example-server_OBJS := $(L)/example-server.o \
 	$(L)/rpc_json_jansson.o \
 	$(L)/rpc_example_service.o \
 	$(LIBCX_DIR)/base/errno.o \
-	$(LIBCX_DIR)/socket/ws/base64_enc.o \
-	$(LIBCX_DIR)/socket/ws/sha1.o \
-	$(LIBCX_DIR)/socket/ws/handshake.o \
-	$(LIBCX_DIR)/socket/ws/frame.o \
-	$(LIBCX_DIR)/socket/ws/util.o \
-	$(LIBCX_DIR)/socket/ws/ws_connection.o \
 	$(LIBCX_DIR)/umtp/parser.o \
 	$(LIBCX_DIR)/umtp/message_parser.o \
 	$(LIBCX_DIR)/umtp/message_fsm.o \
@@ -60,6 +54,7 @@ $(L)/example-server_OBJS := $(L)/example-server.o \
 	$(LIBCX_DIR)/socket/socket_unix.o \
 	$(LIBCX_DIR)/socket/socket_tcp.o \
 	$(LIBCX_DIR)/socket/connection.o \
+	$(LIBCX_DIR)/socket/echo_connection.o \
 	$(LIBCX_DIR)/socket/worker.o \
 	$(LIBCX_DIR)/socket/connection_worker.o \
 	$(LIBCX_DIR)/socket/request.o \

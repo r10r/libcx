@@ -41,8 +41,8 @@ cx_rpc_strerror(RPC_Error err)
 	case CX_RPC_ERROR_METHOD_NOT_FOUND: return "Method not found";
 	case CX_RPC_ERROR_INVALID_PARAMS: return "Invalid params";
 	case CX_RPC_ERROR_INTERNAL: return "Internal error";
-	default: return NULL; /* make GCC happy */
 	}
+	return NULL; /* make GCC happy */
 }
 
 RPC_Value*

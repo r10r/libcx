@@ -15,6 +15,15 @@ handle_error(Connection* conn)
 	close_connection(conn);
 }
 
+static size_t
+get_payload(Request* request, const char** payload_ptr)
+{
+	StringBuffer* buffer = (StringBuffer*)request->data;
+
+	*payload_ptr = StringBuffer_value(buffer);
+	return StringBuffer_used(buffer);
+}
+
 static void
 handle_request(Connection* conn)
 {
@@ -28,7 +37,11 @@ handle_request(Connection* conn)
 	if (num_bytes_received > 0)
 	{
 		if (conn->callbacks->on_request)
-			conn->callbacks->on_request(conn, Request_new(buffer));
+		{
+			Request* request = Request_new(buffer);
+			request->f_get_payload = get_payload;
+			conn->callbacks->on_request(conn, request);
+		}
 	}
 	else
 	{
