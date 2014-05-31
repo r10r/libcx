@@ -10,6 +10,7 @@
 #define cx_alloc(size) calloc(1, size)
 #define cx_free(ptr) free(ptr)
 #define cx_strdup(s) strdup(s)
+#define cx_strndup(s, l) strndup(s, l)
 
 #else
 
@@ -56,6 +57,15 @@ cx_strdup_dbg(const char* s, const char* file, int line, const char* func)
 	return s_dup;
 }
 
+static inline char*
+cx_strndup_dbg(const char* s, size_t length, const char* file, int line, const char* func)
+{
+	char* s_dup = strndup(s, length);
+
+	cx_mem_dbg((void*)s_dup, ALLOC_TOKEN, file, line, func, 1, strlen(s) + 1);
+	return s_dup;
+}
+
 #define cx_alloc(eltsize) \
 	cx_calloc_dbg(1, eltsize, __FILE__, __LINE__, __func__)
 
@@ -64,6 +74,9 @@ cx_strdup_dbg(const char* s, const char* file, int line, const char* func)
 
 #define cx_strdup(s) \
 	cx_strdup_dbg(s, __FILE__, __LINE__, __func__)
+
+#define cx_strndup(s, l) \
+	cx_strndup_dbg(s, l, __FILE__, __LINE__, __func__)
 
 #endif
 #endif

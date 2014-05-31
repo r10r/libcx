@@ -130,6 +130,15 @@ test_TIMEVAL_SET_MILLIS()
 	TEST_ASSERT_EQUAL_INT(3000, t.tv_usec);
 }
 
+static void
+test_cx_strndup()
+{
+	char* s = cx_strndup("foobar", 3);
+
+	TEST_ASSERT_EQUAL_STRING("foo", s);
+	cx_free(s);
+}
+
 int
 main()
 {
@@ -141,6 +150,7 @@ main()
 	RUN(test_EACH);
 	RUN(test_unsigned_arithmetic);
 	RUN(test_TIMEVAL_SET_MILLIS);
+	RUN(test_cx_strndup);
 
 	TEST_END
 }
