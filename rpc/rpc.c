@@ -41,6 +41,7 @@ cx_rpc_strerror(RPC_Error err)
 	case CX_RPC_ERROR_METHOD_NOT_FOUND: return "Method not found";
 	case CX_RPC_ERROR_INVALID_PARAMS: return "Invalid params";
 	case CX_RPC_ERROR_INTERNAL: return "Internal error";
+	default: return NULL; /* make GCC happy */
 	}
 }
 
@@ -75,8 +76,8 @@ Service_call(RPC_MethodTable* service_methods, RPC_Request* request)
 	{
 		if (strcmp(wrapped_method->method_name, request->method_name) == 0)
 		{
-			XFDBG("Calling method[%s] (wrapper:%p, params:%d, format:%d)",
-			      request->method_name, (void*)wrapped_method->method_wrapper, request->num_params, request->format);
+			XFDBG("Calling method[%s] (params:%d, format:%d)",
+			      request->method_name, request->num_params, request->format);
 			wrapped_method->method_wrapper(request->params, request->num_params, &request->result, request->format);
 			method_missing = false;
 			break;

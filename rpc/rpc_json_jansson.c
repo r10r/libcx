@@ -343,7 +343,7 @@ RPC_process(RPC_MethodTable* rpc_methods, Request* request)
 
 	memset(&error, 0, sizeof(json_error_t));
 
-	char* payload = NULL;
+	const char* payload = NULL;
 	size_t payload_len = request->f_get_payload(request, &payload);
 	json_t* root_json = json_loadb(payload, payload_len, JSON_DECODE_ANY | JSON_REJECT_DUPLICATES, &error);
 
