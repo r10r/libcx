@@ -155,15 +155,6 @@ Value_to_json(RPC_Value* value)
 	return NULL;
 }
 
-void
-RPC_Request_json_free(RPC_Request* request)
-{
-	if (request->data)
-		json_decref((json_t*)request->data);
-
-	RPC_Request_free(request);
-}
-
 static json_t*
 request_id_to_json(RPC_Request* request)
 {
@@ -222,6 +213,19 @@ create_json_rpc_response_error(RPC_Request* request)
 }
 
 static json_t*
+RPC_Request_create_error(Request* request, RPC_Error err, const char* message)
+{
+	json_t* response_json;
+	RPC_Request rpc_request;
+
+	RPC_Request_init(&rpc_request, request);
+	RPC_Result_set_error(&rpc_request.result, err, message);
+	response_json = create_json_rpc_response_error(&rpc_request);
+	RPC_Request_free(&rpc_request);
+	return response_json;
+}
+
+static json_t*
 create_json_rpc_response(RPC_Request* request)
 {
 	json_t* id_json = request_id_to_json(request);
@@ -264,30 +268,30 @@ Request_create_json_response(RPC_Request* request)
 }
 
 static json_t*
-process_request(RPC_MethodTable* rpc_methods, RPC_Request* request, json_t* request_json)
+process_request(RPC_MethodTable* rpc_methods, Request* request, json_t* request_json)
 {
-	/* single request */
-	int status = Request_from_json(request, request_json);
+	RPC_Request rpc_request;
 
+	RPC_Request_init(&rpc_request, request);
+
+	int status = Request_from_json(&rpc_request, request_json);
 	if (status == 0)
 	{
-		Service_call(rpc_methods, request);
-		XFLOG("RPC method(%s) executed (with return value)", request->method_name);
+		Service_call(rpc_methods, &rpc_request);
+		XFLOG("RPC method(%s) executed (with return value)", rpc_request.method_name);
 	}
-	json_t* response_json = Request_create_json_response(request);
-	RPC_Request_json_free(request);
+	json_t* response_json = Request_create_json_response(&rpc_request);
+	RPC_Request_free(&rpc_request);
 	return response_json;
 }
 
 static json_t*
-process_batch_request(RPC_MethodTable* rpc_methods, RPC_Request* request, json_t* batch_request_json)
+process_batch_request(RPC_MethodTable* rpc_methods, Request* request, json_t* batch_request_json)
 {
-	json_t* response_json = NULL;
-
 	/* batch request */
 	if (json_array_size(batch_request_json) > 0)
 	{
-		response_json = json_array();
+		json_t* response_json = json_array();
 
 		size_t index;
 		json_t* request_json = NULL;
@@ -297,93 +301,51 @@ process_batch_request(RPC_MethodTable* rpc_methods, RPC_Request* request, json_t
 
 			json_array_append(response_json, json);
 		}
+		return response_json;
 	}
 	else
 	{
-		RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST, "Batch request is empty");
-		response_json = create_json_rpc_response_error(request);
-		RPC_Request_json_free(request);
+		return RPC_Request_create_error(request, CX_RPC_ERROR_INVALID_REQUEST, "Empty batch request");
 	}
-	return response_json;
 }
 
 json_t*
 RPC_process(RPC_MethodTable* rpc_methods, Request* request)
 {
-	char* payload = NULL;
-	size_t payload_len = request->f_get_payload(request, &payload);
-
 	/* initialize error */
 	json_error_t error;
 
 	memset(&error, 0, sizeof(json_error_t));
 
-	/* initialize rpc */
-	RPC_Request rpc_request;
-	memset(&rpc_request, 0, sizeof(RPC_Request));
-	rpc_request.f_free = RPC_Request_json_free;
-	rpc_request.request = request;
-
-	json_t* response_json = NULL;
-
+	char* payload = NULL;
+	size_t payload_len = request->f_get_payload(request, &payload);
 	json_t* root_json = json_loadb(payload, payload_len, JSON_DECODE_ANY | JSON_REJECT_DUPLICATES, &error);
 
-	if (!root_json)
-	{
-		/* invalid JSON */
-		RPC_Result_set_error(&rpc_request.result, CX_RPC_ERROR_PARSE, error.text);
-		response_json = create_json_rpc_response_error(&rpc_request);
-		RPC_Request_json_free(&rpc_request);
-	}
-	else
+	json_t* response_json = NULL;
+	if (root_json)
 	{
 		/* valid JSON */
 		if (json_is_object(root_json))
 		{
 			/* single rpc */
-			response_json = process_request(rpc_methods, &rpc_request, root_json);
+			response_json = process_request(rpc_methods, request, root_json);
 		}
 		else if (json_is_array(root_json))
 		{
 			/* batch rpc */
-			response_json = process_batch_request(rpc_methods, &rpc_request, root_json);
+			response_json = process_batch_request(rpc_methods, request, root_json);
 		}
 		else
 		{
-			/* valid JSON but neither an object nor an array */
-			RPC_Result_set_error(&rpc_request.result, CX_RPC_ERROR_INVALID_REQUEST, "Invalid request value (expected array or object)");
-			response_json = create_json_rpc_response_error(&rpc_request);
-			RPC_Request_json_free(&rpc_request);
+			response_json = RPC_Request_create_error(request, CX_RPC_ERROR_INVALID_REQUEST, "Invalid request value (expected array or object)");
 		}
-	}
-
-	return response_json;
-}
-
-int
-Request_json_parse(RPC_Request* request, const char* data, size_t data_len)
-{
-	json_error_t error;
-
-	memset(&error, 0, sizeof(json_error_t));
-
-	json_t* root = json_loadb(data, data_len, JSON_DECODE_ANY | JSON_REJECT_DUPLICATES, &error);
-
-	if (!root)
-	{
-//		memset(request, 0, sizeof(RPC_Request));
-		request->f_free = RPC_Request_json_free;
-		RPC_Result_set_error(&request->result, CX_RPC_ERROR_PARSE, error.text);
-		return -1;
+		json_decref(root_json);
 	}
 	else
 	{
-		if (Request_from_json(request, root) == -1)
-		{
-			return -1;
-		}
+		response_json = RPC_Request_create_error(request, CX_RPC_ERROR_PARSE, error.text);
 	}
-	return 0;
+	return response_json;
 }
 
 static int
@@ -521,12 +483,7 @@ deserialize_params(RPC_Request* request, json_t* params_json)
 int
 Request_from_json(RPC_Request* request, json_t* request_json)
 {
-	/* clear request */
-//	memset(request, 0, sizeof(RPC_Request));
-
 	request->format = FORMAT_JSON;
-	request->f_free = RPC_Request_json_free;
-	request->data = request_json;
 
 	json_error_t error;
 	memset(&error, 0, sizeof(json_error_t));

@@ -20,8 +20,10 @@ typedef struct json_t json_t;
 typedef enum cx_json_rpc_error_t
 {
 	CX_RPC_ERROR_OK = CX_ERR_OK,
+	/* the following errors are always returned to the client */
 	CX_RPC_ERROR_PARSE = -32700,
 	CX_RPC_ERROR_INVALID_REQUEST = -32600,
+	/* the following errors are only returned if the request is not a notification */
 	CX_RPC_ERROR_METHOD_NOT_FOUND = -32601,
 	CX_RPC_ERROR_INVALID_PARAMS = -32602,
 	CX_RPC_ERROR_INTERNAL = -32603,
@@ -57,14 +59,12 @@ typedef struct cx_rpc_result_t RPC_Result;
  * @param object the param object of the union value
  */
 typedef void F_RPC_ValueFree (void* object);
-typedef void F_RPC_RequestFree (RPC_Request* request);
 
 /*
  * @param deserialize function only set/used when type is object
  */
 typedef json_t* F_ValueToJSON (void* object);
 typedef void RPC_MethodWrapper (RPC_Param* params, int num_params, RPC_Result* result, RPC_Format format);
-
 
 struct cx_rpc_value_t
 {
@@ -128,9 +128,6 @@ struct cx_rpc_request_t
 	int num_params;
 	RPC_Format format;
 	RPC_Result result;
-
-	void* data; /* contains deserialized JSON */
-	F_RPC_RequestFree* f_free;
 };
 
 void
@@ -145,6 +142,8 @@ Service_call(RPC_MethodTable* method_map, RPC_Request* request);
 const char*
 cx_rpc_strerror(RPC_Error err);
 
+void
+RPC_Request_init(RPC_Request* rpc_request, Request* request);
 void
 RPC_Request_free(RPC_Request* request);
 

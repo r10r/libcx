@@ -5,6 +5,25 @@
 
 #include <jansson.h>
 
+static int
+Request_json_parse(RPC_Request* request, const char* data, size_t data_len)
+{
+	memset(request, 0, sizeof(RPC_Request));
+	json_error_t error;
+
+	memset(&error, 0, sizeof(json_error_t));
+
+	json_t* root = json_loadb(data, data_len, JSON_DECODE_ANY | JSON_REJECT_DUPLICATES, &error);
+
+	if (!root)
+	{
+		RPC_Result_set_error(&request->result, CX_RPC_ERROR_PARSE, error.text);
+		return -1;
+	}
+	else
+		return Request_from_json(request, root);
+}
+
 static void
 test_json_obj_param()
 {
@@ -153,6 +172,7 @@ test_deserialize_error_request_parse()
 	const char* request_json = "\"jsonrpc\": \"2.0\", \"id\": 66, \"method\": \"play\"}";
 
 	RPC_Request request;
+
 	int status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
@@ -164,7 +184,7 @@ test_deserialize_error_request_parse()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 }
 
 static void
@@ -173,6 +193,7 @@ test_deserialize_error_request_invalid()
 	const char* request_json = "{\"id\": 66, \"method\": \"play\"}";
 
 	RPC_Request request;
+
 	int status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
@@ -182,7 +203,7 @@ test_deserialize_error_request_invalid()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 }
 
 static void
@@ -192,6 +213,7 @@ test_deserialize_error_request_invalid__jsonrpc_type()
 	const char* request_json = "{\"jsonrpc\": 2.0, \"id\": 66, \"method\": \"play\"}";
 
 	RPC_Request request;
+
 	int status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
@@ -201,7 +223,7 @@ test_deserialize_error_request_invalid__jsonrpc_type()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 }
 
 /* jsonrpc version value must be exactly '2.0' */
@@ -211,6 +233,7 @@ test_deserialize_error_param_invalid_value__jsonrpc()
 	const char* request_json = "{\"jsonrpc\": \"3.0\", \"id\": 66, \"method\": \"play\"}";
 
 	RPC_Request request;
+
 	int status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
@@ -220,7 +243,7 @@ test_deserialize_error_param_invalid_value__jsonrpc()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 }
 
 /* jsonrpc version value must be a string or an integer*/
@@ -242,7 +265,7 @@ test_deserialize_error_param_invalid_type__id()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 
 
 	request_json = "{\"jsonrpc\": \"2.0\", \"id\": true, \"method\": \"play\"}";
@@ -256,7 +279,7 @@ test_deserialize_error_param_invalid_type__id()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 
 
 	request_json = "{\"jsonrpc\": \"2.0\", \"id\": {}, \"method\": \"play\"}";
@@ -270,7 +293,7 @@ test_deserialize_error_param_invalid_type__id()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 
 
 	request_json = "{\"jsonrpc\": \"2.0\", \"id\": [\"66\"], \"method\": \"play\"}";
@@ -284,7 +307,7 @@ test_deserialize_error_param_invalid_type__id()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 }
 
 static void
@@ -294,6 +317,7 @@ test_deserialize_error_request_invalid__missing_method_param()
 	const char* request_json = "{\"jsonrpc\": \"2.0\", \"id\": 66}";
 
 	RPC_Request request;
+
 	int status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(-1, status);
@@ -303,7 +327,7 @@ test_deserialize_error_request_invalid__missing_method_param()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 }
 
 static void
@@ -324,7 +348,7 @@ test_deserialize_request__id()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 
 
 	request_json = "{\"jsonrpc\": \"2.0\", \"id\": \"66\", \"method\": \"play\"}";
@@ -338,7 +362,7 @@ test_deserialize_request__id()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 
 
 	request_json = "{\"jsonrpc\": \"2.0\", \"method\": \"play\"}";
@@ -352,7 +376,7 @@ test_deserialize_request__id()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 }
 
 /* FIXME
@@ -376,7 +400,7 @@ test_deserialize_request__extraneous_attributes()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 }
 
 static void
@@ -397,7 +421,7 @@ test_deserialize_error_param_deserialize()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 	cx_err_clear();
 
 	request_json = "{\"jsonrpc\": \"2.0\", \"id\": \"foobar\", \"method\": \"play\", \"params\" : 2.0 }";
@@ -411,9 +435,8 @@ test_deserialize_error_param_deserialize()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 	cx_err_clear();
-
 
 	request_json = "{\"jsonrpc\": \"2.0\", \"id\": \"foobar\", \"method\": \"play\", \"params\" : \"foobar\" }";
 	status = Request_json_parse(&request, request_json, strlen(request_json));
@@ -426,7 +449,7 @@ test_deserialize_error_param_deserialize()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 	cx_err_clear();
 
 
@@ -441,7 +464,7 @@ test_deserialize_error_param_deserialize()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 	cx_err_clear();
 
 
@@ -456,7 +479,7 @@ test_deserialize_error_param_deserialize()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 	cx_err_clear();
 }
 
@@ -468,7 +491,6 @@ test_deserialize_request_empty_params()
 	int status;
 
 	request_json = "{\"jsonrpc\": \"2.0\",  \"id\": \"foobar\", \"method\": \"play\", \"params\" : []}";
-
 	status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(0, status);
@@ -477,7 +499,7 @@ test_deserialize_request_empty_params()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 
 
 	request_json = "{\"jsonrpc\": \"2.0\",  \"id\": \"foobar\", \"method\": \"play\", \"params\" : {}}";
@@ -489,7 +511,7 @@ test_deserialize_request_empty_params()
 	TEST_ASSERT_EQUAL_INT(0, request.num_params);
 	TEST_ASSERT_NULL(request.params);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 }
 
 static void
@@ -498,6 +520,7 @@ test_deserialize_request()
 	const char* request_json = "{\"jsonrpc\": \"2.0\", \"id\": 66, \"method\": \"play\", \"params\" : [\"hello world\"]}";
 
 	RPC_Request request;
+
 	int status = Request_json_parse(&request, request_json, strlen(request_json));
 
 	TEST_ASSERT_EQUAL_INT(0, status);
@@ -514,7 +537,7 @@ test_deserialize_request()
 
 	TEST_ASSERT_EQUAL_INT(request.result.error, CX_RPC_ERROR_OK);
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 }
 
 static void
@@ -538,30 +561,32 @@ test_Request_create_json_response_error()
 	json_t* id_json = NULL;
 	int error_code;
 	const char* error_message = NULL;
-	const char* error_reason = NULL;
+	const char* error_details = NULL;
+	const char* error_token = NULL;
 
 	json_error_t error;
 	memset(&error, 0, sizeof(json_error_t));
 
-	int status = json_unpack_ex(response, &error, 0, "{s:s,s?:o,s:{s:i,s:s,s?:s}}",
+	int status = json_unpack_ex(response, &error, 0, "{s:s,s?:o,s:{s:i,s:s,s:{s:s,s:s}}}",
 				    "jsonrpc", &jsonrpc_version,
 				    "id", &id_json,
 				    "error", "code", &error_code, "message", &error_message,
-				    "data", &error_reason);
+				    "data", "details", &error_details, "token", &error_token);
 
 	TEST_ASSERT_EQUAL_INT(0, status);
 	TEST_ASSERT_EQUAL_STRING(JSONRPC_VERSION, jsonrpc_version);
 	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_PARSE, error_code);
 	TEST_ASSERT_EQUAL_STRING("Parse error", error_message);
-	TEST_ASSERT_EQUAL_STRING("My error reason", error_reason);
+	TEST_ASSERT_EQUAL_STRING("My error reason", error_details);
+	TEST_ASSERT_EQUAL_INT(CX_UID_LENGTH - 1, strlen(error_token));
 	TEST_ASSERT_TRUE(json_is_null(id_json));
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 	Request_free_members(&r);
 }
 
 static void
-test_Request_create_json_response_error__no_reason()
+test_Request_create_json_response_error__no_details()
 {
 	Request r;
 
@@ -581,25 +606,29 @@ test_Request_create_json_response_error__no_reason()
 	json_t* id_json = NULL;
 	int error_code;
 	const char* error_message = NULL;
-	const char* error_reason = NULL;
+	const char* error_details = NULL;
+	const char* error_token = NULL;
 
 	json_error_t error;
 	memset(&error, 0, sizeof(json_error_t));
 
-	int status = json_unpack_ex(response, &error, 0, "{s:s,s?:o,s:{s:i,s:s,s?:{s:s}}}",
+	json_dumpf(response, stdout, JSON_INDENT(2));
+
+	int status = json_unpack_ex(response, &error, 0, "{s:s,s?:o,s:{s:i,s:s,s:{s?:s,s:s}}}",
 				    "jsonrpc", &jsonrpc_version,
 				    "id", &id_json,
 				    "error", "code", &error_code, "message", &error_message,
-				    "data", "reason", &error_reason);
+				    "data", "details", &error_details, "token", &error_token);
 
 	TEST_ASSERT_EQUAL_INT(0, status);
 	TEST_ASSERT_EQUAL_STRING(JSONRPC_VERSION, jsonrpc_version);
 	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_PARSE, error_code);
 	TEST_ASSERT_EQUAL_STRING("Parse error", error_message);
-	TEST_ASSERT_NULL(error_reason);
+	TEST_ASSERT_NULL(error_details);
+	TEST_ASSERT_EQUAL_INT(CX_UID_LENGTH - 1, strlen(error_token));
 	TEST_ASSERT_EQUAL_STRING("myid", json_string_value(id_json));
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 	Request_free_members(&r);
 	json_decref(response);
 }
@@ -634,7 +663,7 @@ test_Request_create_response()
 	TEST_ASSERT_NOT_NULL(response);
 	json_dumpf(response, stdout, JSON_INDENT(2));
 
-	RPC_Request_json_free(&request);
+	RPC_Request_free(&request);
 	json_decref(response);
 }
 
@@ -669,7 +698,7 @@ main()
 
 	/* JSON RPC 2.0 method calls */
 	RUN(test_Request_create_json_response_error);
-	RUN(test_Request_create_json_response_error__no_reason);
+	RUN(test_Request_create_json_response_error__no_details);
 	RUN(test_Request_create_response);
 
 	TEST_END

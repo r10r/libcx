@@ -7,6 +7,14 @@ cx_rpc_free_simple(void* object)
 }
 
 void
+RPC_Request_init(RPC_Request* rpc_request, Request* request)
+{
+	// clears everything (including the result)
+	memset(rpc_request, 0, sizeof(RPC_Request));
+	rpc_request->request = request;
+}
+
+void
 RPC_Result_set_error(RPC_Result* result, RPC_Error err_code, const char* err_message)
 {
 	assert(result->error == CX_RPC_ERROR_OK);
