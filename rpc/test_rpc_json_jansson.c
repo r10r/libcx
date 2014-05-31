@@ -541,6 +541,35 @@ test_deserialize_request()
 }
 
 static void
+test_assert_json_is_error(json_t* json, RPC_Error err, const char* details)
+{
+	const char* jsonrpc_version = NULL;
+	json_t* id_json = NULL;
+	int error_code;
+	const char* error_message = NULL;
+	const char* error_details = NULL;
+	const char* error_token = NULL;
+
+	json_error_t error;
+
+	memset(&error, 0, sizeof(json_error_t));
+
+	int status = json_unpack_ex(json, &error, 0, "{s:s,s:o,s:{s:i,s:s,s:{s:s,s:s}}}",
+				    "jsonrpc", &jsonrpc_version,
+				    "id", &id_json,
+				    "error", "code", &error_code, "message", &error_message,
+				    "data", "details", &error_details, "token", &error_token);
+
+	TEST_ASSERT_EQUAL_INT(0, status);
+	TEST_ASSERT_EQUAL_STRING(JSONRPC_VERSION, jsonrpc_version);
+	TEST_ASSERT_EQUAL_INT(err, error_code);
+	TEST_ASSERT_EQUAL_STRING(cx_rpc_strerror(err), error_message);
+	TEST_ASSERT_EQUAL_STRING(details, error_details);
+	TEST_ASSERT_EQUAL_INT(CX_UID_LENGTH - 1, strlen(error_token));
+	TEST_ASSERT_TRUE(json_equal(json_null(), id_json));
+}
+
+static void
 test_Request_create_json_response_error()
 {
 	Request r;
@@ -557,29 +586,7 @@ test_Request_create_json_response_error()
 
 	json_t* response = Request_create_json_response(&request);
 
-	const char* jsonrpc_version = NULL;
-	json_t* id_json = NULL;
-	int error_code;
-	const char* error_message = NULL;
-	const char* error_details = NULL;
-	const char* error_token = NULL;
-
-	json_error_t error;
-	memset(&error, 0, sizeof(json_error_t));
-
-	int status = json_unpack_ex(response, &error, 0, "{s:s,s?:o,s:{s:i,s:s,s:{s:s,s:s}}}",
-				    "jsonrpc", &jsonrpc_version,
-				    "id", &id_json,
-				    "error", "code", &error_code, "message", &error_message,
-				    "data", "details", &error_details, "token", &error_token);
-
-	TEST_ASSERT_EQUAL_INT(0, status);
-	TEST_ASSERT_EQUAL_STRING(JSONRPC_VERSION, jsonrpc_version);
-	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_PARSE, error_code);
-	TEST_ASSERT_EQUAL_STRING("Parse error", error_message);
-	TEST_ASSERT_EQUAL_STRING("My error reason", error_details);
-	TEST_ASSERT_EQUAL_INT(CX_UID_LENGTH - 1, strlen(error_token));
-	TEST_ASSERT_TRUE(json_is_null(id_json));
+	test_assert_json_is_error(response, CX_RPC_ERROR_PARSE, "My error reason");
 
 	RPC_Request_free(&request);
 	Request_free_members(&r);
@@ -667,6 +674,59 @@ test_Request_create_response()
 	json_decref(response);
 }
 
+static size_t
+test_get_payload(Request* request, const char** ptr)
+{
+	*ptr = (char*)request->data;
+	return strlen(*ptr);
+}
+
+static void
+test_RPC_process_single()
+{
+	Request request;
+
+	memset(&request, 0, sizeof(request));
+	Request_init(&request);
+	request.f_get_payload = test_get_payload;
+	request.data = "abcdefgdfdfdfdf";
+
+	json_t* json = RPC_process(EXAMPLE_SERVICE_METHODS, &request);
+
+	json_t* obj1 = NULL;
+
+	json_unpack(json, "o", &obj1);
+
+	test_assert_json_is_error(obj1, CX_RPC_ERROR_PARSE, "invalid token near 'abcdefgdfdfdfdf'");
+
+	json_decref(json);
+	Request_free_members(&request);
+}
+
+static void
+test_RPC_process_batch()
+{
+	Request request;
+
+	memset(&request, 0, sizeof(request));
+	Request_init(&request);
+	request.f_get_payload = test_get_payload;
+	request.data = "[1,{}]";
+
+	json_t* json = RPC_process(EXAMPLE_SERVICE_METHODS, &request);
+
+	json_t* obj1 = NULL;
+	json_t* obj2 = NULL;
+
+	json_unpack(json, "[o,o]", &obj1, &obj2);
+
+	test_assert_json_is_error(obj1, CX_RPC_ERROR_INVALID_REQUEST, "Expected object, got integer");
+	test_assert_json_is_error(obj2, CX_RPC_ERROR_INVALID_REQUEST, "Parameter 'jsonrpc' - not available");
+
+	json_decref(json);
+	Request_free_members(&request);
+}
+
 int
 main()
 {
@@ -700,6 +760,9 @@ main()
 	RUN(test_Request_create_json_response_error);
 	RUN(test_Request_create_json_response_error__no_details);
 	RUN(test_Request_create_response);
+
+	RUN(test_RPC_process_single);
+	RUN(test_RPC_process_batch);
 
 	TEST_END
 }
