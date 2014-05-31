@@ -133,6 +133,12 @@ struct cx_rpc_request_t
 void
 RPC_Result_set_error(RPC_Result* request, int err, const char* message);
 
+#define RPC_Result_error(result, err_code) \
+	RPC_Result_set_error(result, err_code, NULL)
+
+#define RPC_Result_error_with_message(result, err_code, err_message) \
+	RPC_Result_set_error(result, err_code, err_message)
+
 RPC_Value*
 Param_get(RPC_Param* params, int position, const char* name, int num_params);
 

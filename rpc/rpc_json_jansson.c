@@ -220,7 +220,7 @@ RPC_Request_create_error(Request* request, RPC_Error err, const char* message)
 	RPC_Request rpc_request;
 
 	RPC_Request_init(&rpc_request, request);
-	RPC_Result_set_error(&rpc_request.result, err, message);
+	RPC_Result_error_with_message(&rpc_request.result, err, message);
 	response_json = create_json_rpc_response_error(&rpc_request);
 	RPC_Request_free(&rpc_request);
 	return response_json;
@@ -271,10 +271,8 @@ process_request(RPC_MethodTable* rpc_methods, Request* request, json_t* request_
 
 	int status = Request_from_json(&rpc_request, request_json);
 	if (status == 0)
-	{
 		Service_call(rpc_methods, &rpc_request);
-		XFLOG("RPC method(%s) executed (with return value)", rpc_request.method_name);
-	}
+
 	json_t* response_json = NULL;
 
 	/* check whether the it is a notification */
@@ -404,8 +402,8 @@ deserialize_id(RPC_Request* request, json_t* id_json)
 		}
 		else
 		{
-			RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
-					     "parameter 'id': invalid format (expected integer or string)");
+			RPC_Result_error_with_message(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+						      "parameter 'id': invalid format (expected integer or string)");
 			request->id_type = RPC_ID_INVALID;
 			return -1;
 		}
@@ -426,22 +424,22 @@ deserialize_version(RPC_Request* request, json_t* jsonrpc_version_json)
 			{
 				// FIXME use formatted message (using snprintf into the error buffer);
 //				XFERR("Parameter 'jsonrpc' - invalid value [%s] (expected  '%s')", jsonrpc_version, JSONRPC_VERSION);
-				RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
-						     "Parameter 'jsonrpc' - invalid value (expected string \"2.0\")");
+				RPC_Result_error_with_message(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+							      "Parameter 'jsonrpc' - invalid value (expected string \"2.0\")");
 				return -1;
 			}
 		}
 		else
 		{
-			RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
-					     "Parameter 'jsonrpc' - invalid value (expected string \"2.0\")");
+			RPC_Result_error_with_message(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+						      "Parameter 'jsonrpc' - invalid value (expected string \"2.0\")");
 			return -1;
 		}
 	}
 	else
 	{
-		RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
-				     "Parameter 'jsonrpc' - is unavailable");
+		RPC_Result_error_with_message(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+					      "Parameter 'jsonrpc' - is unavailable");
 		return -1;
 	}
 	return 0;
@@ -460,8 +458,8 @@ deserialize_method_name(RPC_Request* request, json_t* method_name_json)
 				if (strncasecmp(JSONRPC_RESERVED_METHOD_PREFIX, method_name,
 						JSONRPC_RESERVED_METHOD_PREFIX_LEN) == 0)
 				{
-					RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
-							     "Parameter 'method' begins with the reserved prefix 'rpc.' (internal use only).");
+					RPC_Result_error_with_message(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+								      "Parameter 'method' begins with the reserved prefix 'rpc.' (internal use only).");
 					return -1;
 				}
 				else
@@ -472,22 +470,22 @@ deserialize_method_name(RPC_Request* request, json_t* method_name_json)
 			}
 			else
 			{
-				RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
-						     "Empty 'method' parameter");
+				RPC_Result_error_with_message(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+							      "Empty 'method' parameter");
 				return -1;
 			}
 		}
 		else
 		{
-			RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
-					     "Parameter 'method' - is not a string value");
+			RPC_Result_error_with_message(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+						      "Parameter 'method' - is not a string value");
 			return -1;
 		}
 	}
 	else
 	{
-		RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
-				     "Parameter 'method' - is unavailable");
+		RPC_Result_error_with_message(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
+					      "Parameter 'method' - is unavailable");
 		return -1;
 	}
 }
@@ -501,7 +499,7 @@ deserialize_params(RPC_Request* request, json_t* params_json)
 
 		if (num_params == -1)
 		{
-			RPC_Result_set_error(&request->result, cx_err_code, cx_rpc_strerror(cx_err_code));
+			RPC_Result_error(&request->result, cx_err_code);
 			return -1;
 		}
 		else
@@ -536,7 +534,7 @@ Request_from_json(RPC_Request* request, json_t* request_json)
 	{
 		XFERR("JSON unpack error: %s", error.text);
 		// FIXME print to buffer with detailed information ?
-		RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST, error.text);
+		RPC_Result_error_with_message(&request->result, CX_RPC_ERROR_INVALID_REQUEST, error.text);
 		return -1;
 	}
 	else

@@ -15,18 +15,29 @@ RPC_Request_init(RPC_Request* rpc_request, Request* request)
 }
 
 void
-RPC_Result_set_error(RPC_Result* result, RPC_Error err_code, const char* err_message)
+RPC_Result_set_error(RPC_Result* result, int err_code, const char* custom_err_message)
 {
-	assert(result->error == CX_RPC_ERROR_OK);
 	assert(err_code != CX_RPC_ERROR_OK);
+	/* avoid errors to be overwritten - this is an application error */
+	assert(result->error == CX_RPC_ERROR_OK);
 
-	result->error = err_code;
-	if (err_message)
+	/* map out of range error codes to ERROR_INTERNAL */
+	if (err_code >= JSON_RPC_ERROR_MIN && err_code <= JSON_RPC_ERROR_MAX)
+		result->error = err_code;
+	else
+		result->error = CX_RPC_ERROR_INTERNAL;
+
+	if (custom_err_message)
 	{
+		XFDBG("RPC error code:%d, rpc_code:%d : %s", err_code, result->error, custom_err_message);
 		assert(result->value.type == RPC_TYPE_VOID);
 		result->value.type = RPC_TYPE_STRING;
-		result->value.data.string = cx_strndup(err_message, RPC_ERROR_MESSAGE_LENGTH_MAX);
+		result->value.data.string = cx_strndup(custom_err_message, RPC_ERROR_MESSAGE_LENGTH_MAX);
 		result->value.f_free = &cx_rpc_free_simple;
+	}
+	else
+	{
+		XFDBG("RPC error code:%d, rpc_code:%d : %s", err_code, result->error, cx_rpc_strerror(result->error));
 	}
 }
 
@@ -97,18 +108,15 @@ Service_call(RPC_MethodTable* service_methods, RPC_Request* request)
 	}
 
 	if (method_missing)
-		RPC_Result_set_error(&request->result, CX_RPC_ERROR_METHOD_NOT_FOUND, NULL);
-
-	if (cx_err_code)
+		RPC_Result_error(&request->result, CX_RPC_ERROR_METHOD_NOT_FOUND);
+	else
 	{
-		if (cx_err_code < JSON_RPC_ERROR_MIN || cx_err_code > JSON_RPC_ERROR_MAX)
+		if (cx_err_code == CX_RPC_ERROR_OK)
 		{
-			RPC_Result_set_error(&request->result, CX_RPC_ERROR_INTERNAL, NULL);
+			XFDBG("RPC method(%s) executed", request->method_name);
 		}
 		else
-		{
-			RPC_Result_set_error(&request->result, cx_err_code, NULL);
-		}
+			RPC_Result_error(&request->result, cx_err_code);
 	}
 }
 

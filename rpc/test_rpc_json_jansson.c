@@ -625,7 +625,6 @@ test_Request_create_json_response_error__no_details()
 	TEST_ASSERT_EQUAL_STRING(JSONRPC_VERSION, jsonrpc_version);
 	TEST_ASSERT_EQUAL_INT(CX_RPC_ERROR_PARSE, error_code);
 	TEST_ASSERT_EQUAL_STRING("Parse error", error_message);
-	TEST_ASSERT_NULL(error_details);
 	TEST_ASSERT_EQUAL_INT(CX_UID_LENGTH - 1, strlen(error_token));
 	TEST_ASSERT_EQUAL_STRING("myid", json_string_value(id_json));
 
