@@ -257,12 +257,6 @@ Request_create_json_response(RPC_Request* request)
 		 */
 		XERR("Failed to create JSON RPC 2.0 response");
 	}
-	else
-	{
-#ifdef _CX_DEBUG
-		json_dumpf(response_json, stderr, JSON_INDENT(2));
-#endif
-	}
 
 	return response_json;
 }
@@ -280,7 +274,25 @@ process_request(RPC_MethodTable* rpc_methods, Request* request, json_t* request_
 		Service_call(rpc_methods, &rpc_request);
 		XFLOG("RPC method(%s) executed (with return value)", rpc_request.method_name);
 	}
-	json_t* response_json = Request_create_json_response(&rpc_request);
+	json_t* response_json = NULL;
+
+	/* check whether the it is a notification */
+	if (rpc_request.result.error == CX_RPC_ERROR_INVALID_REQUEST
+	    || rpc_request.id_type != RPC_ID_NONE)
+	{
+		response_json = Request_create_json_response(&rpc_request);
+#ifdef _CX_DEBUG
+		XFDBG("Generated response for request[%s]", request->id);
+		fprintf(stderr, "<----------\n");
+		json_dumpf(response_json, stderr, JSON_INDENT(2));
+		fprintf(stderr, "\n<----------\n");
+#endif
+	}
+	else
+	{
+		XDBG("Ignoring result from method call. Request is a notification\n");
+	}
+
 	RPC_Request_free(&rpc_request);
 	return response_json;
 }
@@ -289,19 +301,31 @@ static json_t*
 process_batch_request(RPC_MethodTable* rpc_methods, Request* request, json_t* batch_request_json)
 {
 	/* batch request */
+	size_t num_requests = json_array_size(batch_request_json);
+
+	XFDBG("Batch request[%s] has %zu elements", request->id, num_requests);
 	if (json_array_size(batch_request_json) > 0)
 	{
-		json_t* response_json = json_array();
+		json_t* batch_response_json = json_array();
 
 		size_t index;
 		json_t* request_json = NULL;
 		json_array_foreach(batch_request_json, index, request_json)
 		{
-			json_t* json = process_request(rpc_methods, request, request_json);
+			json_t* response_json = process_request(rpc_methods, request, request_json);
 
-			json_array_append(response_json, json);
+			if (response_json)
+				json_array_append_new(batch_response_json, response_json);
 		}
-		return response_json;
+
+		/* do not return an empty batch response */
+		if (json_array_size(batch_response_json) == 0)
+		{
+			json_decref(batch_response_json);
+			return NULL;
+		}
+		else
+			return batch_response_json;
 	}
 	else
 	{
@@ -324,6 +348,14 @@ RPC_process(RPC_MethodTable* rpc_methods, Request* request)
 	json_t* response_json = NULL;
 	if (root_json)
 	{
+		#ifdef _CX_DEBUG
+		XFDBG("Processing request[%s]", request->id);
+		fprintf(stderr, "---------->\n");
+		json_dumpf(root_json, stderr, JSON_INDENT(2));
+		fprintf(stderr, "\n---------->\n");
+		#endif
+
+
 		/* valid JSON */
 		if (json_is_object(root_json))
 		{
@@ -407,7 +439,7 @@ deserialize_version(RPC_Request* request, json_t* jsonrpc_version_json)
 	else
 	{
 		RPC_Result_set_error(&request->result, CX_RPC_ERROR_INVALID_REQUEST,
-				     "Parameter 'jsonrpc' - not available");
+				     "Parameter 'jsonrpc' - is unavailable");
 		return -1;
 	}
 	return 0;

@@ -35,12 +35,8 @@ test_json_obj_param()
 
 	json_t* json = Person_to_json(&person);
 
-	size_t flags = JSON_INDENT(2);
-	char* json_string = json_dumps(json, flags);
-
-	printf("%s", json_string);
-
 	Person person2;
+
 	memset(&person2, 0, sizeof(Person));
 
 	Person_from_json(&person2, json);
@@ -50,7 +46,6 @@ test_json_obj_param()
 	TEST_ASSERT_EQUAL_INT(person.age, person2.age);
 
 	json_decref(json);
-	cx_free(json_string);
 }
 
 static void
@@ -619,8 +614,6 @@ test_Request_create_json_response_error__no_details()
 	json_error_t error;
 	memset(&error, 0, sizeof(json_error_t));
 
-	json_dumpf(response, stdout, JSON_INDENT(2));
-
 	int status = json_unpack_ex(response, &error, 0, "{s:s,s?:o,s:{s:i,s:s,s:{s?:s,s:s}}}",
 				    "jsonrpc", &jsonrpc_version,
 				    "id", &id_json,
@@ -668,7 +661,6 @@ test_Request_create_response()
 	json_t* response = Request_create_json_response(&request);
 
 	TEST_ASSERT_NOT_NULL(response);
-	json_dumpf(response, stdout, JSON_INDENT(2));
 
 	RPC_Request_free(&request);
 	json_decref(response);
@@ -679,6 +671,23 @@ test_get_payload(Request* request, const char** ptr)
 {
 	*ptr = (char*)request->data;
 	return strlen(*ptr);
+}
+
+static void
+test_RPC_process_notification()
+{
+	Request request;
+
+	memset(&request, 0, sizeof(request));
+	Request_init(&request);
+	request.f_get_payload = test_get_payload;
+	request.data = "{\"jsonrpc\":\"2.0\", \"method\":\"foobar\"}";
+
+	json_t* json = RPC_process(EXAMPLE_SERVICE_METHODS, &request);
+
+	TEST_ASSERT_NULL(json);
+
+	Request_free_members(&request);
 }
 
 static void
@@ -721,9 +730,33 @@ test_RPC_process_batch()
 	json_unpack(json, "[o,o]", &obj1, &obj2);
 
 	test_assert_json_is_error(obj1, CX_RPC_ERROR_INVALID_REQUEST, "Expected object, got integer");
-	test_assert_json_is_error(obj2, CX_RPC_ERROR_INVALID_REQUEST, "Parameter 'jsonrpc' - not available");
+	test_assert_json_is_error(obj2, CX_RPC_ERROR_INVALID_REQUEST, "Parameter 'jsonrpc' - is unavailable");
 
 	json_decref(json);
+	Request_free_members(&request);
+}
+
+static void
+test_RPC_process_batch_notification()
+{
+	Request request;
+
+	memset(&request, 0, sizeof(request));
+	Request_init(&request);
+
+	request.f_get_payload = test_get_payload;
+	request.data = "[{\"jsonrpc\":\"2.0\", \"method\":\"foobar\"},"
+		       "{\"jsonrpc\":\"2.0\", \"method\":\"has_count\"},"
+		       "{\"jsonrpc\":\"2.0\", \"method\":\"has_count\", \"params\":[\"foobar\", 6]}]";
+
+	// --> protocol violation (using rpc prefix), will return an error even for notifications
+	// "{\"jsonrpc\":\"2.0\", \"method\":\"rpc.foobar\"}]
+
+
+	json_t* json = RPC_process(EXAMPLE_SERVICE_METHODS, &request);
+
+	TEST_ASSERT_NULL(json);
+
 	Request_free_members(&request);
 }
 
@@ -761,8 +794,10 @@ main()
 	RUN(test_Request_create_json_response_error__no_details);
 	RUN(test_Request_create_response);
 
+	RUN(test_RPC_process_notification);
 	RUN(test_RPC_process_single);
 	RUN(test_RPC_process_batch);
+	RUN(test_RPC_process_batch_notification);
 
 	TEST_END
 }
