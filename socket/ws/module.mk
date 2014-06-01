@@ -40,6 +40,7 @@ $(L)/test_handshake_OBJS := $(TEST_OBJS) \
 	$(L)/test_handshake.o \
 	$(L)/handshake.o \
 	$(L)/sha1.o \
+	$(L)/util.o \
 	$(L)/base64_enc.o \
 	$(LIBCX_DIR)/umtp/parser.o \
 	$(LIBCX_DIR)/umtp/message_parser.o \

@@ -4,12 +4,23 @@
 #include "websocket.h"
 #include "util.h"
 
-#define EXTENDED_PAYLOAD_LENGTH 126             /* 2 bytes (16 bit unsigned integer network byte order */
-#define CONTINUED_EXTENDED_PAYLOAD_LENGTH 127   /* 8 bytes (64 bit unsigned integer (MSB 0)  */
-#define EXTENDED_PAYLOAD_MAX 0xFFFF
+#define PAYLOAD_EXTENDED 126             /* 16 bit unsigned integer (Big-Endian / MSB 0) */
+#define PAYLOAD_EXTENDED_SIZE   2
+#define PAYLOAD_EXTENDED_MAX 0xFFFF
 
+#define PAYLOAD_EXTENDED_CONTINUED 127   /* 64 bit unsigned integer (Big-Endian / MSB 0)  */
+#define PAYLOAD_EXTENDED_CONTINUED_SIZE 8
 
-size_t
-WebsocketsFrame_get_payload_length(Websockets* ws);
+#define WS_MASKING_KEY_LENGTH 4
+
+/* -1 on error, 1 else */
+int
+WebsocketsFrame_parse(Websockets* ws);
+
+void
+WebsocketsFrame_unmask_payload_data(Websockets* ws, uint8_t* masking_key);
+
+void
+WebsocketsFrame_parse_extended_payload_length(Websockets* ws);
 
 #endif

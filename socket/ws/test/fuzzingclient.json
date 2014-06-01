@@ -4,7 +4,7 @@
    "servers": [
                   {
                      "agent": "AutobahnPython",
-                     "url": "ws://127.0.0.1:8809/echo"
+                     "url": "ws://127.0.0.1:8088/echo"
                   }
               ],
    "cases": ["1.1.3"],
