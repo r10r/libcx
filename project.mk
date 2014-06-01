@@ -15,7 +15,8 @@ MODULES := base \
 	string \
 	list \
 	umtp \
-	socket
+	socket \
+	socket/ws
 
 # TODO ignore parameter/functions/values/variables with a macro
 # #define UNUSED(x) (void)(x)
