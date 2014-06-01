@@ -2,7 +2,7 @@
 L := $(LOCAL_DIR)
 
 PROGRAMS += $(L)/echo-server
-#TESTS += $(L)/test_jsonrpc
+TESTS += $(L)/test_handshake
 
 # overwrite CFLAGS per object
 #$(L)/.o : CFLAGS += ...
@@ -13,7 +13,13 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/base64_enc.o \
 	$(L)/sha1.o \
 	$(L)/websocket.o \
+	$(L)/handshake.o \
+	$(L)/frame.o \
 	$(L)/ws_connection.o \
+	$(LIBCX_DIR)/umtp/parser.o \
+	$(LIBCX_DIR)/umtp/message_parser.o \
+	$(LIBCX_DIR)/umtp/message_fsm.o \
+	$(LIBCX_DIR)/umtp/message.o \
 	$(LIBCX_DIR)/socket/server.o \
 	$(LIBCX_DIR)/socket/server_unix.o \
 	$(LIBCX_DIR)/socket/server_tcp.o \
@@ -27,3 +33,18 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(LIBCX_DIR)/list/list.o \
 	$(LIBCX_DIR)/string/string.o \
 	$(LIBCX_DIR)/string/pair.o
+
+#$(L)/test_handshake_FLAGS := -I$(L) -lev -lpthread
+$(L)/test_handshake_OBJS := $(TEST_OBJS) \
+	$(L)/test_handshake.o \
+	$(L)/handshake.o \
+	$(L)/sha1.o \
+	$(L)/base64_enc.o \
+	$(LIBCX_DIR)/umtp/parser.o \
+	$(LIBCX_DIR)/umtp/message_parser.o \
+	$(LIBCX_DIR)/umtp/message_fsm.o \
+	$(LIBCX_DIR)/umtp/message.o \
+	$(LIBCX_DIR)/string/string.o \
+	$(LIBCX_DIR)/string/pair.o \
+	$(LIBCX_DIR)/list/list.o
+

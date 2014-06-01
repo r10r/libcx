@@ -29,7 +29,7 @@ ws_connection_handler(Connection* connection, ConnectionEvent event)
 			}
 			else
 			{
-				printf("YYYYY\n");
+				XDBG("Closing connection\n");
 				Websockets_free(ws);
 				Connection_close(connection);
 				break;
@@ -42,10 +42,12 @@ ws_connection_handler(Connection* connection, ConnectionEvent event)
 		break;
 	}
 	case CONNECTION_EVENT_CLOSE_READ:
+		XDBG("Client closed connection. Closing connection\n");
 		Websockets_free(ws);
 		Connection_close(connection);
 		break;
 	case CONNECTION_EVENT_ERRNO:
+		XDBG("Error on connection. Closing connection\n");
 		Websockets_free(ws);
 		Connection_close(connection);
 		break;
