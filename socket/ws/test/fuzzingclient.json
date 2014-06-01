@@ -1,0 +1,13 @@
+
+{
+   "outdir": "./reports/libcx",
+   "servers": [
+                  {
+                     "agent": "AutobahnPython",
+                     "url": "ws://127.0.0.1:8809/echo"
+                  }
+              ],
+   "cases": ["1.1.3"],
+   "exclude-cases": [],
+   "exclude-agent-cases": {}
+}

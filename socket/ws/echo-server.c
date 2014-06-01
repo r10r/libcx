@@ -4,7 +4,7 @@
 #include "socket/server_tcp.h"
 #include "ws_connection.h"
 
-#define CONNECTION_BUFFER_CHUNK 256
+#define CONNECTION_BUFFER_CHUNK 128
 
 static Connection*
 ws_connection_handler(Connection* connection, ConnectionEvent event)
@@ -90,7 +90,7 @@ static void
 print_usage(const char* message)
 {
 	fprintf(stderr, "Error: %s\n", message);
-	fprintf(stderr, "Usage: $0 <unix|tcp>\n");
+	fprintf(stderr, "Usage: $0 <port>\n");
 	exit(1);
 }
 
@@ -102,14 +102,17 @@ main(int argc, char** argv)
 
 	Server* server = NULL;
 
-	if (strcmp(argv[1], "unix") == 0)
-		server = (Server*)UnixServer_new("/tmp/echo.sock");
-	else if (strcmp(argv[1], "tcp") == 0)
-		server = (Server*)TCPServer_new("0.0.0.0", 8088);
-	else
-		print_usage("Invalid server type");
+//	if (strcmp(argv[1], "unix") == 0)
+//		server = (Server*)UnixServer_new("/tmp/echo.sock");
+//	else if (strcmp(argv[1], "tcp") == 0)
+	server = (Server*)TCPServer_new("0.0.0.0", (uint16_t)atoi(argv[1]));
+//	else
+//		print_usage("Invalid server type");
 
 	List_push(server->workers, WebsocketsWorker_new());
+//	List_push(server->workers, WebsocketsWorker_new());
+//	List_push(server->workers, WebsocketsWorker_new());
+//	List_push(server->workers, WebsocketsWorker_new());
 
 	Server_start(server);         // blocks
 }

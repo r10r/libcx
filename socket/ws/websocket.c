@@ -23,6 +23,9 @@
 
 #include "websocket.h"
 #include "base/debug.h"
+#include "string/string_buffer.h"
+#include <inttypes.h> /* print types uint64_t */
+#include "util.h"
 
 static char rn[] PROGMEM = "\r\n";
 
@@ -188,131 +191,67 @@ wsParseHandshake(const uint8_t* inputFrame, size_t inputLength,
 }
 
 void
-wsGetHandshakeAnswer(const struct handshake* hs, uint8_t* outFrame,
-		     size_t* outLength)
+wsMakeFrame(Websockets* ws, enum wsFrameType frameType, uint8_t*payload, uint64_t payload_length)
 {
-	assert(outFrame && *outLength);
-	assert(hs->frameType == WS_OPENING_FRAME);
-	assert(hs && hs->key);
+	/* ensure frameType is not an error frame type  ? */
+	assert(frameType < WS_EMPTY_FRAME /* first error frame */);
 
-	char* responseKey = NULL;
-	uint8_t length = (uint8_t)(strlen(hs->key) + strlen_P(secret));
-	responseKey = malloc(length);
-	memcpy(responseKey, hs->key, strlen(hs->key));
-	memcpy_P(&(responseKey[strlen(hs->key)]), secret, strlen_P(secret));
-	char shaHash[20];
-	memset(shaHash, 0, sizeof(shaHash));
-	sha1(shaHash, responseKey, length * 8);
-	base64enc(responseKey, shaHash, 20);
+	/* clear buffer */
+	StringBuffer_clear(ws->out);
+	size_t frame_header_length = 2;
+	uint8_t* frame_buf = (uint8_t*)StringBuffer_value(ws->out);
 
-	int written = sprintf_P((char*)outFrame,
-				PSTR("HTTP/1.1 101 Switching Protocols\r\n"
-				     "%s%s\r\n"
-				     "%s%s\r\n"
-				     "Sec-WebSocket-Accept: %s\r\n\r\n"),
-				upgradeField,
-				websocket,
-				connectionField,
-				upgrade2,
-				responseKey);
+	frame_buf[0] =  (0x80 | frameType);
 
-	free(responseKey);
-	// if assert fail, that means, that we corrupt memory
-	assert(written <= (int)*outLength);
-	*outLength = (size_t)written;
-}
-
-void
-wsMakeFrame(const uint8_t* data, size_t dataLength,
-	    uint8_t* outFrame, size_t* outLength, enum wsFrameType frameType)
-{
-	assert(outFrame && *outLength);
-	assert(frameType < 0x10);
-	if (dataLength > 0)
-		assert(data);
-
-	outFrame[0] = 0x80 | frameType;
-
-	if (dataLength <= 125)
+	if (payload_length < EXTENDED_PAYLOAD_LENGTH)
 	{
-		outFrame[1] = (uint8_t)dataLength;
-		*outLength = 2;
+		frame_buf[1] = (uint8_t)payload_length;
 	}
-	else if (dataLength <= 0xFFFF)
+	else if (payload_length <= EXTENDED_PAYLOAD_MAX)
 	{
-		outFrame[1] = 126;
-		uint16_t payloadLength16b = htons(dataLength);
-		memcpy(&outFrame[2], &payloadLength16b, 2);
-		*outLength = 4;
+		frame_buf[1] = EXTENDED_PAYLOAD_LENGTH;
+		uint16_t payload_length_net = htons(payload_length);
+		memcpy(frame_buf[2], &payload_length_net, sizeof(payload_length_net));
+		frame_header_length += sizeof(payload_length_net);
 	}
 	else
 	{
-		outFrame[1] = 127;
-		memcpy(&outFrame[2], &dataLength, 8);
-		*outLength = 10;
+		frame_buf[1] = CONTINUED_EXTENDED_PAYLOAD_LENGTH;
+		uint64_t payload_length_net = htobe64(payload_length);
+		memcpy(frame_buf[2], &payload_length_net, sizeof(payload_length_net));
+		frame_header_length += sizeof(payload_length_net);
 	}
-	memcpy(&outFrame[*outLength], data, dataLength);
-	*outLength += dataLength;
+
+	/* copy data */
+	// ensure output buffer is large enough
+	size_t package_length = frame_header_length + payload_length;
+	StringBuffer_make_room(ws->out, 0, package_length + 1);
+
+	/* copy input data */
+	memcpy(frame_buf[frame_header_length], payload, payload_length);
+
+	// terminate buffer
+	frame_buf[package_length] = '\0';
+	ws->out->string->length = package_length + 1;
 }
 
-static size_t
-getPayloadLength(const uint8_t* inputFrame, size_t inputLength,
-		 uint8_t* payloadFieldExtraBytes, enum wsFrameType* frameType)
+void
+Websockets_parse_input_frame(Websockets *ws)
 {
-	size_t payloadLength = inputFrame[1] & 0x7F;
 
-	*payloadFieldExtraBytes = 0;
-	if ((payloadLength == 0x7E && inputLength < 4) || (payloadLength == 0x7F && inputLength < 10))
-	{
-		*frameType = WS_INCOMPLETE_FRAME;
-		return 0;
-	}
-	if (payloadLength == 0x7F && (inputFrame[3] & 0x80) != 0x0)
-	{
-		*frameType = WS_ERROR_FRAME;
-		return 0;
-	}
+	uint8_t inputFrame = StringBuffer_value(ws->in)[0];
 
-	if (payloadLength == 0x7E)
-	{
-		uint16_t payloadLength16b = 0;
-		*payloadFieldExtraBytes = 2;
-		memcpy(&payloadLength16b, &inputFrame[2], *payloadFieldExtraBytes);
-		payloadLength = payloadLength16b;
-	}
-	else if (payloadLength == 0x7F)
-	{
-		uint64_t payloadLength64b = 0;
-		*payloadFieldExtraBytes = 8;
-		memcpy(&payloadLength64b, &inputFrame[2], *payloadFieldExtraBytes);
-		if (payloadLength64b > SIZE_MAX)
-		{
-			*frameType = WS_ERROR_FRAME;
-			return 0;
-		}
-		payloadLength = (size_t)payloadLength64b;
-	}
+	ws->
 
-	return payloadLength;
-}
+//	if ((inputFrame[0] & 0x70) != 0x0)      // checks extensions off
+//		return WS_ERROR_FRAME;
+//	if ((inputFrame[0] & 0x80) != 0x80)     // we haven't continuation frames support
+//		return WS_ERROR_FRAME;          			// so, fin flag must be set
+		int masked = wsinputFrame[1] & 0x80) != 0x80)     // checks masking bit
+//		return WS_ERROR_FRAME;
 
-enum wsFrameType
-wsParseInputFrame(uint8_t* inputFrame, size_t inputLength,
-		  uint8_t** dataPtr, size_t* dataLength)
-{
-	assert(inputFrame && inputLength);
+	uint8_t opcode = StringBuffer_value(ws->in)[0] & 0x0F;
 
-	if (inputLength < 2)
-		return WS_INCOMPLETE_FRAME;
-
-	if ((inputFrame[0] & 0x70) != 0x0)      // checks extensions off
-		return WS_ERROR_FRAME;
-	if ((inputFrame[0] & 0x80) != 0x80)     // we haven't continuation frames support
-		return WS_ERROR_FRAME;          // so, fin flag must be set
-	if ((inputFrame[1] & 0x80) != 0x80)     // checks masking bit
-		return WS_ERROR_FRAME;
-
-	uint8_t opcode = inputFrame[0] & 0x0F;
 	if (opcode == WS_TEXT_FRAME ||
 	    opcode == WS_BINARY_FRAME ||
 	    opcode == WS_CLOSING_FRAME ||
@@ -322,12 +261,10 @@ wsParseInputFrame(uint8_t* inputFrame, size_t inputLength,
 	{
 		enum wsFrameType frameType = opcode;
 
-		uint8_t payloadFieldExtraBytes = 0;
-		size_t payloadLength = getPayloadLength(inputFrame, inputLength,
-							&payloadFieldExtraBytes, &frameType);
+		uint64_t payload_length = getPayloadLength(ws);
 
-		XFDBG("Frame: payload:%zu, input:%zu, extra:%u", payloadLength, inputLength, payloadFieldExtraBytes);
-		if (payloadLength > 0)
+		XFDBG("Frame: opcode:%#x payload:%zu, input:%zu, extra:%u", opcode, payload_length);
+		if (payload_length > 0)
 		{
 //			if (payloadLength < inputLength - 6 - payloadFieldExtraBytes) // 4-maskingKey, 2-header
 //				return WS_INCOMPLETE_FRAME;
@@ -337,7 +274,7 @@ wsParseInputFrame(uint8_t* inputFrame, size_t inputLength,
 //			assert(payloadLength == inputLength - 6 - payloadFieldExtraBytes);
 
 			*dataPtr = &inputFrame[2 + payloadFieldExtraBytes + 4];
-			*dataLength = payloadLength;
+			*dataLength = payload_length;
 
 			size_t i;
 			for (i = 0; i < *dataLength; i++)

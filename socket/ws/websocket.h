@@ -24,10 +24,6 @@
 #ifndef WEBSOCKET_H
 #define WEBSOCKET_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #include <assert.h>
 #include <stdint.h>     /* uint8_t */
 #include <stdlib.h>     /* strtoul */
@@ -38,18 +34,56 @@ extern "C" {
 //#include <stddef.h> /* size_t */
 #include "base64_enc.h"
 #include "sha1.h"
-#ifdef __AVR__
-    #include <avr/pgmspace.h>
-#else
-    #define PROGMEM
-    #define PSTR
-    #define strstr_P strstr
-    #define sscanf_P sscanf
-    #define sprintf_P sprintf
-    #define strlen_P strlen
-    #define memcmp_P memcmp
-    #define memcpy_P memcpy
-#endif
+
+typedef enum websockets_opcode_t
+{
+	WS_FRAME_CONTINUATION = 0x0, /* a continuation frame */
+	WS_FRAME_TEXT = 0x1, /* a text frame */
+	WS_FRAME_BINARY = 0x2, /* a binary frame */
+//	0x3 - 0x7 reserved for further non-control frames
+	WS_FRAME_CLOSE = 0x8,	/* a connection close */
+	WS_FRAME_PING = 0x9, /* a ping */
+	WS_FRAME_PONG = 0xA /* a pong */
+// 0xB - 0xF  reserved for further control frames
+} WebsocketsOpcode;
+
+typedef struct websockets_header_t
+{
+	unsigned int fin:1;
+	unsigned int rsv1:1;
+	unsigned int rsv2:1;
+	unsigned int rsv3:1;
+	unsigned int opcode:4;
+	unsigned int mask:1;
+	unsigned int payload_length:1;
+} WebsocketsHeader;
+
+typedef struct websockets_frame_t
+{
+	WebsocketsHeader header;
+	WebsocketsOpcode opcode;	/* decoded opcode */
+	uint64_t payload_length; 	/* decoded payload length */
+	uint32_t mask;						/* contains the mask when masked */
+
+	uint8_t* header_data; 	/* pointer to the start of the frame */
+	uint8_t* payload_data; /* pointer to the start of the data (points to input buffer) */
+} WebsocketsFrame;
+
+typedef struct websockets_state_t
+{
+	WebsocketsFrame frame;
+	StringBuffer* in;
+	StringBuffer* out;
+} Websockets;
+
+typedef struct websockets_handshake_t
+{
+	char* host;
+	char* origin;
+	char* key;
+	char* resource;
+	enum wsFrameType frameType;
+} WebsocketsHandshake;
 
 #ifndef TRUE
     #define TRUE 1
@@ -58,75 +92,8 @@ extern "C" {
     #define FALSE 0
 #endif
 
-static const char connectionField[] PROGMEM = "Connection: ";
-static const char upgrade[] PROGMEM = "upgrade";
-static const char upgrade2[] PROGMEM = "Upgrade";
-static const char upgradeField[] PROGMEM = "Upgrade: ";
-static const char websocket[] PROGMEM = "websocket";
-static const char hostField[] PROGMEM = "Host: ";
-static const char originField[] PROGMEM = "Origin: ";
-static const char keyField[] PROGMEM = "Sec-WebSocket-Key: ";
-static const char protocolField[] PROGMEM = "Sec-WebSocket-Protocol: ";
-static const char versionField[] PROGMEM = "Sec-WebSocket-Version: ";
-static const char version[] PROGMEM = "13";
-static const char secret[] PROGMEM = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
-enum wsFrameType   // errors starting from 0xF0
-{ WS_EMPTY_FRAME = 0xF0,
-  WS_ERROR_FRAME = 0xF1,
-  WS_INCOMPLETE_FRAME = 0xF2,
-  WS_TEXT_FRAME = 0x01,
-  WS_BINARY_FRAME = 0x02,
-  WS_PING_FRAME = 0x09,
-  WS_PONG_FRAME = 0x0A,
-  WS_OPENING_FRAME = 0xF3,
-  WS_CLOSING_FRAME = 0x08 };
-
-enum wsState
-{
-	WS_STATE_OPENING,
-	WS_STATE_NORMAL,
-	WS_STATE_CLOSING
-};
-
-struct handshake
-{
-	char* host;
-	char* origin;
-	char* key;
-	char* resource;
-	enum wsFrameType frameType;
-};
-
-/**
- * @param inputFrame Pointer to input frame
- * @param inputLength Length of input frame
- * @param hs Cleared with nullHandshake() handshake structure
- * @return Type of parsed frame
- */
-enum wsFrameType
-wsParseHandshake(const uint8_t* inputFrame, size_t inputLength,
-		 struct handshake* hs);
-
-/**
- * @param hs Filled handshake structure
- * @param outFrame Pointer to frame buffer
- * @param outLength Length of frame buffer. Return length of out frame
- */
-void
-wsGetHandshakeAnswer(const struct handshake* hs, uint8_t* outFrame,
-		     size_t* outLength);
-
-/**
- * @param data Pointer to input data array
- * @param dataLength Length of data array
- * @param outFrame Pointer to frame buffer
- * @param outLength Length of out frame buffer. Return length of out frame
- * @param frameType [WS_TEXT_FRAME] frame type to build
- */
-void
-wsMakeFrame(const uint8_t* data, size_t dataLength,
-	    uint8_t* outFrame, size_t* outLength, enum wsFrameType frameType);
+wsMakeFrame(Websockets* ws, enum wsFrameType frameType, uint8_t*payload, uint64_t payload_length);
 
 /**
  *
@@ -136,9 +103,8 @@ wsMakeFrame(const uint8_t* data, size_t dataLength,
  * @param outLen Return length of extracted data
  * @return Type of parsed frame
  */
-enum wsFrameType
-wsParseInputFrame(uint8_t* inputFrame, size_t inputLength,
-		  uint8_t** outDataPtr, size_t* outLen);
+void
+wsParseInputFrame(Websockets* ws, enum wsFrameType frameType, uint8_t*payload, uint64_t payload_length);
 
 /**
  * @param hs NULL handshake structure
@@ -151,9 +117,5 @@ nullHandshake(struct handshake* hs);
  */
 void
 freeHandshake(struct handshake* hs);
-
-#ifdef  __cplusplus
-}
-#endif
 
 #endif  /* WEBSOCKET_H */
