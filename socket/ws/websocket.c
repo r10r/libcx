@@ -217,7 +217,7 @@ wsGetHandshakeAnswer(const struct handshake* hs, uint8_t* outFrame,
 
 	free(responseKey);
 	// if assert fail, that means, that we corrupt memory
-	assert(written <= *outLength);
+	assert(written <= (int)*outLength);
 	*outLength = (size_t)written;
 }
 

@@ -13,6 +13,7 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/base64_enc.o \
 	$(L)/sha1.o \
 	$(L)/websocket.o \
+	$(L)/ws_connection.o \
 	$(LIBCX_DIR)/socket/server.o \
 	$(LIBCX_DIR)/socket/server_unix.o \
 	$(LIBCX_DIR)/socket/server_tcp.o \

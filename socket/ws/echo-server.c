@@ -1,249 +1,115 @@
-/*
- * Copyright (c) 2014 Putilov Andrey
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- */
+#include "base/test.h"
+#include "base/base.h"
+#include "socket/server_unix.h"
+#include "socket/server_tcp.h"
+#include "ws_connection.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
+#define CONNECTION_BUFFER_CHUNK 256
 
-#include "websocket.h"
-#include "socket/socket_tcp.h"
-
-//#define PORT 8088
-#define BUF_LEN 0xFFFF
-#define PACKET_DUMP
-
-static uint8_t gBuffer[BUF_LEN];
-
-__attribute__((noreturn))
-static void
-error(const char* msg)
+static Connection*
+ws_connection_handler(Connection* connection, ConnectionEvent event)
 {
-	perror(msg);
-	exit(EXIT_FAILURE);
-}
+	Websockets* ws = (Websockets*)connection->data;
 
-static int
-safeSend(int clientSocket, const uint8_t* buffer, size_t bufferSize)
-{
-    #ifdef PACKET_DUMP
-	printf("out packet:\n");
-//    fwrite(buffer, 1, bufferSize, stdout);
-//    printf("\n");
-    #endif
-	ssize_t written = send(clientSocket, buffer, bufferSize, 0);
-	if (written == -1)
+	switch (event)
 	{
-		close(clientSocket);
-		perror("send failed");
-		return EXIT_FAILURE;
-	}
-	else if ((size_t)written != bufferSize)
+	case CONNECTION_EVENT_DATA:
 	{
-		close(clientSocket);
-		perror("written not all bytes");
-		return EXIT_FAILURE;
-	}
+		StringBuffer_log(ws->in, "Input buffer (before process)");
+		StringBuffer_log(ws->out, "Output buffer (before process");
 
-	return EXIT_SUCCESS;
-}
+		size_t nbuffered;
 
-static void
-clientWorker(int clientSocket)
-{
-	memset(gBuffer, 0, BUF_LEN);
-	size_t readedLength = 0;
-	size_t frameSize = BUF_LEN;
-	enum wsState state = WS_STATE_OPENING;
-	uint8_t* data = NULL;
-	size_t dataSize = 0;
-	enum wsFrameType frameType = WS_INCOMPLETE_FRAME;
-	struct handshake hs;
-	nullHandshake(&hs);
-
-    #define prepareBuffer frameSize = BUF_LEN; memset(gBuffer, 0, BUF_LEN);
-    #define initNewFrame frameType = WS_INCOMPLETE_FRAME; readedLength = 0; memset(gBuffer, 0, BUF_LEN);
-
-	while (frameType == WS_INCOMPLETE_FRAME)
-	{
-		ssize_t readed = recv(clientSocket, gBuffer + readedLength, BUF_LEN - readedLength, 0);
-		if (readed < 1)
+		while ((nbuffered = StringBuffer_used(ws->in)) > 1) //&& buffer_after < buffer_before)
 		{
-			close(clientSocket);
-			perror("recv failed");
-			return;
-		}
-#ifdef PACKET_DUMP
-		printf("in packet:\n");
-//        fwrite(gBuffer, 1, readed, stdout);
-		printf("\n");
-#endif
-		readedLength += (size_t)readed;
-		assert(readedLength <= BUF_LEN);
-
-		if (state == WS_STATE_OPENING)
-			frameType = wsParseHandshake(gBuffer, readedLength, &hs);
-		else
-			frameType = wsParseInputFrame(gBuffer, readedLength, &data, &dataSize);
-
-
-		if ((frameType == WS_INCOMPLETE_FRAME && readedLength == BUF_LEN) || frameType == WS_ERROR_FRAME)
-		{
-			if (frameType == WS_INCOMPLETE_FRAME)
-				printf("buffer too small\n");
-			else
-				printf("error in incoming frame\n");
-
-			if (state == WS_STATE_OPENING)
+			if (Websockets_process(connection, ws) > 0)
 			{
-				prepareBuffer;
-
-				int printed = sprintf((char*)gBuffer,
-						      "HTTP/1.1 400 Bad Request\r\n"
-						      "%s%s\r\n\r\n",
-						      versionField,
-						      version);
-				if (printed < 0)
-					perror("error while printing into buffer\n");
-				else
-				{
-					frameSize = (size_t)printed;
-					safeSend(clientSocket, gBuffer, frameSize);
-				}
+				StringBuffer_log(ws->in, "Input buffer (after process)");
+				StringBuffer_log(ws->out, "Output buffer (after process");
+			}
+			else
+			{
+				printf("YYYYY\n");
+				Websockets_free(ws);
+				Connection_close(connection);
 				break;
 			}
-			else
-			{
-				prepareBuffer;
-				wsMakeFrame(NULL, 0, gBuffer, &frameSize, WS_CLOSING_FRAME);
-				if (safeSend(clientSocket, gBuffer, frameSize) == EXIT_FAILURE)
-					break;
-				state = WS_STATE_CLOSING;
-				initNewFrame;
-			}
+
+			/* wait for more input */
+			if (StringBuffer_used(ws->in) == nbuffered)
+				break;
 		}
-
-
-		if (state == WS_STATE_OPENING)
-		{
-			assert(frameType == WS_OPENING_FRAME);
-			if (frameType == WS_OPENING_FRAME)
-			{
-				// if resource is right, generate answer handshake and send it
-				if (strcmp(hs.resource, "/echo") != 0)
-				{
-					int printed = sprintf((char*)gBuffer, "HTTP/1.1 404 Not Found\r\n\r\n");
-					if (printed < 0)
-					{
-						perror("Error while printing to buffer\n");
-						return;
-					}
-					else
-						frameSize = (size_t)safeSend(clientSocket, gBuffer, frameSize);
-					break;
-				}
-
-				prepareBuffer;
-				wsGetHandshakeAnswer(&hs, gBuffer, &frameSize);
-				freeHandshake(&hs);
-				if (safeSend(clientSocket, gBuffer, frameSize) == EXIT_FAILURE)
-					break;
-				state = WS_STATE_NORMAL;
-				initNewFrame;
-			}
-		}
-		else
-		{
-			if (frameType == WS_CLOSING_FRAME)
-			{
-				if (state == WS_STATE_CLOSING)
-					break;
-				else
-				{
-					prepareBuffer;
-					wsMakeFrame(NULL, 0, gBuffer, &frameSize, WS_CLOSING_FRAME);
-					safeSend(clientSocket, gBuffer, frameSize);
-					break;
-				}
-			}
-			else if (frameType == WS_TEXT_FRAME)
-			{
-				uint8_t* recievedString = NULL;
-				recievedString = malloc(dataSize + 1);
-				assert(recievedString);
-				memcpy(recievedString, data, dataSize);
-				recievedString[ dataSize ] = 0;
-
-				prepareBuffer;
-				wsMakeFrame(recievedString, dataSize, gBuffer, &frameSize, WS_TEXT_FRAME);
-				free(recievedString);
-				if (safeSend(clientSocket, gBuffer, frameSize) == EXIT_FAILURE)
-					break;
-				initNewFrame;
-			}
-		}
-	} // read/write cycle
-
-	close(clientSocket);
+		break;
+	}
+	case CONNECTION_EVENT_CLOSE_READ:
+		Websockets_free(ws);
+		Connection_close(connection);
+		break;
+	case CONNECTION_EVENT_ERRNO:
+		Websockets_free(ws);
+		Connection_close(connection);
+		break;
+	case CONNECTION_EVENT_ERROR_WRITE:
+		break;
+	}
+	return connection;
 }
 
-static TCPSocket* server_socket;
+static ssize_t
+ws_connection_data_handler(Connection* connection)
+{
+	Websockets* ws = (Websockets*)connection->data;
+
+	return StringBuffer_fdxload(ws->in, connection->fd, CONNECTION_BUFFER_CHUNK, 0);
+}
+
+static Connection*
+WebsocketsConnection_new()
+{
+	Connection* connection = Connection_new(NULL, -1);
+
+	connection->f_data_handler = ws_connection_data_handler;
+	connection->f_handler = ws_connection_handler;
+	connection->data = Websockets_new();
+	return connection;
+}
+
+static UnixWorker*
+WebsocketsWorker_new()
+{
+	UnixWorker* worker = UnixWorker_new();
+
+	worker->f_create_connection = WebsocketsConnection_new;
+	return worker;
+}
 
 static void
-handle_sigint(int signal)
+print_usage(const char* message) __attribute__((noreturn));
+
+static void
+print_usage(const char* message)
 {
-	/* close server socket, otherwise it takes some time to reconnect */
-	close(server_socket->socket.fd);
-	TCPSocket_free(server_socket);
+	fprintf(stderr, "Error: %s\n", message);
+	fprintf(stderr, "Usage: $0 <unix|tcp>\n");
+	exit(1);
 }
 
 int
 main(int argc, char** argv)
 {
-	signal(SIGINT, handle_sigint);
+	if (argc != 2)
+		print_usage("Invalid parameter count");
 
-	const char* ip = "127.0.0.1";
-	uint16_t port =  (uint16_t)atoi(argv[1]);
-	server_socket = TCPSocket_new(ip, port);
+	Server* server = NULL;
 
-	if (Socket_serve((Socket*)server_socket) == SOCKET_LISTEN)
-	{
-		printf("Listening to socket: %s:%d\n", ip, port);
-		while (TRUE)
-		{
-			int clientSocket = accept(server_socket->socket.fd, NULL, NULL);
-			if (clientSocket == -1)
-				error("accept failed");
-			clientWorker(clientSocket);
-			printf("disconnected\n");
-		}
-	}
+	if (strcmp(argv[1], "unix") == 0)
+		server = (Server*)UnixServer_new("/tmp/echo.sock");
+	else if (strcmp(argv[1], "tcp") == 0)
+		server = (Server*)TCPServer_new("0.0.0.0", 8088);
 	else
-		printf("Failed to listen to socket: %s:%d\n", ip, port);
-//	close(listenSocket);
-	return EXIT_SUCCESS;
+		print_usage("Invalid server type");
+
+	List_push(server->workers, WebsocketsWorker_new());
+
+	Server_start(server);         // blocks
 }
