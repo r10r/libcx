@@ -1,5 +1,25 @@
 #include "frame.h"
 
+size_t
+WebsocketsFrame_get_payload_length(Websockets* ws)
+{
+	uint8_t payload_length = ws->frame.header_data[1] & CONTINUED_EXTENDED_PAYLOAD_LENGTH;
+	uint64_t extended_payload_length = 0;
+
+	/* TODO check for incomplete frames !!! and payload length > CONTINUED_EXTENDED_PAYLOAD_LENGTH  */
+
+	if (payload_length < EXTENDED_PAYLOAD_LENGTH)
+		extended_payload_length = payload_length;
+	if (payload_length == EXTENDED_PAYLOAD_LENGTH)
+		extended_payload_length = ntohs((uint16_t)ws->frame.header_data[2]);
+	else if (payload_length == CONTINUED_EXTENDED_PAYLOAD_LENGTH)
+		extended_payload_length = be64toh((uint64_t)ws->frame.header_data[2]);
+
+	XFDBG("Payload length: %llu\n", extended_payload_length);
+
+	return extended_payload_length;
+}
+
 //void
 //wsMakeFrame(Websockets* ws, enum wsFrameType frameType, uint8_t* payload, uint64_t payload_length)
 //{

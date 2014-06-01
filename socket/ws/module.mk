@@ -15,6 +15,7 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/websocket.o \
 	$(L)/handshake.o \
 	$(L)/frame.o \
+	$(L)/util.o \
 	$(L)/ws_connection.o \
 	$(LIBCX_DIR)/umtp/parser.o \
 	$(LIBCX_DIR)/umtp/message_parser.o \
