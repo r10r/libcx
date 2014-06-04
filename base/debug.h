@@ -17,7 +17,7 @@
 
 /* consider using write ? (should be atomic up to PIPE_BUFF_MAX) */
 #define cx_log(format, ...) \
-	flockfile(stderr); fprintf(stderr, format "\n", __VA_ARGS__); funlockfile(stderr)
+	{ flockfile(stderr); fprintf(stderr, format "\n", __VA_ARGS__); funlockfile(stderr); }
 
 #ifndef _CX_DEBUG
 #define XDBG(message) UNUSED(message)
