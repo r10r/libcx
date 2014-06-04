@@ -32,10 +32,39 @@ Queue_free(Queue* queue)
 	cx_free(queue);
 }
 
+/* TODO test */
+void*
+Queue_pop(Queue* queue)
+{
+	void* data = NULL;
+	int rc = 0;
+
+	rc = pthread_mutex_lock(queue->mutex_add_item);
+	XFCHECK(rc == 0,
+		"pthread_mutex_lock should exit with 0 (was %d)", rc);
+
+	/*
+	 * When the queue was destroyed/deactivated, multiple threads
+	 * access this region concurrently. To ensure
+	 * that only a single thread calls List_pop we have
+	 * to check whether the queue is active.
+	 */
+	if (Queue_active(queue))
+		data = List_pop(queue->items);
+
+	pthread_mutex_unlock(queue->mutex_add_item);
+	XFCHECK(rc == 0,
+		"pthread_mutex_unlock should exit with 0 (was %d)", rc);
+	return data;
+}
+
+// TODO add timeout parameter using pthread_cond_timed_wait
+// add synchronized method without waiting
+
 // POP returns NULL when Queue is not active anymore ?
 // -> check for null in the calling thread
 void*
-Queue_pop(Queue* queue)
+Queue_pop_wait(Queue* queue)
 {
 	void* data = NULL;
 	int rc = 0;
@@ -47,6 +76,58 @@ Queue_pop(Queue* queue)
 	while (Queue_active(queue) && queue->items->length == 0)
 	{
 		rc = pthread_cond_wait(queue->mutex_cond_add_item, queue->mutex_add_item);
+		XFCHECK(rc == 0,
+			"pthread_cond_wait should exit with 0 (was %d)", rc);
+	}
+
+	/*
+	 * When the queue was destroyed/deactivated, multiple threads
+	 * access this region concurrently. To ensure
+	 * that only a single thread calls List_pop we have
+	 * to check whether the queue is active.
+	 */
+	if (Queue_active(queue))
+		data = List_pop(queue->items);
+
+	pthread_mutex_unlock(queue->mutex_add_item);
+	XFCHECK(rc == 0,
+		"pthread_mutex_unlock should exit with 0 (was %d)", rc);
+	return data;
+}
+
+/* TODO test */
+void*
+Queue_pop_timedwait(Queue* queue, long wait_nanos)
+{
+	void* data = NULL;
+	int rc = 0;
+
+	rc = pthread_mutex_lock(queue->mutex_add_item);
+	XFCHECK(rc == 0,
+		"pthread_mutex_lock should exit with 0 (was %d)", rc);
+
+	while (Queue_active(queue) && queue->items->length == 0)
+	{
+		struct timespec ts;
+		struct timeval tv;
+		rc = gettimeofday(&tv, NULL);
+
+		if (rc != 0)
+		{
+			XFDBG("error gettimeofday : %s", strerror(rc));
+			exit(1);
+		}
+
+		TIMEVAL_TO_TIMESPEC(&tv, &ts);
+
+		long tv_sec = ts.tv_sec + (wait_nanos / BILLION);
+		long tv_nsec = ts.tv_nsec + (wait_nanos % BILLION);
+
+		/* set timeout values and correct overflow of tv_nsec */
+		ts.tv_sec = tv_sec + (tv_nsec / BILLION);
+		ts.tv_nsec = tv_nsec % BILLION;
+
+		rc = pthread_cond_timedwait(queue->mutex_cond_add_item, queue->mutex_add_item, &ts);
 		XFCHECK(rc == 0,
 			"pthread_cond_wait should exit with 0 (was %d)", rc);
 	}

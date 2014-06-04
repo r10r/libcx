@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <sys/time.h> /* gettimeofday */
 
 #include "../list/list.h"
 
@@ -26,6 +27,12 @@ Queue_free(Queue* queue);
 
 void*
 Queue_pop(Queue* queue);
+
+void*
+Queue_pop_wait(Queue* queue);
+
+void*
+Queue_pop_timedwait(Queue* queue, long wait_nanos);
 
 /* 0 when the item was queued */
 int

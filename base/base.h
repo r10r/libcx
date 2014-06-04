@@ -13,8 +13,9 @@
 //typedef unsigned long ssize_t;
 #endif
 
-#define MILLION 1000000
 #define THOUSAND 1000
+#define MILLION  1000000
+#define BILLION  1000000000
 
 #define TIMEVAL_SET_MILLIS(_timeval, millis) \
 	_timeval.tv_sec = (millis / THOUSAND); \
