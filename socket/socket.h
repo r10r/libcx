@@ -95,6 +95,6 @@ Socket_set_timeout(Socket* sock, long millis, int optname, const char* name);
 	Socket_set_timeout_send(sock, millis_sndtimeo)
 
 void
-Socket_ignore_sigpipe(Socket *sock);
+Socket_ignore_sigpipe(Socket* sock);
 
 #endif

@@ -9,7 +9,9 @@ main(int argc, char** argv)
 
 	size_t nunparsed = RagelParser_unparsed((RagelParser*)parser);
 	if (nunparsed > 0)
+	{
 		XFDBG("ERROR: %zu unparsed tokens", nunparsed);
+	}
 	else
 	{
 		/* print the message */

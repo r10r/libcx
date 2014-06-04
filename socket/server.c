@@ -67,7 +67,7 @@ Server_start(Server* server)
 		Worker_start(worker);
 	}
 
-	 /* blocks until SIGINT handler fires and initiates the shutdown process */
+	/* blocks until SIGINT handler fires and initiates the shutdown process */
 	ev_run(server->loop, 0);
 	return 0;
 }

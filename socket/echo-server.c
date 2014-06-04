@@ -28,13 +28,13 @@ echo_connection_read(Connection* conn)
 
 	if (!conn->data)
 		conn->data = StringBuffer_new(CONNECTION_BUFFER_LENGTH);
-
 	StringBuffer* buffer = (StringBuffer*)conn->data;
 
 	/* receive data until buffer is full */
 	StringBuffer_ffill(buffer, conn->fd);
 
 	CXFDBG(conn, "buffer status %d", buffer->status);
+
 	switch (buffer->status)
 	{
 	case STRING_BUFFER_STATUS_OK:
