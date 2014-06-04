@@ -3,9 +3,7 @@
 
 #include <string.h>             /* strerror */
 #include <errno.h>
-#include <stdio.h>              /* fprintf */
-
-#define DFMT ":(%s) %s %d - "   /* function, method, line */
+#include <stdio.h>              /* fprintf, flockfile, funlockfile */
 
 /*
  * debug message convetions:
@@ -14,6 +12,12 @@
  * - surround strings containing spaces with square brackets '[]'
  * - to emphasize surround element with brackets '()'
  */
+#define DFMT ":(%s) %s %d - "   /* function, method, line */
+
+
+/* consider using write ? (should be atomic up to PIPE_BUFF_MAX) */
+#define cx_log(format, ...) \
+	flockfile(stderr); fprintf(stderr, format "\n", __VA_ARGS__); funlockfile(stderr)
 
 #ifndef _CX_DEBUG
 #define XDBG(message) UNUSED(message)
@@ -24,12 +28,12 @@
  * Prints the given message to stderr with debug information if errno is not 0.
  */
 #define XDBG(message) \
-	fprintf(stderr, "XDBG" DFMT message "\n", \
-		__func__, __FILE__, __LINE__)
+	cx_log("XDBG" DFMT message, \
+	       __func__, __FILE__, __LINE__)
 
 #define XFDBG(format, ...) \
-	fprintf(stderr, "XDBG" DFMT format "\n", \
-		__func__, __FILE__, __LINE__, __VA_ARGS__)
+	cx_log("XDBG" DFMT format, \
+	       __func__, __FILE__, __LINE__, __VA_ARGS__)
 
 #endif
 
@@ -37,37 +41,33 @@
 
 
 #define XFLOG(format, ...) \
-	fprintf(stdout, format "\n", __VA_ARGS__)
+	cx_log(format, __VA_ARGS__)
 
 #define XLOG(message) \
-	fprintf(stdout, message "\n")
+	cx_log("%s", message)
 
-/*
- * Prints the given message to stderr with debug information if errno is not 0.
- */
-// FIXME rename to XERRNO
 #define XERRNO(message) \
-	fprintf(stderr, "XERR" DFMT "%s errno:%d:[%s]\n", \
-		__func__, __FILE__, __LINE__, message, errno, strerror(errno))
+	cx_log("XERR" DFMT "%s errno:%d:[%s]", \
+	       __func__, __FILE__, __LINE__, message, errno, strerror(errno))
 
 #define XFERRNO(format, ...) \
-	fprintf(stderr, "XERR" DFMT "errno:%d:[%s] - " format "\n", \
-		__func__, __FILE__, __LINE__, errno, strerror(errno), __VA_ARGS__)
+	cx_log("XERR" DFMT "errno:%d:[%s] - " format, \
+	       __func__, __FILE__, __LINE__, errno, strerror(errno), __VA_ARGS__)
 
 #define XERR(message) \
-	fprintf(stderr, "XERR" DFMT message "\n", \
-		__func__, __FILE__, __LINE__)
+	cx_log("XERR" DFMT message, \
+	       __func__, __FILE__, __LINE__)
 
 #define XFERR(format, ...) \
-	fprintf(stderr, "XERR" DFMT format "\n", \
-		__func__, __FILE__, __LINE__, __VA_ARGS__)
+	cx_log("XERR" DFMT format, \
+	       __func__, __FILE__, __LINE__, __VA_ARGS__)
 
 #define XWARN(message) \
-	fprintf(stderr, "XWARN" DFMT "%s \n", \
-		__func__, __FILE__, __LINE__, message)
+	cx_log("XWARN" DFMT "%s", \
+	       __func__, __FILE__, __LINE__, message)
 
 #define XFWARN(format, ...) \
-	fprintf(stderr, "XWARN" DFMT format "\n", \
-		__func__, __FILE__, __LINE__, __VA_ARGS__)
+	cx_log("XWARN" DFMT format, \
+	       __func__, __FILE__, __LINE__, __VA_ARGS__)
 
 #endif
