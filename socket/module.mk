@@ -5,7 +5,7 @@ L := $(LOCAL_DIR)
 PROGRAMS += $(L)/echo-server \
 	$(L)/echo-client-threaded
 	
-TESTS += $(L)/test_queue
+#TESTS += $(L)/test_
 
 # -- executables --
 
@@ -42,8 +42,4 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(LIBCX_DIR)/string/pair.o
 
 # -- tests -- 
-$(L)/test_queue_FLAGS := -lpthread
-$(L)/test_queue_OBJS := $(TEST_OBJS) \
-	$(L)/test_queue.o \
-	$(L)/queue.o \
-	$(LIBCX_DIR)/list/list.o
+

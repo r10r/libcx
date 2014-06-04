@@ -6,9 +6,6 @@
 #include <stdbool.h>
 
 #include "../list/list.h"
-#include "server.h" /* FIXME circular inclusion */
-#include "worker.h"
-
 
 typedef struct cx_queue_t
 {
