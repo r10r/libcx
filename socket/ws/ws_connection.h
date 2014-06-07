@@ -17,7 +17,7 @@ Websockets_new(void);
 void
 Websockets_free(Websockets* ws);
 
-int
+void
 Websockets_process(Connection* connection, Websockets* ws);
 
 #endif

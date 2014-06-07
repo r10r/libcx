@@ -22,12 +22,19 @@ ws_connection_handler(Connection* connection, ConnectionEvent event)
 
 		while ((nbuffered = StringBuffer_used(ws->in)) > 1)
 		{
-			if (Websockets_process(connection, ws) == -1)
+			Websockets_process(connection, ws);
+
+			if (ws->state == WS_STATE_CLOSE)
+			{
+				Websockets_free(ws);
+				Connection_close(connection);
+				break;
+			}
+			else if (ws->state == WS_STATE_ERROR)
 			{
 				XFDBG("ERROR: closing connection: %s", StringBuffer_value(ws->error_message));
 				Websockets_free(ws);
 				Connection_close(connection);
-				break;
 			}
 			else
 			{
