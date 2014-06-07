@@ -69,15 +69,13 @@ typedef enum websockets_status_code_t
 typedef enum websockets_status_t
 {
 	WS_STATE_NEW,
-	WS_STATE_ESTABLISHED,
-	WS_STATE_INCOMPLETE,
-	WS_STATE_CLOSED,
+	WS_STATE_FRAME_NEW,
+	WS_STATE_FRAME_INCOMPLETE,
 	WS_STATE_ERROR
 } WebsocketsState;
 
 typedef struct websockets_frame_t
 {
-	uint8_t* raw;
 	uint8_t payload_offset;         /* payload offset from start of frame */
 
 	/* decoded bit fields */
@@ -94,6 +92,7 @@ typedef struct websockets_frame_t
 	uint8_t* payload_raw;                   /* pointer to the start of the data (points to input buffer) */
 	uint8_t* payload_raw_end;               /* pointer to last payload byte */
 	uint8_t* masking_key;                   /* pointe to the masking key */
+	uint64_t length;                        /* payload_length_extended + payload_offset */
 } WebsocketsFrame;
 
 typedef struct websockets_state_t
