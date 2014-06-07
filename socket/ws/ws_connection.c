@@ -48,7 +48,6 @@ Websockets_process_handshake(Connection* con, Websockets* ws)
 		CXFDBG(con, "sending handshake response: \n%s", StringBuffer_value(ws->out));
 		Connection_send_buffer(con, ws->out);
 		WebsocketsHandshake_free(handshake);
-		ws->state = WS_STATE_FRAME_NEW;
 		StringBuffer_clear(ws->in);
 		StringBuffer_clear(ws->out);
 		return 1;
@@ -58,7 +57,8 @@ Websockets_process_handshake(Connection* con, Websockets* ws)
 static int
 Websockets_process_frame(Connection* con, Websockets* ws)
 {
-	int parsed = WebsocketsFrame_parse(ws);
+	WebsocketsFrame_parse(ws);
+	int processed = WebsocketsFrame_process(ws);
 
 	/* send response | error */
 	if (StringBuffer_used(ws->out) > 1)
@@ -68,18 +68,18 @@ Websockets_process_frame(Connection* con, Websockets* ws)
 		Connection_send_buffer(con, ws->out);
 		StringBuffer_clear(ws->out);
 	}
-	if (parsed == 1)
+	if (processed == 1)
 	{
 		/* remove processed frame from input */
 		CXFDBG(con, "Shift input buffer by %llu bytes", ws->frame.length);
 		StringBuffer_shift(ws->in, ws->frame.length);
 		ws->state = WS_STATE_FRAME_NEW;
 	}
-	else if (parsed == -1)
+	else if (processed == -1)
 		// TODO send error
 		return -1;
 
-	return parsed;
+	return processed;
 }
 
 int
@@ -91,7 +91,12 @@ Websockets_process(Connection* con, Websockets* ws)
 	{
 	case WS_STATE_NEW:
 		CXFDBG(con, "Process handshake: \n%s", StringBuffer_value(ws->in));
-		return Websockets_process_handshake(con, ws);
+		int processed = Websockets_process_handshake(con, ws);
+		if (processed == 1)
+			ws->state = WS_STATE_FRAME_NEW;
+		else
+			return -1;
+		break;
 	case WS_STATE_FRAME_NEW:
 	{
 		CXDBG(con, "Process frame");

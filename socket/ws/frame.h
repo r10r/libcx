@@ -18,6 +18,9 @@ WebsocketsFrame_parse_header(Websockets* ws);
 
 /* -1 on error, 1 else */
 int
+WebsocketsFrame_process(Websockets* ws);
+
+void
 WebsocketsFrame_parse(Websockets* ws);
 
 void
