@@ -24,6 +24,9 @@ void
 WebsocketsFrame_parse_payload_length_extended(Websockets* ws);
 
 void
-WebsocketsFrame_create_data_frame(StringBuffer* buf, const char* payload, uint64_t nchars, WebsocketsOpcode opcode);
+WebsocketsFrame_write_to_buffer(StringBuffer* buf, uint8_t header_bits, const char* payload, uint64_t nchars, unsigned int masked);
+
+#define WebsocketsFrame_create(buf, opcode, payload, nchars) \
+	WebsocketsFrame_write_to_buffer(buf, (uint8_t)WS_HDR_FIN.bitmask | opcode, payload, nchars, 0)
 
 #endif
