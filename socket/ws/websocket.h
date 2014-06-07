@@ -70,6 +70,7 @@ typedef enum websockets_status_t
 {
 	WS_STATE_NEW,
 	WS_STATE_ESTABLISHED,
+	WS_STATE_INCOMPLETE,
 	WS_STATE_CLOSED,
 	WS_STATE_ERROR
 } WebsocketsState;

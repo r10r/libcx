@@ -116,39 +116,53 @@ WebsocketsFrame_parse(Websockets* ws)
 {
 	assert(StringBuffer_used(ws->in) >= 2);
 
+	/* string buffer is resized so every time there is new data we have to reset all data pointers */
 	ws->frame.raw = (uint8_t*)StringBuffer_value(ws->in);
-	ws->frame.payload_length = HeaderField_byte_value(WS_HDR_PAYLOAD_LENGTH, ws->frame.raw);
-	ws->frame.payload_offset = 2;
 
-	ws->frame.opcode = HeaderField_byte_value(WS_HDR_OPCODE, ws->frame.raw);
-	ws->frame.masked = HeaderField_byte_value(WS_HDR_MASKED, ws->frame.raw);
-	ws->frame.fin = HeaderField_byte_value(WS_HDR_FIN, ws->frame.raw);
-	ws->frame.rsv1 = HeaderField_byte_value(WS_HDR_RSV1, ws->frame.raw);
-	ws->frame.rsv2 = HeaderField_byte_value(WS_HDR_RSV2, ws->frame.raw);
-	ws->frame.rsv3 = HeaderField_byte_value(WS_HDR_RSV3, ws->frame.raw);
-
-
-	/* extract extended payload length */
-	WebsocketsFrame_parse_payload_length_extended(ws);
-
-	/* extract masking key */
-	if (ws->frame.masked)
+	if (ws->state == WS_STATE_ESTABLISHED)
 	{
-		ws->frame.payload_offset += WS_MASKING_KEY_LENGTH;
-		ws->frame.masking_key = ws->frame.raw + ws->frame.payload_offset - WS_MASKING_KEY_LENGTH;
+		ws->frame.payload_length = HeaderField_byte_value(WS_HDR_PAYLOAD_LENGTH, ws->frame.raw);
+		ws->frame.payload_offset = 2;
+
+		ws->frame.opcode = HeaderField_byte_value(WS_HDR_OPCODE, ws->frame.raw);
+		ws->frame.masked = HeaderField_byte_value(WS_HDR_MASKED, ws->frame.raw);
+		ws->frame.fin = HeaderField_byte_value(WS_HDR_FIN, ws->frame.raw);
+		ws->frame.rsv1 = HeaderField_byte_value(WS_HDR_RSV1, ws->frame.raw);
+		ws->frame.rsv2 = HeaderField_byte_value(WS_HDR_RSV2, ws->frame.raw);
+		ws->frame.rsv3 = HeaderField_byte_value(WS_HDR_RSV3, ws->frame.raw);
+
+
+		/* extract extended payload length */
+		WebsocketsFrame_parse_payload_length_extended(ws);
+
+		/* extract masking key */
+		if (ws->frame.masked)
+			ws->frame.payload_offset += WS_MASKING_KEY_LENGTH;
 	}
+
+	if (ws->frame.masked)
+		ws->frame.masking_key = ws->frame.raw + ws->frame.payload_offset - WS_MASKING_KEY_LENGTH;
 
 	/* calculate final payload offset */
 	ws->frame.payload_raw = ws->frame.raw + ws->frame.payload_offset;
 	ws->frame.payload_raw_end = ws->frame.payload_raw + ws->frame.payload_length_extended;
 
-	XFDBG("payload raw:%p last:%p term:%p",
-	      ws->frame.payload_raw, ws->frame.payload_raw_end, S_term(ws->in->string));
-
 	/* ensure we are not corrupting memory */
 	assert(ws->frame.payload_raw <= ws->frame.payload_raw_end);
+
+	/* check if frame is fully loaded into buffer, if not stop processing here */
+	long missing_payload_bytes = (char*)ws->frame.payload_raw_end - S_term(ws->in->string);
+	if (missing_payload_bytes > 0)
+	{
+		XFDBG("incomplete frame: %ld bytes missing", missing_payload_bytes);
+		ws->state = WS_STATE_INCOMPLETE;
+		return 0;
+	}
+
+	/* reset state to established (maybe WS_STATE_COMPLETE is better ?) */
+	ws->state = WS_STATE_ESTABLISHED;
+
 	assert(ws->frame.payload_raw_end <= (uint8_t*)S_term(ws->in->string));
-	/* TODO check if we have to wait for fragmented data to arrive */
 
 	StringBuffer_print_bytes_hex(ws->in, FRAME_HEX_NPRINT, "package bytes");
 	WebsocketsFrame_log(ws);
