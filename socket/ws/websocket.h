@@ -48,25 +48,29 @@ typedef enum cx_websockets_opcode_t
  * [Reserved Status Code Ranges](see https://tools.ietf.org/html/rfc6455#section-7.4.2)
  *
  * - 0 - 999 unused
- * - 1000-2999 reserved for rfc6455
- * - 3000-3999 public use (libraries/frameworks/application) - IANA registration
- * - 4000-4999 private use
  */
+#define WS_CODE_PROTOCOL_MIN 1000 /* reserved for rfc6455 */
+#define WS_CODE_PROTOCOL_MAX 2999
+#define WS_CODE_PUBLIC_MIN 3000		/* public use (libraries/frameworks/application) - IANA registration required */
+#define WS_CODE_PUBLIC_MAX 3999
+#define WS_CODE_PRIVATE_MIN 4000	/* private use */
+#define WS_CODE_PRIVATE_MAX 4999
+
 typedef enum cx_websockets_status_code_t
 {
-	WS_CODE_SUCCESS = 1000,                 /* normal closure */
-	WS_CODE_MOVED = 1001,                   /* server going down / browser navigated away */
-	WS_CODE_ERROR_PROTOCOL = 1002,          /* closure because of protocol error */
-	WS_CODE_ERROR_MESSAGE_TYPE = 1003,      /* type of data can not be processed (e.g binary) */
+	WS_CODE_SUCCESS = 1000,                         /* normal closure */
+	WS_CODE_MOVED = 1001,                           /* server going down / browser navigated away */
+	WS_CODE_ERROR_PROTOCOL = 1002,                  /* closure because of protocol error */
+	WS_CODE_ERROR_MESSAGE_TYPE = 1003,              /* type of data can not be processed (e.g binary) */
 	// 1004 reserved for future use
-	// 1005 reserved for client (missing status code)
-	// 1006 reserved for client (abnormal closed connection)
-	WS_CODE_ERROR_MESSAGE_VALUE = 1007,     /* message contains an invalid token */
-	WS_CODE_POLICY_VIOLATION = 1008,        /* generic policy violation */
-	WS_CODE_POLICY_MESSAGE_TO_BIG = 1009,   /* message is to big to be processed */
-	// 1010 reserved for client (missing extension)
-	WS_CODE_SERVER_ERROR = 1011             /* unexpected server error */
-	                                        // 1015 reserved for client (TLC handshake error)
+	WS_CODE_CLIENT_MISSING_STATUS_CODE = 1005,      /*  1005 reserved for client (missing status code) */
+	WS_CODE_ClIENT_ERROR = 1006,                    /* reserved for client (abnormal closed connection) */
+	WS_CODE_ERROR_MESSAGE_VALUE = 1007,             /* message contains an invalid token */
+	WS_CODE_POLICY_VIOLATION = 1008,                /* generic policy violation (TODO check only for server ?) */
+	WS_CODE_POLICY_MESSAGE_TO_BIG = 1009,           /* message is to big to be processed (TODO check only for server ?) */
+	WS_CODE_CLIENT_MISSING_EXTENSION = 1010,        /* reserved for client (missing extension) */
+	WS_CODE_SERVER_ERROR = 1011,                    /* unexpected server error */
+	WS_CODE_CLIENT_TLS_HANDSHAKE_ERROR = 1015       /* reserved for client (TLS handshake error) */
 } WebsocketsStatusCode;
 
 typedef enum cx_websockets_status_t

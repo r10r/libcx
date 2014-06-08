@@ -3,19 +3,24 @@
 void
 WebsocketsFrame_unmask_payload_data(Websockets* ws)
 {
-	XDBG("Unmasking data");
-	size_t i = 0;
-	uint8_t* payload_byte = ws->frame.payload_raw;
-
-	for (i = 0; i < ws->frame.payload_length_extended; i++)
+	if (ws->frame.masked && ws->frame.payload_length > 0)
 	{
-		/* we are corrupting memory */
-		assert(payload_byte < ws->frame.payload_raw_end);
+		XDBG("Unmasking data");
+		size_t i = 0;
+		uint8_t* payload_byte = ws->frame.payload_raw;
 
-		uint8_t key = *(ws->frame.masking_key + (i % WS_MASKING_KEY_LENGTH));
-		*payload_byte = *payload_byte ^ key;
-		payload_byte++;
+		for (i = 0; i < ws->frame.payload_length_extended; i++)
+		{
+			/* we are corrupting memory */
+			assert(payload_byte < ws->frame.payload_raw_end);
+
+			uint8_t key = *(ws->frame.masking_key + (i % WS_MASKING_KEY_LENGTH));
+			*payload_byte = *payload_byte ^ key;
+			payload_byte++;
+		}
 	}
+	else
+		XDBG("Message with empty payload");
 }
 
 void
@@ -64,20 +69,66 @@ process_control_frame(Websockets* ws)
 		case WS_FRAME_CLOSE:
 		{
 			XFDBG("Received WS_FRAME_CLOSE masked:%u", ws->frame.masked);
-			uint16_t status = htons(WS_CODE_SUCCESS);
-			WebsocketsFrame_create(ws->out, WS_FRAME_CLOSE, (char*)&status, 2);
+
+			uint16_t response_status;
+
+			if (ws->frame.payload_length == 0)
+			{
+				XDBG("Close frame has no status code");
+				response_status = htons(WS_CODE_SUCCESS);
+			}
+			else if (ws->frame.payload_length == 1)
+			{
+				XDBG("Close frame has incomplete status code (payload length 1, required 2)");
+				response_status = htons(WS_CODE_ERROR_PROTOCOL);
+			}
+			else if (ws->frame.payload_length > 1)
+			{
+				uint16_t close_code = ntohs(*((uint16_t*)(ws->frame.payload_raw)));
+
+				if (close_code >= WS_CODE_PROTOCOL_MIN && close_code <= WS_CODE_PROTOCOL_MAX)
+				{
+					switch (close_code)
+					{
+					case WS_CODE_MOVED:
+					case WS_CODE_CLIENT_MISSING_EXTENSION:
+					case WS_CODE_ERROR_MESSAGE_TYPE:
+					case WS_CODE_ERROR_MESSAGE_VALUE:
+					case WS_CODE_ERROR_PROTOCOL:
+					case WS_CODE_POLICY_MESSAGE_TO_BIG:
+					case WS_CODE_POLICY_VIOLATION:
+					case WS_CODE_SERVER_ERROR:
+					case WS_CODE_SUCCESS:
+						XFDBG("Close frame status code: %d", close_code);
+						response_status = htons(WS_CODE_SUCCESS);
+						break;
+					default:
+						XFDBG("Invalid close frame status code: %d", close_code);
+						response_status = htons(WS_CODE_ERROR_PROTOCOL);
+					}
+				}
+				else if (close_code >= WS_CODE_PUBLIC_MIN && close_code <= WS_CODE_PUBLIC_MAX)
+					/* reply with received public status code */
+					response_status = htons(close_code);
+				else if (close_code >= WS_CODE_PRIVATE_MIN && close_code <= WS_CODE_PRIVATE_MAX)
+					/* reply with received private status code */
+					response_status = htons(close_code);
+				else
+				{
+					XFDBG("Invalid close frame status code: %d", close_code);
+					response_status = htons(WS_CODE_ERROR_PROTOCOL);
+				}
+			}
+
+			WebsocketsFrame_create(ws->out, WS_FRAME_CLOSE, (char*)&response_status, 2);
 			ws->state = WS_STATE_CLOSE;
 			break;
 		}
 		case WS_FRAME_PING:
 		{
 			XDBG("Received WS_FRAME_PING");
-			/* TODO send pong frame and copy application data */
+			/* send PONG frame with unmasked payload data from PING frame */
 			XFDBG("ping frame: payload offset:%hhu length:%llu", ws->frame.payload_offset, ws->frame.payload_length_extended);
-			if (ws->frame.masked && ws->frame.payload_length > 0)
-				WebsocketsFrame_unmask_payload_data(ws);
-			else
-				XDBG("ping frame has no payload");
 			WebsocketsFrame_create(ws->out, WS_FRAME_PONG, (char*)ws->frame.payload_raw, ws->frame.payload_length_extended);
 			ws->state = WS_STATE_FRAME_SEND_RESPONSE; /* FIXME move this marker to the buffer (e.g a flush flag) */
 			break;
@@ -93,6 +144,7 @@ process_control_frame(Websockets* ws)
 			break;
 		}
 	}
+
 	else
 	{
 		Websockets_ferror(ws, WS_CODE_ERROR_PROTOCOL,
@@ -104,12 +156,6 @@ static void
 Websockets_echo(Websockets* ws)
 {
 	XFDBG("payload offset:%hhu length:%llu", ws->frame.payload_offset, ws->frame.payload_length_extended);
-
-	/* unmask masked text data */
-	if (ws->frame.masked && ws->frame.payload_length > 0)
-		WebsocketsFrame_unmask_payload_data(ws);
-	else
-		XDBG("Message with empty payload");
 
 	switch (ws->frame.opcode)
 	{
@@ -179,11 +225,13 @@ WebsocketsFrame_process(Websockets* ws)
 	case WS_FRAME_CONTINUATION:
 	case WS_FRAME_TEXT:
 	case WS_FRAME_BINARY:
+		WebsocketsFrame_unmask_payload_data(ws);
 		Websockets_echo(ws);
 		break;
 	case WS_FRAME_CLOSE:
 	case WS_FRAME_PING:
 	case WS_FRAME_PONG:
+		WebsocketsFrame_unmask_payload_data(ws);
 		process_control_frame(ws);
 		break;
 	default:
