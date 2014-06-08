@@ -41,4 +41,7 @@ WebsocketsFrame_write_to_buffer(StringBuffer* buf, uint8_t header_bits, const ch
 #define WebsocketsFrame_buffer_level(ws) \
 	(int64_t)(StringBuffer_used((ws)->in) - (ws)->frame.length)
 
+void
+WebsocketsFrame_write_error(Websockets* ws);
+
 #endif

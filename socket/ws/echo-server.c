@@ -35,6 +35,7 @@ ws_connection_handler(Connection* connection, ConnectionEvent event)
 				XFDBG("ERROR: closing connection: %s", StringBuffer_value(ws->error_message));
 				Websockets_free(ws);
 				Connection_close(connection);
+				break;
 			}
 			else
 			{

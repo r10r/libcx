@@ -17,6 +17,7 @@ Websockets_new()
 
 	ws->in = StringBuffer_new(WS_BUFFER_LENGTH);
 	ws->out = StringBuffer_new(WS_BUFFER_LENGTH);
+	ws->error_message = StringBuffer_new(WS_BUFFER_LENGTH);
 	ws->state = WS_STATE_NEW;
 	return ws;
 }
@@ -26,6 +27,7 @@ Websockets_free(Websockets* ws)
 {
 	StringBuffer_free(ws->in);
 	StringBuffer_free(ws->out);
+	StringBuffer_free(ws->error_message);
 	cx_free(ws);
 }
 
@@ -85,6 +87,14 @@ Websockets_process_frame(Connection* con, Websockets* ws)
 		StringBuffer_print_bytes_hex(ws->out, FRAME_HEX_NPRINT, "output message");
 		Connection_send_buffer(con, ws->out);
 		StringBuffer_clear(ws->out);
+	}
+	else if (ws->state == WS_STATE_ERROR)
+	{
+		size_t error_message_length = StringBuffer_used(ws->error_message);
+		CXFDBG(con, "Sending error message (length %zu): %d %s",
+		       error_message_length, ws->status_code, StringBuffer_value(ws->error_message));
+		WebsocketsFrame_write_error(ws);
+		Connection_send_buffer(con, ws->out);
 	}
 }
 

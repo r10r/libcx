@@ -62,19 +62,33 @@ process_control_frame(Websockets* ws)
 		switch (ws->frame.opcode)
 		{
 		case WS_FRAME_CLOSE:
+		{
 			XFDBG("Received WS_FRAME_CLOSE masked:%u", ws->frame.masked);
 			uint16_t status = htons(WS_CODE_SUCCESS);
 			WebsocketsFrame_create(ws->out, WS_FRAME_CLOSE, (char*)&status, 2);
 			ws->state = WS_STATE_CLOSE;
 			break;
+		}
 		case WS_FRAME_PING:
+		{
 			XDBG("Received WS_FRAME_PING");
 			/* TODO send pong frame and copy application data */
+			XFDBG("ping frame: payload offset:%hhu length:%llu", ws->frame.payload_offset, ws->frame.payload_length_extended);
+			if (ws->frame.masked && ws->frame.payload_length > 0)
+				WebsocketsFrame_unmask_payload_data(ws);
+			else
+				XDBG("ping frame has no payload");
+			WebsocketsFrame_create(ws->out, WS_FRAME_PONG, (char*)ws->frame.payload_raw, ws->frame.payload_length_extended);
+			ws->state = WS_STATE_FRAME_SEND_RESPONSE; /* FIXME move this marker to the buffer (e.g a flush flag) */
 			break;
+		}
 		case WS_FRAME_PONG:
-			XDBG("Received WS_FRAME_PONG");
-			/* TODO send pong frame and copy application data */
+		{
+			XERR("Ignoring unsolicitated PONG frame.");
+			StringBuffer_shift(ws->in, (uint32_t)ws->frame.length);
+			ws->state = WS_STATE_FRAME_NEW;
 			break;
+		}
 		default:
 			break;
 		}
@@ -177,6 +191,22 @@ WebsocketsFrame_process(Websockets* ws)
 	}
 }
 
+void
+WebsocketsFrame_write_error(Websockets* ws)
+{
+	/* error message length + 2 (status code length) must be < 126 */
+	assert(StringBuffer_used(ws->error_message) < PAYLOAD_EXTENDED - 2);
+
+	StringBuffer* buf = StringBuffer_new(125);
+	StringBuffer_cat_htons(buf, ws->status_code);
+	StringBuffer_ncat(buf, StringBuffer_value(ws->error_message), StringBuffer_used(ws->error_message));
+
+	WebsocketsFrame_write_to_buffer(ws->out, (uint8_t)WS_HDR_FIN.bitmask | WS_FRAME_CLOSE,
+					StringBuffer_value(buf), StringBuffer_used(buf), 0);
+
+	StringBuffer_free(buf);
+}
+
 /*
  * TODO When masked is set to 1 then payload is masked and masking key is included in the payload.
  */
@@ -224,4 +254,6 @@ WebsocketsFrame_write_to_buffer(StringBuffer* buf, uint8_t header_bits, const ch
 		assert(nchars <= UINT32_MAX); /* FIXME make StringBuffer_append accept uint64_t as length */
 		StringBuffer_ncat(buf, payload, (uint32_t)nchars);
 	}
+	else
+		XDBG("No payload to send.");
 }
