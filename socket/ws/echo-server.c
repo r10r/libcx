@@ -4,8 +4,6 @@
 #include "socket/server_tcp.h"
 #include "ws_connection.h"
 
-#define CONNECTION_BUFFER_CHUNK 128
-
 static Connection*
 ws_connection_handler(Connection* connection, ConnectionEvent event)
 {
@@ -72,8 +70,37 @@ static ssize_t
 ws_connection_data_handler(Connection* connection)
 {
 	Websockets* ws = (Websockets*)connection->data;
+	size_t nused_before = StringBuffer_used(ws->in);
 
-	return StringBuffer_fdxload(ws->in, connection->fd, CONNECTION_BUFFER_CHUNK, 0);
+	/*
+	 * TODO check whether we have an incomplete frame or whether this is a new frame ?
+	 * - let the buffer define the read size ?
+	 *
+	 */
+	BufferStatus status;
+
+	if (ws->state == WS_STATE_NEW)
+	{
+		status = StringBuffer_fdxload(ws->in, connection->fd, WS_HANDSHAKE_BUFFER_SIZE, 0);
+		if (status == CX_OK)
+		{
+			size_t new = StringBuffer_used(ws->in) - nused_before;
+			assert(new < SSIZE_MAX); /* application bug */
+			return (ssize_t)new;
+		}
+	}
+	else
+	{
+		status = StringBuffer_ffill(ws->in, connection->fd, 0);
+		if (status == CX_OK)
+		{
+			size_t new = StringBuffer_used(ws->in) - nused_before;
+			assert(new < SSIZE_MAX); /* application bug */
+			return (ssize_t)new;
+		}
+	}
+
+	return status;
 }
 
 static Connection*

@@ -1,7 +1,6 @@
 #include "ws_connection.h"
 
 //#define WS_BUFFER_LENGTH 0xffff
-#define WS_BUFFER_LENGTH 512
 
 #define CXDBG(con, message) \
 	XFDBG("Connection[%d] - " message, con->fd)
@@ -9,15 +8,14 @@
 #define CXFDBG(con, message, ...) \
 	XFDBG("Connection[%d] - " message, con->fd, __VA_ARGS__)
 
-
 Websockets*
 Websockets_new()
 {
 	Websockets* ws = cx_alloc(sizeof(Websockets));
 
-	ws->in = StringBuffer_new(WS_BUFFER_LENGTH);
-	ws->out = StringBuffer_new(WS_BUFFER_LENGTH);
-	ws->error_message = StringBuffer_new(WS_BUFFER_LENGTH);
+	ws->in = StringBuffer_new(WS_HANDSHAKE_BUFFER_SIZE);
+	ws->out = StringBuffer_new(WS_BUFFER_SIZE);
+	ws->error_message = StringBuffer_new(WS_BUFFER_SIZE);
 	ws->state = WS_STATE_NEW;
 	return ws;
 }
@@ -122,6 +120,10 @@ Websockets_process(Connection* con, Websockets* ws)
 		StringBuffer_print_bytes_hex(ws->in, FRAME_HEX_NPRINT, "package bytes");
 		assert(StringBuffer_used(ws->in) >= 2);
 		WebsocketsFrame_parse_header(&ws->frame, StringBuffer_value(ws->in), StringBuffer_used(ws->in));
+
+		// grow buffer
+		if (ws->frame.length > StringBuffer_length(ws->in))
+			StringBuffer_make_room(ws->in, 0, ws->frame.length);
 
 		// TODO if frame is a control frame fail connection if message is
 		// not fully buffered (fragmented control frames are not allowed)

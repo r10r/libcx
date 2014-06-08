@@ -16,7 +16,11 @@
 
 #define WS_OK 1
 #define WS_ERR 0
-#define FRAME_HEX_NPRINT 16 /* number of bytes to print for debugging */
+#define FRAME_HEX_NPRINT 16     /* number of bytes to print for debugging */
+
+#define WS_BUFFER_SIZE 128      /* control frame: 2 header + 125 payload + \0 */
+
+#define WS_HANDSHAKE_BUFFER_SIZE 512
 
 extern const HeaderField WS_HDR_FIN;
 extern const HeaderField WS_HDR_RSV1;
