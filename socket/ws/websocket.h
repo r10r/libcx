@@ -1,7 +1,6 @@
-#ifndef CX_WS_H
-#define CX_WS_H
+#ifndef _CX_WS_H
+#define _CX_WS_H
 
-#include <assert.h>
 #include <stdint.h>     /* uint8_t */
 #include <stdlib.h>     /* strtoul */
 #include <netinet/in.h> /*htons*/

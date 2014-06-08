@@ -13,7 +13,7 @@
 Websockets*
 Websockets_new()
 {
-	Websockets* ws = calloc(1, sizeof(Websockets));
+	Websockets* ws = cx_alloc(sizeof(Websockets));
 
 	ws->in = StringBuffer_new(WS_BUFFER_LENGTH);
 	ws->out = StringBuffer_new(WS_BUFFER_LENGTH);
@@ -26,7 +26,7 @@ Websockets_free(Websockets* ws)
 {
 	StringBuffer_free(ws->in);
 	StringBuffer_free(ws->out);
-	free(ws);
+	cx_free(ws);
 }
 
 static int

@@ -1,8 +1,9 @@
 #include "util.h"
 
 /*
- * host order is LE (unless we are working on a mainframe ;), network byte order of TCP BE
- * http://stackoverflow.com/questions/2100331/c-macro-definition-to-determine-big-endian-or-little-endian-machine
+ * host order is LE (unless we are working on a mainframe ;),
+ * network byte order of TCP BE
+ * see [stackoverflow - macro definition to detect endianess](http://goo.gl/8RTNkV)
  *
  */
 
@@ -52,10 +53,12 @@ HeaderField_value(HeaderField field, void* data)
 	case HDR_FIELD_INT64:
 		return ntoh64(*((uint64_t*)start)) & field.bitmask;
 	}
-
-	/* dead code makes GCC happy, since GCC does not check switch cases */
+#if defined(__GNUC__) && !defined(__clang__)
+	/* dead code makes GCC happy,
+	 * because it does not check that all cases are covered */
 	assert(0);
 	return 0;
+#endif
 }
 
 uint8_t

@@ -1,5 +1,4 @@
 #include "handshake.h"
-#include <assert.h>
 
 static const char* WS_SECRET = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 #define WS_SECRET_LENGTH strlen(WS_SECRET)
@@ -12,7 +11,7 @@ WebsocketsHandshake_reply(WebsocketsHandshake* handshake, StringBuffer* out)
 	size_t handshake_key_length = strlen(handshake->ws_key);
 	size_t handshake_length = WS_SECRET_LENGTH + handshake_key_length;
 
-	responseKey = malloc(handshake_length);
+	responseKey = cx_alloc(handshake_length);
 
 	memcpy(responseKey, handshake->ws_key, handshake_key_length);
 	memcpy(&(responseKey[handshake_key_length]), WS_SECRET, WS_SECRET_LENGTH);
@@ -29,13 +28,13 @@ WebsocketsHandshake_reply(WebsocketsHandshake* handshake, StringBuffer* out)
 			    "Sec-WebSocket-Accept: %s\r\n"
 			    "\r\n", responseKey);
 
-	free(responseKey);
+	cx_free(responseKey);
 }
 
 WebsocketsHandshake*
 WebsocketsHandshake_new()
 {
-	WebsocketsHandshake* handshake = calloc(1, sizeof(WebsocketsHandshake));
+	WebsocketsHandshake* handshake = cx_alloc(sizeof(WebsocketsHandshake));
 
 	return handshake;
 }
@@ -49,7 +48,7 @@ WebsocketsHandshake_free(WebsocketsHandshake* handshake)
 	if (handshake->message)
 		Message_free(handshake->message);
 
-	free(handshake);
+	cx_free(handshake);
 }
 
 /* return 1 if message was parsed successfully, -1 on error */

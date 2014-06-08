@@ -1,5 +1,5 @@
-#ifndef CX_WS_HANDSHAKE_H
-#define CX_WS_HANDSHAKE_H
+#ifndef _CX_WS_HANDSHAKE_H
+#define _CX_WS_HANDSHAKE_H
 
 #include "websocket.h"
 #include "umtp/message_parser.h"
