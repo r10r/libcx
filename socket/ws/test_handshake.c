@@ -1,26 +1,6 @@
 #include "base/test.h"
 #include "handshake.h"
 
-typedef enum _endian { little_endian, big_endian } EndianType;
-
-static EndianType
-CheckCPUEndian()
-{
-	unsigned short x;
-	unsigned char c;
-	EndianType CPUEndian;
-
-	x = 0x0001;
-	;
-	c = *(unsigned char*)(&x);
-	if ( c == 0x01 )
-		CPUEndian = little_endian;
-	else
-		CPUEndian = big_endian;
-
-	return CPUEndian;
-}
-
 static void
 test_Handshake_parse()
 {
@@ -56,15 +36,49 @@ test_Handshake_parse()
 static void
 test_cpu_endian()
 {
-	switch (CheckCPUEndian())
-	{
-	case little_endian:
-		XDBG("Little Endian");
-		break;
-	case big_endian:
-		XDBG("Big Endign");
-		break;
-	}
+	TEST_ASSERT_EQUAL_INT(little_endian, CheckCPUEndian());
+}
+
+static void
+test_StringBuffer_cat_htons()
+{
+	StringBuffer* buf = StringBuffer_new(1024);
+	uint16_t num = 0x1122;
+
+	StringBuffer_cat_htons(buf, num);
+
+	uint16_t decoded = ntohs(*((uint16_t*)StringBuffer_value(buf)));
+	TEST_ASSERT_EQUAL_INT16(num, decoded);
+
+	StringBuffer_free(buf);
+}
+
+static void
+test_StringBuffer_cat_htonl()
+{
+	StringBuffer* buf = StringBuffer_new(1024);
+	uint32_t num = 0x11223344;
+
+	StringBuffer_cat_htonl(buf, num);
+
+	uint32_t decoded = ntohl(*((uint32_t*)StringBuffer_value(buf)));
+	TEST_ASSERT_EQUAL_INT16(num, decoded);
+
+	StringBuffer_free(buf);
+}
+
+static void
+test_StringBuffer_cat_hton64()
+{
+	StringBuffer* buf = StringBuffer_new(1024);
+	uint64_t num = 0x1122334455667788;
+
+	StringBuffer_cat_hton64(buf, num);
+
+	uint64_t decoded = ntoh64(*((uint64_t*)StringBuffer_value(buf)));
+	TEST_ASSERT_EQUAL_INT64(num, decoded);
+
+	StringBuffer_free(buf);
 }
 
 int
@@ -74,6 +88,9 @@ main()
 
 	RUN(test_Handshake_parse);
 	RUN(test_cpu_endian);
+	RUN(test_StringBuffer_cat_htons);
+	RUN(test_StringBuffer_cat_htonl);
+	RUN(test_StringBuffer_cat_hton64);
 
 	TEST_END
 }

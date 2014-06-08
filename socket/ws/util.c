@@ -89,3 +89,21 @@ HeaderField_value_for(HeaderFieldType type, uint8_t offset, uint64_t bitmask, vo
 
 	return HeaderField_value(field, data);
 }
+
+EndianType
+CheckCPUEndian()
+{
+	unsigned short x;
+	unsigned char c;
+	EndianType CPUEndian;
+
+	x = 0x0001;
+	;
+	c = *(unsigned char*)(&x);
+	if ( c == 0x01 )
+		CPUEndian = little_endian;
+	else
+		CPUEndian = big_endian;
+
+	return CPUEndian;
+}
