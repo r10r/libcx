@@ -125,10 +125,23 @@ Websockets_process(Connection* con, Websockets* ws)
 		// TODO if frame is a control frame fail connection if message is
 		// not fully buffered (fragmented control frames are not allowed)
 
-		if (WebsocketsFrame_buffer_level(ws) >= 0)
-			Websockets_process_frame(con, ws);
+		if (ws->frame.rsv1 || ws->frame.rsv2 || ws->frame.rsv3)
+		{
+			ws->state = WS_STATE_ERROR;
+			Websockets_error(ws, WS_CODE_ERROR_PROTOCOL, "RSV bits must not be set without extension.");
+			size_t error_message_length = StringBuffer_used(ws->error_message);
+			CXFDBG(con, "Sending error message (length %zu): %d %s",
+			       error_message_length, ws->status_code, StringBuffer_value(ws->error_message));
+			WebsocketsFrame_write_error(ws);
+			Connection_send_buffer(con, ws->out);
+		}
 		else
-			ws->state = WS_STATE_FRAME_INCOMPLETE;
+		{
+			if (WebsocketsFrame_buffer_level(ws) >= 0)
+				Websockets_process_frame(con, ws);
+			else
+				ws->state = WS_STATE_FRAME_INCOMPLETE;
+		}
 	}
 	break;
 	case WS_STATE_FRAME_INCOMPLETE:
