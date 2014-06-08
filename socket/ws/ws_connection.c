@@ -59,7 +59,7 @@ Websockets_process_handshake(Connection* con, Websockets* ws)
 static void
 Websockets_process_frame(Connection* con, Websockets* ws)
 {
-	WebsocketsFrame_parse(ws);
+	WebsocketsFrame_parse(&ws->frame, (uint8_t*)StringBuffer_value(ws->in), StringBuffer_used(ws->in));
 	WebsocketsFrame_process(ws);
 
 	/* send response | error */
@@ -120,7 +120,8 @@ Websockets_process(Connection* con, Websockets* ws)
 	{
 		CXDBG(con, "Process frame");
 		StringBuffer_print_bytes_hex(ws->in, FRAME_HEX_NPRINT, "package bytes");
-		WebsocketsFrame_parse_header(ws);
+		assert(StringBuffer_used(ws->in) >= 2);
+		WebsocketsFrame_parse_header(&ws->frame, StringBuffer_value(ws->in), StringBuffer_used(ws->in));
 
 		// TODO if frame is a control frame fail connection if message is
 		// not fully buffered (fragmented control frames are not allowed)

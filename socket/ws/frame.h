@@ -14,19 +14,25 @@
 #define WS_MASKING_KEY_LENGTH 4
 
 void
-WebsocketsFrame_parse_header(Websockets* ws);
-
-void
 WebsocketsFrame_process(Websockets* ws);
 
-void
-WebsocketsFrame_parse(Websockets* ws);
+WebsocketsFrame*
+WebsocketsFrame_dup(WebsocketsFrame* frame);
 
 void
-WebsocketsFrame_unmask_payload_data(Websockets* ws);
+WebsocketsFrame_free(WebsocketsFrame* frame);
 
 void
-WebsocketsFrame_parse_payload_length_extended(Websockets* ws);
+WebsocketsFrame_parse_header(WebsocketsFrame* frame, char* raw, size_t length);
+
+void
+WebsocketsFrame_parse(WebsocketsFrame* frame, uint8_t* raw, size_t length);
+
+void
+WebsocketsFrame_unmask_payload_data(WebsocketsFrame* frame);
+
+void
+WebsocketsFrame_parse_payload_length_extended(WebsocketsFrame* frame, char* raw, size_t length);
 
 void
 WebsocketsFrame_write_to_buffer(StringBuffer* buf, uint8_t header_bits, const char* payload, uint64_t nchars, unsigned int masked);

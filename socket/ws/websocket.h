@@ -49,11 +49,11 @@ typedef enum cx_websockets_opcode_t
  *
  * - 0 - 999 unused
  */
-#define WS_CODE_PROTOCOL_MIN 1000 /* reserved for rfc6455 */
+#define WS_CODE_PROTOCOL_MIN 1000       /* reserved for rfc6455 */
 #define WS_CODE_PROTOCOL_MAX 2999
-#define WS_CODE_PUBLIC_MIN 3000		/* public use (libraries/frameworks/application) - IANA registration required */
+#define WS_CODE_PUBLIC_MIN 3000         /* public use (libraries/frameworks/application) - IANA registration required */
 #define WS_CODE_PUBLIC_MAX 3999
-#define WS_CODE_PRIVATE_MIN 4000	/* private use */
+#define WS_CODE_PRIVATE_MIN 4000        /* private use */
 #define WS_CODE_PRIVATE_MAX 4999
 
 typedef enum cx_websockets_status_code_t
@@ -83,11 +83,15 @@ typedef enum cx_websockets_status_t
 	WS_STATE_CLOSE
 } WebsocketsState;
 
-typedef struct cx_websockets_frame_t
+typedef struct cx_websockets_frame_t WebsocketsFrame;
+
+struct cx_websockets_frame_t
 {
+	/* pointers set by WebsocketsFrame_parse */
+	uint8_t* raw;
 	uint8_t* payload_raw;                   /* pointer to the start of the data (points to input buffer) */
 	uint8_t* payload_raw_end;               /* pointer to last payload byte */
-	uint8_t* masking_key;                   /* pointe to the masking key */
+	uint8_t* masking_key;                   /* pointer to the masking key */
 	uint64_t payload_length_extended;       /* decoded payload length */
 	uint64_t length;                        /* payload_length_extended + payload_offset */
 
@@ -101,7 +105,10 @@ typedef struct cx_websockets_frame_t
 	unsigned int rsv2 : 1;
 	unsigned int rsv3 : 1;
 	unsigned int masked : 1;        /* bit field whether frame is masked or not */
-} WebsocketsFrame;
+
+	WebsocketsFrame* next;
+	uint8_t* data;                 /* duplicated data */
+};
 
 typedef struct cx_websockets_state_t
 {
@@ -112,6 +119,9 @@ typedef struct cx_websockets_state_t
 
 	WebsocketsStatusCode status_code;
 	StringBuffer* error_message;
+
+	WebsocketsFrame* first_fragment;
+	WebsocketsFrame* last_frament;
 } Websockets;
 
 typedef struct cx_websockets_handshake_t
