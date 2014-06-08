@@ -6,9 +6,13 @@
 
 #include "base/base.h"
 
-typedef enum _endian { little_endian, big_endian } EndianType;
+typedef enum cx_processor_endian
+{
+	little_endian,
+	big_endian
+} ProcessorEndianType;
 
-EndianType
+ProcessorEndianType
 CheckCPUEndian(void);
 
 /* host to network byte order */
@@ -18,7 +22,7 @@ hton64(uint64_t x);
 uint64_t
 ntoh64(uint64_t x);
 
-typedef enum header_field_type_t
+typedef enum cx_header_field_type_t
 {
 	HDR_FIELD_BOOL,         /* single bit */
 	HDR_FIELD_OCTET,        /* 2 to 8 bit */
@@ -27,7 +31,7 @@ typedef enum header_field_type_t
 	HDR_FIELD_INT64         /* 64 bit (converted with ntohl) */
 } HeaderFieldType;
 
-typedef struct header_field_t
+typedef struct cx_header_field_t
 {
 	HeaderFieldType type;   /* field type */
 
@@ -41,22 +45,22 @@ typedef struct header_field_t
 /* TODO inline these functions or convert to macros */
 
 uint64_t
-HeaderField_value(HeaderField field, void* data);
+HeaderField_value(HeaderField field, char* data);
 
 uint8_t
-HeaderField_byte_value(HeaderField field, void* data);
+HeaderField_byte_value(HeaderField field, char* data);
 
 uint16_t
-HeaderField_uint16_value(HeaderField field, void* data);
+HeaderField_uint16_value(HeaderField field, char* data);
 
 uint32_t
-HeaderField_uint32_value(HeaderField field, void* data);
+HeaderField_uint32_value(HeaderField field, char* data);
 
 uint64_t
-HeaderField_uint64_value(HeaderField field, void* data);
+HeaderField_uint64_value(HeaderField field, char* data);
 
 uint64_t
-HeaderField_value_for(HeaderFieldType type, uint8_t offset, uint64_t bitmask, void* data);
+HeaderField_value_for(HeaderFieldType type, uint8_t offset, uint64_t bitmask, char* data);
 
 
 /* TODO move to string_buffer.h (depends on arpa/inet.h) header */

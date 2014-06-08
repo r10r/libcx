@@ -21,7 +21,7 @@ WebsocketsFrame_unmask_payload_data(Websockets* ws)
 void
 WebsocketsFrame_parse_payload_length_extended(Websockets* ws)
 {
-	uint8_t* raw = (uint8_t*)StringBuffer_value(ws->in);
+	char* raw = StringBuffer_value(ws->in);
 
 	switch (ws->frame.payload_length)
 	{
@@ -119,7 +119,7 @@ void
 WebsocketsFrame_parse_header(Websockets* ws)
 {
 	assert(StringBuffer_used(ws->in) >= 2);
-	uint8_t* raw = (uint8_t*)StringBuffer_value(ws->in);
+	char* raw = StringBuffer_value(ws->in);
 
 	ws->frame.payload_length = HeaderField_byte_value(WS_HDR_PAYLOAD_LENGTH, raw);
 	ws->frame.payload_offset = 2;
