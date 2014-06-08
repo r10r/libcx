@@ -7,7 +7,7 @@
                      "url": "ws://127.0.0.1:8088/echo"
                   }
               ],
-   "cases": ["1.*"],
-   "exclude-cases": [],
+   "cases": ["1.*", "9.*"],
+   "exclude-cases": ["9.3.*", "9.4.*"],
    "exclude-agent-cases": {}
 }
