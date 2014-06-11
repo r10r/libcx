@@ -124,6 +124,17 @@ Message_set_header(Message* message, const char* key, const char* value)
 		List_push(message->headers, StringPair_new(key, value));
 }
 
+const char*
+Message_get_header_value(Message* message, const char* name, bool ignorecase)
+{
+	StringPair* header = Message_get_header(message, name, ignorecase);
+
+	if (header)
+		return (const char*)header->value->value;
+	else
+		return NULL;
+}
+
 StringPair*
 Message_get_header(Message* message, const char* key, bool ignorecase)
 {

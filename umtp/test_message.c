@@ -147,6 +147,20 @@ test_Message_header_value_equals()
 	Message_free(message);
 }
 
+static void
+test_Message_get_header_value()
+{
+	Message* message = Message_new();
+
+	Message_set_header(message, "foo", "bar");
+
+	TEST_ASSERT_EQUAL_STRING(Message_get_header_value(message, "foo", true), "bar");
+	TEST_ASSERT_EQUAL_STRING(Message_get_header_value(message, "FOO", true), "bar");
+	TEST_ASSERT_NULL(Message_get_header_value(message, "XXX", true));
+
+	Message_free(message);
+}
+
 int
 main()
 {
@@ -158,6 +172,7 @@ main()
 	RUN(test_Message_read_file);
 	RUN(test_Message_protocol_value_equals);
 	RUN(test_Message_header_value_equals);
+	RUN(test_Message_get_header_value);
 
 	TEST_END
 }

@@ -52,6 +52,9 @@ Message_protocol_value_equals(Message* message, unsigned int index, const char* 
 void
 Message_set_header(Message* message, const char* key, const char* value);
 
+const char*
+Message_get_header_value(Message* message, const char* name, bool ignorecase);
+
 StringPair*
 Message_get_header(Message* message, const char* name, bool ignorecase);
 
