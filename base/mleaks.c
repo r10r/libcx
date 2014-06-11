@@ -30,7 +30,7 @@ struct cx_allocation_t
 
 #define MIN_CONVERSIONS 5
 #define MAX_CONVERSIONS 6
-#define LOG_FORMAT  "%*s %li %c %s %s %d %zu\n"
+#define LOG_FORMAT  "%*s %li %c %s %s %d %zu"
 #define ALLOC_TOKEN '+'
 #define FREE_TOKEN '-'
 
@@ -82,7 +82,7 @@ read_line(MemoryAllocation* allocation, FILE* stream)
 
 	if (result == 0) /* error: input available but no conversions assigned */
 	{
-		fprintf(stderr, "ERROR: Input available but no conversions assigned\n");
+		XDBG("ERROR: Input available but no conversions assigned");
 		return ERROR;
 	}
 
@@ -97,13 +97,13 @@ read_line(MemoryAllocation* allocation, FILE* stream)
 			allocation->method = FREE;
 		else
 		{
-			fprintf(stderr, "ERROR: Invalid method_token token: %c\n", method_token);
+			XFDBG("ERROR: Invalid method_token token: %c", method_token);
 			return ERROR;
 		}
 	}
 	else
 	{
-		fprintf(stderr, "ERROR: Invalid number of conversions %d\n", result);
+		XFDBG("ERROR: Invalid number of conversions %d", result);
 		return ERROR;
 	}
 
@@ -113,13 +113,13 @@ read_line(MemoryAllocation* allocation, FILE* stream)
 static inline void
 log_error(MemoryAllocation* alloc, const char* message)
 {
-	fprintf(stderr, "LEAK[0x%lx] %zu bytes %s line:%d (%s): %s\n",
-		alloc->address,
-		alloc->size,
-		alloc->file,
-		alloc->line,
-		alloc->func,
-		message);
+	XFLOG("LEAK[0x%lx] %zu bytes %s line:%d (%s): %s",
+	      alloc->address,
+	      alloc->size,
+	      alloc->file,
+	      alloc->line,
+	      alloc->func,
+	      message);
 }
 
 static inline void
@@ -159,12 +159,12 @@ log_leaks(List* allocations)
 
 	if (num_leaks == 0)
 	{
-		XLOG("No memory leaks detected.")
+		XLOG("\nNo memory leaks.")
 	}
 	else
 	{
-		fprintf(stderr, "\ndetected %lu memory leaks\n"
-			"================\n", allocations->length);
+		XFLOG("\n#%lu memory leaks\n"
+		      "=======================", allocations->length);
 
 		Node* head = allocations->first;
 		Node* node;
@@ -175,7 +175,7 @@ log_leaks(List* allocations)
 			log_error(unfree, "was not freed");
 		}
 	}
-	fprintf(stderr, "\n");
+	XLOG("\n");
 	return num_leaks;
 }
 
@@ -192,7 +192,7 @@ static void
 signal_clear_leaks(int signum)
 {
 	log_leaks(allocations);
-	XFLOG("Received signal %d. Clear list of unfreed memory allocations.", signum);
+	XFLOG("\nReceived signal %d. Clear list of unfreed memory allocations.\n", signum);
 	List_free(allocations);
 	allocations = List_new();
 }
@@ -204,6 +204,8 @@ main()
 
 	signal(SIGTRAP, signal_log_leaks);
 	signal(SIGUSR1, signal_clear_leaks);
+
+	setvbuf(stdin, NULL, _IOLBF, 0);
 
 	allocations->f_node_data_free = free_memory_allocation;
 	MemoryAllocation* a = MemoryAllocation_new();
@@ -238,8 +240,7 @@ main()
 		}
 		else if (result == ERROR)
 		{
-			fprintf(stderr, "ERROR: processing line[%d]\n", count);
-			break;
+			XFDBG("ERROR: processing line[%d]\n", count);
 		}
 		count++;
 	}
