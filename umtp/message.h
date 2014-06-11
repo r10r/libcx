@@ -53,13 +53,13 @@ void
 Message_set_header(Message* message, const char* key, const char* value);
 
 StringPair*
-Message_get_header(Message* message, const char* name);
+Message_get_header(Message* message, const char* name, bool ignorecase);
 
 int
 Message_link_header_value(Message* message, const char* name, const char** const destination);
 
 int
-Message_header_value_equals(Message* message, const char* name, const char* value, int ignorecase);
+Message_header_value_equals(Message* message, const char* name, const char* value, bool ignorecase);
 
 ssize_t
 Message_write(Message* message, int fd);

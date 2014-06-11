@@ -112,7 +112,7 @@ Message_protocol_value_equals(Message* message, unsigned int index, const char* 
 void
 Message_set_header(Message* message, const char* key, const char* value)
 {
-	StringPair* pair = Message_get_header(message, key);
+	StringPair* pair = Message_get_header(message, key, true);
 
 	if (pair)
 	{
@@ -125,7 +125,7 @@ Message_set_header(Message* message, const char* key, const char* value)
 }
 
 StringPair*
-Message_get_header(Message* message, const char* key)
+Message_get_header(Message* message, const char* key, bool ignorecase)
 {
 	Node* head = message->headers->first;
 	Node* node;
@@ -135,8 +135,16 @@ Message_get_header(Message* message, const char* key)
 		StringPair* header = (StringPair*)node->data;
 
 		assert(header);
-		if (strcmp(key, header->key->value) == 0)
-			return header;
+		if (ignorecase)
+		{
+			if (strcasecmp(key, header->key->value) == 0)
+				return header;
+		}
+		else
+		{
+			if (strcmp(key, header->key->value) == 0)
+				return header;
+		}
 	}
 	return NULL;
 }
@@ -145,7 +153,7 @@ int
 Message_link_header_value(Message* message, const char* name, const char** const destination)
 {
 	assert(destination);
-	StringPair* header = Message_get_header(message, name);
+	StringPair* header = Message_get_header(message, name, true);
 	if (header)
 	{
 		*destination = header->value->value;
@@ -156,9 +164,9 @@ Message_link_header_value(Message* message, const char* name, const char** const
 }
 
 int
-Message_header_value_equals(Message* message, const char* name, const char* value, int ignorecase)
+Message_header_value_equals(Message* message, const char* name, const char* value, bool ignorecase)
 {
-	StringPair* header = Message_get_header(message, name);
+	StringPair* header = Message_get_header(message, name, true);
 
 	if (header)
 	{

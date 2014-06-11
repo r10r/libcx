@@ -122,7 +122,7 @@ test_Message_header_value_equals()
 
 	Message_set_header(message, "foo", "bar");
 
-	TEST_ASSERT_NOT_NULL(Message_get_header(message, "foo"));
+	TEST_ASSERT_NOT_NULL(Message_get_header(message, "foo", false));
 	TEST_ASSERT_EQUAL_INT(1, message->headers->length);
 
 	/* case sensitive */
