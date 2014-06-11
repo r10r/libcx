@@ -14,8 +14,10 @@
  */
 #define DFMT ":(%s) %s %d - "   /* function, method, line */
 
-
 /* consider using write ? (should be atomic up to PIPE_BUFF_MAX) */
+#define cx_printf(format, ...) \
+	{ flockfile(stderr); fprintf(stderr, format, __VA_ARGS__); funlockfile(stderr); }
+
 #define cx_log(format, ...) \
 	{ flockfile(stderr); fprintf(stderr, format "\n", __VA_ARGS__); funlockfile(stderr); }
 
