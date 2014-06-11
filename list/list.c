@@ -16,12 +16,18 @@ Node_free(Node* node, F_NodeDataFree* f_node_data_free)
 	cx_free(node);
 }
 
+static inline void
+Node_free_data(void* data)
+{
+	cx_free(data);
+}
+
 List*
 List_new()
 {
 	List* list = cx_alloc(sizeof(List));
 
-	list->f_node_data_free = free;
+	list->f_node_data_free = Node_free_data;
 	return list;
 }
 

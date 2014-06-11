@@ -8,19 +8,10 @@ data_strcmp(Node* node, void* data)
 	return strcmp((char*)data, node->data);
 }
 
-static
-void
-node_free(void* data)
-{
-	cx_free(data);
-}
-
 static void
 test_List_append()
 {
 	List* list = List_new();
-
-	list->f_node_data_free = node_free;
 
 	TEST_ASSERT_EQUAL_INT(0, List_append(list, cx_strdup("node 1")));
 	TEST_ASSERT_EQUAL_STRING("node 1", list->last->data);
@@ -44,8 +35,6 @@ test_List_push()
 {
 	List* list = List_new();
 
-	list->f_node_data_free = node_free;
-
 	TEST_ASSERT_EQUAL_INT(0, List_push(list, cx_strdup("node 1")));
 	TEST_ASSERT_EQUAL_STRING("node 1", list->last->data);
 	TEST_ASSERT_EQUAL_INT(1, List_push(list, cx_strdup("node 2")));
@@ -67,8 +56,6 @@ static void
 test_List_match()
 {
 	List* list = List_new();
-
-	list->f_node_data_free = node_free;
 
 	TEST_ASSERT_NULL(List_match(list, "node 1", data_strcmp));
 
@@ -96,8 +83,6 @@ static void
 test_List_each()
 {
 	List* list = List_new();
-
-	list->f_node_data_free = node_free;
 
 	List_each(list, test_iterator); /* test empty list */
 
@@ -260,7 +245,6 @@ test_LIST_EACH_WITH_INDEX()
 {
 	List* list = List_new();
 
-	list->f_node_data_free = node_free;
 	List_push(list, cx_strdup("foo"));
 	List_push(list, cx_strdup("bar"));
 	List_push(list, cx_strdup("baz"));
@@ -288,7 +272,6 @@ test_List_delete()
 {
 	List* list = List_new();
 
-	list->f_node_data_free = node_free;
 	List_push(list, cx_strdup("foo"));
 	List_push(list, cx_strdup("bar"));
 	List_push(list, cx_strdup("baz"));
