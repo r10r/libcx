@@ -152,10 +152,58 @@ free_memory_allocation(void* value)
 	MemoryAllocation_free((MemoryAllocation*)value);
 }
 
+static unsigned long
+log_leaks(List* allocations)
+{
+	unsigned long num_leaks = allocations->length;
+
+	if (num_leaks == 0)
+	{
+		XLOG("No memory leaks detected.")
+	}
+	else
+	{
+		fprintf(stderr, "\ndetected %lu memory leaks\n"
+			"================\n", allocations->length);
+
+		Node* head = allocations->first;
+		Node* node;
+		LIST_EACH(head, node)
+		{
+			MemoryAllocation* unfree = (MemoryAllocation*)node->data;
+
+			log_error(unfree, "was not freed");
+		}
+	}
+	fprintf(stderr, "\n");
+	return num_leaks;
+}
+
+static List* allocations;
+
+static void
+signal_log_leaks(int signum)
+{
+	UNUSED(signum);
+	log_leaks(allocations);
+}
+
+static void
+signal_clear_leaks(int signum)
+{
+	log_leaks(allocations);
+	XFLOG("Received signal %d. Clear list of unfreed memory allocations.", signum);
+	List_free(allocations);
+	allocations = List_new();
+}
+
 int
 main()
 {
-	List* allocations = List_new();
+	allocations = List_new();
+
+	signal(SIGTRAP, signal_log_leaks);
+	signal(SIGUSR1, signal_clear_leaks);
 
 	allocations->f_node_data_free = free_memory_allocation;
 	MemoryAllocation* a = MemoryAllocation_new();
@@ -178,27 +226,14 @@ main()
 				List_push(allocations, dup);
 			}
 			else if (a->method == FREE)
+			{
 				MemoryAllocation_delete_alloc(allocations, a);
+			}
 		}
 		else if (result == FINISHED)
 		{
-			if (allocations->length == 0)
+			if (log_leaks(allocations) == 0)
 				exit_code = 0;
-			else
-			{
-				fprintf(stderr, "detected %lu memory leaks\n"
-					"================\n", allocations->length);
-
-				Node* head = allocations->first;
-				Node* node;
-				LIST_EACH(head, node)
-				{
-					MemoryAllocation* unfree = (MemoryAllocation*)node->data;
-
-					log_error(unfree, "was not freed");
-				}
-			}
-
 			break;
 		}
 		else if (result == ERROR)
