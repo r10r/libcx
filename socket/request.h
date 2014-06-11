@@ -20,7 +20,7 @@ typedef struct cx_request_t Request;
 struct cx_request_t
 {
 	/* some kind of id  */
-	unsigned long id;
+	const char* id;
 	int error;
 	RequestStatus status;
 	struct timeval* started_at;
@@ -34,7 +34,7 @@ void
 Request_init(Request* request);
 
 Request*
-Request_new(unsigned long id);
+Request_new(const char* id);
 
 void
 Request_free_members(Request* request);

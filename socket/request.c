@@ -14,7 +14,7 @@ Request_init(Request* request)
 }
 
 Request*
-Request_new(unsigned long id)
+Request_new(const char* id)
 {
 	Request* request = cx_alloc(sizeof(Request));
 
