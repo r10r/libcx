@@ -3,9 +3,10 @@
 static const char* WS_SECRET = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 #define WS_SECRET_LENGTH strlen(WS_SECRET)
 
-void
-WebsocketsHandshake_reply(WebsocketsHandshake* handshake, StringBuffer* out)
+StringBuffer*
+WebsocketsHandshake_create_reply(WebsocketsHandshake* handshake)
 {
+	StringBuffer* handshake_buffer = StringBuffer_new(WS_HANDSHAKE_BUFFER_SIZE);
 	/* generate the response key */
 	char* responseKey = NULL;
 	size_t handshake_key_length = strlen(handshake->ws_key);
@@ -21,7 +22,7 @@ WebsocketsHandshake_reply(WebsocketsHandshake* handshake, StringBuffer* out)
 	sha1(shaHash, responseKey, (uint32_t)(handshake_length * 8));
 	base64enc(responseKey, shaHash, 20);
 
-	StringBuffer_printf(out,
+	StringBuffer_printf(handshake_buffer,
 			    "HTTP/1.1 101 Switching Protocols\r\n"
 			    "Upgrade: websocket\r\n"
 			    "Connection: Upgrade\r\n"
@@ -29,6 +30,7 @@ WebsocketsHandshake_reply(WebsocketsHandshake* handshake, StringBuffer* out)
 			    "\r\n", responseKey);
 
 	cx_free(responseKey);
+	return handshake_buffer;
 }
 
 WebsocketsHandshake*
@@ -52,7 +54,7 @@ WebsocketsHandshake_free(WebsocketsHandshake* handshake)
 }
 
 /* return 1 if message was parsed successfully, -1 on error */
-int
+void
 WebsocketsHandshake_parse(WebsocketsHandshake* handshake, StringBuffer* in)
 {
 	MessageParser* parser = MessageParser_from_buf(in, 1);
@@ -68,7 +70,6 @@ WebsocketsHandshake_parse(WebsocketsHandshake* handshake, StringBuffer* in)
 		Message_free(message);
 		MessageParser_free(parser);
 		PARSE_ERROR(handshake, "%zu unparsed tokens", nunparsed);
-		return -1;
 	}
 	MessageParser_free(parser);
 
@@ -76,13 +77,11 @@ WebsocketsHandshake_parse(WebsocketsHandshake* handshake, StringBuffer* in)
 	if (message->body != NULL)
 	{
 		PARSE_ERROR(handshake, "message has a body (length %d)", message->body->length);
-		return -1;
 	}
 
 	if (message->protocol_values->length != 3)
 	{
 		PARSE_ERROR(handshake, "invalid protocol line: (%d values, expected 3)", message->protocol_values->length);
-		return -1;
 	}
 
 	CHECK_PROTOCOL_VALUE(handshake, PROTOCOL_HTTP_VERB, "GET", 0)
@@ -94,23 +93,19 @@ WebsocketsHandshake_parse(WebsocketsHandshake* handshake, StringBuffer* in)
 	if (!Message_header_value_equals(message, "Connection", "Upgrade", 1))
 	{
 		PARSE_ERROR(handshake, "Invalid header : %s: %s", "Connection", "Upgrade");
-		return -1;
 	}
 	if (!Message_header_value_equals(message, "Upgrade", "websocket", 1))
 	{
 		PARSE_ERROR(handshake, "Invalid header : %s: %s", "Upgrade", "websocket");
-		return -1;
 	}
 	if (!Message_header_value_equals(message, "Sec-WebSocket-Version", "13", 0))
 	{
 		PARSE_ERROR(handshake, "Invalid header : %s: %s", "Sec-WebSocket-Version", "13");
-		return -1;
 	}
 
 	if (!Message_link_header_value(message, "Host", &handshake->host))
 	{
 		PARSE_ERROR(handshake, "Missing header : %s", "Host");
-		return -1;
 	}
 
 	// origin field is optional
@@ -124,8 +119,5 @@ WebsocketsHandshake_parse(WebsocketsHandshake* handshake, StringBuffer* in)
 	if (!Message_link_header_value(message, "Sec-WebSocket-Key", &handshake->ws_key))
 	{
 		PARSE_ERROR(handshake, "Missing header : %s", "Sec-WebSocket-Key");
-		return -1;
 	}
-
-	return 1;
 }

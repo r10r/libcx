@@ -80,11 +80,11 @@ typedef enum cx_websockets_status_code_t
 typedef enum cx_websockets_status_t
 {
 	WS_STATE_NEW,
-	WS_STATE_FRAME_NEW,
+	WS_STATE_ESTABLISHED,
+	WS_STATE_CLOSE,
 	WS_STATE_FRAME_INCOMPLETE,
-	WS_STATE_FRAME_SEND_RESPONSE,
+	WS_STATE_ERROR_HANDSHAKE_FAILED,
 	WS_STATE_ERROR, /* generic error ? */
-	WS_STATE_CLOSE
 } WebsocketsState;
 
 typedef struct cx_websockets_frame_t WebsocketsFrame;
@@ -144,19 +144,5 @@ typedef struct cx_websockets_handshake_t
 	StringBuffer* error_message;    /* error message explaining the error code */
 } WebsocketsHandshake;
 
-
-#define Websockets_error(ws, code, message) \
-	{ \
-		StringBuffer_cat((ws)->error_message, message); \
-		ws->status_code = code; \
-		ws->state = WS_STATE_ERROR; \
-	}
-
-#define Websockets_ferror(ws, code, format, ...) \
-	{ \
-		StringBuffer_printf((ws)->error_message, format, __VA_ARGS__); \
-		ws->status_code = code; \
-		ws->state = WS_STATE_ERROR; \
-	}
 
 #endif  /* WEBSOCKET_H */

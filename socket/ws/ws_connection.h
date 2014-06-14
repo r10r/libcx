@@ -18,4 +18,13 @@ Websockets_free(Websockets* ws);
 void
 Websockets_process(Connection* connection, Websockets* ws);
 
+void
+Websockets_process_frame(Connection* connection, Websockets* ws);
+
+void
+Connection_send_error(Connection* connection, Websockets* ws, WebsocketsStatusCode code, const char* message);
+
+#define Connection_send_frame(conn, header_bits, payload, nchars) \
+	Connection_send_buffer(conn, WebsocketsFrame_create(header_bits, payload, nchars))
+
 #endif

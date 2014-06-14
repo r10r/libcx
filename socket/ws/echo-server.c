@@ -13,52 +13,27 @@ ws_connection_handler(Connection* connection, ConnectionEvent event)
 	{
 	case CONNECTION_EVENT_DATA:
 	{
-		StringBuffer_log(ws->in, "Input buffer (before process)");
-		StringBuffer_log(ws->out, "Output buffer (before process");
+		Websockets_process(connection, ws);
+		/* state must be established or error / handshake error */
+		assert(ws->state != WS_STATE_NEW);
 
-		size_t nbuffered;
-
-		while ((nbuffered = StringBuffer_used(ws->in)) > 1)
+		switch (ws->state)
 		{
-			Websockets_process(connection, ws);
-
-			if (ws->state == WS_STATE_CLOSE)
-			{
-				Websockets_free(ws);
-				Connection_close(connection);
-				break;
-			}
-			else if (ws->state == WS_STATE_ERROR)
-			{
-				XFDBG("ERROR: closing connection: %s", StringBuffer_value(ws->error_message));
-				Websockets_free(ws);
-				Connection_close(connection);
-				break;
-			}
-			else
-			{
-				StringBuffer_log(ws->in, "Input buffer (after process)");
-				StringBuffer_log(ws->out, "Output buffer (after process");
-			}
-
-			/* wait for more input */
-			if (StringBuffer_used(ws->in) == nbuffered)
-				break;
+		case WS_STATE_CLOSE:
+		case WS_STATE_ERROR:
+		case WS_STATE_ERROR_HANDSHAKE_FAILED:
+			Websockets_free(ws);
+			Connection_close(connection);
+			break;
+		default:         /* makes compiler happy */
+			break;
 		}
 		break;
 	}
 	case CONNECTION_EVENT_CLOSE_READ:
-		XDBG("Client closed connection. Closing connection");
-		Websockets_free(ws);
-		Connection_close(connection);
-		break;
 	case CONNECTION_EVENT_ERRNO:
-		XDBG("Error on connection. Closing connection");
-		Websockets_free(ws);
-		Connection_close(connection);
-		break;
 	case CONNECTION_EVENT_ERROR_WRITE:
-		XDBG("Error on writing. Closing connection");
+		XFDBG("Event %d. Closing connection", event);
 		Websockets_free(ws);
 		Connection_close(connection);
 		break;

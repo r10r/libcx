@@ -13,16 +13,15 @@ test_Handshake_parse()
 	fclose(file);
 
 	WebsocketsHandshake* handshake = WebsocketsHandshake_new();
-	int result = WebsocketsHandshake_parse(handshake, buffer_in);
+	WebsocketsHandshake_parse(handshake, buffer_in);
 
 	Message_fwrite(handshake->message, stdout);
 
-	if (result == -1)
+	if (handshake->error)
 		XFDBG("Handshake parse error: %s", StringBuffer_value(handshake->error_message));
-	TEST_ASSERT_EQUAL_INT(1, result);
+	TEST_ASSERT_FALSE(handshake->error);
 
-	StringBuffer* buffer_out = StringBuffer_new(2048);
-	WebsocketsHandshake_reply(handshake, buffer_out);
+	StringBuffer* buffer_out = WebsocketsHandshake_create_reply(handshake);
 	XFDBG("Handshake Reply:\n%s", StringBuffer_value(buffer_out));
 
 	StringBuffer_free(buffer_in);

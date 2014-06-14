@@ -20,6 +20,7 @@ static const char* const NOT_FOUND =
 #define WS_KEY_LENGTH 16
 
 #define PARSE_ERROR(handshake, format, ...) \
+	handshake->error = 1; \
 	handshake->error_message = StringBuffer_from_printf(128, format, __VA_ARGS__)
 
 #define CHECK_PROTOCOL_VALUE(handshake, index, val, ignorecase) \
@@ -27,14 +28,12 @@ static const char* const NOT_FOUND =
 	{ \
 		PARSE_ERROR(handshake, "invalid protocol value[%d]: expected %s was %s",  \
 			    index, val, NULLS(Message_get_protocol_value(message, index))); \
-		return -1; \
 	}
 
-void
-WebsocketsHandshake_reply(WebsocketsHandshake* handshake, StringBuffer* out);
+StringBuffer*
+WebsocketsHandshake_create_reply(WebsocketsHandshake* handshake);
 
-/* return 1 if message was parsed successfully, -1 on error */
-int
+void
 WebsocketsHandshake_parse(WebsocketsHandshake* handshake, StringBuffer* in);
 
 WebsocketsHandshake*

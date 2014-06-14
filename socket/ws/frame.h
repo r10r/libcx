@@ -4,6 +4,10 @@
 #include "websocket.h"
 #include "util.h"
 
+#define WS_HEADER_SIZE 2
+#define PAYLOAD_MAX 125
+
+/* FIXME prefix with WS_, rename everything to size or byte */
 #define PAYLOAD_EXTENDED 126             /* 16 bit unsigned integer (Big-Endian / MSB 0) */
 #define PAYLOAD_EXTENDED_SIZE   2
 #define PAYLOAD_EXTENDED_MAX 0xFFFF
@@ -13,8 +17,12 @@
 
 #define WS_MASKING_KEY_LENGTH 4
 
-void
-WebsocketsFrame_process(Websockets* ws);
+#define WS_CONTROL_MESSAGE_PAYLOAD_SIZE_MAX PAYLOAD_MAX
+#define WS_CONTROL_MESSAGE_SIZE_MAX (WS_HEADER_SIZE + WS_CONTROL_MESSAGE_PAYLOAD_SIZE_MAX)
+
+/* error messages are control messages */
+#define WS_STATUS_CODE_SIZE 2   /* 16 bit error code */
+#define WS_STATUS_DATA_SIZE_MAX (WS_CONTROL_MESSAGE_PAYLOAD_SIZE_MAX - WS_STATUS_CODE_SIZE)
 
 WebsocketsFrame*
 WebsocketsFrame_dup(WebsocketsFrame* frame);
@@ -34,11 +42,11 @@ WebsocketsFrame_unmask_payload_data(WebsocketsFrame* frame);
 void
 WebsocketsFrame_parse_payload_length_extended(WebsocketsFrame* frame, char* raw, size_t length);
 
-void
-WebsocketsFrame_write_to_buffer(StringBuffer* buf, uint8_t header_bits, const char* payload, uint64_t nchars, unsigned int masked);
+StringBuffer*
+WebsocketsFrame_write(uint8_t header_bits, const char* payload, uint64_t nchars, unsigned int masked);
 
-#define WebsocketsFrame_create(buf, opcode, payload, nchars) \
-	WebsocketsFrame_write_to_buffer(buf, (uint8_t)WS_HDR_FIN.bitmask | opcode, payload, nchars, 0)
+#define WebsocketsFrame_create_message(opcode, payload, nchars) \
+	WebsocketsFrame_create((uint8_t)WS_HDR_FIN.bitmask | opcode, payload, nchars)
 
 /*
  * checks if frame is fully loaded into buffer, if not stop processing here
@@ -47,7 +55,16 @@ WebsocketsFrame_write_to_buffer(StringBuffer* buf, uint8_t header_bits, const ch
 #define WebsocketsFrame_buffer_level(ws) \
 	(int64_t)(StringBuffer_used((ws)->in) - (ws)->frame.length)
 
-void
-WebsocketsFrame_write_error(Websockets* ws);
+StringBuffer*
+WebsocketsFrame_create(uint8_t header_bits, const char* payload, uint64_t nchars);
+
+StringBuffer*
+WebsocketsFrame_create_error(WebsocketsStatusCode status_code, const char* message);
+
+StringBuffer*
+WebsocketsFrame_create_echo(WebsocketsFrame* frame);
+
+uint16_t
+WebsocketsFrame_response_status(WebsocketsFrame* frame);
 
 #endif
