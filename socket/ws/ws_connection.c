@@ -85,7 +85,7 @@ void
 ws_send_error(Connection* conn, Websockets* ws, WebsocketsStatusCode status_code, const char* message)
 {
 	ws->state = WS_STATE_ERROR;
-	XFDBG("Send error frame [%d:%s]", status_code, message);
+	CXFWARN(conn, "Send error frame [%d:%s]", status_code, message);
 	ws_send(conn, WebsocketsFrame_create_error(status_code, message), error_send_finished);
 }
 
@@ -216,7 +216,7 @@ WebsocketsFrame_process_control_frame(Connection* conn, Websockets* ws)
 		}
 		case WS_FRAME_PONG:
 		{
-			XERR("Ignoring unsolicitated PONG frame.");
+			CXWARN(conn, "Ignoring unsolicitated PONG frame.");
 			break;
 		}
 		default:
