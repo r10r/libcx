@@ -18,7 +18,7 @@
 #define WS_ERR 0
 #define FRAME_HEX_NPRINT 16     /* number of bytes to print for debugging */
 
-#define WS_BUFFER_SIZE 128      /* control frame: 2 header + 125 payload + \0 */
+#define WS_BUFFER_SIZE WS_CONTROL_MESSAGE_SIZE_MAX
 
 #define WS_HANDSHAKE_BUFFER_SIZE 512
 
@@ -82,6 +82,7 @@ typedef enum cx_websockets_status_t
 	WS_STATE_NEW,
 	WS_STATE_ESTABLISHED,
 	WS_STATE_CLOSE,
+	WS_STATE_FRAME_MISSING_LENGTH,
 	WS_STATE_FRAME_INCOMPLETE,
 	WS_STATE_ERROR_HANDSHAKE_FAILED,
 	WS_STATE_ERROR, /* generic error ? */
@@ -119,7 +120,6 @@ typedef struct cx_websockets_state_t
 	WebsocketsFrame frame; /* the current incomming frame */
 	WebsocketsState state;
 	StringBuffer* in;
-	StringBuffer* out;
 
 	WebsocketsStatusCode status_code;
 	StringBuffer* error_message;

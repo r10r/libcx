@@ -18,7 +18,7 @@
 #define WS_MASKING_KEY_LENGTH 4
 
 #define WS_CONTROL_MESSAGE_PAYLOAD_SIZE_MAX PAYLOAD_MAX
-#define WS_CONTROL_MESSAGE_SIZE_MAX (WS_HEADER_SIZE + WS_CONTROL_MESSAGE_PAYLOAD_SIZE_MAX)
+#define WS_CONTROL_MESSAGE_SIZE_MAX (WS_HEADER_SIZE + WS_CONTROL_MESSAGE_PAYLOAD_SIZE_MAX + WS_MASKING_KEY_LENGTH)
 
 /* error messages are control messages */
 #define WS_STATUS_CODE_SIZE 2   /* 16 bit error code */
@@ -66,5 +66,12 @@ WebsocketsFrame_create_echo(WebsocketsFrame* frame);
 
 uint16_t
 WebsocketsFrame_response_status(WebsocketsFrame* frame);
+
+#define WebsocketsFrame_log(frame) \
+	XFDBG("\n" \
+	      "--->	fin:%u, rsv1:%u, rsv2:%u, rsv3:%u, masked:%u, opcode:0x%x\n" \
+	      "	payload_length:%u, payload_length_extended:%llu", \
+	      frame->fin, frame->rsv1, frame->rsv2, frame->rsv3, frame->masked, frame->opcode, \
+	      frame->payload_length, frame->payload_length_extended)
 
 #endif

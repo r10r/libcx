@@ -13,6 +13,12 @@ ws_connection_handler(Connection* connection, ConnectionEvent event)
 	{
 	case CONNECTION_EVENT_DATA:
 	{
+		if (StringBuffer_length(ws->in) < 2)
+		{
+			XWARN("Data size is below minimum frame size 2");
+			break;
+		}
+
 		Websockets_process(connection, ws);
 		/* state must be established or error / handshake error */
 		assert(ws->state != WS_STATE_NEW);
@@ -45,7 +51,9 @@ static ssize_t
 ws_connection_data_handler(Connection* connection)
 {
 	Websockets* ws = (Websockets*)connection->data;
-	size_t nused_before = StringBuffer_used(ws->in);
+
+	/* invalid connection state */
+	assert(ws->state == WS_STATE_NEW || ws->state == WS_STATE_ESTABLISHED || ws->state == WS_STATE_FRAME_INCOMPLETE);
 
 	/*
 	 * TODO check whether we have an incomplete frame or whether this is a new frame ?
@@ -56,20 +64,27 @@ ws_connection_data_handler(Connection* connection)
 
 	if (ws->state == WS_STATE_NEW)
 	{
+		ws->in = StringBuffer_new(WS_HANDSHAKE_BUFFER_SIZE);
 		status = StringBuffer_fdxload(ws->in, connection->fd, WS_HANDSHAKE_BUFFER_SIZE, 0);
 		if (status == CX_OK)
 		{
-			size_t new = StringBuffer_used(ws->in) - nused_before;
+			size_t new = ws->in->status_data;
 			assert(new < SSIZE_MAX); /* application bug */
 			return (ssize_t)new;
 		}
 	}
 	else
 	{
+		if (ws->state == WS_STATE_ESTABLISHED)
+		{
+			StringBuffer_free(ws->in);         /* free handshake buffer */
+			ws->in = StringBuffer_new(WS_BUFFER_SIZE);
+		}
+
 		status = StringBuffer_ffill(ws->in, connection->fd, 0);
 		if (status == CX_OK)
 		{
-			size_t new = StringBuffer_used(ws->in) - nused_before;
+			size_t new = ws->in->status_data;
 			assert(new < SSIZE_MAX); /* application bug */
 			return (ssize_t)new;
 		}

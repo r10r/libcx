@@ -3,6 +3,9 @@
 static unsigned int
 WebsocketsFrame_offset(uint64_t nchars, unsigned int masked);
 
+static uint8_t
+WebsocketsFrame_parse_offset(uint8_t payload_length, unsigned int masked);
+
 static inline void
 WebsocketsFrame_write_header(StringBuffer* buf, uint8_t header_bits, uint64_t nchars, unsigned int masked);
 
@@ -70,16 +73,8 @@ WebsocketsFrame_parse_payload_length_extended(WebsocketsFrame* frame, char* raw,
 	default:
 		frame->payload_length_extended = frame->payload_length;
 	}
-}
-
-static void
-WebsocketsFrame_log(WebsocketsFrame* frame)
-{
-	XFDBG("\n"
-	      "--->	fin:%u, rsv1:%u, rsv2:%u, rsv3:%u, masked:%u, opcode:0x%x\n"
-	      "	payload_length:%u, payload_length_extended:%llu",
-	      frame->fin, frame->rsv1, frame->rsv2, frame->rsv3, frame->masked, frame->opcode,
-	      frame->payload_length, frame->payload_length_extended);
+	frame->length = frame->payload_offset + frame->payload_length_extended;
+	XFDBG("Parsed extended payload size: %llu", frame->payload_length_extended);
 }
 
 uint16_t
@@ -140,8 +135,7 @@ WebsocketsFrame_response_status(WebsocketsFrame* frame)
 StringBuffer*
 WebsocketsFrame_create_echo(WebsocketsFrame* frame)
 {
-	XFDBG("payload offset:%hhu length:%llu", frame->payload_offset, frame->payload_length_extended);
-
+	XDBG("Send echo frame");
 	switch (frame->opcode)
 	{
 	case WS_FRAME_CONTINUATION:
@@ -161,19 +155,16 @@ void
 WebsocketsFrame_parse_header(WebsocketsFrame* frame, char* raw, size_t length)
 {
 	frame->payload_length = HeaderField_byte_value(WS_HDR_PAYLOAD_LENGTH, raw);
-	frame->payload_offset = 2;
 	frame->opcode = HeaderField_byte_value(WS_HDR_OPCODE, raw);
 	frame->masked = HeaderField_byte_value(WS_HDR_MASKED, raw);
 	frame->fin = HeaderField_byte_value(WS_HDR_FIN, raw);
 	frame->rsv1 = HeaderField_byte_value(WS_HDR_RSV1, raw);
 	frame->rsv2 = HeaderField_byte_value(WS_HDR_RSV2, raw);
 	frame->rsv3 = HeaderField_byte_value(WS_HDR_RSV3, raw);
-	/* extract extended payload length */
-	WebsocketsFrame_parse_payload_length_extended(frame, raw, length);
-	/* extract masking key */
-	if (frame->masked)
-		frame->payload_offset += WS_MASKING_KEY_LENGTH;
-	frame->length = frame->payload_offset + frame->payload_length_extended;
+	frame->payload_offset = WebsocketsFrame_parse_offset(frame->payload_length, frame->masked);
+
+	if (frame->payload_length <= PAYLOAD_MAX)
+		frame->length = frame->payload_offset + frame->payload_length;
 
 	WebsocketsFrame_log(frame);
 }
@@ -196,8 +187,9 @@ WebsocketsFrame_parse(WebsocketsFrame* frame, uint8_t* raw, size_t length)
 }
 
 StringBuffer*
-WebsocketsFrame_create(uint8_t header_bits, const char* payload, uint64_t nchars)
+WebsocketsFrame_create(uint8_t opcode, const char* payload, uint64_t nchars)
 {
+	uint8_t header_bits = (uint8_t)WS_HDR_FIN.bitmask | opcode;
 	StringBuffer* buf = WebsocketsFrame_create_buffer(header_bits, nchars);
 
 	if (nchars)
@@ -231,6 +223,27 @@ WebsocketsFrame_create_error(WebsocketsStatusCode status_code, const char* messa
 	return buf;
 }
 
+static uint8_t
+WebsocketsFrame_parse_offset(uint8_t payload_length, unsigned int masked)
+{
+	uint8_t offset = WS_HEADER_SIZE;
+
+	if (payload_length == PAYLOAD_EXTENDED)
+	{
+		offset += 2;
+	}
+	else if (payload_length == PAYLOAD_EXTENDED_CONTINUED)
+	{
+		offset += 8;
+	}
+
+	if (masked)
+		offset += WS_MASKING_KEY_LENGTH;
+
+	XFDBG("Parsed frame offset: %u (payload field:%u, masked:%u)", offset, payload_length, masked);
+	return offset;
+}
+
 static unsigned int
 WebsocketsFrame_offset(uint64_t nchars, unsigned int masked)
 {
@@ -242,12 +255,13 @@ WebsocketsFrame_offset(uint64_t nchars, unsigned int masked)
 	}
 	else if (nchars > PAYLOAD_MAX)
 	{
-		offset += 4;
+		offset += 2;
 	}
 
 	if (masked)
 		offset += WS_MASKING_KEY_LENGTH;
 
+	XFDBG("Calculated frame offset: %u (length:%llu, masked:%u)", offset, nchars, masked);
 	return offset;
 }
 

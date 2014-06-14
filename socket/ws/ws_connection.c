@@ -16,9 +16,6 @@ Websockets_new()
 {
 	Websockets* ws = cx_alloc(sizeof(Websockets));
 
-	ws->in = StringBuffer_new(WS_HANDSHAKE_BUFFER_SIZE);
-	ws->out = StringBuffer_new(WS_HANDSHAKE_BUFFER_SIZE);
-	ws->error_message = StringBuffer_new(WS_BUFFER_SIZE);
 	ws->state = WS_STATE_NEW;
 	return ws;
 }
@@ -27,8 +24,6 @@ void
 Websockets_free(Websockets* ws)
 {
 	StringBuffer_free(ws->in);
-	StringBuffer_free(ws->out);
-	StringBuffer_free(ws->error_message);
 	cx_free(ws);
 }
 
@@ -55,6 +50,38 @@ Websockets_process_handshake(Connection* con, Websockets* ws)
 	WebsocketsHandshake_free(handshake);
 }
 
+static int
+WebsocketsFrame_parse_length(Websockets* ws)
+{
+	size_t nused = StringBuffer_used(ws->in);
+	size_t nheader_without_masking_key = ws->frame.payload_offset;
+
+	if (ws->frame.masked)
+		nheader_without_masking_key -= WS_MASKING_KEY_LENGTH;
+
+	if (nused < nheader_without_masking_key)
+	{
+		XDBG("Frame to small to parse payload size");
+		return 0;
+	}
+	else
+	{
+		WebsocketsFrame_parse_payload_length_extended(&ws->frame, StringBuffer_value(ws->in), nused);
+		return 1;
+	}
+}
+
+static int
+Websockets_parse_frame(Connection* conn, Websockets* ws)
+{
+		if (WebsocketsFrame_buffer_level(ws) >= 0)
+		{
+			Websockets_process_frame(conn, ws);
+			return 1;
+		}
+		return 0;
+}
+
 void
 Websockets_process(Connection* conn, Websockets* ws)
 {
@@ -72,7 +99,8 @@ Websockets_process(Connection* conn, Websockets* ws)
 	{
 		CXDBG(conn, "Process frame");
 		StringBuffer_print_bytes_hex(ws->in, FRAME_HEX_NPRINT, "package bytes");
-		assert(StringBuffer_used(ws->in) >= 2);
+		size_t nused = StringBuffer_used(ws->in);
+		assert(nused >= 2);
 
 		WebsocketsFrame_parse_header(&ws->frame, StringBuffer_value(ws->in), StringBuffer_used(ws->in));
 
@@ -80,27 +108,37 @@ Websockets_process(Connection* conn, Websockets* ws)
 			Connection_send_error(conn, ws, WS_CODE_ERROR_PROTOCOL, "RSV bits must not be set without extension.");
 		else
 		{
-			if (WebsocketsFrame_buffer_level(ws) >= 0)
-				Websockets_process_frame(conn, ws);
+			if (WebsocketsFrame_parse_length(ws))
+				if (Websockets_parse_frame(conn, ws))
+					ws->state = WS_STATE_ESTABLISHED;
+				else
+					ws->state = WS_STATE_FRAME_INCOMPLETE;
 			else
-			{
-				/* grow buffer */
-				ws->state = WS_STATE_FRAME_INCOMPLETE;
-				StringBuffer_make_room(ws->in, 0, ws->frame.length);
-			}
+				ws->state = WS_STATE_FRAME_MISSING_LENGTH;
 		}
 		break;
 	}
 	case WS_STATE_FRAME_INCOMPLETE:
+		CXDBG(conn, "Incomplete frame");
 	{
 		CXDBG(conn, "Process incomplete frame");
-		if (WebsocketsFrame_buffer_level(ws) >= 0)
-		{
-			Websockets_process_frame(conn, ws);
-			ws->state = WS_STATE_ESTABLISHED;
-		}
+		if (Websockets_parse_frame(conn, ws))
+						ws->state = WS_STATE_ESTABLISHED;
 		break;
 	}
+	case WS_STATE_FRAME_MISSING_LENGTH:
+		CXDBG(conn, "Missing frame length");
+		if (WebsocketsFrame_parse_length(ws))
+		{
+			/* grow buffer */
+				StringBuffer_make_room(ws->in, 0, ws->frame.length);
+				ws->state = WS_STATE_FRAME_INCOMPLETE;
+				if (Websockets_parse_frame(conn, ws))
+					ws->state = WS_STATE_ESTABLISHED;
+				else
+			ws->state = WS_STATE_FRAME_INCOMPLETE;
+		}
+		break;
 	default:
 		break;
 	}
@@ -128,12 +166,14 @@ Websockets_process_frame(Connection* conn, Websockets* ws)
 		/* TODO response might be send async */
 		WebsocketsFrame_unmask_payload_data(frame);
 		Connection_send_buffer(conn, WebsocketsFrame_create_echo(frame));
+		ws->state = WS_STATE_ESTABLISHED;
 		break;
 	case WS_FRAME_CLOSE:
 	case WS_FRAME_PING:
 	case WS_FRAME_PONG:
 		WebsocketsFrame_unmask_payload_data(frame);
 		WebsocketsFrame_process_control_frame(conn, ws);
+		ws->state = WS_STATE_ESTABLISHED;
 		break;
 	default:
 		Connection_send_error(conn, ws, WS_CODE_ERROR_PROTOCOL, "Invalid opcode");
@@ -186,5 +226,6 @@ void
 Connection_send_error(Connection* conn, Websockets* ws, WebsocketsStatusCode status_code, const char* message)
 {
 	ws->state = WS_STATE_ERROR;
+	XFDBG("Connection error %s", message);
 	Connection_send_buffer(conn, WebsocketsFrame_create_error(status_code, message));
 }
