@@ -27,11 +27,16 @@ static void
 handshake_send_finished(Connection* conn, SendUnit* unit)
 {
 	CXFDBG(conn, "Handshake was send %p", unit->buffer);
-	Websockets* ws = (Websockets*)conn->data;
-	StringBuffer_clear(ws->in);
-	Connection_start_read(conn); /* process more data */
+
+	/* remove send unit */
 	StringBuffer_free(unit->buffer);
 	SendUnit_free(unit);
+
+	/* accept more data */
+	Websockets* ws = (Websockets*)conn->data;
+	StringBuffer_clear(ws->in);
+	ws->state = WS_STATE_ESTABLISHED;
+	Connection_start_read(conn); /* process more data */
 }
 
 static void
@@ -40,6 +45,15 @@ frame_send_finished(Connection* conn, SendUnit* unit)
 	CXFDBG(conn, "Frame was send %p", unit->buffer);
 	StringBuffer_free(unit->buffer);
 	SendUnit_free(unit);
+}
+
+static void
+frame_send_close(Connection* conn, SendUnit *unit)
+{
+	CXFDBG(conn, "Frame was send %p", unit->buffer);
+	StringBuffer_free(unit->buffer);
+	SendUnit_free(unit);
+	Connection_close(conn);
 }
 
 static void
@@ -76,10 +90,10 @@ ws_send_error(Connection* conn, Websockets* ws, WebsocketsStatusCode status_code
 }
 
 void
-ws_send_frame(Connection* conn, uint8_t opcode, const char* payload, size_t nchars)
+ws_send_frame(Connection* conn, uint8_t opcode, const char* payload, size_t nchars, F_SendFinished* f_finished)
 {
 	StringBuffer *out = WebsocketsFrame_create(opcode, payload, nchars);
-	ws_send(conn, out, frame_send_finished);
+	ws_send(conn, out, f_finished);
 }
 
 void
@@ -100,7 +114,6 @@ Websockets_process_handshake(Connection* con, Websockets* ws)
 		StringBuffer* handshake_buffer = WebsocketsHandshake_create_reply(handshake);
 		CXFDBG(con, "sending handshake response: \n%s", StringBuffer_value(handshake_buffer));
 		ws_send(con, handshake_buffer, handshake_send_finished);
-		ws->state = WS_STATE_ESTABLISHED;
 	}
 	WebsocketsHandshake_free(handshake);
 }
@@ -136,7 +149,7 @@ WebsocketsFrame_parse_length(Websockets* ws)
 bool
 WebsocketsFrame_complete(Websockets* ws)
 {
-	return ws->frame.length >= StringBuffer_used(ws->in);
+	return StringBuffer_used(ws->in) >=  ws->frame.length;
 }
 
 void
@@ -175,6 +188,7 @@ Websockets_process_frame(Connection* conn, Websockets* ws)
 		ws_send_error(conn, ws, WS_CODE_ERROR_PROTOCOL, "Invalid opcode");
 	}
 
+	CXDBG(conn, "Shifting input buffer");
 	StringBuffer_shift(ws->in, frame->length);
 }
 
@@ -199,7 +213,7 @@ WebsocketsFrame_process_control_frame(Connection* conn, Websockets* ws)
 			XFDBG("Received WS_FRAME_CLOSE masked:%u", frame->masked);
 			ws->state = WS_STATE_CLOSE;
 			uint16_t response_status = WebsocketsFrame_response_status(&ws->frame);
-			ws_send_frame(conn, WS_FRAME_CLOSE, (char*)&response_status, sizeof(response_status));
+			ws_send_frame(conn, WS_FRAME_CLOSE, (char*)&response_status, sizeof(response_status), frame_send_close);
 			break;
 		}
 		case WS_FRAME_PING:
@@ -207,7 +221,7 @@ WebsocketsFrame_process_control_frame(Connection* conn, Websockets* ws)
 			XDBG("Received WS_FRAME_PING");
 			/* send PONG frame with unmasked payload data from PING frame */
 			XFDBG("ping frame: payload offset:%hhu length:%llu", frame->payload_offset, frame->payload_length_extended);
-			ws_send_frame(conn, WS_FRAME_PONG, (char*)frame->payload_raw, frame->payload_length_extended);
+			ws_send_frame(conn, WS_FRAME_PONG, (char*)frame->payload_raw, frame->payload_length_extended, frame_send_finished);
 			break;
 		}
 		case WS_FRAME_PONG:

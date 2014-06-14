@@ -54,7 +54,7 @@ void
 ws_send_error(Connection* conn, Websockets* ws, WebsocketsStatusCode status_code, const char* message);
 
 void
-ws_send_frame(Connection* conn, uint8_t opcode, const char* payload, size_t nchars);
+ws_send_frame(Connection* conn, uint8_t opcode, const char* payload, size_t nchars, F_SendFinished* f_finished);
 
 bool
 WebsocketsFrame_complete(Websockets* ws);
