@@ -13,32 +13,40 @@ close_connection(Connection* conn)
 	Connection_close(conn);
 }
 
-static void
+static bool
 process_frame(Connection* conn, Websockets* ws)
 {
 	CXDBG(conn, "Process frame");
 	StringBuffer_print_bytes_hex(ws->in, FRAME_HEX_NPRINT, "package bytes");
-	size_t nused = StringBuffer_used(ws->in);
-
-//	assert(nused >= 2);
-	if (nused < 2)
-	{
-		CXFDBG(conn, "Invalid frame length %zu", nused);
-		return;
-	}
 
 	WebsocketsFrame_parse_header(&ws->frame, StringBuffer_value(ws->in),
 				     StringBuffer_used(ws->in));
 	if (ws->frame.rsv1 || ws->frame.rsv2 || ws->frame.rsv3)
-		ws_send_error(conn, ws, WS_CODE_ERROR_PROTOCOL,
-			      "RSV bits must not be set without extension.");
+		ws_send_error(conn, ws, WS_CODE_ERROR_PROTOCOL, "RSV bits must not be set without extension.");
 	else
 	{
 		if (WebsocketsFrame_parse_length(ws))
 		{
 			if (WebsocketsFrame_complete(ws))
+			{
 				Websockets_process_frame(conn, ws);
+				if (ws->state == WS_STATE_ESTABLISHED)
+					return true;
+			}
+			else
+				CXFDBG(conn, "Incomplete frame (length %zu)", StringBuffer_used(ws->in));
 		}
+	}
+	return false;
+}
+
+static void
+process_frames(Connection* conn, Websockets* ws)
+{
+	while (process_frame(conn, ws))
+	{
+		CXDBG(conn, "Shifting input buffer");
+		StringBuffer_shift(ws->in, ws->frame.length);
 	}
 }
 
@@ -54,7 +62,7 @@ ws_connection_read(Connection* conn)
 		ws->in = StringBuffer_new(WS_HANDSHAKE_BUFFER_SIZE);
 		CXFDBG(conn, "Created input buffer[%p] size %zu", ws->in, StringBuffer_length(ws->in));
 		StringBuffer_fdload(ws->in, conn->fd, WS_HANDSHAKE_BUFFER_SIZE);
-		Connection_stop_read(conn); /* read nothing until we have processed the handshake */
+		Connection_stop_read(conn); /* stop connection watcher until handshake was send */
 		Websockets_process_handshake(conn, ws);
 	}
 	else if (ws->state == WS_STATE_CLOSE || ws->state == WS_STATE_ERROR || ws->state == WS_STATE_ERROR_HANDSHAKE_FAILED)
@@ -71,12 +79,12 @@ ws_connection_read(Connection* conn)
 		switch (ws->in->status)
 		{
 		case STRING_BUFFER_STATUS_OK:
-			process_frame(conn, ws);
+			process_frames(conn, ws);
 			break;
 		case STRING_BUFFER_STATUS_EOF:
 			/* todo check if there is any data to send */
 			XDBG("received EOF - closing connection");
-			process_frame(conn, ws);
+			process_frames(conn, ws);
 			close_connection(conn);
 			break;
 		case STRING_BUFFER_STATUS_ERROR_TO_SMALL:
@@ -95,7 +103,7 @@ ws_connection_read(Connection* conn)
 				close_connection(conn);
 			}
 			else
-				process_frame(conn, ws);
+				process_frames(conn, ws);
 		}
 		}
 	}

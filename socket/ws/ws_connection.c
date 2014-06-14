@@ -163,16 +163,9 @@ Websockets_process_frame(Connection* conn, Websockets* ws)
 	switch (frame->opcode)
 	{
 	case WS_FRAME_CONTINUATION:
-//		if (ws->last_frament)
-//		{
-//			// copy last fragment
-//		}
-//			WebsocketsFrame_unmask_payload_data(&ws->frame);
 		break;
-
 	case WS_FRAME_TEXT:
 	case WS_FRAME_BINARY:
-		/* TODO response might be send async */
 		WebsocketsFrame_unmask_payload_data(frame);
 		ws_send(conn, WebsocketsFrame_create_echo(frame), frame_send_finished);
 		ws->state = WS_STATE_ESTABLISHED;
@@ -187,9 +180,6 @@ Websockets_process_frame(Connection* conn, Websockets* ws)
 	default:
 		ws_send_error(conn, ws, WS_CODE_ERROR_PROTOCOL, "Invalid opcode");
 	}
-
-	CXDBG(conn, "Shifting input buffer");
-	StringBuffer_shift(ws->in, frame->length);
 }
 
 static void
