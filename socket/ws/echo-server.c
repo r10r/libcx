@@ -47,6 +47,9 @@ process_frames(Connection* conn, Websockets* ws)
 	{
 		CXDBG(conn, "Shifting input buffer");
 		StringBuffer_shift(ws->in, ws->frame.length);
+
+		if (StringBuffer_used(ws->in) < 2)
+			break;
 	}
 }
 
@@ -132,7 +135,8 @@ ws_connection_write(Connection* conn)
 	}
 	else
 	{
-		ssize_t nwritten = write(conn->fd, StringBuffer_value(unit->buffer), ntransmit);
+		char* start = StringBuffer_value(unit->buffer) + unit->ntransmitted;
+		ssize_t nwritten = write(conn->fd, start, ntransmit);
 
 		if (nwritten == -1)
 		{
