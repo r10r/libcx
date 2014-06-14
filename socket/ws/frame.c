@@ -37,7 +37,7 @@ WebsocketsFrame_unmask_payload_data(WebsocketsFrame* frame)
 {
 	if (frame->masked && frame->payload_length > 0)
 	{
-		XDBG("Unmasking data");
+		XDBG("Unmasking payload data");
 		size_t i = 0;
 		uint8_t* payload_byte = frame->payload_raw;
 
@@ -58,16 +58,13 @@ WebsocketsFrame_unmask_payload_data(WebsocketsFrame* frame)
 void
 WebsocketsFrame_parse_payload_length_extended(WebsocketsFrame* frame, char* raw, size_t length)
 {
+	XDBG("Parse frame extended payload length");
 	switch (frame->payload_length)
 	{
 	case PAYLOAD_EXTENDED:
-		frame->payload_offset += PAYLOAD_EXTENDED_SIZE;
-		assert(length > frame->payload_offset); /* avoid memory corruption */
 		frame->payload_length_extended = HeaderField_value(WS_HDR_PAYLOAD_LENGTH_EXT, raw);
 		break;
 	case PAYLOAD_EXTENDED_CONTINUED:
-		frame->payload_offset += PAYLOAD_EXTENDED_CONTINUED_SIZE;
-		assert(length > frame->payload_offset); /* avoid memory corruption */
 		frame->payload_length_extended = HeaderField_value(WS_HDR_PAYLOAD_LENGTH_EXT_CONTINUED, raw);
 		break;
 	default:
@@ -80,6 +77,7 @@ WebsocketsFrame_parse_payload_length_extended(WebsocketsFrame* frame, char* raw,
 uint16_t
 WebsocketsFrame_response_status(WebsocketsFrame* frame)
 {
+	XDBG("Parse frame status");
 	uint16_t response_status;
 
 	if (frame->payload_length == 0)
@@ -135,7 +133,7 @@ WebsocketsFrame_response_status(WebsocketsFrame* frame)
 StringBuffer*
 WebsocketsFrame_create_echo(WebsocketsFrame* frame)
 {
-	XDBG("Send echo frame");
+	XDBG("Create echo frame");
 	switch (frame->opcode)
 	{
 	case WS_FRAME_CONTINUATION:
@@ -154,6 +152,7 @@ WebsocketsFrame_create_echo(WebsocketsFrame* frame)
 void
 WebsocketsFrame_parse_header(WebsocketsFrame* frame, char* raw, size_t length)
 {
+	XDBG("Parse frame header");
 	frame->payload_length = HeaderField_byte_value(WS_HDR_PAYLOAD_LENGTH, raw);
 	frame->opcode = HeaderField_byte_value(WS_HDR_OPCODE, raw);
 	frame->masked = HeaderField_byte_value(WS_HDR_MASKED, raw);
@@ -172,6 +171,7 @@ WebsocketsFrame_parse_header(WebsocketsFrame* frame, char* raw, size_t length)
 void
 WebsocketsFrame_parse(WebsocketsFrame* frame, uint8_t* raw, size_t length)
 {
+	XDBG("Parse frame");
 	/* frame is complete so we can set the data pointers */
 	frame->raw = raw;
 
@@ -189,6 +189,7 @@ WebsocketsFrame_parse(WebsocketsFrame* frame, uint8_t* raw, size_t length)
 StringBuffer*
 WebsocketsFrame_create(uint8_t opcode, const char* payload, uint64_t nchars)
 {
+	XDBG("Creating frame");
 	uint8_t header_bits = (uint8_t)WS_HDR_FIN.bitmask | opcode;
 	StringBuffer* buf = WebsocketsFrame_create_buffer(header_bits, nchars);
 
@@ -208,6 +209,7 @@ WebsocketsFrame_create(uint8_t opcode, const char* payload, uint64_t nchars)
 StringBuffer*
 WebsocketsFrame_create_error(WebsocketsStatusCode status_code, const char* message)
 {
+	XDBG("Creating error frame");
 	size_t nchars = WS_STATUS_CODE_SIZE + strlen(message);
 
 	assert(nchars <= WS_CONTROL_MESSAGE_SIZE_MAX); /* application error */
@@ -302,7 +304,6 @@ WebsocketsFrame_write_header(StringBuffer* buf, uint8_t header_bits, uint64_t nc
 	}
 
 	XFDBG("Creating response with: %llu chars, payload length:%d", nchars, payload_length);
-	/* TODO debug response */
 
 	header[1] = payload_length;
 	if (masked)

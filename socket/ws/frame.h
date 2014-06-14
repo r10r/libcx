@@ -17,8 +17,8 @@
 
 #define WS_MASKING_KEY_LENGTH 4
 
-#define WS_CONTROL_MESSAGE_PAYLOAD_SIZE_MAX PAYLOAD_MAX
-#define WS_CONTROL_MESSAGE_SIZE_MAX (WS_HEADER_SIZE + WS_CONTROL_MESSAGE_PAYLOAD_SIZE_MAX + WS_MASKING_KEY_LENGTH)
+#define WS_CONTROL_MESSAGE_PAYLOAD_SIZE_MAX PAYLOAD_MAX                                                                 /* 125 */
+#define WS_CONTROL_MESSAGE_SIZE_MAX (WS_HEADER_SIZE + WS_CONTROL_MESSAGE_PAYLOAD_SIZE_MAX + WS_MASKING_KEY_LENGTH)      /* 131 */
 
 /* error messages are control messages */
 #define WS_STATUS_CODE_SIZE 2   /* 16 bit error code */
@@ -53,7 +53,7 @@ WebsocketsFrame_write(uint8_t header_bits, const char* payload, uint64_t nchars,
  * @return number of additional bytes (>= 0) or number of missing bytes (< 0)
  */
 #define WebsocketsFrame_buffer_level(ws) \
-	(int64_t)(StringBuffer_used((ws)->in) - (ws)->frame.length)
+	((int64_t)StringBuffer_used((ws)->in) - (int64_t)(ws)->frame.length)
 
 StringBuffer*
 WebsocketsFrame_create(uint8_t header_bits, const char* payload, uint64_t nchars);
