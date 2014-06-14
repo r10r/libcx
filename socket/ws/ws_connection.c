@@ -57,15 +57,14 @@ ws_send(Connection* conn, StringBuffer* buf, F_SendFinished* f_finished)
 	Websockets* ws = (Websockets*)conn->data;
 	size_t nused = StringBuffer_used(buf);
 
-	if (nused > 2)
-	{
+	if (nused < WS_FRAME_SIZE_MIN)
+		CXFERR(conn, "Invalid frame size %zu", nused);
+	else {
 		CXFDBG(conn, "Send frame [%p]", buf);
 		SendUnit* unit = SendUnit_new(buf, f_finished);
 		List_push(ws->out, unit);
 		Connection_start_write(conn);
 	}
-	else
-		CXFERR(conn, "Invalid frame size %zu", nused);
 }
 
 void

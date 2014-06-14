@@ -17,6 +17,8 @@
 
 #define WS_MASKING_KEY_LENGTH 4
 
+#define WS_FRAME_SIZE_MIN WS_HEADER_SIZE
+
 #define WS_CONTROL_MESSAGE_PAYLOAD_SIZE_MAX PAYLOAD_MAX                                                                 /* 125 */
 #define WS_CONTROL_MESSAGE_SIZE_MAX (WS_HEADER_SIZE + WS_CONTROL_MESSAGE_PAYLOAD_SIZE_MAX + WS_MASKING_KEY_LENGTH)      /* 131 */
 
