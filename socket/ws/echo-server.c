@@ -58,7 +58,7 @@ ws_connection_read(Connection* conn)
 		Connection_stop_read(conn); /* stop connection watcher until handshake was send */
 
 		/* if handshake can't be read close connection */
-		if (! Websockets_process_handshake(conn, ws))
+		if (!Websockets_process_handshake(conn, ws))
 			ws_close_connection(conn);
 	}
 	else if (ws->state == WS_STATE_CLOSE || ws->state == WS_STATE_ERROR || ws->state == WS_STATE_ERROR_HANDSHAKE_FAILED)
@@ -109,7 +109,7 @@ static void
 ws_connection_write(Connection* conn)
 {
 	Websockets* ws = (Websockets*)conn->data;
-	SendUnit* unit = (SendUnit*)List_get(ws->out, 0);
+	SendBuffer* unit = (SendBuffer*)List_get(ws->out, 0);
 
 	if (!unit)
 	{

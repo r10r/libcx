@@ -24,22 +24,6 @@ Websockets_process_frame(Connection* connection, Websockets* ws);
 bool
 Websockets_process_handshake(Connection* con, Websockets* ws);
 
-typedef struct ws_send_unit_t SendUnit;
-typedef void F_SendFinished (Connection* conn, SendUnit* unit);
-
-struct ws_send_unit_t
-{
-	StringBuffer* buffer;
-	F_SendFinished* f_send_finished;
-	size_t ntransmitted;
-};
-
-SendUnit*
-SendUnit_new(StringBuffer* buffer, F_SendFinished* f_finished);
-
-void
-SendUnit_free(SendUnit* unit);
-
 bool
 Websockets_can_parse(Connection* conn, Websockets* ws);
 

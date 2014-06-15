@@ -54,8 +54,6 @@ WebsocketsHandshake_free(WebsocketsHandshake* handshake)
 
 		cx_free(handshake);
 	}
-
-
 }
 
 /* return 1 if message was parsed successfully, -1 on error */

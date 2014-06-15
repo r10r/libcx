@@ -6,9 +6,9 @@ static void
 WebsocketsFrame_process_control_frame(Connection* conn, Websockets* ws);
 
 static void
-send_unit_node_free(void *data)
+send_buffer_node_free(void* data)
 {
-	SendUnit_free((SendUnit*)data);
+	SendBuffer_free((SendBuffer*)data);
 }
 
 Websockets*
@@ -17,7 +17,7 @@ Websockets_new()
 	Websockets* ws = cx_alloc(sizeof(Websockets));
 
 	ws->out = List_new();
-	ws->out->f_node_data_free = send_unit_node_free;
+	ws->out->f_node_data_free = send_buffer_node_free;
 	ws->state = WS_STATE_NEW;
 	return ws;
 }
@@ -32,12 +32,12 @@ Websockets_free(Websockets* ws)
 }
 
 static void
-handshake_send_finished(Connection* conn, SendUnit* unit)
+handshake_send_finished(Connection* conn, SendBuffer* unit)
 {
 	CXFDBG(conn, "Handshake was send %p", unit->buffer);
 
 	/* remove send unit */
-	SendUnit_free(unit);
+	SendBuffer_free(unit);
 
 	/* accept more data */
 	Websockets* ws = (Websockets*)conn->data;
@@ -48,29 +48,29 @@ handshake_send_finished(Connection* conn, SendUnit* unit)
 }
 
 static void
-frame_send_finished(Connection* conn, SendUnit* unit)
+frame_send_finished(Connection* conn, SendBuffer* unit)
 {
 	CXFDBG(conn, "Frame was send %p", unit->buffer);
 	ev_set_priority(&conn->send_data_watcher, 0);
-	SendUnit_free(unit);
+	SendBuffer_free(unit);
 }
 
 static void
-frame_send_close(Connection* conn, SendUnit *unit)
+frame_send_close(Connection* conn, SendBuffer* unit)
 {
 	CXFDBG(conn, "Frame was send %p", unit->buffer);
 
-	SendUnit_free(unit);
+	SendBuffer_free(unit);
 
 	ws_close_connection(conn);
 }
 
 static void
-error_send_finished(Connection* conn, SendUnit* unit)
+error_send_finished(Connection* conn, SendBuffer* unit)
 {
 	CXFDBG(conn, "Error was send. Closing connection now %p", unit->buffer);
 
-	SendUnit_free(unit);
+	SendBuffer_free(unit);
 	ws_close_connection(conn);
 }
 
@@ -82,9 +82,10 @@ ws_send(Connection* conn, StringBuffer* buf, F_SendFinished* f_finished)
 
 	if (nused < WS_FRAME_SIZE_MIN)
 		CXFERR(conn, "Invalid frame size %zu", nused);
-	else {
+	else
+	{
 		CXFDBG(conn, "Send frame [%p]", buf);
-		SendUnit* unit = SendUnit_new(buf, f_finished);
+		SendBuffer* unit = SendBuffer_new(buf, f_finished);
 		List_push(ws->out, unit);
 		Connection_start_write(conn);
 	}
@@ -102,7 +103,8 @@ ws_send_error(Connection* conn, Websockets* ws, WebsocketsStatusCode status_code
 void
 ws_send_frame(Connection* conn, uint8_t opcode, const char* payload, size_t nchars, F_SendFinished* f_finished)
 {
-	StringBuffer *out = WebsocketsFrame_create(opcode, payload, nchars);
+	StringBuffer* out = WebsocketsFrame_create(opcode, payload, nchars);
+
 	ws_send(conn, out, f_finished);
 }
 
@@ -179,6 +181,7 @@ void
 Websockets_process_frame(Connection* conn, Websockets* ws)
 {
 	WebsocketsFrame* frame = &ws->frame;
+
 	CXFDBG(conn, "Process frame opcode 0x%x", frame->opcode);
 
 	WebsocketsFrame_parse(frame, (uint8_t*)StringBuffer_value(ws->in), StringBuffer_used(ws->in));
@@ -192,14 +195,14 @@ Websockets_process_frame(Connection* conn, Websockets* ws)
 			WebsocketsFrame_unmask_payload_data(frame);
 			StringBuffer_ncat(ws->fragments_buffer, (char*)ws->frame.payload_raw, ws->frame.payload_length_extended);
 			if (ws->frame.fin)
-				{
-					CXFDBG(conn, "Finishing continuation data in buffer[%p]", (void*)ws->fragments_buffer);
-					StringBuffer *frag_frame = WebsocketsFrame_create(ws->fragments_opcode,
-					StringBuffer_value(ws->fragments_buffer), StringBuffer_used(ws->fragments_buffer));
-					ws_send(conn, frag_frame, frame_send_finished);
-					StringBuffer_free(ws->fragments_buffer);
-					ws->fragments_buffer = NULL;
-				}
+			{
+				CXFDBG(conn, "Finishing continuation data in buffer[%p]", (void*)ws->fragments_buffer);
+				StringBuffer* frag_frame = WebsocketsFrame_create(ws->fragments_opcode,
+										  StringBuffer_value(ws->fragments_buffer), StringBuffer_used(ws->fragments_buffer));
+				ws_send(conn, frag_frame, frame_send_finished);
+				StringBuffer_free(ws->fragments_buffer);
+				ws->fragments_buffer = NULL;
+			}
 			else
 				CXFDBG(conn, "Appending continuation data to buffer[%p]", (void*)ws->fragments_buffer);
 		}
@@ -220,10 +223,10 @@ Websockets_process_frame(Connection* conn, Websockets* ws)
 		else
 		{
 //				ws->fragments = StringBuffer_new(frame->length); /* TODO leave room for next frames */
-				ws->fragments_buffer = StringBuffer_new(WS_BUFFER_SIZE); /* TODO leave room for next frames */
-				CXFDBG(conn, "Starting continuation data [%p]", (void*)ws->fragments_buffer);
-				StringBuffer_ncat(ws->fragments_buffer, (char*)ws->frame.payload_raw, ws->frame.payload_length_extended);
-				ws->fragments_opcode = ws->frame.opcode;
+			ws->fragments_buffer = StringBuffer_new(WS_BUFFER_SIZE);         /* TODO leave room for next frames */
+			CXFDBG(conn, "Starting continuation data [%p]", (void*)ws->fragments_buffer);
+			StringBuffer_ncat(ws->fragments_buffer, (char*)ws->frame.payload_raw, ws->frame.payload_length_extended);
+			ws->fragments_opcode = ws->frame.opcode;
 		}
 		ws->state = WS_STATE_ESTABLISHED;
 		break;
@@ -247,6 +250,7 @@ WebsocketsFrame_process_control_frame(Connection* conn, Websockets* ws)
 	   and MUST NOT be fragmented.
 	 */
 	WebsocketsFrame* frame = &ws->frame;
+
 	CXFDBG(conn, "Process control frame 0x%x", frame->opcode);
 
 	if (frame->length > WS_CONTROL_MESSAGE_SIZE_MAX)
@@ -284,21 +288,4 @@ WebsocketsFrame_process_control_frame(Connection* conn, Websockets* ws)
 			break;
 		}
 	}
-}
-
-SendUnit*
-SendUnit_new(StringBuffer* buffer, F_SendFinished* f_finished)
-{
-	SendUnit* unit = cx_alloc(sizeof(SendUnit));
-
-	unit->buffer = buffer;
-	unit->f_send_finished = f_finished;
-	return unit;
-}
-
-void
-SendUnit_free(SendUnit* unit)
-{
-	StringBuffer_free(unit->buffer);
-	cx_free(unit);
 }

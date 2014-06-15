@@ -19,7 +19,7 @@
 #define FRAME_HEX_NPRINT 16     /* number of bytes to print for debugging */
 
 //#define WS_BUFFER_SIZE WS_CONTROL_MESSAGE_SIZE_MAX
-#define WS_BUFFER_SIZE 1024*1024*4 /* 4miB */
+#define WS_BUFFER_SIZE 1024 * 1024 * 4 /* 4miB */
 
 #define WS_HANDSHAKE_BUFFER_SIZE 512
 
