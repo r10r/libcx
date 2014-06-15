@@ -45,12 +45,17 @@ void
 WebsocketsHandshake_free(WebsocketsHandshake* handshake)
 {
 	if (handshake)
+	{
 		if (handshake->error_message)
 			StringBuffer_free(handshake->error_message);
-	if (handshake->message)
-		Message_free(handshake->message);
 
-	cx_free(handshake);
+		if (handshake->message)
+			Message_free(handshake->message);
+
+		cx_free(handshake);
+	}
+
+
 }
 
 /* return 1 if message was parsed successfully, -1 on error */

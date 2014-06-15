@@ -21,7 +21,8 @@ static const char* const NOT_FOUND =
 
 #define PARSE_ERROR(handshake, format, ...) \
 	handshake->error = 1; \
-	handshake->error_message = StringBuffer_from_printf(128, format, __VA_ARGS__)
+	handshake->error_message = StringBuffer_from_printf(128, format, __VA_ARGS__); \
+	return
 
 #define CHECK_PROTOCOL_VALUE(handshake, index, val, ignorecase) \
 	if (!Message_protocol_value_equals(message, index, val, ignorecase)) \

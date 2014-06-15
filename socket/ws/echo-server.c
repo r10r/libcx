@@ -56,7 +56,10 @@ ws_connection_read(Connection* conn)
 		CXFDBG(conn, "Created input buffer[%p] size %zu", ws->in, StringBuffer_length(ws->in));
 		StringBuffer_fdload(ws->in, conn->fd, WS_HANDSHAKE_BUFFER_SIZE);
 		Connection_stop_read(conn); /* stop connection watcher until handshake was send */
-		Websockets_process_handshake(conn, ws);
+
+		/* if handshake can't be read close connection */
+		if (! Websockets_process_handshake(conn, ws))
+			ws_close_connection(conn);
 	}
 	else if (ws->state == WS_STATE_CLOSE || ws->state == WS_STATE_ERROR || ws->state == WS_STATE_ERROR_HANDSHAKE_FAILED)
 	{
