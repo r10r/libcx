@@ -26,6 +26,7 @@ void
 Websockets_free(Websockets* ws)
 {
 	StringBuffer_free(ws->in);
+	StringBuffer_free(ws->fragments_buffer);
 	List_free(ws->out);
 	cx_free(ws);
 }
@@ -185,11 +186,45 @@ Websockets_process_frame(Connection* conn, Websockets* ws)
 	switch (frame->opcode)
 	{
 	case WS_FRAME_CONTINUATION:
+		/* check whether the previous frame has the fin bit not set */
+		if (ws->fragments_buffer)
+		{
+			WebsocketsFrame_unmask_payload_data(frame);
+			StringBuffer_ncat(ws->fragments_buffer, (char*)ws->frame.payload_raw, ws->frame.payload_length_extended);
+			if (ws->frame.fin)
+				{
+					CXFDBG(conn, "Finishing continuation data in buffer[%p]", (void*)ws->fragments_buffer);
+					StringBuffer *frag_frame = WebsocketsFrame_create(ws->fragments_opcode,
+					StringBuffer_value(ws->fragments_buffer), StringBuffer_used(ws->fragments_buffer));
+					ws_send(conn, frag_frame, frame_send_finished);
+					StringBuffer_free(ws->fragments_buffer);
+					ws->fragments_buffer = NULL;
+				}
+			else
+				CXFDBG(conn, "Appending continuation data to buffer[%p]", (void*)ws->fragments_buffer);
+		}
+		else
+			ws_send_error(conn, ws, WS_CODE_ERROR_PROTOCOL, "Nothing to continue");
 		break;
 	case WS_FRAME_TEXT:
 	case WS_FRAME_BINARY:
+
 		WebsocketsFrame_unmask_payload_data(frame);
-		ws_send(conn, WebsocketsFrame_create_echo(frame), frame_send_finished);
+		if (frame->fin)
+		{
+			if (ws->fragments_buffer)
+				ws_send_error(conn, ws, WS_CODE_ERROR_PROTOCOL, "Fragmented frame not finished");
+			else
+				ws_send(conn, WebsocketsFrame_create_echo(frame), frame_send_finished);
+		}
+		else
+		{
+//				ws->fragments = StringBuffer_new(frame->length); /* TODO leave room for next frames */
+				ws->fragments_buffer = StringBuffer_new(WS_BUFFER_SIZE); /* TODO leave room for next frames */
+				CXFDBG(conn, "Starting continuation data [%p]", (void*)ws->fragments_buffer);
+				StringBuffer_ncat(ws->fragments_buffer, (char*)ws->frame.payload_raw, ws->frame.payload_length_extended);
+				ws->fragments_opcode = ws->frame.opcode;
+		}
 		ws->state = WS_STATE_ESTABLISHED;
 		break;
 	case WS_FRAME_CLOSE:

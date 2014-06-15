@@ -3,7 +3,7 @@
 
 WSTEST_JSON="reports/libcx/index.json"
 TESTNUM=0
-SERVER_PID=$1
+SERVER_PID=`pidof echo-server`
 OUT_DIR=data
 
 run_wstest()

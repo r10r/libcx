@@ -18,7 +18,8 @@
 #define WS_ERR 0
 #define FRAME_HEX_NPRINT 16     /* number of bytes to print for debugging */
 
-#define WS_BUFFER_SIZE WS_CONTROL_MESSAGE_SIZE_MAX
+//#define WS_BUFFER_SIZE WS_CONTROL_MESSAGE_SIZE_MAX
+#define WS_BUFFER_SIZE 1024*1024*4 /* 4miB */
 
 #define WS_HANDSHAKE_BUFFER_SIZE 512
 
@@ -125,8 +126,8 @@ typedef struct cx_websockets_state_t
 	WebsocketsStatusCode status_code;
 	StringBuffer* error_message;
 
-	WebsocketsFrame* first_fragment;
-	WebsocketsFrame* last_frament;
+	StringBuffer* fragments_buffer;
+	uint8_t fragments_opcode;
 } Websockets;
 
 typedef struct cx_websockets_handshake_t
