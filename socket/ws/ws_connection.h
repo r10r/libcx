@@ -21,7 +21,7 @@ Websockets_process(Connection* connection, Websockets* ws);
 void
 Websockets_process_frame(Connection* connection, Websockets* ws);
 
-void
+bool
 Websockets_process_handshake(Connection* con, Websockets* ws);
 
 typedef struct ws_send_unit_t SendUnit;

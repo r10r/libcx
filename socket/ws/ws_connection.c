@@ -42,6 +42,7 @@ handshake_send_finished(Connection* conn, SendUnit* unit)
 	Websockets* ws = (Websockets*)conn->data;
 	StringBuffer_clear(ws->in);
 	ws->state = WS_STATE_ESTABLISHED;
+	ev_set_priority(&conn->send_data_watcher, 0);
 	Connection_start_read(conn); /* process more data */
 }
 
@@ -49,7 +50,7 @@ static void
 frame_send_finished(Connection* conn, SendUnit* unit)
 {
 	CXFDBG(conn, "Frame was send %p", unit->buffer);
-
+	ev_set_priority(&conn->send_data_watcher, 0);
 	SendUnit_free(unit);
 }
 
@@ -69,7 +70,6 @@ error_send_finished(Connection* conn, SendUnit* unit)
 	CXFDBG(conn, "Error was send. Closing connection now %p", unit->buffer);
 
 	SendUnit_free(unit);
-
 	ws_close_connection(conn);
 }
 
@@ -94,6 +94,7 @@ ws_send_error(Connection* conn, Websockets* ws, WebsocketsStatusCode status_code
 {
 	ws->state = WS_STATE_ERROR;
 	CXFWARN(conn, "Send error frame [%d:%s]", status_code, message);
+	ev_set_priority(&conn->send_data_watcher, EV_MAXPRI);
 	ws_send(conn, WebsocketsFrame_create_error(status_code, message), error_send_finished);
 }
 
@@ -113,8 +114,8 @@ ws_close_connection(Connection* conn)
 	Connection_close(conn);
 }
 
-void
-Websockets_process_handshake(Connection* con, Websockets* ws)
+bool
+Websockets_process_handshake(Connection* conn, Websockets* ws)
 {
 	WebsocketsHandshake* handshake = WebsocketsHandshake_new();
 
@@ -122,17 +123,21 @@ Websockets_process_handshake(Connection* con, Websockets* ws)
 
 	if (handshake->error)
 	{
-		CXFDBG(con, "Handshake error: %s", StringBuffer_value(handshake->error_message));
+		CXFDBG(conn, "Handshake error: %s", StringBuffer_value(handshake->error_message));
 		/* TODO send HTTP handshake error 400 */
 		ws->state = WS_STATE_ERROR_HANDSHAKE_FAILED;
+		WebsocketsHandshake_free(handshake);
+		return false;
 	}
 	else
 	{
 		StringBuffer* handshake_buffer = WebsocketsHandshake_create_reply(handshake);
-		CXFDBG(con, "sending handshake response: \n%s", StringBuffer_value(handshake_buffer));
-		ws_send(con, handshake_buffer, handshake_send_finished);
+		WebsocketsHandshake_free(handshake);
+		CXFDBG(conn, "sending handshake response: \n%s", StringBuffer_value(handshake_buffer));
+		ev_set_priority(&conn->send_data_watcher, EV_MAXPRI);
+		ws_send(conn, handshake_buffer, handshake_send_finished);
+		return true;
 	}
-	WebsocketsHandshake_free(handshake);
 }
 
 /* true if frame length is detected and buffer was resized, false else */
@@ -211,6 +216,8 @@ WebsocketsFrame_process_control_frame(Connection* conn, Websockets* ws)
 
 	if (frame->length > WS_CONTROL_MESSAGE_SIZE_MAX)
 		ws_send_error(conn, ws, WS_CODE_ERROR_PROTOCOL, "Invalid control frame (length > 127)");
+	else if (frame->fin == 0)
+		ws_send_error(conn, ws, WS_CODE_ERROR_PROTOCOL, "Control frames must not be fragmented (FIN bit is set)");
 	else
 	{
 		switch (frame->opcode)
@@ -220,6 +227,7 @@ WebsocketsFrame_process_control_frame(Connection* conn, Websockets* ws)
 			XFDBG("Received WS_FRAME_CLOSE masked:%u", frame->masked);
 			ws->state = WS_STATE_CLOSE;
 			uint16_t response_status = WebsocketsFrame_response_status(&ws->frame);
+			ev_set_priority(&conn->send_data_watcher, EV_MAXPRI);
 			ws_send_frame(conn, WS_FRAME_CLOSE, (char*)&response_status, sizeof(response_status), frame_send_close);
 			break;
 		}
@@ -228,6 +236,7 @@ WebsocketsFrame_process_control_frame(Connection* conn, Websockets* ws)
 			XDBG("Received WS_FRAME_PING");
 			/* send PONG frame with unmasked payload data from PING frame */
 			XFDBG("ping frame: payload offset:%hhu length:%llu", frame->payload_offset, frame->payload_length_extended);
+			ev_set_priority(&conn->send_data_watcher, EV_MAXPRI);
 			ws_send_frame(conn, WS_FRAME_PONG, (char*)frame->payload_raw, frame->payload_length_extended, frame_send_finished);
 			break;
 		}
