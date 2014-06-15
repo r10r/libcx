@@ -1,5 +1,3 @@
-#include "base/test.h"
-#include "base/base.h"
 #include "socket/server_unix.h"
 #include "socket/server_tcp.h"
 #include "ws_connection.h"
@@ -8,9 +6,11 @@ static bool
 process_frame(Connection* conn, Websockets* ws)
 {
 	CXDBG(conn, "Process frame");
+#ifdef _CX_DEBUG
 	StringBuffer_print_bytes_hex(ws->in, FRAME_HEX_NPRINT, "package bytes");
+#endif
 
-	WebsocketsFrame_parse_header(&ws->frame, StringBuffer_value(ws->in), StringBuffer_used(ws->in));
+	WebsocketsFrame_parse_header(&ws->frame, StringBuffer_value(ws->in));
 	if (ws->frame.rsv1 || ws->frame.rsv2 || ws->frame.rsv3)
 		ws_send_error(conn, ws, WS_CODE_ERROR_PROTOCOL, "RSV bits must not be set without extension.");
 	else
@@ -53,7 +53,7 @@ ws_connection_read(Connection* conn)
 	{
 		/* receive handshake */
 		ws->in = StringBuffer_new(WS_HANDSHAKE_BUFFER_SIZE);
-		CXFDBG(conn, "Created input buffer[%p] size %zu", ws->in, StringBuffer_length(ws->in));
+		CXFDBG(conn, "Created input buffer[%p] size %zu", (void*)ws->in, StringBuffer_length(ws->in));
 		StringBuffer_fdload(ws->in, conn->fd, WS_HANDSHAKE_BUFFER_SIZE);
 		Connection_stop_read(conn); /* stop connection watcher until handshake was send */
 
@@ -118,7 +118,7 @@ ws_connection_write(Connection* conn)
 		return;
 	}
 
-	CXFDBG(conn, "write data [%p]", unit->buffer);
+	CXFDBG(conn, "write data [%p]", (void*)unit->buffer);
 	size_t ntransmit = StringBuffer_used(unit->buffer) - unit->ntransmitted;
 	if (ntransmit == 0)
 	{
@@ -142,7 +142,9 @@ ws_connection_write(Connection* conn)
 		}
 		else
 		{
+#ifdef _CX_DEBUG
 			StringBuffer_print_bytes_hex(unit->buffer, 16, "bytes send");
+#endif
 			CXFDBG(conn, "send %zu bytes (%zu remaining)", nwritten, ntransmit - (size_t)nwritten);
 			unit->ntransmitted += (size_t)nwritten;
 		}

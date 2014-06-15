@@ -33,16 +33,16 @@ void
 WebsocketsFrame_free(WebsocketsFrame* frame);
 
 void
-WebsocketsFrame_parse_header(WebsocketsFrame* frame, char* raw, size_t length);
+WebsocketsFrame_parse_header(WebsocketsFrame* frame, char* raw);
 
 void
-WebsocketsFrame_parse(WebsocketsFrame* frame, uint8_t* raw, size_t length);
+WebsocketsFrame_parse(WebsocketsFrame* frame, uint8_t* raw);
 
 void
 WebsocketsFrame_unmask_payload_data(WebsocketsFrame* frame);
 
 void
-WebsocketsFrame_parse_payload_length_extended(WebsocketsFrame* frame, char* raw, size_t length);
+WebsocketsFrame_parse_payload_length_extended(WebsocketsFrame* frame, char* raw);
 
 StringBuffer*
 WebsocketsFrame_write(uint8_t header_bits, const char* payload, uint64_t nchars, unsigned int masked);

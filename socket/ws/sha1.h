@@ -33,6 +33,11 @@
 #define SHA1_H_
 
 #include <stdint.h>
+#include <string.h> /* memcpy & co */
+
+#ifndef LITTLE_ENDIAN
+#define LITTLE_ENDIAN
+#endif
 
 /** \def SHA1_HASH_BITS
  * definees the size of a SHA-1 hash in bits

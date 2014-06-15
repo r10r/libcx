@@ -1,7 +1,6 @@
 #ifndef _CX_WS_CONNECTION_H
 #define _CX_WS_CONNECTION_H
 
-#include "base/debug.h"
 #include "string/string_buffer.h"
 #include "socket/connection.h"
 

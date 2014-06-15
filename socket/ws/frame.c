@@ -20,7 +20,7 @@ WebsocketsFrame_dup(WebsocketsFrame* frame)
 	memcpy(dup, frame, sizeof(WebsocketsFrame));
 	dup->data = cx_alloc(frame->length);
 	memcpy(dup->data, frame->raw, frame->length);
-	WebsocketsFrame_parse(frame, dup->data, frame->length);
+	WebsocketsFrame_parse(frame, dup->data);
 	return dup;
 }
 
@@ -56,7 +56,7 @@ WebsocketsFrame_unmask_payload_data(WebsocketsFrame* frame)
 }
 
 void
-WebsocketsFrame_parse_payload_length_extended(WebsocketsFrame* frame, char* raw, size_t length)
+WebsocketsFrame_parse_payload_length_extended(WebsocketsFrame* frame, char* raw)
 {
 	XDBG("Parse frame extended payload length");
 	switch (frame->payload_length)
@@ -150,7 +150,7 @@ WebsocketsFrame_create_echo(WebsocketsFrame* frame)
 
 /* extract header fields and calculate offset */
 void
-WebsocketsFrame_parse_header(WebsocketsFrame* frame, char* raw, size_t length)
+WebsocketsFrame_parse_header(WebsocketsFrame* frame, char* raw)
 {
 	XDBG("Parse frame header");
 	frame->payload_length = HeaderField_byte_value(WS_HDR_PAYLOAD_LENGTH, raw);
@@ -169,7 +169,7 @@ WebsocketsFrame_parse_header(WebsocketsFrame* frame, char* raw, size_t length)
 }
 
 void
-WebsocketsFrame_parse(WebsocketsFrame* frame, uint8_t* raw, size_t length)
+WebsocketsFrame_parse(WebsocketsFrame* frame, uint8_t* raw)
 {
 	XDBG("Parse frame");
 	/* frame is complete so we can set the data pointers */

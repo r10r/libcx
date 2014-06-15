@@ -27,11 +27,7 @@
  *
  */
 
-#include <string.h> /* memcpy & co */
-#include <stdint.h>
 #include "sha1.h"
-
-#define LITTLE_ENDIAN
 
 /********************************************************************************************************/
 
