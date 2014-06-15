@@ -1,0 +1,10 @@
+GET /echo HTTP/1.1
+User-Agent: AutobahnTestSuite/0.6.1-0.8.8
+Host: blaubeere:8088
+Upgrade: WebSocket
+Connection: Upgrade
+Pragma: no-cache
+Cache-Control: no-cache
+Sec-WebSocket-Key: Sg8WME9klvzw+IsoxnclMw==
+Sec-WebSocket-Version: 13
+
