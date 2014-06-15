@@ -5,12 +5,19 @@
 static void
 WebsocketsFrame_process_control_frame(Connection* conn, Websockets* ws);
 
+static void
+send_unit_node_free(void *data)
+{
+	SendUnit_free((SendUnit*)data);
+}
+
 Websockets*
 Websockets_new()
 {
 	Websockets* ws = cx_alloc(sizeof(Websockets));
 
 	ws->out = List_new();
+	ws->out->f_node_data_free = send_unit_node_free;
 	ws->state = WS_STATE_NEW;
 	return ws;
 }
@@ -29,7 +36,6 @@ handshake_send_finished(Connection* conn, SendUnit* unit)
 	CXFDBG(conn, "Handshake was send %p", unit->buffer);
 
 	/* remove send unit */
-	StringBuffer_free(unit->buffer);
 	SendUnit_free(unit);
 
 	/* accept more data */
@@ -43,7 +49,7 @@ static void
 frame_send_finished(Connection* conn, SendUnit* unit)
 {
 	CXFDBG(conn, "Frame was send %p", unit->buffer);
-	StringBuffer_free(unit->buffer);
+
 	SendUnit_free(unit);
 }
 
@@ -51,18 +57,20 @@ static void
 frame_send_close(Connection* conn, SendUnit *unit)
 {
 	CXFDBG(conn, "Frame was send %p", unit->buffer);
-	StringBuffer_free(unit->buffer);
+
 	SendUnit_free(unit);
-	Connection_close(conn);
+
+	ws_close_connection(conn);
 }
 
 static void
 error_send_finished(Connection* conn, SendUnit* unit)
 {
 	CXFDBG(conn, "Error was send. Closing connection now %p", unit->buffer);
-	StringBuffer_free(unit->buffer);
+
 	SendUnit_free(unit);
-	Connection_close(conn);
+
+	ws_close_connection(conn);
 }
 
 void
@@ -94,6 +102,15 @@ ws_send_frame(Connection* conn, uint8_t opcode, const char* payload, size_t ncha
 {
 	StringBuffer *out = WebsocketsFrame_create(opcode, payload, nchars);
 	ws_send(conn, out, f_finished);
+}
+
+void
+ws_close_connection(Connection* conn)
+{
+	Websockets* ws = (Websockets*)conn->data;
+
+	Websockets_free(ws);
+	Connection_close(conn);
 }
 
 void
@@ -238,5 +255,6 @@ SendUnit_new(StringBuffer* buffer, F_SendFinished* f_finished)
 void
 SendUnit_free(SendUnit* unit)
 {
+	StringBuffer_free(unit->buffer);
 	cx_free(unit);
 }

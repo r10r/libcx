@@ -59,4 +59,7 @@ ws_send_frame(Connection* conn, uint8_t opcode, const char* payload, size_t ncha
 bool
 WebsocketsFrame_complete(Websockets* ws);
 
+void
+ws_close_connection(Connection* conn);
+
 #endif

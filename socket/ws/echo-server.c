@@ -4,23 +4,13 @@
 #include "socket/server_tcp.h"
 #include "ws_connection.h"
 
-static void
-close_connection(Connection* conn)
-{
-	Websockets* ws = (Websockets*)conn->data;
-
-	Websockets_free(ws);
-	Connection_close(conn);
-}
-
 static bool
 process_frame(Connection* conn, Websockets* ws)
 {
 	CXDBG(conn, "Process frame");
 	StringBuffer_print_bytes_hex(ws->in, FRAME_HEX_NPRINT, "package bytes");
 
-	WebsocketsFrame_parse_header(&ws->frame, StringBuffer_value(ws->in),
-				     StringBuffer_used(ws->in));
+	WebsocketsFrame_parse_header(&ws->frame, StringBuffer_value(ws->in), StringBuffer_used(ws->in));
 	if (ws->frame.rsv1 || ws->frame.rsv2 || ws->frame.rsv3)
 		ws_send_error(conn, ws, WS_CODE_ERROR_PROTOCOL, "RSV bits must not be set without extension.");
 	else
@@ -71,7 +61,7 @@ ws_connection_read(Connection* conn)
 	else if (ws->state == WS_STATE_CLOSE || ws->state == WS_STATE_ERROR || ws->state == WS_STATE_ERROR_HANDSHAKE_FAILED)
 	{
 		/* FIXME should not happen because connection should be closed right away */
-		Connection_close(conn);
+		ws_close_connection(conn);
 	}
 	else
 	{
@@ -88,14 +78,14 @@ ws_connection_read(Connection* conn)
 			/* todo check if there is any data to send */
 			XDBG("received EOF - closing connection");
 			process_frames(conn, ws);
-			close_connection(conn);
+			ws_close_connection(conn);
 			break;
 		case STRING_BUFFER_STATUS_ERROR_TO_SMALL:
 		case STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS:
 		case STRING_BUFFER_STATUS_ERROR_INVALID_READ_SIZE:
 		{
 			CXFDBG(conn, "closing connection because of error :%d", ws->in->status);
-			close_connection(conn);
+			ws_close_connection(conn);
 			break;
 		}
 		case STRING_BUFFER_STATUS_ERROR_ERRNO:
@@ -103,7 +93,7 @@ ws_connection_read(Connection* conn)
 			if (ws->in->error_errno != EWOULDBLOCK)
 			{
 				CXERRNO(conn, "closing read connection");
-				close_connection(conn);
+				ws_close_connection(conn);
 			}
 			else
 				process_frames(conn, ws);
@@ -145,7 +135,7 @@ ws_connection_write(Connection* conn)
 			CXERRNO(conn, "Failed to write data");
 			// when writing fails shutdown connection, because buffer is not shifted any longer
 			// FIXME free unsend SendUnits
-			Connection_close(conn);
+			ws_close_connection(conn);
 		}
 		else
 		{
