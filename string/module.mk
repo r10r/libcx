@@ -3,7 +3,8 @@ L := $(LOCAL_DIR)
 
 TESTS += $(L)/test_string \
 	$(L)/test_stringbuffer \
-	$(L)/test_string_pair
+	$(L)/test_string_pair \
+	$(L)/test_util
 
 # -- executables --
 #_OBJS := 
@@ -22,3 +23,7 @@ $(L)/test_string_pair_OBJS := $(TEST_OBJS) \
 	 $(L)/test_string_pair.o \
 	 $(L)/string.o \
 	 $(L)/pair.o
+	 
+$(L)/test_util_OBJS := $(TEST_OBJS) \
+	 $(L)/test_util.o \
+	 $(L)/util.o
