@@ -18,8 +18,9 @@ WebsocketsFrame_dup(WebsocketsFrame* frame)
 	WebsocketsFrame* dup = cx_alloc(sizeof(WebsocketsFrame));
 
 	memcpy(dup, frame, sizeof(WebsocketsFrame));
-	dup->data = cx_alloc(frame->length);
-	memcpy(dup->data, frame->raw, frame->length);
+	assert(frame->length < SIZE_MAX);
+	dup->data = cx_alloc((size_t)frame->length);
+	memcpy(dup->data, frame->raw, (size_t)frame->length);
 	WebsocketsFrame_parse(frame, dup->data);
 	return dup;
 }
@@ -271,7 +272,10 @@ static inline StringBuffer*
 WebsocketsFrame_create_buffer(uint8_t header_bits, uint64_t nchars)
 {
 	unsigned int offset = WebsocketsFrame_offset(nchars, 0);
-	StringBuffer* buf = StringBuffer_new(offset + nchars);
+	uint64_t length = offset + nchars;
+
+	assert(length < SIZE_MAX);
+	StringBuffer* buf = StringBuffer_new((size_t)length);
 
 	WebsocketsFrame_write_header(buf, header_bits, nchars, 0);
 	return buf;

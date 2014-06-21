@@ -36,7 +36,8 @@ process_frames(Connection* conn, Websockets* ws)
 	while (process_frame(conn, ws))
 	{
 		CXDBG(conn, "Shifting input buffer");
-		StringBuffer_shift(ws->in, ws->frame.length);
+		assert(ws->frame.length < SIZE_MAX);
+		StringBuffer_shift(ws->in, (size_t)ws->frame.length);
 
 		if (StringBuffer_used(ws->in) < 2)
 			break;

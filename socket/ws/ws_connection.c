@@ -172,7 +172,10 @@ WebsocketsFrame_parse_length(Websockets* ws)
 			return true;
 		}
 		else
-			return StringBuffer_make_room(ws->in, 0, ws->frame.length);
+		{
+			assert(ws->frame.length < SIZE_MAX);
+			return StringBuffer_make_room(ws->in, 0, (size_t)ws->frame.length);
+		}
 	}
 }
 
@@ -198,7 +201,8 @@ Websockets_process_frame(Connection* conn, Websockets* ws)
 		if (ws->fragments_buffer)
 		{
 			WebsocketsFrame_unmask_payload_data(frame);
-			StringBuffer_ncat(ws->fragments_buffer, (char*)ws->frame.payload_raw, ws->frame.payload_length_extended);
+			assert(ws->frame.payload_length_extended < SIZE_MAX);
+			StringBuffer_ncat(ws->fragments_buffer, (char*)ws->frame.payload_raw, (size_t)ws->frame.payload_length_extended);
 			if (ws->frame.fin)
 			{
 				CXFDBG(conn, "Finishing continuation data in buffer[%p]", (void*)ws->fragments_buffer);
@@ -230,7 +234,8 @@ Websockets_process_frame(Connection* conn, Websockets* ws)
 //				ws->fragments = StringBuffer_new(frame->length); /* TODO leave room for next frames */
 			ws->fragments_buffer = StringBuffer_new(WS_BUFFER_SIZE);         /* TODO leave room for next frames */
 			CXFDBG(conn, "Starting continuation data [%p]", (void*)ws->fragments_buffer);
-			StringBuffer_ncat(ws->fragments_buffer, (char*)ws->frame.payload_raw, ws->frame.payload_length_extended);
+			assert(ws->frame.payload_length_extended < SIZE_MAX);
+			StringBuffer_ncat(ws->fragments_buffer, (char*)ws->frame.payload_raw, (size_t)ws->frame.payload_length_extended);
 			ws->fragments_opcode = ws->frame.opcode;
 		}
 		ws->state = WS_STATE_ESTABLISHED;
@@ -283,7 +288,8 @@ WebsocketsFrame_process_control_frame(Connection* conn, Websockets* ws)
 			XFDBG("ping frame: payload offset:%hhu length:%llu", frame->payload_offset, frame->payload_length_extended);
 			ev_io* watcher = &conn->send_data_watcher;
 			ev_set_priority(watcher, EV_MAXPRI);
-			ws_send_frame(conn, WS_FRAME_PONG, (char*)frame->payload_raw, frame->payload_length_extended, frame_send_finished);
+			assert(frame->payload_length_extended < SIZE_MAX);
+			ws_send_frame(conn, WS_FRAME_PONG, (char*)frame->payload_raw, (size_t)frame->payload_length_extended, frame_send_finished);
 			break;
 		}
 		case WS_FRAME_PONG:
