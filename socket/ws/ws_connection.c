@@ -23,12 +23,10 @@ Websockets_free(Websockets* ws)
 }
 
 static void
-handshake_send_finished(Connection* conn, SendBuffer* unit)
+handshake_send_finished(Connection* conn, SendBuffer* send_buffer)
 {
-	CXFDBG(conn, "Handshake was send %p", (void*)unit->buffer);
-
-	/* remove send unit */
-	SendBuffer_free(unit);
+	UNUSED(send_buffer);
+	CXFDBG(conn, "Handshake was send %p", (void*)send_buffer->buffer);
 
 	/* accept more data */
 	Websockets* ws = (Websockets*)conn->data;
@@ -40,30 +38,29 @@ handshake_send_finished(Connection* conn, SendBuffer* unit)
 }
 
 static void
-frame_send_finished(Connection* conn, SendBuffer* unit)
+frame_send_finished(Connection* conn, SendBuffer* send_buffer)
 {
-	CXFDBG(conn, "Frame was send %p", (void*)unit->buffer);
+	UNUSED(send_buffer);
+	CXFDBG(conn, "Frame was send %p", (void*)send_buffer->buffer);
 	ev_io* watcher = &conn->send_data_watcher;
 	ev_set_priority(watcher, 0);
-	SendBuffer_free(unit);
 }
 
 static void
-frame_send_close(Connection* conn, SendBuffer* unit)
+frame_send_close(Connection* conn, SendBuffer* send_buffer)
 {
-	CXFDBG(conn, "Frame was send %p", (void*)unit->buffer);
-
-	SendBuffer_free(unit);
+	UNUSED(send_buffer);
+	CXFDBG(conn, "Frame was send %p", (void*)send_buffer->buffer);
 
 	ws_close_connection(conn);
 }
 
 static void
-error_send_finished(Connection* conn, SendBuffer* unit)
+error_send_finished(Connection* conn, SendBuffer* send_buffer)
 {
-	CXFDBG(conn, "Error was send. Closing connection now %p", (void*)unit->buffer);
+	UNUSED(send_buffer);
+	CXFDBG(conn, "Error was send. Closing connection now %p", (void*)send_buffer->buffer);
 
-	SendBuffer_free(unit);
 	ws_close_connection(conn);
 }
 
