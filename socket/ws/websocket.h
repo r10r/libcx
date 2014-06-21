@@ -115,7 +115,6 @@ typedef struct cx_websockets_state_t
 	WebsocketsFrame frame; /* the current incomming frame */
 	WebsocketsState state;
 	StringBuffer* in;
-	List* out;
 
 	WebsocketsStatusCode status_code;
 	StringBuffer* error_message;

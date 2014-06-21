@@ -109,8 +109,7 @@ ws_connection_read(Connection* conn)
 static void
 ws_connection_write(Connection* conn)
 {
-	Websockets* ws = (Websockets*)conn->data;
-	SendBuffer* unit = (SendBuffer*)List_get(ws->out, 0);
+	SendBuffer* unit = (SendBuffer*)List_get(conn->send_buffers, 0);
 
 	if (!unit)
 	{
@@ -124,7 +123,7 @@ ws_connection_write(Connection* conn)
 	if (ntransmit == 0)
 	{
 		CXDBG(conn, "no more data available for writing");
-		List_shift(ws->out); /* remove from list */
+		List_shift(conn->send_buffers); /* remove from list */
 		unit->f_send_finished(conn, unit);
 	}
 	else

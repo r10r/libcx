@@ -5,19 +5,11 @@
 static void
 WebsocketsFrame_process_control_frame(Connection* conn, Websockets* ws);
 
-static void
-send_buffer_node_free(void* data)
-{
-	SendBuffer_free((SendBuffer*)data);
-}
-
 Websockets*
 Websockets_new()
 {
 	Websockets* ws = cx_alloc(sizeof(Websockets));
 
-	ws->out = List_new();
-	ws->out->f_node_data_free = send_buffer_node_free;
 	ws->state = WS_STATE_NEW;
 	return ws;
 }
@@ -27,7 +19,6 @@ Websockets_free(Websockets* ws)
 {
 	StringBuffer_free(ws->in);
 	StringBuffer_free(ws->fragments_buffer);
-	List_free(ws->out);
 	cx_free(ws);
 }
 
@@ -79,7 +70,6 @@ error_send_finished(Connection* conn, SendBuffer* unit)
 void
 ws_send(Connection* conn, StringBuffer* buf, F_SendFinished* f_finished)
 {
-	Websockets* ws = (Websockets*)conn->data;
 	size_t nused = StringBuffer_used(buf);
 
 	if (nused < WS_FRAME_SIZE_MIN)
@@ -87,9 +77,7 @@ ws_send(Connection* conn, StringBuffer* buf, F_SendFinished* f_finished)
 	else
 	{
 		CXFDBG(conn, "Send frame [%p]", (void*)buf);
-		SendBuffer* unit = SendBuffer_new(buf, f_finished);
-		List_push(ws->out, unit);
-		Connection_start_write(conn);
+		Connection_send(conn, buf, f_finished);
 	}
 }
 
