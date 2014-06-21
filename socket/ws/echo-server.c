@@ -163,10 +163,10 @@ WebsocketsConnection_new()
 	return connection;
 }
 
-static UnixWorker*
+static ConnectionWorker*
 WebsocketsWorker_new()
 {
-	UnixWorker* worker = UnixWorker_new();
+	ConnectionWorker* worker = ConnectionWorker_new();
 
 	worker->f_create_connection = WebsocketsConnection_new;
 	return worker;

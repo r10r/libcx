@@ -37,6 +37,7 @@ profile ?= debug
 CFLAGS += -I$(LIBCX_DIR)/..
 
 # TODO Check whether autoconf is of use here ?
+# TODO add profile test (with -D_CX_DEBUG_MEM)
 
 ifeq ($(profile),release)
 	CFLAGS += -O3

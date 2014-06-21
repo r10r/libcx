@@ -55,7 +55,6 @@ frame_send_finished(Connection* conn, SendBuffer* unit)
 	ev_io* watcher = &conn->send_data_watcher;
 	ev_set_priority(watcher, 0);
 	SendBuffer_free(unit);
-	ws_close_connection(conn);
 }
 
 static void

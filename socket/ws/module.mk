@@ -29,7 +29,7 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(LIBCX_DIR)/socket/socket_tcp.o \
 	$(LIBCX_DIR)/socket/connection.o \
 	$(LIBCX_DIR)/socket/worker.o \
-	$(LIBCX_DIR)/socket/worker_unix.o \
+	$(LIBCX_DIR)/socket/connection_worker.o \
 	$(LIBCX_DIR)/socket/request.o \
 	$(LIBCX_DIR)/list/list.o \
 	$(LIBCX_DIR)/string/string.o \
