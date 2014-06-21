@@ -106,58 +106,13 @@ ws_connection_read(Connection* conn)
 	}
 }
 
-static void
-ws_connection_write(Connection* conn)
-{
-	SendBuffer* unit = (SendBuffer*)List_get(conn->send_buffers, 0);
-
-	if (!unit)
-	{
-		CXDBG(conn, "no more units available for sending");
-		Connection_stop_write(conn);
-		return;
-	}
-
-	CXFDBG(conn, "write data [%p]", (void*)unit->buffer);
-	size_t ntransmit = StringBuffer_used(unit->buffer) - unit->ntransmitted;
-	if (ntransmit == 0)
-	{
-		CXDBG(conn, "no more data available for writing");
-		List_shift(conn->send_buffers); /* remove from list */
-		unit->f_send_finished(conn, unit);
-	}
-	else
-	{
-		char* start = StringBuffer_value(unit->buffer) + unit->ntransmitted;
-		ssize_t nwritten = write(conn->fd, start, ntransmit);
-
-		if (nwritten == -1)
-		{
-			// we should not receive EAGAIN here ?
-			assert(errno != EAGAIN);
-			CXERRNO(conn, "Failed to write data");
-			// when writing fails shutdown connection, because buffer is not shifted any longer
-			// FIXME free unsend SendUnits
-			ws_close_connection(conn);
-		}
-		else
-		{
-#ifdef _CX_DEBUG
-			StringBuffer_print_bytes_hex(unit->buffer, 16, "bytes send");
-#endif
-			CXFDBG(conn, "send %zu bytes (%zu remaining)", nwritten, ntransmit - (size_t)nwritten);
-			unit->ntransmitted += (size_t)nwritten;
-		}
-	}
-}
-
 static Connection*
 WebsocketsConnection_new()
 {
 	Connection* connection = Connection_new(NULL, -1);
 
 	connection->f_receive_data_handler = ws_connection_read;
-	connection->f_send_data_handler = ws_connection_write;
+	connection->f_on_write_error = ws_close_connection;
 	connection->data = Websockets_new();
 	return connection;
 }
