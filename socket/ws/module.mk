@@ -12,7 +12,6 @@ $(L)/echo-server_FLAGS := -I$(L) -lev -lpthread
 $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/base64_enc.o \
 	$(L)/sha1.o \
-	$(L)/websocket.o \
 	$(L)/handshake.o \
 	$(L)/frame.o \
 	$(L)/util.o \

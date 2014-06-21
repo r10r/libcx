@@ -77,3 +77,23 @@ WebsocketsFrame_response_status(WebsocketsFrame* frame);
 	      frame->payload_length, frame->payload_length_extended)
 
 #endif
+
+typedef enum cx_header_field_type_t
+{
+	HDR_FIELD_BOOL,         /* single bit */
+	HDR_FIELD_OCTET,        /* 2 to 8 bit */
+	HDR_FIELD_INT16,        /* 16 bit (converted with ntohs) */
+	HDR_FIELD_INT32,        /* 32 bit (converted with ntohl) */
+	HDR_FIELD_INT64         /* 64 bit (converted with ntohl) */
+} HeaderFieldType;
+
+typedef struct cx_header_field_t
+{
+	HeaderFieldType type;   /* field type */
+
+	/* TODO use a union for the bitmask instead of casting ? */
+	uint64_t bitmask;       /* bitmask to extract the value */
+	uint8_t offset;         /* offset in bytes */
+} HeaderField;
+
+#define HDR_MASK_ALL    (~((uint64_t)0))

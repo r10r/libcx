@@ -22,47 +22,6 @@ hton64(uint64_t x);
 uint64_t
 ntoh64(uint64_t x);
 
-typedef enum cx_header_field_type_t
-{
-	HDR_FIELD_BOOL,         /* single bit */
-	HDR_FIELD_OCTET,        /* 2 to 8 bit */
-	HDR_FIELD_INT16,        /* 16 bit (converted with ntohs) */
-	HDR_FIELD_INT32,        /* 32 bit (converted with ntohl) */
-	HDR_FIELD_INT64         /* 64 bit (converted with ntohl) */
-} HeaderFieldType;
-
-typedef struct cx_header_field_t
-{
-	HeaderFieldType type;   /* field type */
-
-	/* TODO use a union for the bitmask instead of casting ? */
-	uint64_t bitmask;       /* bitmask to extract the value */
-	uint8_t offset;         /* offset in bytes */
-} HeaderField;
-
-#define HDR_MASK_ALL    (~((uint64_t)0))
-
-/* TODO inline these functions or convert to macros */
-
-uint64_t
-HeaderField_value(HeaderField field, char* data);
-
-uint8_t
-HeaderField_byte_value(HeaderField field, char* data);
-
-uint16_t
-HeaderField_uint16_value(HeaderField field, char* data);
-
-uint32_t
-HeaderField_uint32_value(HeaderField field, char* data);
-
-uint64_t
-HeaderField_uint64_value(HeaderField field, char* data);
-
-uint64_t
-HeaderField_value_for(HeaderFieldType type, uint8_t offset, uint64_t bitmask, char* data);
-
-
 /* TODO move to string_buffer.h (depends on arpa/inet.h) header */
 
 #define StringBuffer_cat_htons(buf, num) \

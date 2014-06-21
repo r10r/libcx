@@ -27,16 +27,6 @@
 
 #define WS_HANDSHAKE_BUFFER_SIZE 512
 
-extern const HeaderField WS_HDR_FIN;
-extern const HeaderField WS_HDR_RSV1;
-extern const HeaderField WS_HDR_RSV2;
-extern const HeaderField WS_HDR_RSV3;
-extern const HeaderField WS_HDR_OPCODE;
-extern const HeaderField WS_HDR_MASKED;
-extern const HeaderField WS_HDR_PAYLOAD_LENGTH;
-extern const HeaderField WS_HDR_PAYLOAD_LENGTH_EXT;
-extern const HeaderField WS_HDR_PAYLOAD_LENGTH_EXT_CONTINUED;
-
 /* https://tools.ietf.org/html/rfc6455#section-5.2 */
 typedef enum cx_websockets_opcode_t
 {

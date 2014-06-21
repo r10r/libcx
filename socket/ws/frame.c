@@ -1,5 +1,29 @@
 #include "frame.h"
 
+/*
+ * Header fields with fixed offset and length.
+ *
+ * - see [Data Notations - Big Endian](https://tools.ietf.org/html/rfc1700)
+ * - see [Websockets - Base Framing Protocol](https://tools.ietf.org/html/rfc6455#section-5.2)
+ *
+ * Bit numbering must be reversed.
+ */
+static const HeaderField WS_HDR_FIN  =  { .type = HDR_FIELD_BOOL, .offset = 0, .bitmask = BIT(7) };
+static const HeaderField WS_HDR_RSV1 = { .type = HDR_FIELD_BOOL, .offset = 0, .bitmask = BIT(6) };
+static const HeaderField WS_HDR_RSV2 = { .type = HDR_FIELD_BOOL, .offset = 0, .bitmask = BIT(5) };
+static const HeaderField WS_HDR_RSV3 = { .type = HDR_FIELD_BOOL, .offset = 0, .bitmask = BIT(4) };
+static const HeaderField WS_HDR_OPCODE = { .type = HDR_FIELD_OCTET, .offset = 0, .bitmask = 0xf };
+static const HeaderField WS_HDR_MASKED = { .type = HDR_FIELD_BOOL, .offset = 1, .bitmask = BIT(7) };
+static const HeaderField WS_HDR_PAYLOAD_LENGTH = { .type = HDR_FIELD_OCTET, .offset = 1, .bitmask = 0x7f };
+static const HeaderField WS_HDR_PAYLOAD_LENGTH_EXT = { .type = HDR_FIELD_INT16, .offset = 2, .bitmask = HDR_MASK_ALL };
+static const HeaderField WS_HDR_PAYLOAD_LENGTH_EXT_CONTINUED = { .type = HDR_FIELD_INT64, .offset = 2, .bitmask = HDR_MASK_ALL };
+
+static uint64_t
+HeaderField_value(HeaderField field, char* data);
+
+static uint8_t
+HeaderField_byte_value(HeaderField field, char* data);
+
 static unsigned int
 WebsocketsFrame_offset(uint64_t nchars, unsigned int masked);
 
@@ -328,4 +352,38 @@ WebsocketsFrame_write_header(StringBuffer* buf, uint8_t header_bits, uint64_t nc
 			break;
 		}
 	}
+}
+
+static uint64_t
+HeaderField_value(HeaderField field, char* data)
+{
+	char* start = data + field.offset;
+
+	switch (field.type)
+	{
+	case HDR_FIELD_BOOL:
+		return (*((uint8_t*)start) & field.bitmask) != 0;
+	case HDR_FIELD_OCTET:
+		return *((uint8_t*)start) & field.bitmask;
+	case HDR_FIELD_INT16:
+		return ntohs(*((uint16_t*)start)) & field.bitmask;
+	case HDR_FIELD_INT32:
+		return ntohl(*((uint32_t*)start)) & field.bitmask;
+	case HDR_FIELD_INT64:
+		return ntoh64(*((uint64_t*)start)) & field.bitmask;
+	}
+#if defined(__GNUC__) && !defined(__clang__)
+
+	/* dead code makes GCC happy,
+	 * because it does not check that all cases are covered */
+	assert(0);
+	return 0;
+#endif
+}
+
+static uint8_t
+HeaderField_byte_value(HeaderField field, char* data)
+{
+	assert(field.type == HDR_FIELD_BOOL || field.type == HDR_FIELD_OCTET);
+	return (uint8_t)(HeaderField_value(field, data));
 }

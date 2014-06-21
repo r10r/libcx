@@ -200,9 +200,9 @@ Websockets_process_frame(Connection* conn, Websockets* ws)
 		if (ws->fragments_buffer)
 		{
 			WebsocketsFrame_unmask_payload_data(frame);
-			assert(ws->frame.payload_length_extended < SIZE_MAX);
-			StringBuffer_ncat(ws->fragments_buffer, (char*)ws->frame.payload_raw, (size_t)ws->frame.payload_length_extended);
-			if (ws->frame.fin)
+			assert(frame->payload_length_extended < SIZE_MAX);
+			StringBuffer_ncat(ws->fragments_buffer, (char*)frame->payload_raw, (size_t)frame->payload_length_extended);
+			if (frame->fin)
 			{
 				CXFDBG(conn, "Finishing continuation data in buffer[%p]", (void*)ws->fragments_buffer);
 				StringBuffer* frag_frame = WebsocketsFrame_create(ws->fragments_opcode,
@@ -230,12 +230,11 @@ Websockets_process_frame(Connection* conn, Websockets* ws)
 		}
 		else
 		{
-//				ws->fragments = StringBuffer_new(frame->length); /* TODO leave room for next frames */
 			ws->fragments_buffer = StringBuffer_new(WS_BUFFER_SIZE);         /* TODO leave room for next frames */
 			CXFDBG(conn, "Starting continuation data [%p]", (void*)ws->fragments_buffer);
-			assert(ws->frame.payload_length_extended < SIZE_MAX);
-			StringBuffer_ncat(ws->fragments_buffer, (char*)ws->frame.payload_raw, (size_t)ws->frame.payload_length_extended);
-			ws->fragments_opcode = ws->frame.opcode;
+			assert(frame->payload_length_extended < SIZE_MAX);
+			StringBuffer_ncat(ws->fragments_buffer, (char*)frame->payload_raw, (size_t)frame->payload_length_extended);
+			ws->fragments_opcode = frame->opcode;
 		}
 		ws->state = WS_STATE_ESTABLISHED;
 		break;
@@ -274,7 +273,7 @@ WebsocketsFrame_process_control_frame(Connection* conn, Websockets* ws)
 		{
 			XFDBG("Received WS_FRAME_CLOSE masked:%u", frame->masked);
 			ws->state = WS_STATE_CLOSE;
-			uint16_t response_status = WebsocketsFrame_response_status(&ws->frame);
+			uint16_t response_status = WebsocketsFrame_response_status(frame);
 			ev_io* watcher = &conn->send_data_watcher;
 			ev_set_priority(watcher, EV_MAXPRI);
 			ws_send_frame(conn, WS_FRAME_CLOSE, (char*)&response_status, sizeof(response_status), frame_send_close);
