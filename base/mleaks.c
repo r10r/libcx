@@ -30,7 +30,7 @@ struct cx_allocation_t
 
 #define MIN_CONVERSIONS 5
 #define MAX_CONVERSIONS 6
-#define LOG_FORMAT  "%*s %li %c %s %s %d %zu"
+#define LOG_FORMAT  "__MEMDBG %li %c %s %s %d %zu"
 #define ALLOC_TOKEN '+'
 #define FREE_TOKEN '-'
 
@@ -72,42 +72,52 @@ read_line(MemoryAllocation* allocation, FILE* stream)
 {
 	char method_token;
 
-	int result = fscanf(stream, LOG_FORMAT,
-			    &allocation->address,
-			    &method_token,
-			    allocation->file,
-			    allocation->func,
-			    &allocation->line,
-			    &allocation->size);
+	char* line_ptr = NULL;
+	size_t line_len = 0;
+	ssize_t nread = getline(&line_ptr, &line_len, stream);
 
-	if (result == 0) /* error: input available but no conversions assigned */
+	if (nread > 0)
 	{
-		XDBG("ERROR: Input available but no conversions assigned");
-		return ERROR;
-	}
+		int result = sscanf(line_ptr, LOG_FORMAT,
+				    &allocation->address,
+				    &method_token,
+				    allocation->file,
+				    allocation->func,
+				    &allocation->line,
+				    &allocation->size);
 
-	if (result == EOF)
-		return FINISHED;
-
-	if (result >= MIN_CONVERSIONS && result <= MAX_CONVERSIONS)
-	{
-		if (method_token == ALLOC_TOKEN)
-			allocation->method = ALLOC;
-		else if (method_token == FREE_TOKEN)
-			allocation->method = FREE;
-		else
+		if (result == 0) /* error: input available but no conversions assigned */
 		{
-			XFDBG("ERROR: Invalid method_token token: %c", method_token);
+			XDBG("ERROR: Input available but no conversions assigned");
 			return ERROR;
 		}
-	}
-	else
-	{
-		XFDBG("ERROR: Invalid number of conversions %d", result);
-		return ERROR;
-	}
 
-	return OK;
+		if (result == EOF)
+			return FINISHED;
+
+		if (result >= MIN_CONVERSIONS && result <= MAX_CONVERSIONS)
+		{
+			if (method_token == ALLOC_TOKEN)
+				allocation->method = ALLOC;
+			else if (method_token == FREE_TOKEN)
+				allocation->method = FREE;
+			else
+			{
+				XFDBG("ERROR: Invalid method_token token: %c", method_token);
+				return ERROR;
+			}
+		}
+		else
+		{
+			XFDBG("ERROR: Invalid number of conversions %d", result);
+			return ERROR;
+		}
+		return OK;
+	}
+	else if (nread == -1)
+		return FINISHED;
+
+	return ERROR;
 }
 
 static inline void
@@ -211,7 +221,9 @@ main()
 	MemoryAllocation* a = MemoryAllocation_new();
 
 	int result = 0;
-	int count = 0;
+	long long num_allocations = 0;
+	long long num_deallocations = 0;
+	long long num_total_lines = 0;
 	int exit_code = 1;
 
 //	FILE* file = fopen(argv[1], "r");
@@ -226,10 +238,12 @@ main()
 			{
 				MemoryAllocation* dup = MemoryAllocation_dup(a);
 				List_push(allocations, dup);
+				num_allocations++;
 			}
 			else if (a->method == FREE)
 			{
 				MemoryAllocation_delete_alloc(allocations, a);
+				num_deallocations++;
 			}
 		}
 		else if (result == FINISHED)
@@ -240,10 +254,13 @@ main()
 		}
 		else if (result == ERROR)
 		{
-			XFDBG("ERROR: processing line[%d]\n", count);
+			XFDBG("ERROR: processing line[%lld]", num_total_lines);
 		}
-		count++;
+		num_total_lines++;
 	}
+
+	printf("Statistics: #alloc[%lld] #free[%lld] #lines[%lld]\n",
+	       num_allocations, num_deallocations, num_total_lines);
 
 	MemoryAllocation_free(a);
 	List_free(allocations);
