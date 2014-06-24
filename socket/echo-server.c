@@ -14,11 +14,46 @@ close_connection(Connection* connection)
 	Connection_close(connection);
 }
 
+//
+//static void
+//connection_close(Connection* conn, SendBuffer* buffer)
+//{
+//	UNUSED(buffer);
+//	Connection_close(conn);
+//}
+
 static void
-connection_close(Connection* conn, SendBuffer* buffer)
+handle_error(Connection* conn)
 {
-	UNUSED(buffer);
-	Connection_close(conn);
+	CXDBG(conn, "closing connection because of error");
+
+	if (conn->handler.on_error)
+		conn->handler.on_error(conn);
+
+	// TODO allow handler to disable connection close ?
+	// FIXME make this async
+	close_connection(conn);
+}
+
+static void
+handle_request(Connection* conn)
+{
+	StringBuffer* buffer = (StringBuffer*)conn->data;
+
+	conn->data = NULL;
+
+	size_t num_bytes_received = StringBuffer_used(buffer);
+	CXFDBG(conn, "processing received data (%zu bytes)", num_bytes_received);
+
+	if (num_bytes_received > 0)
+	{
+		if (conn->handler.on_request)
+			conn->handler.on_request(conn, Request_new(buffer));
+	}
+	else
+	{
+		StringBuffer_free(buffer);
+	}
 }
 
 static void
@@ -28,9 +63,10 @@ echo_connection_read(Connection* conn)
 
 	if (!conn->data)
 		conn->data = StringBuffer_new(CONNECTION_BUFFER_LENGTH);
+
 	StringBuffer* buffer = (StringBuffer*)conn->data;
 
-	/* receive data until buffer is full */
+	/* read data until buffer is full */
 	StringBuffer_ffill(buffer, conn->fd);
 
 	CXFDBG(conn, "buffer status %d", buffer->status);
@@ -38,38 +74,66 @@ echo_connection_read(Connection* conn)
 	switch (buffer->status)
 	{
 	case STRING_BUFFER_STATUS_OK:
-		Connection_send(conn, buffer, NULL);
-		conn->data = NULL;
+		handle_request(conn);
 		break;
 	case STRING_BUFFER_STATUS_EOF:
-		/* todo check if there is any data to send */
 		XDBG("received EOF - closing connection");
 		Connection_close_read(conn);
-		Connection_send(conn, buffer, connection_close);
+		handle_request(conn); // FIXME close connection close_connection(conn);
+		close_connection(conn);
 		break;
 	case STRING_BUFFER_STATUS_ERROR_TO_SMALL:
 	case STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS:
 	case STRING_BUFFER_STATUS_ERROR_INVALID_READ_SIZE:
 	{
-		CXFDBG(conn, "closing connection because of error :%d", buffer->status);
-		close_connection(conn);
+		handle_error(conn);
 		break;
 	}
 	case STRING_BUFFER_STATUS_ERROR_ERRNO:
 	{
 		if (buffer->error_errno == EWOULDBLOCK)
 		{
-			Connection_send(conn, buffer, NULL);
-			conn->data = NULL;
+			handle_request(conn);
 		}
 		else
-		{
-			CXFDBG(conn, "closing connection because of error :%d", buffer->status);
-			close_connection(conn);
-		}
+			handle_error(conn);
 		break;
 	}
 	}
+}
+
+static void
+on_error(Connection* conn)
+{
+	UNUSED(conn);
+	CXDBG(conn, "Connection error");
+}
+
+static void
+on_request(Connection* conn, Request* request)
+{
+	UNUSED(conn);
+	XLOG("ON REQUEST");
+	StringBuffer* data = (StringBuffer*)request->data;
+	XFLOG("request >>>>\n%s\n", StringBuffer_value(data));
+	// TODO free request here (attach to response instead ?)
+	Request_free(request);
+
+	Connection_send(conn, Response_new(data, NULL));
+}
+
+static void
+on_start(Connection* conn)
+{
+	UNUSED(conn);
+	CXDBG(conn, "ON START");
+}
+
+static void
+on_close(Connection* conn)
+{
+	UNUSED(conn);
+	CXDBG(conn, "ON CLOSE");
 }
 
 static Connection*
@@ -80,6 +144,12 @@ EchoConnection_new()
 	connection->f_receive_data_handler = echo_connection_read;
 	connection->f_on_write_error = Connection_close;
 	connection->data = StringBuffer_new(CONNECTION_BUFFER_LENGTH);
+
+	connection->handler.on_error = &on_error;
+	connection->handler.on_request = &on_request;
+	connection->handler.on_start = &on_start;
+	connection->handler.on_close = &on_close;
+
 	return connection;
 }
 

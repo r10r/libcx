@@ -10,17 +10,19 @@ Request_init(Request* request)
 	int ret = gettimeofday(request->started_at, NULL);
 	XASSERT(ret == 0, "gettimeofday should return 0");
 	request->priority = 0; // currently unused
-	request->userdata = NULL;
+	request->data = NULL;
+
+	// TODO optionally generate request id (UUID) ?
+//	request->id;
 }
 
 Request*
-Request_new(const char* id)
+Request_new(void* data)
 {
 	Request* request = cx_alloc(sizeof(Request));
 
-	request->id = id;
-
 	Request_init(request);
+	request->data = data;
 	return request;
 }
 

@@ -15,7 +15,7 @@ Connection_new(Worker* worker, int fd)
 static void
 send_buffer_node_free(void* data)
 {
-	SendBuffer_free((SendBuffer*)data);
+	Response_free((Response*)data);
 }
 
 void
@@ -23,9 +23,8 @@ Connection_init(Connection* connection, Worker* worker, int fd)
 {
 	connection->worker = worker;
 	connection->fd = fd;
-	connection->send_buffers = List_new();
-	connection->send_buffers->f_node_data_free = send_buffer_node_free;
-
+	connection->response_list = List_new();
+	connection->response_list->f_node_data_free = send_buffer_node_free;
 	connection->f_send_data_handler = connection_write;
 }
 
@@ -58,17 +57,22 @@ send_data_callback(ev_loop* loop, ev_io* w, int revents)
 void
 Connection_free(Connection* conn)
 {
-	List_free(conn->send_buffers);
+	List_free(conn->response_list);
 	cx_free(conn);
 }
 
 void
 Connection_start(Connection* conn)
 {
+	CXDBG(conn, "start");
+
 	unblock(conn->fd);
 	ev_io_init(&conn->receive_data_watcher, receive_data_callback, conn->fd, EV_READ);
 	ev_io_init(&conn->send_data_watcher, send_data_callback, conn->fd, EV_WRITE);
 	ev_io_start(conn->worker->loop, &conn->receive_data_watcher);
+
+	if (conn->handler.on_start)
+		conn->handler.on_start(conn);
 }
 
 void
@@ -95,84 +99,69 @@ Connection_close_write(Connection* conn)
 }
 
 void
-Connection_close(Connection* connection)
+Connection_close(Connection* conn)
 {
-	XFDBG("Closing connection[%d]", connection->fd);
-	Connection_close_read(connection);
-	Connection_close_write(connection);
-	Connection_free(connection);
-}
+	CXDBG(conn, "close");
 
-SendBuffer*
-SendBuffer_new(StringBuffer* buffer, F_SendFinished* f_finished)
-{
-	SendBuffer* unit = cx_alloc(sizeof(SendBuffer));
+	if (conn->handler.on_close)
+		conn->handler.on_close(conn);
 
-	unit->buffer = buffer;
-	unit->f_send_finished = f_finished;
-	return unit;
-}
-
-void
-SendBuffer_free(SendBuffer* unit)
-{
-	StringBuffer_free(unit->buffer);
-	cx_free(unit);
+	Connection_close_read(conn);
+	Connection_close_write(conn);
+	close(conn->fd);
+	Connection_free(conn);
 }
 
 static void
 connection_write(Connection* conn)
 {
-	SendBuffer* send_buffer = (SendBuffer*)List_get(conn->send_buffers, 0);
+	Response* response = (Response*)List_get(conn->response_list, 0);
 
-	if (!send_buffer)
+	if (!response)
 	{
-		CXDBG(conn, "no more units available for sending");
+		CXDBG(conn, "no response available for sending");
 		Connection_stop_write(conn);
 		return;
 	}
 
-	CXFDBG(conn, "write data [%p]", (void*)send_buffer->buffer);
-	size_t ntransmit = StringBuffer_used(send_buffer->buffer) - send_buffer->ntransmitted;
-	if (ntransmit == 0)
-	{
-		CXDBG(conn, "no more data available for writing");
-		List_shift(conn->send_buffers); /* remove from list */
-		if (send_buffer->f_send_finished)
-			send_buffer->f_send_finished(conn, send_buffer);
-		SendBuffer_free(send_buffer);
-	}
-	else
-	{
-		char* start = StringBuffer_value(send_buffer->buffer) + send_buffer->ntransmitted;
-		ssize_t nwritten = write(conn->fd, start, ntransmit);
+	CXFDBG(conn, "writing response [%p]", (void*)response);
 
-		if (nwritten == -1)
+	if (response->data_available(response))
+	{
+		const char* response_data = NULL;
+		size_t response_data_len = response->data_get(response, &response_data);
+
+		if (response_data_len > 0)
 		{
-			/* we should never receive EAGAIN here */
-			assert(errno != EAGAIN);
-			CXERRNO(conn, "Failed to write data");
-			if (conn->f_on_write_error)
-				conn->f_on_write_error(conn);
+			ssize_t nwritten = write(conn->fd, response_data, response_data_len);
+			if (nwritten == -1)
+			{
+				/* we should never receive EAGAIN here */
+				assert(errno != EAGAIN);
+				CXERRNO(conn, "Failed to write response_data");
+				if (conn->f_on_write_error)
+					conn->f_on_write_error(conn);
+			}
+			else
+			{
+				CXFDBG(conn, "%zd bytes send", nwritten);
+				response->on_data_transmitted(response, (size_t)nwritten);
+			}
 		}
-		else
-		{
-#ifdef _CX_DEBUG
-			StringBuffer_print_bytes_hex(send_buffer->buffer, 16, "bytes send");
-#endif
-			CXFDBG(conn, "send %zu bytes (%zu remaining)", nwritten, ntransmit - (size_t)nwritten);
-			send_buffer->ntransmitted += (size_t)nwritten;
-		}
+	}
+
+	if (!response->data_available(response))
+	{
+		response = (Response*)List_shift(conn->response_list); /* remove from list */
+		if (response->on_finished)
+			response->on_finished(conn, response);
+		Response_free(response);
 	}
 }
 
 void
-Connection_send(Connection* conn, StringBuffer* buf, F_SendFinished* f_send_finished)
+Connection_send(Connection* conn, Response* response)
 {
-#ifdef _CX_DEBUG
-	StringBuffer_print_bytes_hex(buf, 16, "send buffer");
-#endif
-	SendBuffer* unit = SendBuffer_new(buf, f_send_finished);
-	List_push(conn->send_buffers, unit);
+	List_push(conn->response_list, response);
 	Connection_start_write(conn);
 }

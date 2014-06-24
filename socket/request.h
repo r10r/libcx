@@ -27,14 +27,14 @@ struct cx_request_t
 	struct timeval* finished_at;
 	int priority; /* scheduling priority */
 
-	void* userdata;
+	void* data;
 };
 
 void
 Request_init(Request* request);
 
 Request*
-Request_new(const char* id);
+Request_new(void* data);
 
 void
 Request_free_members(Request* request);

@@ -17,8 +17,21 @@
 	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK)
 
 typedef struct cx_connection_t Connection;
+
+#include "response.h"
+
 typedef void F_ConnectionDataHandler (Connection* connection);
 typedef void F_ConnectionDataCallback (ev_loop* loop, ev_io* w, int revents);
+typedef void F_ConnectionCallback (Connection* conn);
+typedef void F_RequestCallback (Connection* conn, Request* req);
+
+typedef struct cx_handler_t
+{
+	F_ConnectionCallback* on_start;
+	F_ConnectionCallback* on_close;
+	F_RequestCallback* on_request;
+	F_ConnectionCallback* on_error;
+} Handler;
 
 /* created by the connection watcher */
 struct cx_connection_t
@@ -30,33 +43,19 @@ struct cx_connection_t
 	ev_io receive_data_watcher;
 	ev_io send_data_watcher;
 
-	List* send_buffers; /* list of send buffers */
+	List* response_list; /* list of send buffers */
 
 	// set the buffer to receive the data (function ?)
 	F_ConnectionDataHandler* f_receive_data_handler;
 	F_ConnectionDataHandler* f_send_data_handler;
 	F_ConnectionDataHandler* f_on_write_error;
 
+	Handler handler;
+
 	Worker* worker;
 
 	void* data;
 };
-
-typedef struct cx_send_buffer_t SendBuffer;
-typedef void F_SendFinished (Connection* conn, SendBuffer* unit);
-
-struct cx_send_buffer_t
-{
-	StringBuffer* buffer;
-	F_SendFinished* f_send_finished;
-	size_t ntransmitted;
-};
-
-SendBuffer*
-SendBuffer_new(StringBuffer* buffer, F_SendFinished* f_finished);
-
-void
-SendBuffer_free(SendBuffer* unit);
 
 Connection*
 Connection_new(Worker* worker, int fd);
@@ -80,7 +79,7 @@ void
 Connection_close(Connection* c);
 
 void
-Connection_send(Connection* c, StringBuffer* buf, F_SendFinished* f_send_finished);
+Connection_send(Connection* c, Response* response);
 
 void
 Connection_send_blocking(Connection* c, const char* data, size_t length);
