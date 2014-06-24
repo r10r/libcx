@@ -36,7 +36,7 @@ profile ?= debug
 # TODO Check whether autoconf is of use here ?
 
 ifeq ($(profile),release)
-	CFLAGS += -Os
+	CFLAGS += -O3
 else ifeq ($(profile),debug)
 	CFLAGS += -O0 -g -fno-inline --coverage -D_CX_DEBUG -D_CX_TRACE -D_CX_DEBUG_MEM
 	ifeq ($(OS),Darwin)
@@ -52,6 +52,8 @@ else ifeq ($(profile),debug)
 			endif
 		endif
 	endif
+else ifeq ($(profile),profile)
+	CFLAGS += -O3 -D_CX_DEBUG_MEM
 endif
 
 
