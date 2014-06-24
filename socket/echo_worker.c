@@ -92,7 +92,7 @@ echo_connection_read(Connection* conn)
 }
 
 static Connection*
-EchoConnection_new(ConnectionWorker *worker)
+EchoConnection_new(ConnectionWorker* worker)
 {
 	Connection* connection = Connection_new(NULL, -1);
 
@@ -106,7 +106,7 @@ EchoConnection_new(ConnectionWorker *worker)
 }
 
 ConnectionWorker*
-EchoWorker_new(ConnectionCallbacks *connection_callbacks)
+EchoWorker_new(ConnectionCallbacks* connection_callbacks)
 {
 	ConnectionWorker* worker = ConnectionWorker_new(connection_callbacks);
 
