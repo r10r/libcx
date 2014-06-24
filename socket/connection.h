@@ -31,7 +31,7 @@ typedef struct cx_handler_t
 	F_ConnectionCallback* on_close;
 	F_RequestCallback* on_request;
 	F_ConnectionCallback* on_error;
-} Handler;
+} ConnectionCallbacks;
 
 /* created by the connection watcher */
 struct cx_connection_t
@@ -50,7 +50,7 @@ struct cx_connection_t
 	F_ConnectionDataHandler* f_send_data_handler;
 	F_ConnectionDataHandler* f_on_write_error;
 
-	Handler handler;
+	ConnectionCallbacks* connection_callbacks;
 
 	Worker* worker;
 

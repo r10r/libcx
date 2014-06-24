@@ -6,22 +6,23 @@
 
 #define DATA_RECEIVE_MAX 1024
 
-typedef Connection* F_CreateConnection ();
+typedef struct cx_connection_worker_t ConnectionWorker;
+typedef Connection* F_CreateConnection (ConnectionWorker* worker);
 
 void
 connection_watcher(ev_loop* loop, ev_io* w, int revents);
 
-
-typedef struct cx_connection_worker_t
+struct cx_connection_worker_t
 {
 	Worker worker;
 	int server_fd;
 	ev_io connection_watcher;
 	F_CreateConnection* f_create_connection;
-} ConnectionWorker;
+	ConnectionCallbacks* connection_callbacks;
+};
 
 ConnectionWorker*
-ConnectionWorker_new(void);
+ConnectionWorker_new(ConnectionCallbacks* connection_callbacks);
 
 void
 ConnectionWorker_init(ConnectionWorker* worker);

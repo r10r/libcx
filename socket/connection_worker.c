@@ -8,11 +8,12 @@ ConnectionWorker_init(ConnectionWorker* worker)
 }
 
 ConnectionWorker*
-ConnectionWorker_new()
+ConnectionWorker_new(ConnectionCallbacks* connection_callbacks)
 {
 	ConnectionWorker* worker = cx_alloc(sizeof(ConnectionWorker));
 
 	ConnectionWorker_init(worker);
+	worker->connection_callbacks = connection_callbacks;
 	return worker;
 }
 
@@ -50,7 +51,7 @@ connection_watcher(ev_loop* loop, ev_io* w, int revents)
 	else
 	{
 		XFDBG("Worker[%lu] - accepted connection on fd:%d", worker->id, client_fd);
-		Connection* connection = connection_worker->f_create_connection();
+		Connection* connection = connection_worker->f_create_connection(connection_worker);
 		connection->worker = worker;
 		connection->fd = client_fd;
 		Connection_start(connection);

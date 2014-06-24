@@ -2,105 +2,7 @@
 
 #include "server_unix.h"
 #include "server_tcp.h"
-
-#define CONNECTION_BUFFER_LENGTH 1024
-
-static void
-close_connection(Connection* connection)
-{
-	StringBuffer* buffer = (StringBuffer*)connection->data;
-
-	StringBuffer_free(buffer);
-	Connection_close(connection);
-}
-
-//
-//static void
-//connection_close(Connection* conn, SendBuffer* buffer)
-//{
-//	UNUSED(buffer);
-//	Connection_close(conn);
-//}
-
-static void
-handle_error(Connection* conn)
-{
-	CXDBG(conn, "closing connection because of error");
-
-	if (conn->handler.on_error)
-		conn->handler.on_error(conn);
-
-	// TODO allow handler to disable connection close ?
-	// FIXME make this async
-	close_connection(conn);
-}
-
-static void
-handle_request(Connection* conn)
-{
-	StringBuffer* buffer = (StringBuffer*)conn->data;
-
-	conn->data = NULL;
-
-	size_t num_bytes_received = StringBuffer_used(buffer);
-	CXFDBG(conn, "processing received data (%zu bytes)", num_bytes_received);
-
-	if (num_bytes_received > 0)
-	{
-		if (conn->handler.on_request)
-			conn->handler.on_request(conn, Request_new(buffer));
-	}
-	else
-	{
-		StringBuffer_free(buffer);
-	}
-}
-
-static void
-echo_connection_read(Connection* conn)
-{
-	CXDBG(conn, "read data");
-
-	if (!conn->data)
-		conn->data = StringBuffer_new(CONNECTION_BUFFER_LENGTH);
-
-	StringBuffer* buffer = (StringBuffer*)conn->data;
-
-	/* read data until buffer is full */
-	StringBuffer_ffill(buffer, conn->fd);
-
-	CXFDBG(conn, "buffer status %d", buffer->status);
-
-	switch (buffer->status)
-	{
-	case STRING_BUFFER_STATUS_OK:
-		handle_request(conn);
-		break;
-	case STRING_BUFFER_STATUS_EOF:
-		XDBG("received EOF - closing connection");
-		Connection_close_read(conn);
-		handle_request(conn); // FIXME close connection close_connection(conn);
-		close_connection(conn);
-		break;
-	case STRING_BUFFER_STATUS_ERROR_TO_SMALL:
-	case STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS:
-	case STRING_BUFFER_STATUS_ERROR_INVALID_READ_SIZE:
-	{
-		handle_error(conn);
-		break;
-	}
-	case STRING_BUFFER_STATUS_ERROR_ERRNO:
-	{
-		if (buffer->error_errno == EWOULDBLOCK)
-		{
-			handle_request(conn);
-		}
-		else
-			handle_error(conn);
-		break;
-	}
-	}
-}
+#include "echo_worker.h"
 
 static void
 on_error(Connection* conn)
@@ -114,6 +16,9 @@ on_request(Connection* conn, Request* request)
 {
 	UNUSED(conn);
 	XLOG("ON REQUEST");
+
+	// TODO API for data retrieval request->get_data ?
+
 	StringBuffer* data = (StringBuffer*)request->data;
 	XFLOG("request >>>>\n%s\n", StringBuffer_value(data));
 	// TODO free request here (attach to response instead ?)
@@ -136,31 +41,12 @@ on_close(Connection* conn)
 	CXDBG(conn, "ON CLOSE");
 }
 
-static Connection*
-EchoConnection_new()
-{
-	Connection* connection = Connection_new(NULL, -1);
-
-	connection->f_receive_data_handler = echo_connection_read;
-	connection->f_on_write_error = Connection_close;
-	connection->data = StringBuffer_new(CONNECTION_BUFFER_LENGTH);
-
-	connection->handler.on_error = &on_error;
-	connection->handler.on_request = &on_request;
-	connection->handler.on_start = &on_start;
-	connection->handler.on_close = &on_close;
-
-	return connection;
-}
-
-static ConnectionWorker*
-EchoWorker_new()
-{
-	ConnectionWorker* worker = ConnectionWorker_new();
-
-	worker->f_create_connection = EchoConnection_new;
-	return worker;
-}
+static ConnectionCallbacks echo_handler = {
+	.on_close	= &on_close,
+	.on_error	= &on_error,
+	.on_request	= &on_request,
+	.on_start	= &on_start
+};
 
 static void
 print_usage(const char* message) __attribute__((noreturn));
@@ -192,7 +78,7 @@ main(int argc, char** argv)
 
 	int i;
 	for (i = 0; i < worker_count; i++)
-		List_push(server->workers, EchoWorker_new());
+		List_push(server->workers, EchoWorker_new(&echo_handler));
 
 	Server_start(server);         // blocks
 }

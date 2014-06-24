@@ -71,8 +71,8 @@ Connection_start(Connection* conn)
 	ev_io_init(&conn->send_data_watcher, send_data_callback, conn->fd, EV_WRITE);
 	ev_io_start(conn->worker->loop, &conn->receive_data_watcher);
 
-	if (conn->handler.on_start)
-		conn->handler.on_start(conn);
+	if (conn->connection_callbacks->on_start)
+		conn->connection_callbacks->on_start(conn);
 }
 
 void
@@ -103,8 +103,8 @@ Connection_close(Connection* conn)
 {
 	CXDBG(conn, "close");
 
-	if (conn->handler.on_close)
-		conn->handler.on_close(conn);
+	if (conn->connection_callbacks->on_close)
+		conn->connection_callbacks->on_close(conn);
 
 	Connection_close_read(conn);
 	Connection_close_write(conn);

@@ -38,6 +38,7 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/connection_worker.o \
 	$(L)/request.o \
 	$(L)/response.o \
+	$(L)/echo_worker.o \
 	$(LIBCX_DIR)/list/list.o \
 	$(LIBCX_DIR)/string/string.o \
 	$(LIBCX_DIR)/string/pair.o
