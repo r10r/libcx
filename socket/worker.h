@@ -3,7 +3,6 @@
 
 #include <pthread.h>
 
-#include "../base/ev.h"
 #include "../list/list.h"
 #include "server.h"
 
@@ -23,7 +22,6 @@ struct cx_worker_t
 	/* statistics ? */
 	unsigned long id;               /* the worker id */
 	pthread_t* thread;              /* the worker thread */
-	ev_loop* loop;                  /* the workers event loop */
 	Server* server;
 
 	F_WorkerHandler* f_handler;

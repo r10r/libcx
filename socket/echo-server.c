@@ -4,11 +4,27 @@
 #include "server_tcp.h"
 #include "echo_connection.h"
 
+// TODO improve connection logging
+
+static void
+on_start(Connection* conn)
+{
+	UNUSED(conn);
+	XDBG("ON START");
+}
+
+static void
+on_close(Connection* conn)
+{
+	UNUSED(conn);
+	XDBG("ON CLOSE");
+}
+
 static void
 on_error(Connection* conn)
 {
 	UNUSED(conn);
-	CXDBG(conn, "Connection error");
+	XDBG("Connection error");
 }
 
 static void
@@ -16,29 +32,10 @@ on_request(Connection* conn, Request* request)
 {
 	UNUSED(conn);
 	XLOG("ON REQUEST");
-
-	// TODO API for data retrieval request->get_data ?
-
-	StringBuffer* data = (StringBuffer*)request->data;
-	XFLOG("request >>>>\n%s\n", StringBuffer_value(data));
-	// TODO free request here (attach to response instead ?)
+	StringBuffer* request_buffer = (StringBuffer*)request->data;
+	XFLOG("request >>>>\n%s\n", StringBuffer_value(request_buffer));
 	Request_free(request);
-
-	conn->send(conn, Response_new(data));
-}
-
-static void
-on_start(Connection* conn)
-{
-	UNUSED(conn);
-	CXDBG(conn, "ON START");
-}
-
-static void
-on_close(Connection* conn)
-{
-	UNUSED(conn);
-	CXDBG(conn, "ON CLOSE");
+	conn->f_send(conn, Response_new(request_buffer));
 }
 
 static ConnectionCallbacks echo_handler = {

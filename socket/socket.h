@@ -7,6 +7,10 @@
 
 #define SOCK_BACKLOG 512
 
+/* set given file descriptor as non-blocking */
+#define unblock(fd) \
+	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK)
+
 /*
  * gee all these function either define the error response
  * ore the success response

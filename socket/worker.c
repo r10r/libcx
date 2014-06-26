@@ -16,7 +16,6 @@ void
 Worker_init(Worker* worker)
 {
 	worker->thread = cx_alloc(sizeof(pthread_t));
-	worker->loop = ev_loop_new(EVBACKEND);
 	worker->f_handler = NULL;
 }
 

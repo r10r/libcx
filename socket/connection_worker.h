@@ -1,6 +1,8 @@
 #ifndef _CONNECTION_WORKER_H
 #define _CONNECTION_WORKER_H
 
+#include "../base/ev.h"
+
 #include "worker.h"
 #include "connection.h"
 
@@ -17,47 +19,20 @@ struct cx_connection_worker_t
 {
 	Worker worker;
 	int server_fd;
+	ev_loop* loop;
 	ev_io connection_watcher;
 	ConnectionCallbacks* callbacks;
 
-	F_CreateConnection* f_connection_create;        /* factory method to create a new connection */
-
-	F_ManageConnection* f_connection_start;
-	F_ManageConnection* f_connection_close;
-	F_ManageConnection* f_connection_send;
-	F_ManageConnection* f_connection_close_read;
-	F_ManageConnection* f_connection_close_write;
+	F_CreateConnection* f_connection_create;
 };
 
 ConnectionWorker*
-ConnectionWorker_new(F_CreateConnection* f_create_connection, ConnectionCallbacks* connection_callbacks);
-
-void
-ConnectionWorker_init(ConnectionWorker* worker);
+ConnectionWorker_new(F_CreateConnection* f_connection_create, ConnectionCallbacks* connection_callbacks);
 
 void
 ConnectionWorker_run(Worker* worker);
 
-void
-Connection_write_simple(Connection* conn);
-
 #define Connection_callback(conn, _cb_) \
 	if (conn->callbacks->_cb_) conn->callbacks->_cb_(conn)
-
-
-void
-ConnectionWorker_start_connection(ev_loop* loop, Connection* conn);
-
-void
-Connection_close_read(ev_loop* loop, Connection* conn);
-
-void
-Connection_close_write(ev_loop* loop, Connection* conn);
-
-void
-Connection_close(ev_loop* loop, Connection* conn);
-
-void
-Connection_send(Connection* conn, Response* response);
 
 #endif

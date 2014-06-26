@@ -1,26 +1,20 @@
 #include "connection.h"
 
-Connection*
-Connection_new(int fd)
-{
-	Connection* connection = cx_alloc(sizeof(Connection));
-
-	Connection_init(connection, fd);
-	return connection;
-}
-
 static void
 free_response(void* data)
 {
 	Response_free((Response*)data);
 }
 
-void
-Connection_init(Connection* connection, int fd)
+Connection*
+Connection_new(ConnectionCallbacks* callbacks)
 {
-	connection->fd = fd;
-	connection->response_queue = Queue_new();
-	((List*)connection->response_queue)->f_node_data_free = free_response;
+	Connection* conn = cx_alloc(sizeof(Connection));
+
+	conn->callbacks = callbacks;
+	conn->response_queue = Queue_new();
+	((List*)conn->response_queue)->f_node_data_free = free_response;
+	return conn;
 }
 
 void

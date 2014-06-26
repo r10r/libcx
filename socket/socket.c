@@ -126,7 +126,7 @@ enable_so_opt(int fd, int option)
 
 	if (result == 0)
 	{
-		XFDBG("Enabled socket option %d on socket #%d ", option, fd);
+		XFDBG("Option %d on socket #%d enabled", option, fd);
 	}
 	else
 	{

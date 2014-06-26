@@ -5,16 +5,10 @@
 #include <sys/socket.h>
 #include <fcntl.h>      /* fcntl, to make socket non-blocking */
 
-#include "../base/ev.h"
 #include "../base/base.h"
 #include "../list/queue.h"
 #include "../string/string_buffer.h"
 #include "request.h"
-
-// TODO move to socket.h
-/* set given file descriptor as non-blocking */
-#define unblock(fd) \
-	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK)
 
 typedef struct cx_connection_t Connection;
 
@@ -31,12 +25,13 @@ typedef struct cx_connection_callbacks_t ConnectionCallbacks;
 typedef void F_ConnectionCallback (Connection* conn);
 typedef void F_RequestCallback (Connection* conn, Request* req);
 typedef void F_ResponseCallback (Connection* conn, Response* req);
+typedef void F_ReceiveData (Connection* conn, int fd);
 
 /* protocol callbacks ? */
 struct cx_connection_callbacks_t
 {
 	F_ConnectionCallback* on_start;
-	F_ConnectionCallback* on_close;
+	F_ConnectionCallback* on_close;         /* free additional resource data here */
 	F_ConnectionCallback* on_error;
 
 	F_RequestCallback* on_request;
@@ -46,9 +41,6 @@ struct cx_connection_callbacks_t
 /* created by the connection watcher */
 struct cx_connection_t
 {
-	/* FIXME limited to unix socket connections ? */
-	int fd;
-
 	int error;
 	int error_errno;
 
@@ -57,27 +49,20 @@ struct cx_connection_t
 	Queue* response_queue; /* list of send buffers */
 
 	// set the buffer to receive the data (function ?)
-	F_ConnectionCallback* f_receive_data_handler;
-	F_ConnectionCallback* f_send_data_handler;
-	F_ResponseCallback* send;
+	F_ReceiveData* f_receive;
+	F_ResponseCallback* f_send;
+	F_ConnectionCallback* f_close;
+	F_ConnectionCallback* f_close_write;
+	F_ConnectionCallback* f_close_read;
 
 	ConnectionCallbacks* callbacks;
 
+	void* worker_data;
 	void* protocol_data;
-	void* service_data;
-	void* io_data;
-
-	/* watch for incomming data --> this is libev specific */
-	ev_loop* loop;
-	ev_io receive_data_watcher;
-	ev_io send_data_watcher;
 };
 
 Connection*
-Connection_new(int fd);
-
-void
-Connection_init(Connection* connection, int fd);
+Connection_new(ConnectionCallbacks* callbacks);
 
 void
 Connection_free(Connection* c);
