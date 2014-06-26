@@ -40,16 +40,8 @@ data_transmitted(Response* response, size_t transmitted)
 	((BufferedResponse*)response)->transmitted += transmitted;
 }
 
-static void
-on_error(Connection* conn, Response* response, int error)
-{
-	UNUSED(conn);
-	UNUSED(response);
-	XFERR("Error[%d] while sending response", error);
-}
-
 Response*
-Response_new(StringBuffer* buffer, F_SendFinished* f_finished)
+Response_new(StringBuffer* buffer)
 {
 	Response* response = cx_alloc(sizeof(BufferedResponse));
 
@@ -57,8 +49,6 @@ Response_new(StringBuffer* buffer, F_SendFinished* f_finished)
 
 	response->data_get = &data_get;
 	response->on_data_transmitted = &data_transmitted;
-	response->on_error = &on_error;
-	response->on_finished = f_finished;
 	response->data_available = &data_available;
 
 	return response;

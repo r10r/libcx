@@ -1,3 +1,7 @@
+## TODO 
+
+### allow multiple sockets per server
+
 ## Server
 
 1. Server connects to socket

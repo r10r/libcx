@@ -2,7 +2,7 @@
 
 #include "server_unix.h"
 #include "server_tcp.h"
-#include "echo_worker.h"
+#include "echo_connection.h"
 
 static void
 on_error(Connection* conn)
@@ -24,7 +24,7 @@ on_request(Connection* conn, Request* request)
 	// TODO free request here (attach to response instead ?)
 	Request_free(request);
 
-	Connection_send(conn, Response_new(data, NULL));
+	conn->send(conn, Response_new(data));
 }
 
 static void
@@ -78,7 +78,7 @@ main(int argc, char** argv)
 
 	int i;
 	for (i = 0; i < worker_count; i++)
-		List_push(server->workers, EchoWorker_new(&echo_handler));
+		List_push(server->workers, ConnectionWorker_new(EchoConnection_new, &echo_handler));
 
 	Server_start(server);         // blocks
 }
