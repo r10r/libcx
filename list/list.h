@@ -90,9 +90,6 @@ List_userdata_get(List* list);
 void*
 List_get(List* list, unsigned int index);
 
-#define List_first(_list) (_list)->first->data
-#define List_last(_list) (_list)->last->data
-
 Node*
 List_at(List* list, unsigned int index);
 
@@ -103,6 +100,12 @@ List_detach(List* list, unsigned int index);
 /* delete element at index */
 void
 List_delete(List* list, unsigned int index);
+
+void*
+List_last(List* list);
+
+void*
+List_first(List* list);
 
 
 #endif

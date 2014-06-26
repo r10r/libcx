@@ -248,6 +248,28 @@ List_at(List* list, unsigned int index)
 }
 
 void*
+List_first(List* list)
+{
+	Node* node = list->first;
+
+	if (node)
+		return node->data;
+	else
+		return NULL;
+}
+
+void*
+List_last(List* list)
+{
+	Node* node = list->last;
+
+	if (node)
+		return node->data;
+	else
+		return NULL;
+}
+
+void*
 List_get(List* list, unsigned int index)
 {
 	Node* node = List_at(list, index);
