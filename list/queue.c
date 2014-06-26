@@ -52,7 +52,7 @@ Queue_pop(Queue* queue)
 	if (Queue_active(queue))
 		data = List_pop((List*)queue);
 
-	pthread_mutex_unlock(queue->mutex_add_item);
+	rc = pthread_mutex_unlock(queue->mutex_add_item);
 	XFCHECK(rc == 0,
 		"pthread_mutex_unlock should exit with 0 (was %d)", rc);
 	return data;
@@ -89,7 +89,7 @@ Queue_pop_wait(Queue* queue)
 	if (Queue_active(queue))
 		data = List_pop((List*)queue);
 
-	pthread_mutex_unlock(queue->mutex_add_item);
+	rc = pthread_mutex_unlock(queue->mutex_add_item);
 	XFCHECK(rc == 0,
 		"pthread_mutex_unlock should exit with 0 (was %d)", rc);
 	return data;
@@ -141,7 +141,7 @@ Queue_pop_timedwait(Queue* queue, long wait_nanos)
 	if (Queue_active(queue))
 		data = List_pop((List*)queue);
 
-	pthread_mutex_unlock(queue->mutex_add_item);
+	rc = pthread_mutex_unlock(queue->mutex_add_item);
 	XFCHECK(rc == 0,
 		"pthread_mutex_unlock should exit with 0 (was %d)", rc);
 	return data;
@@ -156,7 +156,7 @@ Queue_add(Queue* queue, void* data)
 	int rc = 0;
 
 	// sender (task was added to queue)
-	pthread_mutex_lock(queue->mutex_add_item);
+	rc = pthread_mutex_lock(queue->mutex_add_item);
 	XFCHECK(rc == 0,
 		"pthread_mutex_lock should exit 0 (was %d)", rc);
 
