@@ -1,0 +1,141 @@
+#include "../base/test.h"
+
+#include "server_unix.h"
+#include "server_tcp.h"
+#include "echo_connection.h"
+#include "connection_worker.h"
+
+// TODO improve connection logging
+
+static pthread_t t;
+
+static void
+handle_sigterm(int sig) __attribute__((noreturn));
+
+static void
+handle_sigterm(int sig)
+{
+	UNUSED(sig);
+	printf("hello world\n");
+	signal(sig, SIG_IGN);
+	pthread_exit(NULL);
+}
+
+#include <signal.h>
+
+static void
+send_sec_cleanup(void* data)
+{
+	UNUSED(data);
+	printf("bye bye ....\n");
+}
+
+static void*
+send_sec(void* data)
+{
+	int old_state;
+
+	pthread_setcanceltype(PTHREAD_CANCEL_ENABLE, &old_state);
+	signal(SIGINT, handle_sigterm);
+
+	pthread_cleanup_push(send_sec_cleanup, NULL);
+	pthread_cleanup_pop(1);
+
+
+//	sigset_t sa_mask;
+//	sigemptyset(&sa_mask);
+//	sigaddset(&sa_mask, SIGTERM);
+//	pthread_sigmask(SIG_UNBLOCK, &sa_mask, NULL);
+
+	Connection* conn = (Connection*)data;
+	int count = 0;
+
+	while (true)
+	{
+		Response* response = Response_new(StringBuffer_from_printf(1024, "beep %d\n", count++));
+		conn->f_send(conn, response);
+		sleep(1);
+	}
+	return NULL;
+}
+
+static void
+on_start(Connection* conn)
+{
+	UNUSED(conn);
+	XDBG("ON START");
+	pthread_create(&t, NULL, send_sec, conn);
+}
+
+static void
+on_close(Connection* conn)
+{
+	UNUSED(conn);
+	XDBG("ON CLOSE");
+//	pthread_kill(t, SIGINT);
+	pthread_cancel(t);
+}
+
+static void
+on_error(Connection* conn)
+{
+	UNUSED(conn);
+	XDBG("Connection error");
+}
+
+static void
+on_request(Connection* conn, Request* request)
+{
+	UNUSED(conn);
+	XLOG("ON REQUEST");
+
+	Request_free(request);
+
+//	StringBuffer* request_buffer = (StringBuffer*)request->data;
+//	XFLOG("request >>>>\n%s\n", StringBuffer_value(request_buffer));
+
+
+//	conn->f_send(conn, Response_new(request_buffer));
+}
+
+static ConnectionCallbacks echo_handler = {
+	.on_close	= &on_close,
+	.on_error	= &on_error,
+	.on_request	= &on_request,
+	.on_start	= &on_start
+};
+
+static void
+print_usage(const char* message) __attribute__((noreturn));
+
+static void
+print_usage(const char* message)
+{
+	fprintf(stderr, "Error: %s\n", message);
+	fprintf(stderr, "Usage: $0 <unix|tcp> <worker count>\n");
+	exit(1);
+}
+
+int
+main(int argc, char** argv)
+{
+	if (argc != 3)
+		print_usage("Invalid parameter count");
+
+	Server* server = NULL;
+
+	if (strcmp(argv[1], "unix") == 0)
+		server = (Server*)UnixServer_new("/tmp/echo.sock");
+	else if (strcmp(argv[1], "tcp") == 0)
+		server = (Server*)TCPServer_new("0.0.0.0", 6666);
+	else
+		print_usage("Invalid server type");
+
+	int worker_count = atoi(argv[2]);
+
+	int i;
+	for (i = 0; i < worker_count; i++)
+		List_push(server->workers, ConnectionWorker_new(EchoConnection_new, &echo_handler));
+
+	Server_start(server);         // blocks
+}
