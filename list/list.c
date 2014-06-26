@@ -22,13 +22,33 @@ Node_free_data(void* data)
 	cx_free(data);
 }
 
+void
+List_init(List* list)
+{
+	list->f_node_data_free = Node_free_data;
+}
+
 List*
 List_new()
 {
 	List* list = cx_alloc(sizeof(List));
 
-	list->f_node_data_free = Node_free_data;
+	List_init(list);
 	return list;
+}
+
+void
+List_free_members(List* list)
+{
+// FIXME use iterator to free nodes instead ?
+	Node* next = list->first;
+
+	while (next)
+	{
+		Node* cur = next;
+		next = cur->next;
+		Node_free(cur, list->f_node_data_free);
+	}
 }
 
 void
@@ -36,14 +56,7 @@ List_free(List* list)
 {
 	if (list)
 	{
-		// FIXME use iterator to free nodes instead ?
-		Node* next = list->first;
-		while (next)
-		{
-			Node* cur = next;
-			next = cur->next;
-			Node_free(cur, list->f_node_data_free);
-		}
+		List_free_members(list);
 		cx_free(list);
 	}
 }

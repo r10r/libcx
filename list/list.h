@@ -40,8 +40,14 @@ Node_new(void);
 void
 Node_free(Node* node, F_NodeDataFree* f_free_node);
 
+void
+List_init(List* list);
+
 List*
 List_new(void);
+
+void
+List_free_members(List* list);
 
 void
 List_free(List* list);
@@ -83,6 +89,9 @@ List_userdata_get(List* list);
 
 void*
 List_get(List* list, unsigned int index);
+
+#define List_first(_list) (_list)->first->data
+#define List_last(_list) (_list)->last->data
 
 Node*
 List_at(List* list, unsigned int index);

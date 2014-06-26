@@ -10,7 +10,7 @@
 
 typedef struct cx_queue_t
 {
-	List* items;
+	List items;
 	pthread_cond_t* mutex_cond_add_item;
 	pthread_mutex_t* mutex_add_item;
 	bool _active;   // TODO hide
@@ -37,6 +37,9 @@ Queue_pop_timedwait(Queue* queue, long wait_nanos);
 /* 0 when the item was queued */
 int
 Queue_add(Queue* queue, void* data);
+
+#define Queue_push(_queue, _data) \
+	Queue_add(_queue, _data)
 
 // wake up all waiting workers so they can check whether to exit or not
 /* block insert signal all waiting workers that the queue is going to be destroyed */

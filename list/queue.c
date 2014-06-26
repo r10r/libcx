@@ -5,13 +5,13 @@ Queue_new()
 {
 	Queue* queue = cx_alloc(sizeof(Queue));
 
+	List_init(((List*)queue));
+
 	queue->mutex_add_item = cx_alloc(sizeof(pthread_mutex_t));
 	pthread_mutex_init(queue->mutex_add_item, NULL);
 
 	queue->mutex_cond_add_item = cx_alloc(sizeof(pthread_cond_t));
 	pthread_cond_init(queue->mutex_cond_add_item, NULL);
-
-	queue->items = List_new();
 
 	queue->_active = true;
 
@@ -21,7 +21,7 @@ Queue_new()
 void
 Queue_free(Queue* queue)
 {
-	List_free(queue->items);
+	List_free_members((List*)queue);
 
 	pthread_mutex_destroy(queue->mutex_add_item);
 	cx_free(queue->mutex_add_item);
@@ -50,7 +50,7 @@ Queue_pop(Queue* queue)
 	 * to check whether the queue is active.
 	 */
 	if (Queue_active(queue))
-		data = List_pop(queue->items);
+		data = List_pop((List*)queue);
 
 	pthread_mutex_unlock(queue->mutex_add_item);
 	XFCHECK(rc == 0,
@@ -73,7 +73,7 @@ Queue_pop_wait(Queue* queue)
 	XFCHECK(rc == 0,
 		"pthread_mutex_lock should exit with 0 (was %d)", rc);
 
-	while (Queue_active(queue) && queue->items->length == 0)
+	while (Queue_active(queue) && ((List*)queue)->length == 0)
 	{
 		rc = pthread_cond_wait(queue->mutex_cond_add_item, queue->mutex_add_item);
 		XFCHECK(rc == 0,
@@ -87,7 +87,7 @@ Queue_pop_wait(Queue* queue)
 	 * to check whether the queue is active.
 	 */
 	if (Queue_active(queue))
-		data = List_pop(queue->items);
+		data = List_pop((List*)queue);
 
 	pthread_mutex_unlock(queue->mutex_add_item);
 	XFCHECK(rc == 0,
@@ -106,7 +106,7 @@ Queue_pop_timedwait(Queue* queue, long wait_nanos)
 	XFCHECK(rc == 0,
 		"pthread_mutex_lock should exit with 0 (was %d)", rc);
 
-	while (Queue_active(queue) && queue->items->length == 0)
+	while (Queue_active(queue) && ((List*)queue)->length == 0)
 	{
 		struct timespec ts;
 		struct timeval tv;
@@ -139,7 +139,7 @@ Queue_pop_timedwait(Queue* queue, long wait_nanos)
 	 * to check whether the queue is active.
 	 */
 	if (Queue_active(queue))
-		data = List_pop(queue->items);
+		data = List_pop((List*)queue);
 
 	pthread_mutex_unlock(queue->mutex_add_item);
 	XFCHECK(rc == 0,
@@ -160,7 +160,7 @@ Queue_add(Queue* queue, void* data)
 	XFCHECK(rc == 0,
 		"pthread_mutex_lock should exit 0 (was %d)", rc);
 
-	List_unshift(queue->items, data);
+	List_unshift((List*)queue, data);
 	// wake up a single thread that is waiting for the condition
 	rc = pthread_cond_signal(queue->mutex_cond_add_item);
 	XFCHECK(rc == 0,
