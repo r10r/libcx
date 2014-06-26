@@ -12,9 +12,6 @@ typedef struct cx_connection_worker_t ConnectionWorker;
 typedef Connection* F_CreateConnection (ConnectionCallbacks* callbacks);
 typedef Connection* F_ManageConnection (ConnectionWorker* worker, Connection* connection);
 
-void
-connection_watcher(ev_loop* loop, ev_io* w, int revents);
-
 struct cx_connection_worker_t
 {
 	Worker worker;

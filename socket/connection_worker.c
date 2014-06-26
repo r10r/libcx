@@ -6,9 +6,13 @@ typedef struct cx_connection_worker_data_t
 	ConnectionWorker* worker;
 	Connection* connection;
 
+	ev_async start_send_data_watcher;
 	ev_io receive_data_watcher;
 	ev_io send_data_watcher;
 } ConnectionWorkerData;
+
+static void
+connection_write_cb(ConnectionWorkerData* conn);
 
 static void
 connection_close(Connection* conn);
@@ -23,7 +27,7 @@ static void
 connection_queue_response(Connection* conn, Response* response);
 
 static void
-connection_write_cb(ConnectionWorkerData* conn);
+connection_watcher(ev_loop* loop, ev_io* w, int revents);
 
 static void
 receive_data_callback(ev_loop* loop, ev_io* w, int revents)
@@ -50,6 +54,17 @@ send_data_callback(ev_loop* loop, ev_io* w, int revents)
 	connection_write_cb(data);
 }
 
+static void
+start_send_data_callback(ev_loop* loop, ev_async* w, int revents)
+{
+	UNUSED(loop);
+	UNUSED(revents);
+
+	ConnectionWorkerData* conn_data = container_of(w, ConnectionWorkerData, start_send_data_watcher);
+
+	ev_io_start(conn_data->worker->loop, &conn_data->send_data_watcher);
+}
+
 /* FIXME free !!! */
 static ConnectionWorkerData*
 ConnectionWorkerData_new(ConnectionWorker* worker, Connection* conn, int fd)
@@ -59,10 +74,12 @@ ConnectionWorkerData_new(ConnectionWorker* worker, Connection* conn, int fd)
 	data->worker = worker;
 	data->connection = conn;
 	data->fd = fd;
-	ev_io_init(&data->receive_data_watcher, receive_data_callback, fd, EV_READ);
-	ev_io_init(&data->send_data_watcher, send_data_callback, fd, EV_WRITE);
+	ev_io_init(&data->receive_data_watcher, &receive_data_callback, fd, EV_READ);
+	ev_io_init(&data->send_data_watcher, &send_data_callback, fd, EV_WRITE);
+	ev_async_init(&data->start_send_data_watcher, &start_send_data_callback);
 	unblock(fd);
 	ev_io_start(worker->loop, &data->receive_data_watcher);
+	ev_async_start(worker->loop, &data->start_send_data_watcher);
 	return data;
 }
 
@@ -103,7 +120,7 @@ ConnectionWorker_run(Worker* worker)
 }
 
 /* creates new incomming connections */
-void
+static void
 connection_watcher(ev_loop* loop, ev_io* w, int revents)
 {
 	UNUSED(loop);
@@ -184,7 +201,7 @@ connection_queue_response(Connection* conn, Response* response)
 	CXFDBG(conn_data, "send response %p", (void*)response);
 	int res = Queue_add(conn->response_queue, response);
 	assert(res == 0);
-	ev_io_start(conn_data->worker->loop, &conn_data->send_data_watcher);
+	ev_async_send(conn_data->worker->loop, &conn_data->start_send_data_watcher);
 }
 
 static void
