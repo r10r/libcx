@@ -34,7 +34,7 @@ Queue_free(Queue* queue)
 
 /* TODO test */
 void*
-Queue_pop(Queue* queue)
+Queue_get(Queue* queue)
 {
 	void* data = NULL;
 	int rc = 0;
@@ -50,7 +50,7 @@ Queue_pop(Queue* queue)
 	 * to check whether the queue is active.
 	 */
 	if (Queue_active(queue))
-		data = List_pop((List*)queue);
+		data = List_shift((List*)queue);
 
 	rc = pthread_mutex_unlock(queue->mutex_add_item);
 	XFCHECK(rc == 0,
@@ -64,7 +64,7 @@ Queue_pop(Queue* queue)
 // POP returns NULL when Queue is not active anymore ?
 // -> check for null in the calling thread
 void*
-Queue_pop_wait(Queue* queue)
+Queue_get_wait(Queue* queue)
 {
 	void* data = NULL;
 	int rc = 0;
@@ -87,7 +87,7 @@ Queue_pop_wait(Queue* queue)
 	 * to check whether the queue is active.
 	 */
 	if (Queue_active(queue))
-		data = List_pop((List*)queue);
+		data = List_shift((List*)queue);
 
 	rc = pthread_mutex_unlock(queue->mutex_add_item);
 	XFCHECK(rc == 0,
@@ -97,7 +97,7 @@ Queue_pop_wait(Queue* queue)
 
 /* TODO test */
 void*
-Queue_pop_timedwait(Queue* queue, long wait_nanos)
+Queue_get_timedwait(Queue* queue, long wait_nanos)
 {
 	void* data = NULL;
 	int rc = 0;
@@ -139,7 +139,7 @@ Queue_pop_timedwait(Queue* queue, long wait_nanos)
 	 * to check whether the queue is active.
 	 */
 	if (Queue_active(queue))
-		data = List_pop((List*)queue);
+		data = List_shift((List*)queue);
 
 	rc = pthread_mutex_unlock(queue->mutex_add_item);
 	XFCHECK(rc == 0,
@@ -160,7 +160,7 @@ Queue_add(Queue* queue, void* data)
 	XFCHECK(rc == 0,
 		"pthread_mutex_lock should exit 0 (was %d)", rc);
 
-	List_unshift((List*)queue, data);
+	List_push((List*)queue, data);
 	// wake up a single thread that is waiting for the condition
 	rc = pthread_cond_signal(queue->mutex_cond_add_item);
 	XFCHECK(rc == 0,

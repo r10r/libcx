@@ -50,7 +50,7 @@ start_consumer(void* data)
 
 	while (Queue_active(consumer->queue))
 	{
-		int* x = Queue_pop_wait(consumer->queue);
+		int* x = Queue_get_wait(consumer->queue);
 
 		// last iteration might return NULL
 		if (x)

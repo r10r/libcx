@@ -26,20 +26,17 @@ void
 Queue_free(Queue* queue);
 
 void*
-Queue_pop(Queue* queue);
+Queue_get(Queue* queue);
 
 void*
-Queue_pop_wait(Queue* queue);
+Queue_get_wait(Queue* queue);
 
 void*
-Queue_pop_timedwait(Queue* queue, long wait_nanos);
+Queue_get_timedwait(Queue* queue, long wait_nanos);
 
 /* 0 when the item was queued */
 int
 Queue_add(Queue* queue, void* data);
-
-#define Queue_push(_queue, _data) \
-	Queue_add(_queue, _data)
 
 // wake up all waiting workers so they can check whether to exit or not
 /* block insert signal all waiting workers that the queue is going to be destroyed */
