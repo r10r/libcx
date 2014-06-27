@@ -62,12 +62,11 @@ struct cx_connection_t
 
 	/* worker implementation specific connection state */
 	void* state;
+	void* data;
+	void* userdata;
 
 	F_GetData* f_get_serverdata;
 	F_GetId* f_get_id;
-
-	F_GetData* f_get_userdata;
-	F_SetData* f_set_userdata;
 };
 
 Connection*
@@ -76,6 +75,17 @@ Connection_new(ConnectionCallbacks* callbacks);
 void
 Connection_free(Connection* c);
 
+void*
+Connection_get_data(Connection* conn);
+
+void
+Connection_set_data(Connection* conn, void* data);
+
+void*
+Connection_get_userdata(Connection* conn);
+
+void
+Connection_set_userdata(Connection* conn, void* userdata);
 
 #define CXDBG(conn, message) \
 	XFDBG("Connection[%d] - " message, conn->f_get_id(conn))
@@ -100,6 +110,5 @@ Connection_free(Connection* c);
 
 #define CXFERRNO(conn, format, ...) \
 	XFERRNO("Connection[%d] - " format, conn->f_get_id(conn), __VA_ARGS__)
-
 
 #endif

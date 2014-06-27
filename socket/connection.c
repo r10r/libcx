@@ -14,6 +14,7 @@ Connection_new(ConnectionCallbacks* callbacks)
 	conn->callbacks = callbacks;
 	conn->response_queue = Queue_new();
 	((List*)conn->response_queue)->f_node_data_free = free_response;
+
 	return conn;
 }
 
@@ -22,4 +23,28 @@ Connection_free(Connection* conn)
 {
 	Queue_free(conn->response_queue);
 	cx_free(conn);
+}
+
+void*
+Connection_get_data(Connection* conn)
+{
+	return conn->data;
+}
+
+void
+Connection_set_data(Connection* conn, void* data)
+{
+	conn->data = data;
+}
+
+void*
+Connection_get_userdata(Connection* conn)
+{
+	return conn->userdata;
+}
+
+void
+Connection_set_userdata(Connection* conn, void* userdata)
+{
+	conn->userdata = userdata;
 }

@@ -39,18 +39,6 @@ get_serverdata(Connection* conn)
 	return ((Worker*)state->worker)->server->data;
 }
 
-static void*
-get_userdata(Connection* conn)
-{
-	return WORKERDATA(conn)->userdata;
-}
-
-static void
-set_userdata(Connection* conn, void* userdata)
-{
-	WORKERDATA(conn)->userdata = userdata;
-}
-
 static int
 get_id(Connection* conn)
 {
@@ -176,8 +164,6 @@ connection_watcher(ev_loop* loop, ev_io* w, int revents)
 		conn->f_close_read = connection_close_read;
 		conn->f_close_write = connection_close_write;
 		conn->f_get_serverdata = get_serverdata;
-		conn->f_get_userdata = get_userdata;
-		conn->f_set_userdata = set_userdata;
 		conn->f_get_id = get_id;
 
 		Connection_callback(conn, on_start);

@@ -3,7 +3,7 @@
 static void
 close_connection(Connection* conn)
 {
-	StringBuffer_free((StringBuffer*)conn->f_get_userdata(conn));
+	StringBuffer_free((StringBuffer*)Connection_get_data(conn));
 	conn->f_close(conn);
 }
 
@@ -18,9 +18,9 @@ handle_error(Connection* conn)
 static void
 handle_request(Connection* conn)
 {
-	StringBuffer* buffer = (StringBuffer*)conn->f_get_userdata(conn);
+	StringBuffer* buffer = (StringBuffer*)Connection_get_data(conn);
 
-	conn->f_set_userdata(conn, NULL);
+	Connection_set_data(conn, NULL);
 
 	size_t num_bytes_received = StringBuffer_used(buffer);
 	CXFDBG(conn, "processing received data (%zu bytes)", num_bytes_received);
@@ -41,12 +41,12 @@ echo_connection_read(Connection* conn, int fd)
 {
 	CXDBG(conn, "read data");
 
-	StringBuffer* buffer = (StringBuffer*)conn->f_get_userdata(conn);
+	StringBuffer* buffer = (StringBuffer*)Connection_get_data(conn);
 
 	if (!buffer)
 	{
 		buffer = StringBuffer_new(CONNECTION_BUFFER_LENGTH);
-		conn->f_set_userdata(conn, buffer);
+		Connection_set_data(conn, buffer);
 	}
 
 	/* read data until buffer is full */
