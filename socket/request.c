@@ -10,7 +10,7 @@ Request_init(Request* request)
 	int ret = gettimeofday(request->started_at, NULL);
 	XASSERT(ret == 0, "gettimeofday should return 0");
 	request->priority = 0; // currently unused
-	request->data = NULL;
+	request->userdata = NULL;
 
 	// TODO optionally generate request id (UUID) ?
 //	request->id;
@@ -46,4 +46,28 @@ Request_stop(Request* request)
 	int ret = gettimeofday(request->finished_at, NULL);
 
 	XASSERT(ret == 0, "gettimeofday should return 0");
+}
+
+void
+Request_set_data(Request* request, void* data)
+{
+	request->data = data;
+}
+
+void*
+Request_get_data(Request* request)
+{
+	return request->data;
+}
+
+void
+Request_set_userdata(Request* request, void* userdata)
+{
+	request->userdata = userdata;
+}
+
+void*
+Request_get_userdata(Request* request)
+{
+	return request->userdata;
 }

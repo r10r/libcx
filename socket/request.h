@@ -27,6 +27,7 @@ struct cx_request_t
 	struct timeval* finished_at;
 	int priority; /* scheduling priority */
 
+	void* userdata;
 	void* data;
 };
 
@@ -44,6 +45,18 @@ Request_free(Request* request);
 
 void
 Request_stop(Request* request);
+
+void
+Request_set_data(Request* request, void* data);
+
+void*
+Request_get_data(Request* request);
+
+void
+Request_set_userdata(Request* request, void* userdata);
+
+void*
+Request_get_userdata(Request* request);
 
 #define Request_log(request) \
 	XFDBG("Request[%p] duration:%f msec", (void*)request, timeval_diff(request->started_at, request->finished_at))

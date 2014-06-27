@@ -24,7 +24,7 @@ typedef struct cx_connection_callbacks_t ConnectionCallbacks;
 
 typedef void F_ConnectionCallback (Connection* conn);
 typedef void F_RequestCallback (Connection* conn, Request* req);
-typedef void F_ResponseCallback (Connection* conn, Response* req);
+typedef void F_ResponseCallback (Connection* conn, Response* req, F_ResponseFinished* f_on_finished);
 typedef void F_ReceiveData (Connection* conn, int fd);
 typedef void* F_GetData (Connection* conn);
 typedef void F_SetData (Connection* conn, void* data);
@@ -57,8 +57,15 @@ struct cx_connection_t
 	F_ReceiveData* f_receive;
 	F_ResponseCallback* f_send;
 	F_ConnectionCallback* f_close;
-	F_ConnectionCallback* f_close_write;
-	F_ConnectionCallback* f_close_read;
+
+	/* must be called from the same thread !!! */
+	F_ConnectionCallback* f_receive_enable;
+	F_ConnectionCallback* f_receive_disable;
+	F_ConnectionCallback* f_receive_close;
+
+	F_ConnectionCallback* f_send_enable;
+	F_ConnectionCallback* f_send_disable;
+	F_ConnectionCallback* f_send_close;
 
 	/* worker implementation specific connection state */
 	void* state;
@@ -87,28 +94,34 @@ Connection_get_userdata(Connection* conn);
 void
 Connection_set_userdata(Connection* conn, void* userdata);
 
+#define CXLOG(conn, message) \
+	XFLOG("Connection[%d] - " message, (conn)->f_get_id(conn))
+
+#define CXFLOG(conn, format, ...) \
+	XFLOG("Connection[%d] - " format, (conn)->f_get_id(conn), __VA_ARGS__)
+
 #define CXDBG(conn, message) \
-	XFDBG("Connection[%d] - " message, conn->f_get_id(conn))
+	XFDBG("Connection[%d] - " message, (conn)->f_get_id(conn))
 
 #define CXFDBG(conn, format, ...) \
-	XFDBG("Connection[%d] - " format, conn->f_get_id(conn), __VA_ARGS__)
+	XFDBG("Connection[%d] - " format, (conn)->f_get_id(conn), __VA_ARGS__)
 
 #define CXERR(conn, message) \
-	XFERR("Connection[%d] - " message, conn->f_get_id(conn))
+	XFERR("Connection[%d] - " message, (conn)->f_get_id(conn))
 
 #define CXFERR(conn, format, ...) \
-	XFERR("Connection[%d] - " format, conn->f_get_id(conn), __VA_ARGS__)
+	XFERR("Connection[%d] - " format, (conn)->f_get_id(conn), __VA_ARGS__)
 
 #define CXWARN(conn, message) \
-	XFWARN("Connection[%d] - " message, conn->f_get_id(conn))
+	XFWARN("Connection[%d] - " message, (conn)->f_get_id(conn))
 
 #define CXFWARN(conn, format, ...) \
-	XFWARN("Connection[%d] - " format, conn->f_get_id(conn), __VA_ARGS__)
+	XFWARN("Connection[%d] - " format, (conn)->f_get_id(conn), __VA_ARGS__)
 
 #define CXERRNO(conn, message) \
-	XFERRNO("Connection[%d] - " message, conn->f_get_id(conn))
+	XFERRNO("Connection[%d] - " message, (conn)->f_get_id(conn))
 
 #define CXFERRNO(conn, format, ...) \
-	XFERRNO("Connection[%d] - " format, conn->f_get_id(conn), __VA_ARGS__)
+	XFERRNO("Connection[%d] - " format, (conn)->f_get_id(conn), __VA_ARGS__)
 
 #endif

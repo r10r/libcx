@@ -1,5 +1,17 @@
 #include "response.h"
 
+void
+Response_set_data(Response* response, void* data)
+{
+	response->data = data;
+}
+
+void*
+Response_get_data(Response* response)
+{
+	return response->data;
+}
+
 typedef struct buffer_response_t
 {
 	Response response;
@@ -47,9 +59,9 @@ Response_new(StringBuffer* buffer)
 
 	((BufferedResponse*)response)->buffer = buffer;
 
-	response->data_get = &data_get;
+	response->f_data_get = &data_get;
 	response->on_data_transmitted = &data_transmitted;
-	response->data_available = &data_available;
+	response->f_data_available = &data_available;
 
 	return response;
 }

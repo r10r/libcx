@@ -61,7 +61,7 @@ echo_connection_read(Connection* conn, int fd)
 		break;
 	case STRING_BUFFER_STATUS_EOF:
 		CXDBG(conn, "received EOF - closing connection");
-		conn->f_close_read(conn);
+		conn->f_receive_close(conn);
 		handle_request(conn);
 		close_connection(conn); // FIXME proper close connection handling
 		break;

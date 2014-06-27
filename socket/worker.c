@@ -50,7 +50,7 @@ _Worker_run(void* data)
 {
 	Worker* worker = (Worker*)data;
 
-	XFDBG("Worker[%lu] started", worker->id);
+	XFLOG("Worker[%lu] started", worker->id);
 	if (worker->f_handler)
 		worker->f_handler(worker);
 	else

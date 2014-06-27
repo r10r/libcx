@@ -9,27 +9,29 @@ typedef struct cx_connection_worker_data_t
 	ConnectionWorker* worker;
 	Connection* connection;
 
-	ev_async start_send_data_watcher;
 	ev_io receive_data_watcher;
 	ev_io send_data_watcher;
+	ev_async notify_send_data_watcher;
 
 	void* userdata;
+
+	Response* response; /* response currently send progress */
 } ConnectionState;
 
 static void
-connection_write_cb(ConnectionState* state);
+connection_send_cb(ConnectionState* state);
 
 static void
 connection_close(Connection* conn);
 
 static void
-connection_close_read(Connection* conn);
+connection_close_receive(Connection* conn);
 
 static void
-connection_close_write(Connection* conn);
+connection_close_send(Connection* conn);
 
 static void
-connection_send(Connection* conn, Response* response);
+connection_send(Connection* conn, Response* response, F_ResponseFinished* f_on_finished);
 
 static void*
 get_serverdata(Connection* conn)
@@ -43,6 +45,42 @@ static int
 get_id(Connection* conn)
 {
 	return WORKERDATA(conn)->fd;
+}
+
+static inline void
+enable_receive(Connection* conn)
+{
+	CXDBG(conn, "receive start");
+	ConnectionState* state = WORKERDATA(conn);
+
+	ev_io_start(state->worker->loop, &state->receive_data_watcher);
+}
+
+static inline void
+disable_receive(Connection* conn)
+{
+	CXDBG(conn, "receive stop");
+	ConnectionState* state = WORKERDATA(conn);
+
+	ev_io_stop(state->worker->loop, &state->receive_data_watcher);
+}
+
+static inline void
+enable_send(Connection* conn)
+{
+	CXDBG(conn, "enable send");
+	ConnectionState* state = WORKERDATA(conn);
+
+	ev_io_start(state->worker->loop, &state->send_data_watcher);
+}
+
+static inline void
+disable_send(Connection* conn)
+{
+	CXDBG(conn, "disable send");
+	ConnectionState* state = WORKERDATA(conn);
+
+	ev_io_stop(state->worker->loop, &state->send_data_watcher);
 }
 
 static void
@@ -70,18 +108,17 @@ send_data_callback(ev_loop* loop, ev_io* w, int revents)
 
 	assert(revents & EV_WRITE);  /* application bug */
 
-	connection_write_cb(state);
+	connection_send_cb(state);
 }
 
 static void
-start_send_data_callback(ev_loop* loop, ev_async* w, int revents)
+enable_send_data_watcher(ev_loop* loop, ev_async* w, int revents)
 {
 	UNUSED(loop);
 	UNUSED(revents);
 
-	ConnectionState* state = container_of(w, ConnectionState, start_send_data_watcher);
-
-	ev_io_start(state->worker->loop, &state->send_data_watcher);
+	ConnectionState* state = container_of(w, ConnectionState, notify_send_data_watcher);
+	enable_send(state->connection);
 }
 
 /* FIXME free !!! */
@@ -95,10 +132,8 @@ ConnectionState_new(ConnectionWorker* worker, Connection* conn, int fd)
 	state->fd = fd;
 	ev_io_init(&state->receive_data_watcher, &receive_data_callback, fd, EV_READ);
 	ev_io_init(&state->send_data_watcher, &send_data_callback, fd, EV_WRITE);
-	ev_async_init(&state->start_send_data_watcher, &start_send_data_callback);
+	ev_async_init(&state->notify_send_data_watcher, &enable_send_data_watcher);
 	unblock(fd);
-	ev_io_start(worker->loop, &state->receive_data_watcher);
-	ev_async_start(worker->loop, &state->start_send_data_watcher);
 	return state;
 }
 
@@ -155,25 +190,36 @@ connection_watcher(ev_loop* loop, ev_io* w, int revents)
 	{
 		XFDBG("Worker[%lu] - accepted connection on fd:%d", worker->id, client_fd);
 		Connection* conn = connection_worker->f_connection_create(connection_worker->callbacks);
+		ConnectionState* state = ConnectionState_new(connection_worker, conn, client_fd);
 
-		conn->state = ConnectionState_new(connection_worker, conn, client_fd);
+		conn->state = state;
 
 		/* Register API methods which use on the worker data */
 		conn->f_send = connection_send;
 		conn->f_close = connection_close;
-		conn->f_close_read = connection_close_read;
-		conn->f_close_write = connection_close_write;
+		conn->f_receive_close = connection_close_receive;
+		conn->f_send_close = connection_close_send;
 		conn->f_get_serverdata = get_serverdata;
 		conn->f_get_id = get_id;
 
+		conn->f_receive_enable = enable_receive;
+		conn->f_receive_disable = disable_receive;
+		conn->f_send_enable = enable_send;
+		conn->f_send_disable = disable_send;
+
 		Connection_callback(conn, on_start);
+
+		enable_receive(conn);
+		ev_async_start(loop, &state->notify_send_data_watcher);
 	}
 }
 
 static void
-connection_close_read(Connection* conn)
+connection_close_receive(Connection* conn)
 {
 	ConnectionState* state = WORKERDATA(conn);
+
+	disable_receive(conn);
 
 	if (shutdown(state->fd, SHUT_RD) == -1)
 	{
@@ -182,19 +228,17 @@ connection_close_read(Connection* conn)
 //		if (errno != ENOTCONN)
 //		CXERRNO(conn, "failed to shutdown reading end of connection");
 	}
-
-	ev_io_stop(state->worker->loop, &state->receive_data_watcher);
 }
 
 static void
-connection_close_write(Connection* conn)
+connection_close_send(Connection* conn)
 {
 	ConnectionState* state = WORKERDATA(conn);
 
+	disable_send(conn);
+
 	if (shutdown(state->fd, SHUT_WR) == -1)
 		CXERRNO(conn, "failed to shutdown writing end of connection");
-
-	ev_io_stop(state->worker->loop, &state->send_data_watcher);
 }
 
 static void
@@ -205,22 +249,26 @@ connection_close(Connection* conn)
 	ConnectionState* state = WORKERDATA(conn);
 	Connection_callback(conn, on_close);
 
-	connection_close_read(conn);
-	connection_close_write(conn);
+	ev_async_stop(state->worker->loop, &state->notify_send_data_watcher);
+
+	connection_close_receive(conn);
+	connection_close_send(conn);
 	close(state->fd);
 	Connection_free(conn);
 	ConnectionState_free(state);
 }
 
 static void
-connection_send(Connection* conn, Response* response)
+connection_send(Connection* conn, Response* response, F_ResponseFinished* f_on_finished)
 {
 	CXFDBG(conn, "send response %p", (void*)response);
+
+	response->on_finished = f_on_finished;
 
 	ConnectionState* state = WORKERDATA(conn);
 	int res = Queue_add(conn->response_queue, response);
 	assert(res == 0);
-	ev_async_send(state->worker->loop, &state->start_send_data_watcher);
+	ev_async_send(state->worker->loop, &state->notify_send_data_watcher);
 }
 
 static void
@@ -232,35 +280,24 @@ handle_send_error(Connection* conn)
 	conn->error = CONNECTION_ERROR_ERRNO;
 	conn->error_errno = errno;
 	Connection_callback(conn, on_error);
+	connection_close(conn);
 }
 
 static void
-connection_write_cb(ConnectionState* state)
+write_response(Connection* conn, Response* response, int fd)
 {
-	Connection* conn = state->connection;
-	Response* response = (Response*)List_first((List*)conn->response_queue);
-
-	if (!response)
-	{
-		CXDBG(conn, "no more responses available for sending");
-		ev_io_stop(state->worker->loop, &state->send_data_watcher);
-		return;
-	}
-
-	CXFDBG(conn, "writing response [%p]", (void*)response);
-
-	if (response->data_available(response))
+	if (response->f_data_available(response))
 	{
 		const char* response_data = NULL;
-		size_t response_data_len = response->data_get(response, &response_data);
+		size_t response_data_len = response->f_data_get(response, &response_data);
 
 		if (response_data_len > 0)
 		{
-			ssize_t nwritten = write(state->fd, response_data, response_data_len);
+			ssize_t nwritten = write(fd, response_data, response_data_len);
 			if (nwritten == -1)
 			{
 				CXERRNO(conn, "Failed to write response_data");
-				handle_send_error(conn);
+				handle_send_error(conn);        // FIXME must terminate connection_send_cb ?
 			}
 			else
 			{
@@ -269,10 +306,39 @@ connection_write_cb(ConnectionState* state)
 			}
 		}
 	}
+}
 
-	if (!response->data_available(response))
+static void
+connection_send_cb(ConnectionState* state)
+{
+	Connection* conn = state->connection;
+
+	Response* response = NULL;
+
+	if (!state->response)
+		state->response = (Response*)Queue_get(conn->response_queue);
+
+	response = state->response;
+
+	if (response)
 	{
-		response = (Response*)Queue_pop(conn->response_queue); /* remove from list */
-		Response_free(response);
+		if (response->f_data_available(response))
+		{
+			CXFDBG(conn, "writing response [%p]", (void*)response);
+			write_response(conn, response, state->fd);
+		}
+		else
+		{
+			if (response->on_finished)
+				response->on_finished(response, (void*)conn);
+
+			Response_free(response);
+			state->response = NULL;
+		}
+	}
+	else
+	{
+		CXDBG(conn, "no more queued responses");
+		disable_send(conn);
 	}
 }

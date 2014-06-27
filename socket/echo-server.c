@@ -10,32 +10,32 @@ static void
 on_start(Connection* conn)
 {
 	UNUSED(conn);
-	XDBG("ON START");
+	CXLOG(conn, "ON START");
 }
 
 static void
 on_close(Connection* conn)
 {
 	UNUSED(conn);
-	XDBG("ON CLOSE");
+	CXLOG(conn, "ON CLOSE");
 }
 
 static void
 on_error(Connection* conn)
 {
 	UNUSED(conn);
-	XDBG("Connection error");
+	CXLOG(conn, "Connection error");
 }
 
 static void
 on_request(Connection* conn, Request* request)
 {
 	UNUSED(conn);
-	XLOG("ON REQUEST");
-	StringBuffer* request_buffer = (StringBuffer*)request->data;
+	CXLOG(conn, "ON REQUEST");
+	StringBuffer* request_buffer = (StringBuffer*)Request_get_data(request);
 	XFLOG("request >>>>\n%s\n", StringBuffer_value(request_buffer));
 	Request_free(request);
-	conn->f_send(conn, Response_new(request_buffer));
+	conn->f_send(conn, Response_new(request_buffer), NULL);
 }
 
 static ConnectionCallbacks echo_handler = {

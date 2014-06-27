@@ -15,7 +15,7 @@ static void
 send_sec_cleanup(void* data)
 {
 	UNUSED(data);
-	XDBG("bye bye ....");
+	XLOG("bye bye ....");
 }
 
 static void*
@@ -33,7 +33,7 @@ send_sec(void* data)
 	while (true)
 	{
 		Response* response = Response_new(StringBuffer_from_printf(1024, "beep %d\n", count++));
-		conn->f_send(conn, response);
+		conn->f_send(conn, response, NULL);
 		sleep(1);
 	}
 
@@ -45,7 +45,7 @@ static void
 on_start(Connection* conn)
 {
 	UNUSED(conn);
-	XDBG("ON START");
+	CXLOG(conn, "START response thread");
 	pthread_create(&t, NULL, send_sec, conn);
 }
 
@@ -53,7 +53,7 @@ static void
 on_close(Connection* conn)
 {
 	UNUSED(conn);
-	XDBG("ON CLOSE");
+	CXLOG(conn, "STOP response thread");
 //	pthread_kill(t, SIGINT);
 	pthread_cancel(t);
 }
@@ -62,14 +62,14 @@ static void
 on_error(Connection* conn)
 {
 	UNUSED(conn);
-	XDBG("Connection error");
+	CXLOG(conn, "Connection error");
 }
 
 static void
 on_request(Connection* conn, Request* request)
 {
 	UNUSED(conn);
-	XLOG("ON REQUEST");
+	CXLOG(conn, "ON REQUEST");
 
 	Request_free(request);
 
