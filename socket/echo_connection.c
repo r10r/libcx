@@ -3,14 +3,14 @@
 static void
 close_connection(Connection* conn)
 {
-	StringBuffer_free((StringBuffer*)conn->protocol_data);
+	StringBuffer_free((StringBuffer*)conn->f_get_userdata(conn));
 	conn->f_close(conn);
 }
 
 static void
 handle_error(Connection* conn)
 {
-	XDBG("closing connection because of error");
+	CXDBG(conn, "closing connection because of an error");
 	Connection_callback(conn, on_error);
 	close_connection(conn);
 }
@@ -18,12 +18,12 @@ handle_error(Connection* conn)
 static void
 handle_request(Connection* conn)
 {
-	StringBuffer* buffer = (StringBuffer*)conn->protocol_data;
+	StringBuffer* buffer = (StringBuffer*)conn->f_get_userdata(conn);
 
-	conn->protocol_data = NULL;
+	conn->f_set_userdata(conn, NULL);
 
 	size_t num_bytes_received = StringBuffer_used(buffer);
-	XFDBG("processing received data (%zu bytes)", num_bytes_received);
+	CXFDBG(conn, "processing received data (%zu bytes)", num_bytes_received);
 
 	if (num_bytes_received > 0)
 	{
@@ -39,17 +39,20 @@ handle_request(Connection* conn)
 static void
 echo_connection_read(Connection* conn, int fd)
 {
-	XDBG("read data");
+	CXDBG(conn, "read data");
 
-	if (!conn->protocol_data)
-		conn->protocol_data = StringBuffer_new(CONNECTION_BUFFER_LENGTH);
+	StringBuffer* buffer = (StringBuffer*)conn->f_get_userdata(conn);
 
-	StringBuffer* buffer = (StringBuffer*)conn->protocol_data;
+	if (!buffer)
+	{
+		buffer = StringBuffer_new(CONNECTION_BUFFER_LENGTH);
+		conn->f_set_userdata(conn, buffer);
+	}
 
 	/* read data until buffer is full */
 	StringBuffer_ffill(buffer, fd);
 
-	XFDBG("buffer status %d", buffer->status);
+	CXFDBG(conn, "buffer status %d", buffer->status);
 
 	switch (buffer->status)
 	{
@@ -57,9 +60,7 @@ echo_connection_read(Connection* conn, int fd)
 		handle_request(conn);
 		break;
 	case STRING_BUFFER_STATUS_EOF:
-		XDBG("received EOF - closing connection");
-
-		// connection close reading end
+		CXDBG(conn, "received EOF - closing connection");
 		conn->f_close_read(conn);
 		handle_request(conn);
 		close_connection(conn); // FIXME proper close connection handling

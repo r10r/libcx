@@ -9,25 +9,13 @@
 
 static pthread_t t;
 
-static void
-handle_sigterm(int sig) __attribute__((noreturn));
-
-static void
-handle_sigterm(int sig)
-{
-	UNUSED(sig);
-	printf("hello world\n");
-	signal(sig, SIG_IGN);
-	pthread_exit(NULL);
-}
-
 #include <signal.h>
 
 static void
 send_sec_cleanup(void* data)
 {
 	UNUSED(data);
-	printf("bye bye ....\n");
+	XDBG("bye bye ....");
 }
 
 static void*
@@ -36,16 +24,8 @@ send_sec(void* data)
 	int old_state;
 
 	pthread_setcanceltype(PTHREAD_CANCEL_ENABLE, &old_state);
-	signal(SIGINT, handle_sigterm);
 
 	pthread_cleanup_push(send_sec_cleanup, NULL);
-	pthread_cleanup_pop(1);
-
-
-//	sigset_t sa_mask;
-//	sigemptyset(&sa_mask);
-//	sigaddset(&sa_mask, SIGTERM);
-//	pthread_sigmask(SIG_UNBLOCK, &sa_mask, NULL);
 
 	Connection* conn = (Connection*)data;
 	int count = 0;
@@ -56,6 +36,8 @@ send_sec(void* data)
 		conn->f_send(conn, response);
 		sleep(1);
 	}
+
+	pthread_cleanup_pop(1);
 	return NULL;
 }
 

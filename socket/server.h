@@ -35,6 +35,9 @@ struct cx_server_t
 	Socket* socket;
 
 	F_ServerHandler* f_server_handler;
+
+	void* data;                                     /* available in the connection via conn->get_serverdata() */
+	void* userdata;                                 /* available in the connection via conn->get_userdata() */
 };
 
 Server*

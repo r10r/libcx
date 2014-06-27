@@ -18,8 +18,8 @@ struct cx_connection_worker_t
 	int server_fd;
 	ev_loop* loop;
 	ev_io connection_watcher;
-	ConnectionCallbacks* callbacks;
 
+	ConnectionCallbacks* callbacks;
 	F_CreateConnection* f_connection_create;
 };
 
