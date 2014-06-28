@@ -4,7 +4,7 @@
 #include <stdint.h>     /* uint64_t */
 #include <arpa/inet.h>  /* ntohs ... */
 
-#include "base/base.h"
+#include <libcx/base/base.h>
 
 typedef enum cx_processor_endian
 {

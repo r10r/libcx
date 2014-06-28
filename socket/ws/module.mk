@@ -30,9 +30,12 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(LIBCX_DIR)/socket/worker.o \
 	$(LIBCX_DIR)/socket/connection_worker.o \
 	$(LIBCX_DIR)/socket/request.o \
+	$(LIBCX_DIR)/socket/response.o \
 	$(LIBCX_DIR)/list/list.o \
+	$(LIBCX_DIR)/list/queue.o \
 	$(LIBCX_DIR)/string/string.o \
-	$(LIBCX_DIR)/string/pair.o
+	$(LIBCX_DIR)/string/pair.o \
+	$(LIBCX_DIR)/base/uid.o
 
 #$(L)/test_handshake_FLAGS := -I$(L) -lev -lpthread
 $(L)/test_handshake_OBJS := $(TEST_OBJS) \

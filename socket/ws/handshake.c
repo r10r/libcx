@@ -93,7 +93,7 @@ WebsocketsHandshake_parse(WebsocketsHandshake* handshake, StringBuffer* in)
 	handshake->resource = Message_get_protocol_value(message, PROTOCOL_HTTP_RESOURCE);
 
 	// TODO distinguish between missing header and invalid value
-	if (!Message_header_value_equals(message, "Connection", "Upgrade", 1))
+	if (!Message_header_value_contains(message, "Connection", "Upgrade", 1))
 	{
 		PARSE_ERROR(handshake, "Invalid header : %s: %s", "Connection", "Upgrade");
 	}

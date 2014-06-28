@@ -26,11 +26,11 @@
 #define WS_STATUS_CODE_SIZE 2   /* 16 bit error code */
 #define WS_STATUS_DATA_SIZE_MAX (WS_CONTROL_MESSAGE_PAYLOAD_SIZE_MAX - WS_STATUS_CODE_SIZE)
 
-WebsocketsFrame*
-WebsocketsFrame_dup(WebsocketsFrame* frame);
+//WebsocketsFrame*
+//WebsocketsFrame_dup(WebsocketsFrame* frame);
 
-void
-WebsocketsFrame_free(WebsocketsFrame* frame);
+//void
+//WebsocketsFrame_free(WebsocketsFrame* frame);
 
 void
 WebsocketsFrame_parse_header(WebsocketsFrame* frame, char* raw);
@@ -76,8 +76,6 @@ WebsocketsFrame_response_status(WebsocketsFrame* frame);
 	      frame->fin, frame->rsv1, frame->rsv2, frame->rsv3, frame->masked, frame->opcode, \
 	      frame->payload_length, frame->payload_length_extended)
 
-#endif
-
 typedef enum cx_header_field_type_t
 {
 	HDR_FIELD_BOOL,         /* single bit */
@@ -97,3 +95,5 @@ typedef struct cx_header_field_t
 } HeaderField;
 
 #define HDR_MASK_ALL    (~((uint64_t)0))
+
+#endif

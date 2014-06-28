@@ -36,26 +36,28 @@ WebsocketsFrame_write_header(StringBuffer* buf, uint8_t header_bits, uint64_t nc
 static inline StringBuffer*
 WebsocketsFrame_create_buffer(uint8_t header_bits, uint64_t nchars);
 
-WebsocketsFrame*
-WebsocketsFrame_dup(WebsocketsFrame* frame)
-{
-	WebsocketsFrame* dup = cx_alloc(sizeof(WebsocketsFrame));
+/* TODO frame is not malloced but a member of the connection */
 
-	memcpy(dup, frame, sizeof(WebsocketsFrame));
-	assert(frame->length < SIZE_MAX);
-	dup->data = cx_alloc((size_t)frame->length);
-	memcpy(dup->data, frame->raw, (size_t)frame->length);
-	WebsocketsFrame_parse(frame, dup->data);
-	return dup;
-}
+//WebsocketsFrame*
+//WebsocketsFrame_dup(WebsocketsFrame* frame)
+//{
+//	WebsocketsFrame* dup = cx_alloc(sizeof(WebsocketsFrame));
+//
+//	memcpy(dup, frame, sizeof(WebsocketsFrame));
+//	assert(frame->length < SIZE_MAX);
+//	dup->data = cx_alloc((size_t)frame->length);
+//	memcpy(dup->data, frame->raw, (size_t)frame->length);
+//	WebsocketsFrame_parse(frame, dup->data);
+//	return dup;
+//}
 
-void
-WebsocketsFrame_free(WebsocketsFrame* frame)
-{
-	if (frame->data)
-		cx_free(frame->data);
-	cx_free(frame);
-}
+//void
+//WebsocketsFrame_free(WebsocketsFrame* frame)
+//{
+//	if (frame->data)
+//		cx_free(frame->data);
+//	cx_free(frame);
+//}
 
 void
 WebsocketsFrame_unmask_payload_data(WebsocketsFrame* frame)

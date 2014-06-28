@@ -1,8 +1,9 @@
 #ifndef _CX_WS_HANDSHAKE_H
 #define _CX_WS_HANDSHAKE_H
 
+#include <libcx/umtp/message_parser.h>
+
 #include "websocket.h"
-#include "umtp/message_parser.h"
 
 static const char* const BAD_REQUEST =
 	"HTTP/1.1 400 Bad Request\r\n"

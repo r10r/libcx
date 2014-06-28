@@ -1,5 +1,13 @@
 ## TODO
 
+* optimize pings (only two bytes, no StringBuffer required) 
+
+## deflate extension
+
+http://tools.ietf.org/html/draft-ietf-hybi-permessage-compression-18
+https://www.igvita.com/2013/11/27/configuring-and-optimizing-websocket-compression/
+http://ruby-doc.org/stdlib-1.9.3/libdoc/zlib/rdoc/Zlib/Deflate.html
+
 ## PING heart beat / connection timeout
 
 * when connection receives no data a PING is sent
@@ -33,4 +41,8 @@
 * Remove ssize_t types as they are not C99 conform (only posix)
 
 
+### 
+
+http://stackoverflow.com/questions/13040752/websockets-udp-and-benchmarks
+http://blog.artillery.com/2012/06/websocket-performance.html
 

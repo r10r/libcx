@@ -10,10 +10,9 @@
 //#include <stddef.h> /* size_t macros (for printing) */
 #include <inttypes.h>   /* print types uint64_t */
 
-#include "string/string_buffer.h"
-#include "umtp/message_parser.h"
+#include <libcx/string/string_buffer.h>
+#include <libcx/umtp/message_parser.h>
 
-#include "util.h"
 #include "base64_enc.h"
 #include "sha1.h"
 #include "util.h"
@@ -26,6 +25,8 @@
 #define WS_BUFFER_SIZE 1024 * 1024 * 4 /* 4miB */
 
 #define WS_HANDSHAKE_BUFFER_SIZE 512
+
+#define WS_FRAME_LENGTH_MIN 2
 
 /* https://tools.ietf.org/html/rfc6455#section-5.2 */
 typedef enum cx_websockets_opcode_t
@@ -121,6 +122,8 @@ typedef struct cx_websockets_state_t
 
 	StringBuffer* fragments_buffer;
 	uint8_t fragments_opcode;
+
+	unsigned num_pings_without_pong;
 } Websockets;
 
 typedef struct cx_websockets_handshake_t

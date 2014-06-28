@@ -1,130 +1,7 @@
-#include "socket/server_unix.h"
-#include "socket/server_tcp.h"
+#include <libcx/socket/server_unix.h>
+#include <libcx/socket/server_tcp.h>
+
 #include "ws_connection.h"
-
-static bool
-process_frame(Connection* conn, Websockets* ws)
-{
-	CXDBG(conn, "Process frame");
-#ifdef _CX_DEBUG
-	StringBuffer_print_bytes_hex(ws->in, FRAME_HEX_NPRINT, "package bytes");
-#endif
-
-	WebsocketsFrame_parse_header(&ws->frame, StringBuffer_value(ws->in));
-	if (ws->frame.rsv1 || ws->frame.rsv2 || ws->frame.rsv3)
-		ws_send_error(conn, ws, WS_CODE_ERROR_PROTOCOL, "RSV bits must not be set without extension.");
-	else
-	{
-		if (WebsocketsFrame_parse_length(ws))
-		{
-			if (WebsocketsFrame_complete(ws))
-			{
-				Websockets_process_frame(conn, ws);
-				if (ws->state == WS_STATE_ESTABLISHED)
-					return true;
-			}
-			else
-				CXFDBG(conn, "Incomplete frame (length %zu)", StringBuffer_used(ws->in));
-		}
-	}
-	return false;
-}
-
-static void
-process_frames(Connection* conn, Websockets* ws)
-{
-	while (process_frame(conn, ws))
-	{
-		CXDBG(conn, "Shifting input buffer");
-		assert(ws->frame.length < SIZE_MAX);
-		StringBuffer_shift(ws->in, (size_t)ws->frame.length);
-
-		if (StringBuffer_used(ws->in) < 2)
-			break;
-	}
-}
-
-static void
-ws_connection_read(Connection* conn)
-{
-	CXDBG(conn, "read data");
-	Websockets* ws = (Websockets*)conn->data;
-
-	if (ws->state == WS_STATE_NEW)
-	{
-		/* receive handshake */
-		ws->in = StringBuffer_new(WS_HANDSHAKE_BUFFER_SIZE);
-		CXFDBG(conn, "Created input buffer[%p] size %zu", (void*)ws->in, StringBuffer_length(ws->in));
-		StringBuffer_fdload(ws->in, conn->fd, WS_HANDSHAKE_BUFFER_SIZE);
-		Connection_stop_read(conn); /* stop connection watcher until handshake was send */
-
-		/* if handshake can't be read close connection */
-		if (!Websockets_process_handshake(conn, ws))
-			ws_close_connection(conn);
-	}
-	else if (ws->state == WS_STATE_CLOSE || ws->state == WS_STATE_ERROR || ws->state == WS_STATE_ERROR_HANDSHAKE_FAILED)
-	{
-		/* FIXME should not happen because connection should be closed right away */
-		ws_close_connection(conn);
-	}
-	else
-	{
-		StringBuffer_ffill(ws->in, conn->fd);
-
-		CXFDBG(conn, "websockets state: %d, buffer status %d", ws->state, ws->in->status);
-
-		switch (ws->in->status)
-		{
-		case STRING_BUFFER_STATUS_OK:
-			process_frames(conn, ws);
-			break;
-		case STRING_BUFFER_STATUS_EOF:
-			/* todo check if there is any data to send */
-			XDBG("received EOF - closing connection");
-			process_frames(conn, ws);
-			ws_close_connection(conn);
-			break;
-		case STRING_BUFFER_STATUS_ERROR_TO_SMALL:
-		case STRING_BUFFER_STATUS_ERROR_INVALID_ACCESS:
-		case STRING_BUFFER_STATUS_ERROR_INVALID_READ_SIZE:
-		{
-			CXFDBG(conn, "closing connection because of error :%d", ws->in->status);
-			ws_close_connection(conn);
-			break;
-		}
-		case STRING_BUFFER_STATUS_ERROR_ERRNO:
-		{
-			if (ws->in->error_errno != EWOULDBLOCK)
-			{
-				CXERRNO(conn, "closing read connection");
-				ws_close_connection(conn);
-			}
-			else
-				process_frames(conn, ws);
-		}
-		}
-	}
-}
-
-static Connection*
-WebsocketsConnection_new()
-{
-	Connection* connection = Connection_new(NULL, -1);
-
-	connection->f_receive_data_handler = ws_connection_read;
-	connection->f_on_write_error = ws_close_connection;
-	connection->data = Websockets_new();
-	return connection;
-}
-
-static ConnectionWorker*
-WebsocketsWorker_new()
-{
-	ConnectionWorker* worker = ConnectionWorker_new();
-
-	worker->f_create_connection = WebsocketsConnection_new;
-	return worker;
-}
 
 static void
 print_usage(const char* message) __attribute__((noreturn));
@@ -137,6 +14,72 @@ print_usage(const char* message)
 	exit(1);
 }
 
+#define MAX_NUM_PINGS 3
+#define PING_INTERVAL 15000
+
+static void
+on_timeout(Connection* conn)
+{
+	Websockets* ws = (Websockets*)Connection_get_data(conn);
+
+	UNUSED(ws);
+
+	if (ws->num_pings_without_pong > MAX_NUM_PINGS)
+	{
+		XFDBG(">> T I M E O U T << (%d unacknowledged pings, interval %d millis)", MAX_NUM_PINGS, PING_INTERVAL);
+		conn->f_close(conn);
+	}
+	else
+	{
+		StringBuffer* buffer = WebsocketsFrame_create(WS_FRAME_PING, NULL, 0);
+		conn->f_send(conn, Response_new(buffer), NULL);
+		ws->num_pings_without_pong++;
+	}
+}
+
+static void
+on_start(Connection* conn)
+{
+	UNUSED(conn);
+	CXDBG(conn, "ON START");
+	conn->f_timer_start(conn, PING_INTERVAL);
+}
+
+static void
+on_request(Connection* conn, Request* request)
+{
+	// FIXME restart the timer here ?
+
+	CXDBG(conn, "ON REQUEST");
+	WebsocketsFrame* frame = (WebsocketsFrame*)Request_get_data(request);
+	Request_free(request);
+	StringBuffer* buffer = WebsocketsFrame_create_echo(frame);
+	conn->f_send(conn, Response_new(buffer), NULL);
+}
+
+static void
+on_error(Connection* conn)
+{
+	UNUSED(conn);
+	CXDBG(conn, "Connection error");
+	conn->f_close(conn);
+}
+
+static void
+on_close(Connection* conn)
+{
+	UNUSED(conn);
+	CXDBG(conn, "ON CLOSE");
+}
+
+static ConnectionCallbacks ws_echo_handler = {
+	.on_start       = &on_start,
+	.on_request     = &on_request,
+	.on_error       = &on_error,
+	.on_close       = &on_close,
+	.on_timeout     = &on_timeout
+};
+
 int
 main(int argc, char** argv)
 {
@@ -144,18 +87,12 @@ main(int argc, char** argv)
 		print_usage("Invalid parameter count");
 
 	Server* server = NULL;
-
-//	if (strcmp(argv[1], "unix") == 0)
-//		server = (Server*)UnixServer_new("/tmp/echo.sock");
-//	else if (strcmp(argv[1], "tcp") == 0)
 	server = (Server*)TCPServer_new("0.0.0.0", (uint16_t)atoi(argv[1]));
-//	else
-//		print_usage("Invalid server type");
 
-	List_push(server->workers, WebsocketsWorker_new());
-	List_push(server->workers, WebsocketsWorker_new());
-	List_push(server->workers, WebsocketsWorker_new());
-	List_push(server->workers, WebsocketsWorker_new());
+	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
+	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
+	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
+	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
 
 	Server_start(server);         // blocks
 }

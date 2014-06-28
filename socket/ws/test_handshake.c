@@ -1,4 +1,5 @@
-#include "base/test.h"
+#include <libcx/base/test.h>
+
 #include "handshake.h"
 
 static void
@@ -18,7 +19,9 @@ test_Handshake_parse()
 	Message_fwrite(handshake->message, stdout);
 
 	if (handshake->error)
+	{
 		XFDBG("Handshake parse error: %s", StringBuffer_value(handshake->error_message));
+	}
 	TEST_ASSERT_FALSE(handshake->error);
 
 	StringBuffer* buffer_out = WebsocketsHandshake_create_reply(handshake);
