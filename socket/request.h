@@ -14,21 +14,23 @@ typedef enum cx_request_status_t
 } RequestStatus;
 
 typedef struct cx_request_t Request;
-
+typedef size_t F_GetPayload (Request* request, const char** payload_ptr);
 #define MESSAGE_INITIAL_BUFFER_SIZE 1024
 
 struct cx_request_t
 {
 	/* some kind of id  */
-	const char* id;
 	int error;
+	const char* id;
 	RequestStatus status;
 	struct timeval* started_at;
 	struct timeval* finished_at;
 	int priority; /* scheduling priority */
 
-	void* userdata;
+	F_GetPayload* f_get_payload;
+
 	void* data;
+	void* userdata;
 };
 
 void

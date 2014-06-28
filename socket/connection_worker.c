@@ -297,7 +297,7 @@ write_response(Connection* conn, Response* response, int fd)
 			if (nwritten == -1)
 			{
 				CXERRNO(conn, "Failed to write response_data");
-				handle_send_error(conn);        // FIXME must terminate connection_send_cb ?
+				handle_send_error(conn); // FIXME must terminate connection_send_cb ?
 			}
 			else
 			{
