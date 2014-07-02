@@ -12,6 +12,7 @@ typedef struct cx_connection_worker_data_t
 	ev_io receive_data_watcher;
 	ev_io send_data_watcher;
 	ev_async notify_send_data_watcher;
+	ev_prepare close_connection_watcher;
 
 	void* userdata;
 
@@ -245,6 +246,18 @@ connection_close_send(Connection* conn)
 }
 
 static void
+close_connection_cb(ev_loop* loop, ev_prepare* w, int revents)
+{
+	UNUSED(revents);
+	ConnectionState* state = container_of(w, ConnectionState, close_connection_watcher);
+	ev_prepare_stop(loop, w);
+
+	XFDBG("Destroying connection %d", state->fd);
+	close(state->fd);
+	Connection_free(state->connection);
+}
+
+static void
 connection_close(Connection* conn)
 {
 	CXDBG(conn, "close");
@@ -253,12 +266,12 @@ connection_close(Connection* conn)
 	Connection_callback(conn, on_close);
 
 	ev_async_stop(state->worker->loop, &state->notify_send_data_watcher);
+	disable_receive(conn);
+	disable_send(conn);
 
-	connection_close_receive(conn);
-	connection_close_send(conn);
-	close(state->fd);
-	Connection_free(conn);
-	ConnectionState_free(state);
+	/* schedule connection close to beginning of next loop iteration */
+	ev_prepare_init(&state->close_connection_watcher, &close_connection_cb);
+	ev_prepare_start(state->worker->loop, &state->close_connection_watcher);
 }
 
 static void
@@ -330,7 +343,8 @@ connection_send_cb(ConnectionState* state)
 			CXFDBG(conn, "writing response [%p]", (void*)response);
 			write_response(conn, response, state->fd);
 		}
-		else
+
+		if (!response->f_data_available(response))
 		{
 			if (response->on_finished)
 				response->on_finished(response, (void*)conn);
