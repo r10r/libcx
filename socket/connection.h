@@ -29,6 +29,7 @@ typedef void F_ReceiveData (Connection* conn, int fd);
 typedef void* F_GetData (Connection* conn);
 typedef void F_SetData (Connection* conn, void* data);
 typedef int F_GetId (Connection* conn);
+typedef void F_FreeState (void* state);
 
 /* protocol callbacks ? */
 struct cx_connection_callbacks_t
@@ -71,6 +72,8 @@ struct cx_connection_t
 	void* state;
 	void* data;
 	void* userdata;
+
+	F_FreeState* f_free_state;
 
 	F_GetData* f_get_serverdata;
 	F_GetId* f_get_id;

@@ -21,6 +21,9 @@ Connection_new(ConnectionCallbacks* callbacks)
 void
 Connection_free(Connection* conn)
 {
+	if (conn->f_free_state)
+		conn->f_free_state(conn->state);
+
 	Queue_free(conn->response_queue);
 	cx_free(conn);
 }

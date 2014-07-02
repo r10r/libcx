@@ -138,9 +138,11 @@ ConnectionState_new(ConnectionWorker* worker, Connection* conn, int fd)
 }
 
 static void
-ConnectionState_free(ConnectionState* data)
+ConnectionState_free(ConnectionState* state)
 {
-	cx_free(data);
+	if (state->response)
+		Response_free(state->response);
+	cx_free(state);
 }
 
 ConnectionWorker*
@@ -191,6 +193,7 @@ connection_watcher(ev_loop* loop, ev_io* w, int revents)
 		XFDBG("Worker[%lu] - accepted connection on fd:%d", worker->id, client_fd);
 		Connection* conn = connection_worker->f_connection_create(connection_worker->callbacks);
 		ConnectionState* state = ConnectionState_new(connection_worker, conn, client_fd);
+		conn->f_free_state = (F_FreeState*)ConnectionState_free;
 
 		conn->state = state;
 
