@@ -14,7 +14,7 @@
 
 #else
 
-#define MEMDBG_PREFIX "__MEMDBG"
+#define MEMDBG_PREFIX "\n__MEMDBG"
 #define ALLOC_TOKEN '+'
 #define FREE_TOKEN '-'
 
