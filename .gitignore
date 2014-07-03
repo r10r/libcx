@@ -3,6 +3,6 @@ coverage.info
 .coverage
 
 # generated executables
-src/server
-test/unit/test_list
 base/mleaks
+socket/echo-server-send-threaded
+string/test_util

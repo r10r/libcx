@@ -39,10 +39,10 @@ on_request(Connection* conn, Request* request)
 }
 
 static ConnectionCallbacks echo_handler = {
-	.on_close	= &on_close,
-	.on_error	= &on_error,
-	.on_request	= &on_request,
-	.on_start	= &on_start
+	.on_close       = &on_close,
+	.on_error       = &on_error,
+	.on_request     = &on_request,
+	.on_start       = &on_start
 };
 
 static void

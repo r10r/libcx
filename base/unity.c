@@ -53,7 +53,7 @@ static const _U_UINT UnitySizeMask[] =
 	4294967295u,
 	4294967295u
 #ifdef UNITY_SUPPORT_64
-	,	    0xFFFFFFFFFFFFFFFF
+	,           0xFFFFFFFFFFFFFFFF
 #endif
 };
 
