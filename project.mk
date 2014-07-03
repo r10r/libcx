@@ -22,8 +22,7 @@ MODULES := base \
 
 CFLAGS += -Werror -Wall -pedantic -std=c99 -D_POSIX_C_SOURCE=200809L -D_C99_SOURCE -D_CX_ASSERT \
 	-Wno-error=padded \
-	-Wno-error=cast-align \
-	-Wno-error=switch-enum
+	-Wno-error=cast-align
 	
 # [ profile specific CFLAGS ] 
 # ===========================
@@ -52,7 +51,7 @@ else ifeq ($(profile),debug)
 			endif
 		endif
 	endif
-else ifeq ($(profile),profile)
+else ifeq ($(profile),leaks)
 	CFLAGS += -O3 -D_CX_DEBUG_MEM
 endif
 
