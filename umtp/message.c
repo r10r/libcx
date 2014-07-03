@@ -33,7 +33,8 @@ Message_free(Message* message)
 	List_free(message->headers);
 	if (!message->keep_buffer)
 		StringBuffer_free(message->buffer);
-	cx_free(message->body);
+	if (message->body)
+		cx_free(message->body);
 	cx_free(message);
 }
 
