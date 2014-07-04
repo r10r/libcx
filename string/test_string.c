@@ -2,6 +2,12 @@
 #include "string.h"
 
 static void
+test_S_dup_null()
+{
+	TEST_ASSERT_NULL(S_dup(NULL));
+}
+
+static void
 test_S_dup()
 {
 	String* s = S_dup("bar");
@@ -105,6 +111,7 @@ main()
 {
 	TEST_BEGIN
 
+	RUN(test_S_dup_null);
 	RUN(test_S_dup);
 	RUN(test_S_sget);
 	RUN(test_empty_string);

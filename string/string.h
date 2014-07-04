@@ -78,7 +78,7 @@ String_shift(String* s, size_t count);
 	cx_alloc(S_size(length))
 
 #define S_dup(value) \
-	String_init(value, strlen(value))
+	((value) ? String_init(value, strlen(value)) : NULL)
 
 #define S_comp(a, b) \
 	strcmp((a)->value, (b)->value)
