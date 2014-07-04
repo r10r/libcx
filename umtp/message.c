@@ -147,6 +147,8 @@ Message_get_header(Message* message, const char* key, bool ignorecase)
 		StringPair* header = (StringPair*)node->data;
 
 		assert(header);
+		assert(header->key->value);
+
 		if (ignorecase)
 		{
 			if (strcasecmp(key, header->key->value) == 0)

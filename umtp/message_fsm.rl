@@ -16,7 +16,8 @@
 	action HeaderValue{EmitEvent(parser, P_HEADER_VALUE);}
 	# FIXME multipass must jump out of the machine after emitting body start
 	# using fbreak results in dead code
-	action BodyStart{EmitEvent(parser, P_BODY_START); }
+	action BodyStart{EmitEvent(parser, P_BODY_START);}
+    action ParserDebug{ParserDebug(parser, "debug every token");}
 	
 	LF = '\r'? '\n';
 	SP = [ \t];
@@ -34,7 +35,7 @@
 	envelope = (header LF)*;
 	
 	# body is optional and always separated by a linefeed
-	main := ( ( protocol_line LF envelope ) (LF >CountToken >SetMarker >BodyStart)? )$CountToken;
+	main := ( ( protocol_line LF envelope ) (LF >CountToken >SetMarker >BodyStart)? )$CountToken $ParserDebug;
 }%%
 
 %% write data;

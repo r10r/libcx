@@ -161,6 +161,37 @@ test_Message_get_header_value()
 	Message_free(message);
 }
 
+static const char msg[] =
+	"VERIFY adc83b19e793491b1c6ea0fd8b46cd9f32e592fc\n"
+	"id: blubberbla\n";
+
+static void
+test_Message_parse_simple()
+{
+	MessageParser* parser = MessageParser_new(strlen(msg));
+	RagelParser* ragel_parser = (RagelParser*)parser;
+
+	StringBuffer_ncat(ragel_parser->buffer, msg, strlen(msg));
+	RagelParser_update(ragel_parser);
+
+	TEST_ASSERT_EQUAL_STRING(msg, StringBuffer_value(ragel_parser->buffer));
+
+	RagelParser_parse(ragel_parser);
+	RagelParser_finish(ragel_parser);
+
+	TEST_ASSERT_EQUAL_INT(0, RagelParser_unparsed(ragel_parser));
+
+	Message* message = parser->message;
+
+	TEST_ASSERT_EQUAL_STRING("VERIFY", Message_get_protocol_value(message, 0));
+	TEST_ASSERT_EQUAL_STRING("adc83b19e793491b1c6ea0fd8b46cd9f32e592fc", Message_get_protocol_value(message, 1));
+	String* id_header_value = Message_get_header(message, "id", false)->value;
+	TEST_ASSERT_EQUAL_STRING("blubberbla", id_header_value->value);
+
+	Message_free(parser->message);
+	MessageParser_free(parser);
+}
+
 int
 main()
 {
@@ -173,6 +204,7 @@ main()
 	RUN(test_Message_protocol_value_equals);
 	RUN(test_Message_header_value_equals);
 	RUN(test_Message_get_header_value);
+	RUN(test_Message_parse_simple);
 
 	TEST_END
 }

@@ -4,15 +4,19 @@
 #include "../string/string_buffer.h"
 
 #define ParserDebug(parser, msg) \
-	printf("-- parse event [%s] --\n", msg); \
-	printf("state - cs:%d iterations:%d\n", (parser)->cs, (parser)->iterations); \
-	printf("token - current:%p end:%p eof:%p\n", \
-	       (parser)->buffer_position, (parser)->buffer_end, (parser)->eof); \
-	printf("buffer - offset:%zu length:%zu used:%zu unused:%zu\n", \
-	       (parser)->buffer_offset, StringBuffer_length((parser)->buffer), \
-	       StringBuffer_used((parser)->buffer), StringBuffer_unused((parser)->buffer)); \
-	printf("marker - start:%zu length:%zu\n", (parser)->marker_start, (parser)->marker_length); \
-	printf("-------------------------------\n");
+	XFDBG("\n" \
+	      "-- parser debug [ %s ] --\n" \
+	      "state	[ cs:%d iterations:%d ]\n" \
+	      "token	[ pos:%p end:%p eof:%p ]\n" \
+	      "buffer	[ offset:%zu length:%zu used:%zu unused:%zu ]\n" \
+	      "marker	[ start:%zu length:%zu ]\n" \
+	      "-------------------------------", \
+	      msg, \
+	      (parser)->cs, (parser)->iterations, \
+	      (parser)->buffer_position, (parser)->buffer_end, (parser)->eof, \
+	      (parser)->buffer_offset, StringBuffer_length((parser)->buffer), \
+	      StringBuffer_used((parser)->buffer), StringBuffer_unused((parser)->buffer), \
+	      (parser)->marker_start, (parser)->marker_length);
 
 #define Marker_get(parser) \
 	S_get((parser)->buffer->string, (parser)->marker_start)
@@ -46,7 +50,7 @@
 
 #define RagelParser_update(parser) \
 	(parser)->buffer_position = S_get((parser)->buffer->string, (parser)->buffer_offset); \
-	(parser)->buffer_end = S_last((parser)->buffer->string); \
+	(parser)->buffer_end = S_last((parser)->buffer->string) + 1; \
 	if ((parser)->finished == 1) (parser)->eof = (parser)->buffer_end;
 
 #define RagelParser_finish(parser) \

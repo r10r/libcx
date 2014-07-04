@@ -91,12 +91,10 @@ event_handler(RagelParser* parser, int event)
 		// do error handling here
 		break;
 	case P_PROTOCOL_VALUE:
-		// use Message_* functions ?
 		List_push(message->protocol_values, Marker_toS(parser));
 		break;
 	case P_HEADER_NAME:
 	{
-		// use Message_* functions ?
 		String* header_name = Marker_toS(parser);
 		StringPair* header = StringPair_init(header_name, NULL);
 		List_push(message->headers, header);
@@ -104,13 +102,11 @@ event_handler(RagelParser* parser, int event)
 	}
 	case P_HEADER_VALUE:
 	{
-		// use Message_* functions ?
 		StringPair* header = (StringPair*)message->headers->last->data;
 		header->value = Marker_toS(parser);
 		break;
 	}
 	case P_BODY_START:
-		// TODO mark header as finished here !!!
 		MessageParser_parse_body(message_parser);
 		return;
 	}
