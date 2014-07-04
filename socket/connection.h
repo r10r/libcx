@@ -23,8 +23,9 @@ typedef enum
 typedef struct cx_connection_callbacks_t ConnectionCallbacks;
 
 typedef void F_ConnectionCallback (Connection* conn);
-typedef void F_RequestCallback (Connection* conn, Request* req);
-typedef void F_ResponseCallback (Connection* conn, Response* req, F_ResponseFinished* f_on_finished);
+typedef void F_RequestCallback (Connection* conn, Request* request);
+typedef void F_ResponseCallback (Connection* conn, Response* response);
+typedef void F_SendResponse (Connection* conn, Response* response, F_ResponseFinished* f_on_finished);
 typedef void F_ReceiveData (Connection* conn, int fd);
 typedef void* F_GetData (Connection* conn);
 typedef void F_SetData (Connection* conn, void* data);
@@ -56,7 +57,7 @@ struct cx_connection_t
 
 	/* worker API implementation */
 	F_ReceiveData* f_receive;
-	F_ResponseCallback* f_send;
+	F_SendResponse* f_send;
 	F_ConnectionCallback* f_close;
 
 	/* must be called from the same thread !!! */
