@@ -26,17 +26,17 @@
 
 // TODO make unprintable tokens printable (for easier debugging)
 #define PrintToken(parser) \
-	XFLOG("Token[%zu] %p (%d)'%c'\n", \
+	XFDBG("Token[%zu] %p (%d)'%c'\n", \
 	      (parser)->buffer_offset, (parser)->buffer_position, \
 	      *((parser)->buffer_position), *((parser)->buffer_position));
 
 #define PrintLastToken(parser) \
-	XFLOG("Last Token[%zu] %p (%d)'%c'\n", \
+	XFDBG("Last Token[%zu] %p (%d)'%c'\n", \
 	      StringBuffer_used((parser)->buffer), S_last((parser)->buffer->string), \
 	      *S_last((parser)->buffer->string), *S_last((parser)->buffer->string));
 
 #define SetMarker(parser) \
-	XFLOG("Mark[%zu] %c -> %p\n", \
+	XFDBG("Mark[%zu] %c -> %p\n", \
 	      (parser)->buffer_offset, *((parser)->buffer_position), (parser)->buffer_position); \
 	(parser)->marker_start = (parser)->buffer_offset; \
 	(parser)->marker_length = 0; \

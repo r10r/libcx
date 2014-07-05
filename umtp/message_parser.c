@@ -78,6 +78,7 @@ event_handler(RagelParser* parser, int event)
 	MessageParser* message_parser = (MessageParser*)parser;
 	Message* message = message_parser->message;
 
+	// FIXME if marker length == 1 value is an empty string (set value to null instead ?)
 
 	XFDBG("Event %d, at index %zu [%c]",
 	      event,
