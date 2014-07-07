@@ -288,18 +288,6 @@ connection_send(Connection* conn, Response* response, F_ResponseFinished* f_on_f
 }
 
 static void
-handle_send_error(Connection* conn)
-{
-	/* we should never receive EAGAIN here */
-	assert(errno != EAGAIN);
-	// TODO replace with Connection_set_error(con, READ, ERRNO)
-	conn->error = CONNECTION_ERROR_ERRNO;
-	conn->error_errno = errno;
-	Connection_callback(conn, on_error);
-	connection_close(conn);
-}
-
-static void
 write_response(Connection* conn, Response* response, int fd)
 {
 	if (response->f_data_available(response))
@@ -313,7 +301,9 @@ write_response(Connection* conn, Response* response, int fd)
 			if (nwritten == -1)
 			{
 				CXERRNO(conn, "Failed to write response_data");
-				handle_send_error(conn); // FIXME must terminate connection_send_cb ?
+				/* we should never receive EAGAIN here (only for blocking IO) */
+				assert(errno != EAGAIN);
+				Connection_errno_write(conn);
 			}
 			else
 			{

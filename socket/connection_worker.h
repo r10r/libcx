@@ -29,7 +29,4 @@ ConnectionWorker_new(F_CreateConnection* f_connection_create, ConnectionCallback
 void
 ConnectionWorker_run(Worker* worker);
 
-#define Connection_callback(conn, _cb_) \
-	if (conn->callbacks->_cb_) conn->callbacks->_cb_(conn)
-
 #endif

@@ -12,13 +12,11 @@
 
 typedef struct cx_connection_t Connection;
 
-/* TODO distinguish between read and write errros */
-typedef enum
-{
-	CONNECTION_ERROR_ERRNO
-} ConnectionError;
-
 #include "response.h"
+
+#define CX_CONNECTION_ERROR_READ  0x1
+#define CX_CONNECTION_ERROR_WRITE 0x2
+#define CX_CONNECTION_ERROR_ERRNO 0x4
 
 typedef struct cx_connection_callbacks_t ConnectionCallbacks;
 
@@ -46,8 +44,8 @@ struct cx_connection_callbacks_t
 /* created by the connection watcher */
 struct cx_connection_t
 {
-	int error;
-	int error_errno;
+	int error_type;
+	int error_code;
 
 	/* user API callbacks */
 	ConnectionCallbacks* callbacks;
@@ -79,6 +77,33 @@ struct cx_connection_t
 	F_GetData* f_get_serverdata;
 	F_GetId* f_get_id;
 };
+
+#define Connection_callback(conn_, _cb_) \
+	if ((conn_)->callbacks->_cb_) (conn_)->callbacks->_cb_(conn_)
+
+#define Connection_error(conn_, type_, code_, msg_) \
+	XFERR(conn_, "error %d : %s", code_, msg_); \
+	(conn_)->error_type = type_; \
+	(conn_)->error_code = code_; \
+	Connection_callback(conn_, on_error)
+
+#define Connection_errno_read(conn_) \
+	CXERRNO(conn_, "read error"); \
+	(conn_)->error_type = CX_CONNECTION_ERROR_READ | CX_CONNECTION_ERROR_ERRNO; \
+	(conn_)->error_code = errno; \
+	Connection_callback(conn_, on_error)
+
+#define Connection_errno_write(conn_) \
+	CXERRNO(conn_, "write error"); \
+	(conn_)->error_type = CX_CONNECTION_ERROR_WRITE | CX_CONNECTION_ERROR_ERRNO; \
+	(conn_)->error_code = errno; \
+	Connection_callback(conn_, on_error)
+
+#define Connection_is_write_error(conn_) \
+	((conn_)->error_code & CX_CONNECTION_ERROR_WRITE)
+
+#define Connection_is_read_error(conn_) \
+	((conn_)->error_code & CX_CONNECTION_ERROR_READ)
 
 Connection*
 Connection_new(ConnectionCallbacks* callbacks);
