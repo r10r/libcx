@@ -86,7 +86,7 @@ ifeq ($(OS),Linux)
 	endif
 endif
 
-TEST_OBJS := $(LIBCX_DIR)/base/unity.o
+TEST_OBJS := $(LIBCX_DIR)/base/unity.o $(LIBCX_DIR)/base/errno.o
 
 # ignore unity errors
 UNITY_FLAGS += \

@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <unistd.h> /* sleep */
+#include "errno.h"
 
 // WARNING do not enable this on linux (ARM)
 //#define UNITY_SUPPORT_64
@@ -34,6 +35,7 @@ tearDown()
 }
 
 #define RUN(func) \
+	cx_err_clear(); \
 	RUN_TEST(func, __LINE__);
 
 #define TEST_BEGIN \
