@@ -12,7 +12,7 @@
  * - surround strings containing spaces with square brackets '[]'
  * - to emphasize surround element with brackets '()'
  */
-#define DFMT ":(%s) %s %d - "   /* function, method, line */
+#define CX_DBG_FMT ":(%s) %s %d - "   /* function, file, line */
 
 /* consider using write ? (should be atomic up to PIPE_BUFF_MAX) */
 #define cx_printf(format, ...) \
@@ -30,11 +30,11 @@
  * Prints the given message to stderr with debug information if errno is not 0.
  */
 #define XDBG(message) \
-	cx_log("XDBG" DFMT message, \
+	cx_log("XDBG" CX_DBG_FMT message, \
 	       __func__, __FILE__, __LINE__)
 
 #define XFDBG(format, ...) \
-	cx_log("XDBG" DFMT format, \
+	cx_log("XDBG" CX_DBG_FMT format, \
 	       __func__, __FILE__, __LINE__, __VA_ARGS__)
 
 #endif
@@ -49,27 +49,27 @@
 	cx_log("%s", message)
 
 #define XERRNO(message) \
-	cx_log("XERR" DFMT "%s errno:%d:[%s]", \
+	cx_log("XERR" CX_DBG_FMT "%s errno:%d:[%s]", \
 	       __func__, __FILE__, __LINE__, message, errno, strerror(errno))
 
 #define XFERRNO(format, ...) \
-	cx_log("XERR" DFMT "errno:%d:[%s] - " format, \
+	cx_log("XERR" CX_DBG_FMT "errno:%d:[%s] - " format, \
 	       __func__, __FILE__, __LINE__, errno, strerror(errno), __VA_ARGS__)
 
 #define XERR(message) \
-	cx_log("XERR" DFMT message, \
+	cx_log("XERR" CX_DBG_FMT message, \
 	       __func__, __FILE__, __LINE__)
 
 #define XFERR(format, ...) \
-	cx_log("XERR" DFMT format, \
+	cx_log("XERR" CX_DBG_FMT format, \
 	       __func__, __FILE__, __LINE__, __VA_ARGS__)
 
 #define XWARN(message) \
-	cx_log("XWARN" DFMT "%s", \
+	cx_log("XWARN" CX_DBG_FMT "%s", \
 	       __func__, __FILE__, __LINE__, message)
 
 #define XFWARN(format, ...) \
-	cx_log("XWARN" DFMT format, \
+	cx_log("XWARN" CX_DBG_FMT format, \
 	       __func__, __FILE__, __LINE__, __VA_ARGS__)
 
 #endif

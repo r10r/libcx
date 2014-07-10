@@ -1,4 +1,5 @@
 #include "test.h"
+#include "errno.h"
 
 struct foo
 {
@@ -139,6 +140,24 @@ test_cx_strndup()
 	cx_free(s);
 }
 
+static void
+test_cx_next_uid()
+{
+	const char* uid = cx_uid();
+
+	TEST_ASSERT_EQUAL_STRING("", uid);
+
+	cx_next_uid();
+	XFDBG("[%s --> %s]", uid, cx_uid());
+	TEST_ASSERT_EQUAL_STRING(uid, cx_uid());
+//	TEST_ASSERT_EQUAL_INT(1, cx_next_uid());
+//	TEST_ASSERT_EQUAL_INT(2, cx_next_uid());
+
+//	char uid[CX_UID_LENGTH];
+//	cx_next_uid(uid);
+//	XFDBG("---> [%s]", uid);
+}
+
 int
 main()
 {
@@ -151,6 +170,7 @@ main()
 	RUN(test_unsigned_arithmetic);
 	RUN(test_TIMEVAL_SET_MILLIS);
 	RUN(test_cx_strndup);
+	RUN(test_cx_next_uid);
 
 	TEST_END
 }
