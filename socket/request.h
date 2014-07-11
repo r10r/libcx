@@ -5,6 +5,7 @@
 #include <sys/time.h> // gettimeofday
 
 #include "base/base.h"
+#include "base/uid.h"
 
 typedef enum cx_request_status_t
 {
@@ -21,7 +22,7 @@ struct cx_request_t
 {
 	/* some kind of id  */
 	int error;
-	const char* id;
+	char id[CX_UID_LENGTH];
 	RequestStatus status;
 	struct timeval* started_at;
 	struct timeval* finished_at;

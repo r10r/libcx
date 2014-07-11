@@ -2,9 +2,9 @@
 #define _CX_ERRNO_H
 
 #include <stdio.h>
-
-#define CX_HIDDEN(var) \
-	___cx_ ## var ## ___
+#include <assert.h>
+#include "debug.h"
+#include "base.h"
 
 #define CX_ERR_OK 0
 
@@ -12,8 +12,8 @@ extern __thread int CX_HIDDEN(err_code);
 
 #define cx_ferr_set(_code, err_fmt, ...) \
 	{ \
-		cx_printf("CX_ERR" CX_DBG_FMT "token:%s code:%d message:[" err_fmt "]\n",  \
-			  __func__, __FILE__, __LINE__, cx_next_uid(), _code, __VA_ARGS__); \
+		cx_printf("CX_ERR" CX_DBG_FMT "code:%d message:[" err_fmt "]\n",  \
+			  __func__, __FILE__, __LINE__, _code, __VA_ARGS__); \
 		assert(CX_HIDDEN(err_code) == CX_ERR_OK); \
 		CX_HIDDEN(err_code) = _code; \
 	}
@@ -29,27 +29,6 @@ extern __thread int CX_HIDDEN(err_code);
 	}
 
 #define cx_err_code CX_HIDDEN(err_code)
-
-
-#include <pthread.h>
-#include <time.h>
-#include <stdint.h>
-
-#define CX_UID_LENGTH   (10 + 10 + 1) /* timestamp (uint32_t) + counter (uint32_t) + \0 */
-
-uint32_t
-cx_uid_counter(void);
-
-/*
- * Increment the uid counter.
- *
- * @return the current uid
- */
-const char*
-cx_next_uid(void);
-
-const char*
-cx_uid(void);
 
 
 #endif

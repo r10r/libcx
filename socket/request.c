@@ -3,6 +3,7 @@
 void
 Request_init(Request* request)
 {
+	cx_uid_next(request->id);
 	request->status = REQUEST_STARTED;
 	request->started_at = cx_alloc(sizeof(struct timeval));
 	request->finished_at = cx_alloc(sizeof(struct timeval));

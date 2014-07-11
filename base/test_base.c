@@ -1,5 +1,6 @@
 #include "test.h"
 #include "errno.h"
+#include "uid.h"
 
 struct foo
 {
@@ -143,19 +144,10 @@ test_cx_strndup()
 static void
 test_cx_next_uid()
 {
-	const char* uid = cx_uid();
+	char uid[CX_UID_LENGTH];
 
-	TEST_ASSERT_EQUAL_STRING("", uid);
-
-	cx_next_uid();
-	XFDBG("[%s --> %s]", uid, cx_uid());
-	TEST_ASSERT_EQUAL_STRING(uid, cx_uid());
-//	TEST_ASSERT_EQUAL_INT(1, cx_next_uid());
-//	TEST_ASSERT_EQUAL_INT(2, cx_next_uid());
-
-//	char uid[CX_UID_LENGTH];
-//	cx_next_uid(uid);
-//	XFDBG("---> [%s]", uid);
+	cx_uid_next(uid);
+	TEST_ASSERT_EQUAL_INT(CX_UID_LENGTH - 1, strlen(uid));
 }
 
 int

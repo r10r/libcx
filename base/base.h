@@ -11,6 +11,9 @@
 /* Marker for functions that return malloced data that has to be freed afterwards */
 #define CX_ALLOC
 
+/* Macro to mark variables that cannot be made static as hidden */
+#define CX_HIDDEN(var) ___cx_ ## var ## ___
+
 #ifndef SSIZE_MAX
 #define SSIZE_MAX LONG_MAX
 //typedef unsigned long ssize_t;

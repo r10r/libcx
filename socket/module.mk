@@ -40,6 +40,7 @@ $(L)/echo-server_OBJS := $(L)/echo-server.o \
 	$(L)/request.o \
 	$(L)/response.o \
 	$(L)/echo_connection.o \
+	$(LIBCX_DIR)/base/uid.o \
 	$(LIBCX_DIR)/list/list.o \
 	$(LIBCX_DIR)/list/queue.o \
 	$(LIBCX_DIR)/string/string.o \
@@ -59,6 +60,7 @@ $(L)/echo-server-send-threaded_OBJS := $(L)/echo-server-send-threaded.o \
 	$(L)/request.o \
 	$(L)/response.o \
 	$(L)/echo_connection.o \
+	$(LIBCX_DIR)/base/uid.o \
 	$(LIBCX_DIR)/list/list.o \
 	$(LIBCX_DIR)/list/queue.o \
 	$(LIBCX_DIR)/string/string.o \
