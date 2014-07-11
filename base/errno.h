@@ -7,13 +7,12 @@
 	___cx_ ## var ## ___
 
 #define CX_ERR_OK 0
-#define CX_ERR_DBG_FMT "CX_ERR" CX_DBG_FMT "token:%s code:%d message:[%s]"
 
 extern __thread int CX_HIDDEN(err_code);
 
 #define cx_ferr_set(_code, err_fmt, ...) \
 	{ \
-		cx_printf("CX_ERRNO" CX_DBG_FMT "token:%s code:%d message:[" err_fmt "]\n",  \
+		cx_printf("CX_ERR" CX_DBG_FMT "token:%s code:%d message:[" err_fmt "]\n",  \
 			  __func__, __FILE__, __LINE__, cx_next_uid(), _code, __VA_ARGS__); \
 		assert(CX_HIDDEN(err_code) == CX_ERR_OK); \
 		CX_HIDDEN(err_code) = _code; \
@@ -24,7 +23,8 @@ extern __thread int CX_HIDDEN(err_code);
 
 #define cx_err_clear() \
 	{ \
-		cx_printf("CX_ERRNO" CX_DBG_FMT "clear code:%d\n", __func__, __FILE__, __LINE__, CX_HIDDEN(err_code)); \
+		cx_printf("CX_ERR" CX_DBG_FMT "clear error (code:%d)\n", \
+			  __func__, __FILE__, __LINE__, CX_HIDDEN(err_code)); \
 		CX_HIDDEN(err_code) = CX_ERR_OK; \
 	}
 

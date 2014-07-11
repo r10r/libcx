@@ -8,6 +8,9 @@
 #include "assert.h"
 #include "mem.h"
 
+/* Marker for functions that return malloced data that has to be freed afterwards */
+#define CX_ALLOC
+
 #ifndef SSIZE_MAX
 #define SSIZE_MAX LONG_MAX
 //typedef unsigned long ssize_t;
