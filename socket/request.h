@@ -26,7 +26,7 @@ struct cx_request_t
 	RequestStatus status;
 	struct timeval* started_at;
 	struct timeval* finished_at;
-	int priority; /* scheduling priority */
+	int priority; /* scheduling priority (FIXME currently unused) */
 
 	F_GetPayload* f_get_payload;
 
@@ -62,6 +62,6 @@ void*
 Request_get_userdata(Request* request);
 
 #define Request_log(request) \
-	XFDBG("Request[%p] duration:%f msec", (void*)request, timeval_diff(request->started_at, request->finished_at))
+	XFDBG("Request[%s] duration:%f msec", request->id, timeval_diff(request->started_at, request->finished_at))
 
 #endif
