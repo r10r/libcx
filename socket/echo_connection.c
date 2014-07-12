@@ -85,11 +85,18 @@ echo_connection_read(Connection* conn, int fd)
 	}
 }
 
+static void
+echo_connection_start(Connection* conn)
+{
+	Connection_callback(conn, on_start);
+}
+
 Connection*
 EchoConnection_new(ConnectionCallbacks* callbacks)
 {
 	Connection* connection = Connection_new(callbacks);
 
 	connection->f_receive = echo_connection_read;
+	connection->f_start = echo_connection_start;
 	return connection;
 }

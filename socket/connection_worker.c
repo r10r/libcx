@@ -211,7 +211,8 @@ connection_watcher(ev_loop* loop, ev_io* w, int revents)
 		conn->f_send_enable = enable_send;
 		conn->f_send_disable = disable_send;
 
-		Connection_callback(conn, on_start);
+		if (conn->f_start)
+			conn->f_start(conn);
 
 		enable_receive(conn);
 		ev_async_start(loop, &state->notify_send_data_watcher);

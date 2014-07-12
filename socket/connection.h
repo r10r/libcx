@@ -22,7 +22,6 @@ typedef struct cx_connection_callbacks_t ConnectionCallbacks;
 
 typedef void F_ConnectionCallback (Connection* conn);
 typedef void F_RequestCallback (Connection* conn, Request* request);
-typedef void F_ResponseCallback (Connection* conn, Response* response);
 typedef void F_SendResponse (Connection* conn, Response* response, F_ResponseFinished* f_on_finished);
 typedef void F_ReceiveData (Connection* conn, int fd);
 typedef void* F_GetData (Connection* conn);
@@ -30,15 +29,14 @@ typedef void F_SetData (Connection* conn, void* data);
 typedef int F_GetId (Connection* conn);
 typedef void F_FreeState (void* state);
 
-/* protocol callbacks ? */
+/* protocol callbacks */
 struct cx_connection_callbacks_t
 {
-	F_ConnectionCallback* on_start;
+	F_ConnectionCallback* on_start;         /* called when PROTOCOL (e.g websockets) connection is established */
 	F_ConnectionCallback* on_close;         /* callback to free additional resource data here */
 	F_ConnectionCallback* on_error;
 
 	F_RequestCallback* on_request;
-	F_ResponseCallback* on_response;
 };
 
 /* created by the connection watcher */
@@ -54,6 +52,7 @@ struct cx_connection_t
 	Queue* response_queue;
 
 	/* worker API implementation */
+	F_ConnectionCallback* f_start;          /* called when TRANSPORT (e.g TCP) connection is established */
 	F_ReceiveData* f_receive;
 	F_SendResponse* f_send;
 	F_ConnectionCallback* f_close;
