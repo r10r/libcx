@@ -28,6 +28,7 @@ typedef void* F_GetData (Connection* conn);
 typedef void F_SetData (Connection* conn, void* data);
 typedef int F_GetId (Connection* conn);
 typedef void F_FreeState (void* state);
+typedef void F_ConnectionTimerStart (Connection* conn, unsigned interval_millis);
 
 /* protocol callbacks */
 struct cx_connection_callbacks_t
@@ -35,6 +36,7 @@ struct cx_connection_callbacks_t
 	F_ConnectionCallback* on_start;         /* called when PROTOCOL (e.g websockets) connection is established */
 	F_ConnectionCallback* on_close;         /* callback to free additional resource data here */
 	F_ConnectionCallback* on_error;
+	F_ConnectionCallback* on_timeout;
 
 	F_RequestCallback* on_request;
 };
@@ -65,6 +67,9 @@ struct cx_connection_t
 	F_ConnectionCallback* f_send_enable;
 	F_ConnectionCallback* f_send_disable;
 	F_ConnectionCallback* f_send_close;
+
+	F_ConnectionTimerStart* f_timer_start;
+	F_ConnectionCallback* f_timer_stop;
 
 	/* worker implementation specific connection state */
 	void* state;

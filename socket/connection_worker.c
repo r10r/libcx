@@ -13,6 +13,7 @@ typedef struct cx_connection_worker_data_t
 	ev_io send_data_watcher;
 	ev_async notify_send_data_watcher;
 	ev_prepare close_connection_watcher;
+	ev_timer timer_watcher;
 
 	void* userdata;
 
@@ -84,6 +85,45 @@ disable_send(Connection* conn)
 	ev_io_stop(state->worker->loop, &state->send_data_watcher);
 }
 
+static inline void
+start_timer(Connection* conn, unsigned millis)
+{
+	CXFDBG(conn, "start timer (timeout %u millis)", millis);
+	ConnectionState* state = WORKERDATA(conn);
+
+	if (state->connection->callbacks->on_timeout)
+	{
+		state->timer_watcher.repeat = millis / 1000.0;
+		ev_timer_again(state->worker->loop, &state->timer_watcher);
+	}
+	else
+	{
+		XERR("No timer callback set. Refusing to enable timer.");
+	}
+}
+
+static inline void
+stop_timer(Connection* conn)
+{
+	CXDBG(conn, "stop timer");
+	ConnectionState* state = WORKERDATA(conn);
+
+	ev_timer_stop(state->worker->loop, &state->timer_watcher);
+}
+
+static void
+timer_watcher_callback(ev_loop* loop, ev_timer* w, int revents)
+{
+	UNUSED(loop);
+	UNUSED(revents);
+
+	ConnectionState* state = container_of(w, ConnectionState, timer_watcher);
+
+	UNUSED(state);
+
+	state->connection->callbacks->on_timeout(state->connection);
+}
+
 static void
 connection_watcher(ev_loop* loop, ev_io* w, int revents);
 
@@ -134,6 +174,7 @@ ConnectionState_new(ConnectionWorker* worker, Connection* conn, int fd)
 	ev_io_init(&state->receive_data_watcher, &receive_data_callback, fd, EV_READ);
 	ev_io_init(&state->send_data_watcher, &send_data_callback, fd, EV_WRITE);
 	ev_async_init(&state->notify_send_data_watcher, &enable_send_data_watcher);
+	ev_init(&state->timer_watcher, &timer_watcher_callback);
 	unblock(fd);
 	return state;
 }
@@ -211,6 +252,9 @@ connection_watcher(ev_loop* loop, ev_io* w, int revents)
 		conn->f_send_enable = enable_send;
 		conn->f_send_disable = disable_send;
 
+		conn->f_timer_start = start_timer;
+		conn->f_timer_stop = stop_timer;
+
 		if (conn->f_start)
 			conn->f_start(conn);
 
@@ -267,6 +311,7 @@ connection_close(Connection* conn)
 	Connection_callback(conn, on_close);
 
 	ev_async_stop(state->worker->loop, &state->notify_send_data_watcher);
+	stop_timer(conn);
 	disable_receive(conn);
 	disable_send(conn);
 
