@@ -1,7 +1,7 @@
 #include <pthread.h>
 
-#include "../base/profile.h"
-#include "../string/string_buffer.h"
+#include <libcx/base/profile.h>
+#include <libcx/string/string_buffer.h>
 #include "client.h"
 
 typedef void F_Connected (TCPSocket* sock);

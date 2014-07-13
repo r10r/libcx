@@ -5,9 +5,10 @@
 #include <sys/socket.h>
 #include <fcntl.h>      /* fcntl, to make socket non-blocking */
 
-#include "../base/base.h"
-#include "../list/queue.h"
-#include "../string/string_buffer.h"
+#include <libcx/base/base.h>
+#include <libcx/list/queue.h>
+#include <libcx/string/string_buffer.h>
+
 #include "request.h"
 
 typedef struct cx_connection_t Connection;

@@ -160,6 +160,7 @@ str_arr_len(const char** a)
 {
 	int len = 0;
 
-	while (a[len++]);
+	while (a[len++])
+		;
 	return len;
 }

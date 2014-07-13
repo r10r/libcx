@@ -4,7 +4,8 @@
 #include <pthread.h>
 #include <time.h>
 #include <stdint.h>
-#include <stdio.h> /* snprintf */
+#include <stdio.h>      /* snprintf */
+#include <stddef.h>     /* NULL */
 
 /* very simple and dump thread-safe UID implementation */
 

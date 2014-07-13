@@ -1,7 +1,7 @@
 #ifndef _CONNECTION_WORKER_H
 #define _CONNECTION_WORKER_H
 
-#include "../base/ev.h"
+#include <libcx/base/ev.h>
 
 #include "worker.h"
 #include "connection.h"

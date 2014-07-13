@@ -1,5 +1,5 @@
 #include <string.h>
-#include "../base/base.h"
+#include <libcx/base/base.h>
 
 unsigned
 str_cnt(const char* s, const char* sep);

@@ -32,6 +32,9 @@ CFLAGS += -Werror -Wall -pedantic -std=c99 -D_POSIX_C_SOURCE=200809L -D_C99_SOUR
 # default profile
 profile ?= debug
 
+# FIXME requires libcx directory to be named 'libcx'
+CFLAGS += -I$(LIBCX_DIR)/..
+
 # TODO Check whether autoconf is of use here ?
 
 ifeq ($(profile),release)

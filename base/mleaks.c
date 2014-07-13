@@ -5,7 +5,8 @@
 #include <stdbool.h>
 
 #undef _CX_DEBUG_MEM
-#include "../list/list.h"
+
+#include <libcx/list/list.h>
 
 typedef enum cx_alloc_method_t
 {

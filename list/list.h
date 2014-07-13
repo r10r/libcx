@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "../base/base.h"
+#include <libcx/base/base.h>
 
 typedef struct cx_node_t Node;
 typedef struct cx_list_t List;

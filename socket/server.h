@@ -7,9 +7,10 @@
 #include <string.h>     /* strlen */
 #include <pthread.h>
 
-#include "../base/base.h"
-#include "../base/ev.h"
-#include "../list/list.h"
+#include <libcx/base/base.h>
+#include <libcx/base/ev.h>
+#include <libcx/list/list.h>
+
 #include "socket.h"
 
 typedef struct cx_server_t Server;

@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <sys/time.h> // gettimeofday
 
-#include "base/base.h"
-#include "base/uid.h"
+#include <libcx/base/base.h>
+#include <libcx/base/uid.h>
 
 typedef enum cx_request_status_t
 {

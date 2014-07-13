@@ -1,4 +1,4 @@
-#include "../base/test.h"
+#include <libcx/base/test.h>
 
 static void
 test_Something()

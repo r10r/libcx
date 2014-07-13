@@ -1,4 +1,5 @@
-#include "../base/test.h"
+#include <libcx/base/test.h>
+
 #include "pair.h"
 
 static void

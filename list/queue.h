@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <sys/time.h> /* gettimeofday */
 
-#include "../list/list.h"
+#include "list.h"
 
 typedef struct cx_queue_t
 {

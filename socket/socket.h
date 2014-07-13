@@ -3,7 +3,7 @@
 
 #include <sys/socket.h> /* guess what ;) */
 
-#include "../base/base.h"
+#include <libcx/base/base.h>
 
 #define SOCK_BACKLOG 512
 

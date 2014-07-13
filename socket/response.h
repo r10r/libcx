@@ -4,7 +4,7 @@
 #include <stdbool.h> /* bool */
 #include <stddef.h>
 
-#include "../string/string_buffer.h"
+#include <libcx/string/string_buffer.h>
 
 typedef struct cx_response_t Response;
 

@@ -3,7 +3,8 @@
 
 #include <pthread.h>
 
-#include "../list/list.h"
+#include <libcx/list/list.h>
+
 #include "server.h"
 
 #ifdef PTHREAD_STACK_MIN
