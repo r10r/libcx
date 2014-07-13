@@ -16,5 +16,5 @@ str_arr_diff(const char** a, unsigned num_a, const char** b, const char*** c);
 char*
 str_arr_join(const char** a, const char* sep);
 
-inline int
+int
 str_arr_len(const char** a);

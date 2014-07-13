@@ -155,12 +155,11 @@ str_arr_join(const char** arr, const char* sep)
 }
 
 /* calculates length of NULL terminated string array */
-inline int
+int
 str_arr_len(const char** a)
 {
 	int len = 0;
 
-	while (a[len++])
-		;
+	while (a[len++]);
 	return len;
 }
