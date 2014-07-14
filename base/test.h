@@ -16,7 +16,6 @@
 // TODO replace unity with ... (ctest / cunit) ?
 
 #include "unity.h"
-#define _CX_PROFILE
 #include "profile.h"
 #include "base.h"
 
