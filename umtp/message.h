@@ -65,6 +65,9 @@ Message_link_header_value(Message* message, const char* name, const char** const
 int
 Message_header_value_equals(Message* message, const char* name, const char* value, bool ignorecase);
 
+int
+Message_header_value_contains(Message* message, const char* name, const char* value, bool ignorecase);
+
 ssize_t
 Message_write(Message* message, int fd);
 

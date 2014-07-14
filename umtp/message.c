@@ -193,3 +193,20 @@ Message_header_value_equals(Message* message, const char* name, const char* valu
 
 	return 0;
 }
+
+int
+Message_header_value_contains(Message* message, const char* name, const char* value, bool ignorecase)
+{
+	StringPair* header = Message_get_header(message, name, true);
+
+	if (header)
+	{
+		assert(header->value); /* parser bug */
+		if (ignorecase)
+			return strcasestr(header->value->value, value) != NULL;
+		else
+			return strstr(header->value->value, value) != NULL;
+	}
+
+	return 0;
+}
