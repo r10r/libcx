@@ -87,7 +87,7 @@ struct cx_connection_t
 	if ((conn_)->callbacks->_cb_) (conn_)->callbacks->_cb_(conn_)
 
 #define Connection_error(conn_, type_, code_, msg_) \
-	XFERR(conn_, "error %d : %s", code_, msg_); \
+	CXFERR(conn_, "error %d : %s", code_, msg_); \
 	(conn_)->error_type = type_; \
 	(conn_)->error_code = code_; \
 	Connection_callback(conn_, on_error)
