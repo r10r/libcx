@@ -3,6 +3,7 @@
 
 #include <libcx/string/string_buffer.h>
 
+#ifdef _CX_TRACE
 #define ParserDebug(parser, msg) \
 	XFDBG("\n" \
 	      "-- parser debug [ %s ] --\n" \
@@ -18,12 +19,6 @@
 	      StringBuffer_used((parser)->buffer), StringBuffer_unused((parser)->buffer), \
 	      (parser)->marker_start, (parser)->marker_length);
 
-#define Marker_get(parser) \
-	S_get((parser)->buffer->string, (parser)->marker_start)
-
-#define Marker_toS(parser) \
-	String_init(Marker_get(parser), (parser)->marker_length)
-
 // TODO make unprintable tokens printable (for easier debugging)
 #define PrintToken(parser) \
 	XFDBG("Token[%zu] %p (%d)'%c'\n", \
@@ -34,6 +29,20 @@
 	XFDBG("Last Token[%zu] %p (%d)'%c'\n", \
 	      StringBuffer_used((parser)->buffer), S_last((parser)->buffer->string), \
 	      *S_last((parser)->buffer->string), *S_last((parser)->buffer->string));
+
+#else
+
+#define ParserDebug(parser, msg) UNUSED(msg)
+#define PrintToken(parser) UNUSED(parser)
+#define PrintLastToken(parser) UNUSED(parser)
+
+#endif
+
+#define Marker_get(parser) \
+	S_get((parser)->buffer->string, (parser)->marker_start)
+
+#define Marker_toS(parser) \
+	String_init(Marker_get(parser), (parser)->marker_length)
 
 #define SetMarker(parser) \
 	XFDBG("Mark[%zu] %c -> %p\n", \

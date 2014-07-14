@@ -40,7 +40,7 @@ CFLAGS += -I$(LIBCX_DIR)/..
 ifeq ($(profile),release)
 	CFLAGS += -O3
 else ifeq ($(profile),debug)
-	CFLAGS += -O0 -g -fno-inline --coverage -D_CX_DEBUG -D_CX_TRACE -D_CX_DEBUG_MEM
+	CFLAGS += -O0 -g -fno-inline --coverage -D_CX_DEBUG -D_CX_DEBUG_MEM
 	ifeq ($(OS),Darwin)
 		CFLAGS += -gdwarf-2
 		# when clang is installed through homebrew
@@ -93,13 +93,13 @@ TEST_OBJS := $(LIBCX_DIR)/base/unity.o $(LIBCX_DIR)/base/errno.o
 
 # ignore unity errors
 UNITY_FLAGS += \
- 	-Wno-unused-macros \
-	-Wno-sign-conversion \
-	-Wno-float-equal \
-	-Wno-missing-field-initializers \
-	-Wno-missing-braces \
-	-Wno-unused-variable \
-	-Wno-cast-align
+ 	-Wno-error=unused-macros \
+	-Wno-error=sign-conversion \
+	-Wno-error=float-equal \
+	-Wno-error=missing-field-initializers \
+	-Wno-error=missing-braces \
+	-Wno-error=unused-variable \
+	-Wno-error=cast-align
 
 $(LIBCX_DIR)/base/unity.o: CFLAGS += $(UNITY_FLAGS)
 
