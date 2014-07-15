@@ -6,6 +6,12 @@ free_response(void* data)
 	Response_free((Response*)data);
 }
 
+static void
+connection_start_cb(Connection* conn)
+{
+	Connection_callback(conn, on_start);
+}
+
 Connection*
 Connection_new(ConnectionCallbacks* callbacks)
 {
@@ -14,6 +20,9 @@ Connection_new(ConnectionCallbacks* callbacks)
 	conn->callbacks = callbacks;
 	conn->response_queue = Queue_new();
 	((List*)conn->response_queue)->f_node_data_free = free_response;
+
+	/* default start callback */
+	conn->f_start = connection_start_cb;
 
 	return conn;
 }
