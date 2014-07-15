@@ -6,11 +6,21 @@
 
 // TODO improve connection logging
 
+#define CONNECTION_TIMEOUT_MILLIS 5000
+
+static void
+on_timeout(Connection* conn)
+{
+	CXFLOG(conn, "timeout reached (%d)", CONNECTION_TIMEOUT_MILLIS);
+	conn->f_close(conn);
+}
+
 static void
 on_start(Connection* conn)
 {
 	UNUSED(conn);
 	CXLOG(conn, "ON START");
+	conn->f_timer_start(conn, CONNECTION_TIMEOUT_MILLIS);
 }
 
 static void
@@ -32,6 +42,10 @@ on_request(Connection* conn, Request* request)
 {
 	UNUSED(conn);
 	CXLOG(conn, "ON REQUEST");
+
+	/* restart the connection timeout */
+	conn->f_timer_start(conn, CONNECTION_TIMEOUT_MILLIS);
+
 	StringBuffer* request_buffer = (StringBuffer*)Request_get_data(request);
 	XFLOG("request >>>>\n%s\n", StringBuffer_value(request_buffer));
 	Request_free(request);
@@ -42,7 +56,8 @@ static ConnectionCallbacks echo_handler = {
 	.on_close       = &on_close,
 	.on_error       = &on_error,
 	.on_request     = &on_request,
-	.on_start       = &on_start
+	.on_start       = &on_start,
+	.on_timeout                     = &on_timeout
 };
 
 static void
