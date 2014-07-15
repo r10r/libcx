@@ -34,10 +34,11 @@ typedef void F_ConnectionTimerStart (Connection* conn, unsigned interval_millis)
 /* protocol callbacks */
 struct cx_connection_callbacks_t
 {
-	F_ConnectionCallback* on_start;         /* called when PROTOCOL (e.g websockets) connection is established */
-	F_ConnectionCallback* on_close;         /* callback to free additional resource data here */
+	F_ConnectionCallback* on_connect;       /* called when connection is accepted */
+	F_ConnectionCallback* on_close;         /* called before connection is closed (e.g to release resources) */
 	F_ConnectionCallback* on_error;
 	F_ConnectionCallback* on_timeout;
+	F_ConnectionCallback* on_start;                 /* called when PROTOCOL (e.g websockets) connection is established */
 
 	F_RequestCallback* on_request;
 };

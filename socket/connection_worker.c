@@ -255,8 +255,7 @@ connection_watcher(ev_loop* loop, ev_io* w, int revents)
 		conn->f_timer_start = start_timer;
 		conn->f_timer_stop = stop_timer;
 
-		if (conn->f_start)
-			conn->f_start(conn);
+		Connection_callback(conn, on_connect);
 
 		enable_receive(conn);
 		ev_async_start(loop, &state->notify_send_data_watcher);

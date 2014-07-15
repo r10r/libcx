@@ -16,10 +16,10 @@ on_timeout(Connection* conn)
 }
 
 static void
-on_start(Connection* conn)
+on_connect(Connection* conn)
 {
 	UNUSED(conn);
-	CXLOG(conn, "ON START");
+	CXLOG(conn, "ON CONNECT");
 	conn->f_timer_start(conn, CONNECTION_TIMEOUT_MILLIS);
 }
 
@@ -53,11 +53,11 @@ on_request(Connection* conn, Request* request)
 }
 
 static ConnectionCallbacks echo_handler = {
+	.on_connect     = &on_connect,
 	.on_close       = &on_close,
 	.on_error       = &on_error,
 	.on_request     = &on_request,
-	.on_start       = &on_start,
-	.on_timeout                     = &on_timeout
+	.on_timeout     = &on_timeout
 };
 
 static void
