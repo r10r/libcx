@@ -52,7 +52,7 @@ on_request(Connection* conn, Request* request)
 	conn->f_send(conn, Response_new(request_buffer), NULL);
 }
 
-static ConnectionCallbacks echo_handler = {
+static ConnectionCallbacks connection_callbacks = {
 	.on_connect     = &on_connect,
 	.on_close       = &on_close,
 	.on_error       = &on_error,
@@ -70,6 +70,25 @@ print_usage(const char* message)
 	fprintf(stderr, "Usage: $0 <unix|tcp> <worker count>\n");
 	exit(1);
 }
+
+static void
+on_server_stop(Server* server)
+{
+	UNUSED(server);
+	XLOG("SERVER STOP CB");
+}
+
+static void
+on_server_start(Server* server)
+{
+	UNUSED(server);
+	XLOG("SERVER START CB");
+}
+
+static ServerCallbacks server_callbacks = {
+	.on_start = &on_server_start,
+	.on_stop = &on_server_stop
+};
 
 int
 main(int argc, char** argv)
@@ -90,7 +109,9 @@ main(int argc, char** argv)
 
 	int i;
 	for (i = 0; i < worker_count; i++)
-		List_push(server->workers, ConnectionWorker_new(EchoConnection_new, &echo_handler));
+		List_push(server->workers, ConnectionWorker_new(EchoConnection_new, &connection_callbacks));
+
+	server->callbacks = &server_callbacks;
 
 	Server_start(server);         // blocks
 }
