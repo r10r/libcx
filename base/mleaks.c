@@ -3,6 +3,7 @@
 #include <stdlib.h>     /* calloc */
 #include <limits.h>
 #include <stdbool.h>
+#include <signal.h>
 
 #undef _CX_DEBUG_MEM
 

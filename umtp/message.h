@@ -1,7 +1,7 @@
 #ifndef _CX_MESSAGE_H
 #define _CX_MESSAGE_H
 
-#include <string.h>     /* memcpy, strerror, */
+#include <string.h>     /* memcpy, strerror, strcasestr */
 #include <stdio.h>      /* fprintf, feof, fopen, FILE */
 #include <stdbool.h>    /* true, false */
 
