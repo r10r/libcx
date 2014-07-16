@@ -88,13 +88,14 @@ disable_send(Connection* conn)
 static inline void
 start_timer(Connection* conn, unsigned millis)
 {
-	CXFDBG(conn, "start timer (timeout %u millis)", millis);
 	ConnectionState* state = WORKERDATA(conn);
+
 
 	if (state->connection->callbacks->on_timeout)
 	{
-		state->timer_watcher.repeat = millis / 1000.0;
-		ev_timer_again(state->worker->loop, &state->timer_watcher);
+		ev_timer_restart(state->worker->loop, &state->timer_watcher, millis);
+		CXFDBG(conn, "updated timer (remaining:%f seconds)",
+		       ev_timer_remaining(state->worker->loop, &state->timer_watcher));
 	}
 	else
 	{
