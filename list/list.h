@@ -28,11 +28,11 @@ struct cx_list_t
 	void* userdata;
 };
 
-#define LIST_EACH(head, tail) \
-	EACH(head, tail, next)
+#define LIST_EACH(iter, elem) \
+	EACH(iter, elem, next)
 
-#define LIST_EACH_WITH_INDEX(head, node, index) \
-	EACH_WITH_INDEX(head, node, next, index)
+#define LIST_EACH_WITH_INDEX(iter, elem, index) \
+	EACH_WITH_INDEX(iter, elem, next, index)
 
 Node*
 Node_new(void);

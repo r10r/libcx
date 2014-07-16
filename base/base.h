@@ -20,8 +20,8 @@
 #endif
 
 #define THOUSAND 1000
-#define MILLION  1000000
-#define BILLION  1000000000
+#define MILLION  (THOUSAND * THOUSAND)
+#define BILLION  (THOUSAND * THOUSAND * THOUSAND)
 
 #define TIMEVAL_SET_MILLIS(_timeval, millis) \
 	_timeval.tv_sec = (millis / THOUSAND); \
@@ -58,11 +58,11 @@
 #define CX_clone(type, obj) \
 	(type*)memcpy(cx_alloc(sizeof(type)), obj, sizeof(type))
 
-#define EACH(__iter, __elem, __next) \
-	for (; __iter && (__elem = __iter); __iter = __iter->__next)
+#define EACH(iter, elem, next) \
+	for (; iter && (elem = iter); iter = (iter)->next)
 
-#define EACH_WITH_INDEX(__iter, __elem, __next, __index) \
-	for (; __iter && (__elem = __iter); __iter = __iter->__next, __index++)
+#define EACH_WITH_INDEX(iter, elem, next, index) \
+	for (; iter && (elem = iter); iter = (iter)->next, index++)
 
 /* for safely printing NULL values */
 #define NULLS(val) \
