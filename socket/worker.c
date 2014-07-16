@@ -63,6 +63,8 @@ Worker_stop(Worker* worker)
 {
 	UNUSED(worker);
 
+	// TODO send async signal to worker to finish processing ?
+
 	XDBG("Not implemented");
 	// FIXME must signal worker to close all connections (using async_send ?)
 //	XASSERT("Task list should be empty", worker->tasks->length == 0)

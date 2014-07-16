@@ -14,17 +14,20 @@
 #include "socket.h"
 
 typedef struct cx_server_t Server;
+typedef struct cx_server_callbacks_t ServerCallbacks;
+typedef void F_ServerCallback (Server* server);
 
 /* worker requires server typedef */
 #include "worker.h"
 
-typedef enum cx_server_event_t
+struct cx_server_callbacks_t
 {
-	SERVER_START,
-	SERVER_SHUTDOWN
-} ServerEvent;
+	F_ServerCallback* on_start;
+	F_ServerCallback* on_stop;
+};
 
-typedef void F_ServerHandler (Server* server, ServerEvent event);
+#define Server_callback(server_, _cb_) \
+	if ((server_)->callbacks && (server_)->callbacks->_cb_) (server_)->callbacks->_cb_(server_)
 
 struct cx_server_t
 {
@@ -35,7 +38,10 @@ struct cx_server_t
 	List* workers;
 	Socket* socket;
 
-	F_ServerHandler* f_server_handler;
+	ServerCallbacks* callbacks;
+
+	F_ServerCallback* f_start;
+	F_ServerCallback* f_stop;
 
 	void* data;                                     /* available in the connection via conn->get_serverdata() */
 	void* userdata;                                 /* available in the connection via conn->get_userdata() */
@@ -54,6 +60,6 @@ int
 Server_start(Server* server);
 
 void
-Server_shutdown(Server* server);
+Server_stop(Server* server);
 
 #endif

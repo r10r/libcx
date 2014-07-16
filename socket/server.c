@@ -11,7 +11,7 @@ free_worker(void* data)
 {
 	Worker* worker = (Worker*)data;
 
-	Worker_stop(worker);
+	Worker_free(worker);
 }
 
 Server*
@@ -42,7 +42,9 @@ Server_free(Server* server)
 int
 Server_start(Server* server)
 {
-	server->f_server_handler(server, SERVER_START);
+	server->f_start(server);
+
+	Server_callback(server, on_start);
 
 	/* ignore signals before spawning workers */
 	/* ignore SIGPIPE -  write will return SIGPIPE */
@@ -73,10 +75,10 @@ Server_start(Server* server)
 }
 
 void
-Server_shutdown(Server* server)
+Server_stop(Server* server)
 {
 	// shutdown callback
-	server->f_server_handler(server, SERVER_SHUTDOWN);
+	server->f_stop(server);
 
 	// start shutdown watcher
 	server->shutdown_watcher.repeat = 1.;
@@ -94,6 +96,15 @@ shutdown_watcher(ev_loop* loop, ev_timer* w, int revents)
 	// TODO wait here for workers to shutdown
 	ev_timer_stop(loop, w);
 	ev_break(loop, EVBREAK_ALL);
+
+	Node* iter = server->workers->first;
+	Node* elem = NULL;
+	LIST_EACH(iter, elem)
+	{
+		Worker_stop((Worker*)elem->data);
+	}
+
+	Server_callback(server, on_stop);
 	Server_free(server);
 }
 
@@ -107,5 +118,5 @@ sigint_watcher(ev_loop* loop, ev_signal* w, int revents)
 	Server* server = container_of(w, Server, sigint_watcher);
 
 	XDBG("Received SIGINT.");
-	Server_shutdown(server);
+	Server_stop(server);
 }
