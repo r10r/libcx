@@ -24,7 +24,7 @@ Connection_free(Connection* conn)
 	if (conn->f_free_state)
 		conn->f_free_state(conn->state);
 
-	Queue_free(conn->response_queue);
+	Queue_destroy(conn->response_queue);
 	cx_free(conn);
 }
 

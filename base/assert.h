@@ -5,6 +5,8 @@
 
 #ifndef _CX_ASSERT
 
+#define cx_assert(cond) (void)(cond)
+
 #define XCHECK(condition, message) UNUSED(condition)
 #define XCHECK_EQUALS_INT(expected, actual, message) UNUSED(expected)
 #define XFCHECK(condition, format, ...) UNUSED(condition)
@@ -12,6 +14,8 @@
 #define XFASSERT(condition, format, ...) UNUSED(condition)
 
 #else
+
+#define cx_assert(cond) assert(cond)
 
 /*
  * Print message to stderr when assertion fails.

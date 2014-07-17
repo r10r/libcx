@@ -368,7 +368,7 @@ connection_send_cb(ConnectionState* state)
 	Response* response = NULL;
 
 	if (!state->response)
-		state->response = (Response*)Queue_get(conn->response_queue);
+		Queue_get(conn->response_queue, (void**)&state->response);
 
 	response = state->response;
 

@@ -10,11 +10,10 @@
  * Observations:
  * 90% of the time is spend in for acquiring and releasing the lock
  * as well as signaling / waiting for the condition
- *
  */
 
-#define NTHREADS 4
-#define NITERATATIONS 100000
+#define NTHREADS 8
+#define NITERATATIONS 100
 
 typedef struct consumer_t
 {
@@ -48,16 +47,20 @@ start_consumer(void* data)
 {
 	Consumer* consumer = (Consumer*)data;
 
-	while (Queue_active(consumer->queue))
-	{
-		int* x = Queue_get_wait(consumer->queue);
+	int* x;
+	int ret = 0;
 
-		// last iteration might return NULL
-		if (x)
+//	while ((ret = Queue_get(consumer->queue, (void**)&x)) != -1)
+	while ((ret = Queue_get_wait(consumer->queue, (void**)&x)) != -1)
+	{
+		if (ret == 1)
 		{
 			int i = *x;
 			cx_free(x);
 			consumer->processed++;
+
+			XFLOG("Consumer[%d] - received %d", consumer->id, i);
+//			usleep((rand() % 10) * 1000);
 
 			// queue is destroyed on the last request
 			if (i == (NITERATATIONS - 1))
@@ -92,21 +95,22 @@ test_Queue()
 	for (i_thread = 0; i_thread < NTHREADS; i_thread++)
 		consumers[i_thread] = Consumer_start(queue, i_thread);
 
-
 	PROFILE_BEGIN_FMT("Processing %d simple requests with %d threads\n",
 			  NITERATATIONS, NTHREADS);
 
 	int i_item;
 	int expected_sum = 0;
+
 	for (i_item = 0; i_item < NITERATATIONS; i_item++)
 	{
 		int* x = cx_alloc(sizeof(int));
 		*x = i_item;
 		Queue_add(queue, x);
+		usleep(10 * 1000); /* simulate processing delay */
 		expected_sum += i_item;
 	}
 
-	// wake up all threads and tell them to finish up
+	/* wait for threads to finish processing */
 	int total_processed = 0;
 	for (i_thread = 0; i_thread < NTHREADS; i_thread++)
 	{
@@ -114,7 +118,7 @@ test_Queue()
 		// see http://stackoverflow.com/questions/5610677/valgrind-memory-leak-errors-when-using-pthread-create
 		//	http://stackoverflow.com/questions/5282099/signal-handling-in-pthreads
 		pthread_join(*consumer->thread, NULL);
-		printf("Consumer[%d] processed %d\n", consumer->id, consumer->processed);
+		XFLOG("Consumer[%d] processed %d", consumer->id, consumer->processed);
 		total_processed += consumer->processed;
 		Consumer_free(consumer);
 	}
@@ -122,8 +126,6 @@ test_Queue()
 	PROFILE_END
 
 	TEST_ASSERT_EQUAL(total_processed, NITERATATIONS);
-
-	Queue_free(queue);
 }
 
 int
