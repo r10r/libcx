@@ -45,10 +45,10 @@ Consumer_free(Consumer* consumer)
 }
 
 static int
-match_divide_by_three(Node* node, void* keydata)
+match_divide_by_three(Node* node, const void* keydata)
 {
 	int value = *((int*)(node->data));
-	int key = *((int*)keydata);
+	int key = *((const int*)keydata);
 
 	if (value == key)
 	{
@@ -84,7 +84,7 @@ start_consumer(void* data)
 
 	while (true)
 	{
-		int match_status = Queue_match_node(consumer->queue, match_divide_by_three, (void*)&key, (void**)&value);
+		int match_status = Queue_match_node(consumer->queue, match_divide_by_three, (const void*)&key, (void**)&value);
 		/* simply iterate over all elements */
 		(void)Queue_each(consumer->queue, &node_iterator);
 

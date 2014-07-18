@@ -3,9 +3,9 @@
 
 static
 int
-data_strcmp(Node* node, void* data)
+data_strcmp(Node* node, const void* data)
 {
-	return strcmp((char*)data, node->data);
+	return strcmp((const char*)data, node->data);
 }
 
 static void

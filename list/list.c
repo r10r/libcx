@@ -97,7 +97,7 @@ List_push(List* list, void* data)
 }
 
 Node*
-List_match(List* list, void* key, F_NodeMatch* f_node_match)
+List_match(List* list, const void* key, F_NodeMatch* f_node_match)
 {
 	if (list->length == 0)
 		return NULL;
@@ -114,7 +114,7 @@ List_match(List* list, void* key, F_NodeMatch* f_node_match)
 }
 
 void*
-List_match_node(List* list, void* key, F_NodeMatch* f_node_match)
+List_match_node(List* list, const void* key, F_NodeMatch* f_node_match)
 {
 	Node* node = List_match(list, key, f_node_match);
 

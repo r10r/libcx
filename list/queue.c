@@ -221,7 +221,7 @@ Queue_each(Queue* queue, F_NodeIterator* f_node_iterator)
 }
 
 int
-Queue_match_node(Queue* queue, F_NodeMatch* f_node_match, void* key, void** data)
+Queue_match_node(Queue* queue, F_NodeMatch* f_node_match, const void* key, void** data)
 {
 	if (!Queue_active(queue))
 		return -1;
