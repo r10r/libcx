@@ -70,13 +70,14 @@ test_List_match()
 	List_free(list);
 }
 
-static void
+static int
 test_iterator(int index, Node* node)
 {
 	char buf[16];
 
 	sprintf(buf, "node %d", index + 1);
 	TEST_ASSERT_EQUAL_STRING(buf, node->data);
+	return 1;
 }
 
 static void

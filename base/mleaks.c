@@ -164,10 +164,10 @@ free_memory_allocation(void* value)
 	MemoryAllocation_free((MemoryAllocation*)value);
 }
 
-static unsigned long
+static long
 log_leaks(List* allocations)
 {
-	unsigned long num_leaks = allocations->length;
+	long num_leaks = allocations->length;
 
 	if (num_leaks == 0)
 	{

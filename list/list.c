@@ -61,7 +61,7 @@ List_free(List* list)
 	}
 }
 
-static inline unsigned long
+static inline long
 _List_push(List* list, void* data)
 {
 	Node* new = Node_new();
@@ -80,17 +80,17 @@ _List_push(List* list, void* data)
 		list->first = new;
 		list->last = new;
 	}
-	unsigned long length = list->length++;
+	long length = list->length++;
 	return length;
 }
 
-unsigned long
+long
 List_append(List* list, void* data)
 {
 	return _List_push(list, data);
 }
 
-unsigned long
+long
 List_push(List* list, void* data)
 {
 	return _List_push(list, data);
@@ -132,9 +132,8 @@ List_each(List* list, F_NodeIterator* f_node_iterator)
 	Node* node = list->first;
 
 	int index = 0;
-	while (node)
+	while (node && f_node_iterator(index, node))
 	{
-		f_node_iterator(index, node);
 		node = node->next;
 		index++;
 	}

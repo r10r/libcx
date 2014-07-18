@@ -10,7 +10,12 @@ typedef struct cx_list_t List;
 
 typedef int F_NodeMatch (Node* node, void* key);
 typedef void F_NodeDataFree (void* data);
-typedef void F_NodeIterator (int index, Node* node);
+
+/* @return
+ *  1 to continue iteration
+ *  0 to stop iteration
+ */
+typedef int F_NodeIterator (int index, Node* node);
 
 struct cx_node_t
 {
@@ -23,7 +28,7 @@ struct cx_list_t
 {
 	Node* first;
 	Node* last;
-	unsigned long length;
+	long length;
 	F_NodeDataFree* f_node_data_free;
 	void* userdata;
 };
@@ -53,11 +58,11 @@ void
 List_free(List* list);
 
 /* @return the index of the appended element */
-unsigned long
+long
 List_append(List* list, void* data);
 
 /* @return the index of the pushed element */
-unsigned long
+long
 List_push(List* list, void* data);
 
 Node*
