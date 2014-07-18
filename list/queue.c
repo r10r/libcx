@@ -37,14 +37,12 @@ void
 Queue_destroy(Queue* queue)
 {
 	assert(queue->_active);
-	XLOG("Queue is destroyed");
+	XDBG("Queue is destroyed");
 	queue->_active = false;
 
 	/* wakeup up all waiting threads */
-	XLOG("broadcast");
 	cx_assert(pthread_cond_broadcast(&queue->item_added_condition) == 0);
 
-	XLOG("destroy");
 	pthread_mutex_destroy(&queue->item_added_mutex);
 	pthread_cond_destroy(&queue->item_added_condition);
 
