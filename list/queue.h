@@ -29,6 +29,9 @@ void
 Queue_destroy(Queue* queue);
 
 int
+Queue_shift(Queue* queue, void** data);
+
+int
 Queue_get(Queue* queue, void** data);
 
 int
@@ -40,6 +43,14 @@ Queue_get_timedwait(Queue* queue, void** data, int wait_nanos);
 /* 0 when the item was queued */
 int
 Queue_add(Queue* queue, void* data);
+
+int
+Queue_push(Queue* queue, void* data);
+
+void
+Queue_each(Queue* queue, F_NodeIterator* f_node_iterator);
+
+
 
 
 #endif

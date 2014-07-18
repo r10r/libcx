@@ -1,7 +1,7 @@
 #include "queue.h"
 
-//#define __RWLOCK_LOCK_READ(rwlock) \
-// //	{ cx_assert(pthread_rwlock_rdlock(rwlock) == 0);
+#define __RWLOCK_LOCK_READ(rwlock) \
+	{ cx_assert(pthread_rwlock_rdlock(rwlock) == 0);
 
 #define __RWLOCK_LOCK_WRITE(rwlock) \
 	{ cx_assert(pthread_rwlock_wrlock(rwlock) == 0);
@@ -57,12 +57,12 @@ Queue_destroy(Queue* queue)
 
 /*
  * @return
- *      -1 when queue is inactive
+ * -1 when queue is inactive
  *	0 when queue is locked
  *	1 when data was retrieved successfully from the queue
  */
 int
-Queue_get(Queue* queue, void** data)
+Queue_shift(Queue* queue, void** data)
 {
 	if (!Queue_active(queue))
 		return -1;
@@ -93,6 +93,12 @@ Queue_get(Queue* queue, void** data)
 		XFDBG("LOCK status %s", strerror(locked));
 		return -1;
 	}
+}
+
+inline int
+Queue_get(Queue* queue, void** data)
+{
+	return Queue_shift(queue, data);
 }
 
 static void
@@ -176,7 +182,7 @@ Queue_get_wait(Queue* queue, void** data)
 }
 
 int
-Queue_add(Queue* queue, void* data)
+Queue_push(Queue* queue, void* data)
 {
 	if (!Queue_active(queue))
 		return -1;
@@ -192,3 +198,65 @@ Queue_add(Queue* queue, void* data)
 
 	return 0;
 }
+
+inline int
+Queue_add(Queue* queue, void* data)
+{
+	return Queue_push(queue, data);
+}
+
+void
+Queue_each(Queue* queue, F_NodeIterator* f_node_iterator)
+{
+	__RWLOCK_LOCK_READ(&queue->rwlock)
+	List_each((List*)queue, f_node_iterator);
+	__RWLOCK_UNLOCK(&queue->rwlock)
+}
+
+//int
+//Queue_delete(Queue*queue, unsigned int index)
+//{
+//	if (!Queue_active(queue))
+//		return -1;
+//
+//	int item_deleted = -1;
+//	__RWLOCK_LOCK_WRITE(&queue->rwlock)
+//	List_delete((List*)queue,  index);
+//	__RWLOCK_UNLOCK(&queue->rwlock)
+//
+//	return 1;
+//}
+
+//int
+//Queue_at(Queue* queue, unsigned int index, Node *node)
+//{
+//	if (!Queue_active(queue))
+//		return -1;
+//
+//	int locked = pthread_rwlock_rdlock(&queue->rwlock);
+//	if (locked == 0)
+//	{
+//		int ret = -1;
+//
+//		/* check if queue has been destroyed meanwhile */
+//		if (Queue_active(queue))
+//		{
+//			// FIXME must clone entry here
+//			node = List_at((List*)queue);
+//			if (node)
+//			{
+//				ret = 1;
+//			}
+//			else
+//				ret = 0;
+//		}
+//
+//		cx_assert(pthread_rwlock_unlock(&queue->rwlock) == 0);
+//		return ret;
+//	}
+//	else
+//	{
+//		XFDBG("LOCK status %s", strerror(locked));
+//		return -1;
+//	}
+//}
