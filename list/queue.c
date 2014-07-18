@@ -72,18 +72,17 @@ Queue_shift(Queue* queue, void** data)
 	{
 		int ret = -1;
 
-		/* check if queue has been destroyed meanwhile */
-		if (Queue_active(queue))
+		/* since we have aquired the lock before the queue
+		 * becomes inactive we continue processing
+		 */
+		void* node_data = List_shift((List*)queue);
+		if (node_data)
 		{
-			void* node_data = List_shift((List*)queue);
-			if (node_data)
-			{
-				*data = node_data;
-				ret = 1;
-			}
-			else
-				ret = 0;
+			*data = node_data;
+			ret = 1;
 		}
+		else
+			ret = 0;
 
 		cx_assert(pthread_rwlock_unlock(&queue->rwlock) == 0);
 		return ret;
@@ -137,7 +136,11 @@ Queue_get_timedwait(Queue* queue, void** data, int wait_nanos)
 
 	if (mutex_status == 0)
 	{
-		/* check if queue has been destroyed before waiting */
+		/*
+		 * Check if queue has been destroyed before waiting.
+		 * If we don't do this we have to check for an error response code
+		 * from pthread_cond_*wait.
+		 */
 		if (Queue_active(queue))
 		{
 			if (wait_nanos <= 0)
