@@ -3,6 +3,7 @@
 #include <signal.h>
 #endif
 
+#define _CX_PROFILE
 #include <libcx/base/test.h>
 #include "queue.h"
 
@@ -11,9 +12,12 @@
  * 90% of the time is spend in for acquiring and releasing the lock
  * as well as signaling / waiting for the condition
  */
+#define NTHREADS_TOTAL 100
+#define NITERATATIONS 1000 * 10
+//#define SUBMISSION_DELAY_MAX_MSEC 10
+#define PROCESSING_DELAY_MAX_MSEC 10
 
-#define NTHREADS 8
-#define NITERATATIONS 100
+typedef int F_GetItem (Queue* queue, int** int_ptr);
 
 typedef struct consumer_t
 {
@@ -21,7 +25,24 @@ typedef struct consumer_t
 	int id;
 	pthread_t* thread;
 	int processed;
+	F_GetItem* f_get_item;
 } Consumer;
+
+static int
+get_item(Queue* queue, int** x)
+{
+//	return Queue_get(queue, (void**)x);
+	return Queue_get_wait(queue, (void**)x);
+//	return Queue_get_timedwait(queue, (void**)x, 100 * 1000);
+}
+
+static int
+get_item_timed(Queue* queue, int** x)
+{
+//	return Queue_get(queue, (void**)x);
+//	return Queue_get_wait(queue, (void**)x);
+	return Queue_get_timedwait(queue, (void**)x, 100 * 1000);
+}
 
 static Consumer*
 Consumer_new(Queue* queue, int id)
@@ -48,19 +69,22 @@ start_consumer(void* data)
 	Consumer* consumer = (Consumer*)data;
 
 	int* x;
-	int ret = 0;
+	int has_item = 0;
 
-//	while ((ret = Queue_get(consumer->queue, (void**)&x)) != -1)
-	while ((ret = Queue_get_wait(consumer->queue, (void**)&x)) != -1)
+	while ((has_item = consumer->f_get_item(consumer->queue, &x)) != -1)
 	{
-		if (ret == 1)
+		if (has_item == 1)
 		{
 			int i = *x;
 			cx_free(x);
 			consumer->processed++;
 
 			XFLOG("Consumer[%d] - received %d", consumer->id, i);
-//			usleep((rand() % 10) * 1000);
+
+			/* simulate processing delay */
+#ifdef PROCESSING_DELAY_MAX_MSEC
+			usleep((rand() % PROCESSING_DELAY_MAX_MSEC) * 1000);
+#endif
 
 			// queue is destroyed on the last request
 			if (i == (NITERATATIONS - 1))
@@ -75,10 +99,11 @@ start_consumer(void* data)
 }
 
 static Consumer*
-Consumer_start(Queue* queue, int id)
+Consumer_start(Queue* queue, int id, F_GetItem* f_get_item)
 {
 	Consumer* consumer = Consumer_new(queue, id);
 
+	consumer->f_get_item = f_get_item;
 	pthread_create(consumer->thread, NULL, start_consumer, consumer);
 	return consumer;
 }
@@ -88,15 +113,18 @@ test_Queue()
 {
 	Queue* queue = Queue_new();
 
-	Consumer* consumers[NTHREADS];
+	Consumer* consumers[NTHREADS_TOTAL];
 
 	int i_thread;
 
-	for (i_thread = 0; i_thread < NTHREADS; i_thread++)
-		consumers[i_thread] = Consumer_start(queue, i_thread);
+	for (i_thread = 0; i_thread < (NTHREADS_TOTAL / 2); i_thread++)
+		consumers[i_thread] = Consumer_start(queue, i_thread, get_item);
+
+	for (; i_thread < NTHREADS_TOTAL; i_thread++)
+		consumers[i_thread] = Consumer_start(queue, i_thread, get_item_timed);
 
 	PROFILE_BEGIN_FMT("Processing %d simple requests with %d threads\n",
-			  NITERATATIONS, NTHREADS);
+			  NITERATATIONS, NTHREADS_TOTAL);
 
 	int i_item;
 	int expected_sum = 0;
@@ -106,13 +134,18 @@ test_Queue()
 		int* x = cx_alloc(sizeof(int));
 		*x = i_item;
 		Queue_add(queue, x);
-		usleep(10 * 1000); /* simulate processing delay */
+		/* simulate submission delay */
+
 		expected_sum += i_item;
+
+#ifdef SUBMISSION_DELAY_MAX_MSEC
+		usleep((rand() % SUBMISSION_DELAY_MAX_MSEC) * 1000);
+#endif
 	}
 
 	/* wait for threads to finish processing */
 	int total_processed = 0;
-	for (i_thread = 0; i_thread < NTHREADS; i_thread++)
+	for (i_thread = 0; i_thread < NTHREADS_TOTAL; i_thread++)
 	{
 		Consumer* consumer = consumers[i_thread];
 		// see http://stackoverflow.com/questions/5610677/valgrind-memory-leak-errors-when-using-pthread-create

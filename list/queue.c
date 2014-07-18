@@ -58,9 +58,10 @@ Queue_destroy(Queue* queue)
 }
 
 /*
- * @return -1 when queue is inactive
- *                                      0 when queue is locked
- *                                      1 when data was retrieved successfully from the queue
+ * @return
+ *      -1 when queue is inactive
+ *	0 when queue is locked
+ *	1 when data was retrieved successfully from the queue
  */
 int
 Queue_get(Queue* queue, void** data)
@@ -96,28 +97,25 @@ Queue_get(Queue* queue, void** data)
 	}
 }
 
-//void
-//timespec_to_timeval(int wait_nanos)
-//{
-//	struct timespec ts;
-//	struct timeval tv;
-//
-//	cx_assert(gettimeofday(&tv, NULL) == 0);
-//
-//	TIMEVAL_TO_TIMESPEC(&tv, &ts);
-//
-//	long tv_sec = ts.tv_sec + (wait_nanos / BILLION);
-//	long tv_nsec = ts.tv_nsec + (wait_nanos % BILLION);
-//
-//	/* set timeout values and correct overflow of tv_nsec */
-//	ts.tv_sec = tv_sec + (tv_nsec / BILLION);
-//	ts.tv_nsec = tv_nsec % BILLION;
-//}
+static void
+timeout_nanos(struct timespec* ts, int wait_nanos)
+{
+	struct timeval tv;
 
-// POP returns NULL when Queue is not active anymore ?
-// -> check for null in the calling thread
+	cx_assert(gettimeofday(&tv, NULL) == 0);
+
+	TIMEVAL_TO_TIMESPEC(&tv, ts);
+
+	long tv_sec = ts->tv_sec + (wait_nanos / BILLION);
+	long tv_nsec = ts->tv_nsec + (wait_nanos % BILLION);
+
+	/* set timeout values and correct overflow of tv_nsec */
+	ts->tv_sec = tv_sec + (tv_nsec / BILLION);
+	ts->tv_nsec = tv_nsec % BILLION;
+}
+
 int
-Queue_get_wait(Queue* queue, void** data)
+Queue_get_timedwait(Queue* queue, void** data, int wait_nanos)
 {
 	/* check if queue has data which we can get right away */
 	int have_item = Queue_get(queue, data);
@@ -138,7 +136,19 @@ Queue_get_wait(Queue* queue, void** data)
 		/* check if queue has been destroyed before waiting */
 		if (Queue_active(queue))
 		{
-			cx_assert(pthread_cond_wait(&queue->item_added_condition, &queue->item_added_mutex) == 0);
+			if (wait_nanos <= 0)
+			{
+				cx_assert(pthread_cond_wait(&queue->item_added_condition, &queue->item_added_mutex) == 0);
+			}
+			else
+			{
+				int rc = 0;
+				struct timespec ts;
+				timeout_nanos(&ts, wait_nanos);
+				rc = pthread_cond_timedwait(&queue->item_added_condition, &queue->item_added_mutex, &ts);
+				cx_assert(rc == 0 || rc == ETIMEDOUT);
+			}
+
 			int wait_have_item = -1;
 			/* check if queue has been destroyed after waiting */
 			if (Queue_active(queue))
@@ -161,43 +171,10 @@ Queue_get_wait(Queue* queue, void** data)
 	}
 }
 
-/* TODO test */
-int
-Queue_get_timedwait(Queue* queue, void** data, long wait_nanos)
+inline int
+Queue_get_wait(Queue* queue, void** data)
 {
-	if (!Queue_active(queue))
-		return -1;
-
-
-	UNUSED(wait_nanos);
-	UNUSED(data);
-	return -1;
-//	if (((List*)queue)->length == 0)
-//	{
-//		int rc = 0;
-//		cx_assert(pthread_mutex_lock(&queue->item_added_mutex) == 0);
-//		rc = pthread_cond_timedwait(&queue->item_added_condition, &queue->item_added_mutex, &ts);
-//		cx_assert(rc == 0 || rc == ETIMEDOUT);
-//
-//		pthread_mutex_lock(&queue->item_added_mutex);
-//		if (!Queue_active(queue))
-//		{
-//			pthread_mutex_unlock(&queue->item_added_mutex);
-//			return -1;
-//		}
-//		cx_assert(pthread_cond_wait(&queue->item_added_condition, &queue->item_added_mutex) == 0);
-//		pthread_mutex_unlock(&queue->item_added_mutex);
-//	}
-//
-//
-//	__LOCK(&queue->item_added_mutex)
-//
-//	__UNLOCK(&queue->item_added_mutex)
-//
-//	if (rc == 0)
-//		return Queue_get(queue, data);
-//	else
-//		return -1;
+	return Queue_get_timedwait(queue, data, 0);
 }
 
 int

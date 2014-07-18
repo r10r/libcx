@@ -35,7 +35,7 @@ int
 Queue_get_wait(Queue* queue, void** data);
 
 int
-Queue_get_timedwait(Queue* queue, void** data, long wait_nanos);
+Queue_get_timedwait(Queue* queue, void** data, int wait_nanos);
 
 /* 0 when the item was queued */
 int
