@@ -208,12 +208,38 @@ Queue_add(Queue* queue, void* data)
 	return Queue_push(queue, data);
 }
 
-void
+int
 Queue_each(Queue* queue, F_NodeIterator* f_node_iterator)
 {
+	if (!Queue_active(queue))
+		return -1;
+
 	__RWLOCK_LOCK_READ(&queue->rwlock)
 	List_each((List*)queue, f_node_iterator);
 	__RWLOCK_UNLOCK(&queue->rwlock)
+	return 1;
+}
+
+int
+Queue_match_node(Queue* queue, F_NodeMatch* f_node_match, void* key, void** data)
+{
+	if (!Queue_active(queue))
+		return -1;
+
+	int item_matched = -1;
+
+	__RWLOCK_LOCK_READ(&queue->rwlock)
+	void* node_data = List_match_node((List*)queue, key, f_node_match);
+	if (node_data)
+	{
+		*data = node_data;
+		item_matched = 1;
+	}
+	else
+		item_matched = 0;
+	__RWLOCK_UNLOCK(&queue->rwlock)
+
+	return item_matched;
 }
 
 //int

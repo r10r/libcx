@@ -47,10 +47,10 @@ Queue_add(Queue* queue, void* data);
 int
 Queue_push(Queue* queue, void* data);
 
-void
+int
 Queue_each(Queue* queue, F_NodeIterator* f_node_iterator);
 
-
-
+int
+Queue_match_node(Queue* queue, F_NodeMatch* f_node_match, void* key, void** data);
 
 #endif

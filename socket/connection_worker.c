@@ -347,7 +347,7 @@ write_response(Connection* conn, Response* response, int fd)
 			if (nwritten == -1)
 			{
 				CXERRNO(conn, "Failed to write response_data");
-				/* we should never receive EAGAIN here (only for blocking IO) */
+				/* we should never receive EAGAIN here (IO must be non-blocking) */
 				assert(errno != EAGAIN);
 				Connection_errno_write(conn);
 			}
