@@ -18,8 +18,13 @@
 #define cx_printf(format, ...) \
 	{ flockfile(stderr); fprintf(stderr, format, __VA_ARGS__); funlockfile(stderr); }
 
+#ifdef _MULTI_THREADED
+#define cx_log(format, ...) \
+	{ flockfile(stderr); fprintf(stderr, "thread[%d] " format "\n", (int)pthread_self(), __VA_ARGS__); funlockfile(stderr); }
+#else
 #define cx_log(format, ...) \
 	{ flockfile(stderr); fprintf(stderr, format "\n", __VA_ARGS__); funlockfile(stderr); }
+#endif
 
 #ifndef _CX_DEBUG
 #define XDBG(message) UNUSED(message)
