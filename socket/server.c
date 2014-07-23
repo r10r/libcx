@@ -53,11 +53,13 @@ Server_start(Server* server)
 	signal(SIGINT, SIG_IGN);
 
 	/* handle SIGINT in a callback */
-	ev_signal_init(&server->sigint_watcher, sigint_watcher, SIGINT);
+	ev_signal* sigint_w = &server->sigint_watcher;
+	ev_signal_init(sigint_w, sigint_watcher, SIGINT);
 	ev_signal_start(server->loop, &server->sigint_watcher);
 
 	/* initialize shutdown timer */
-	ev_init(&server->shutdown_watcher, shutdown_watcher);
+	ev_timer* shutdown_w = &server->shutdown_watcher;
+	ev_init(shutdown_w, shutdown_watcher);
 
 	/* start workers */
 	unsigned int i;

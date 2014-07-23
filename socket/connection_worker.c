@@ -172,10 +172,19 @@ ConnectionState_new(ConnectionWorker* worker, Connection* conn, int fd)
 	state->worker = worker;
 	state->connection = conn;
 	state->fd = fd;
-	ev_io_init(&state->receive_data_watcher, &receive_data_callback, fd, EV_READ);
-	ev_io_init(&state->send_data_watcher, &send_data_callback, fd, EV_WRITE);
-	ev_async_init(&state->notify_send_data_watcher, &enable_send_data_watcher);
-	ev_init(&state->timer_watcher, &timer_watcher_callback);
+
+	ev_io* receive_data_w = &state->receive_data_watcher;
+	ev_io_init(receive_data_w, &receive_data_callback, fd, EV_READ);
+
+	ev_io* send_data_w = &state->send_data_watcher;
+	ev_io_init(send_data_w, &send_data_callback, fd, EV_WRITE);
+
+	ev_async* notify_send_w = &state->notify_send_data_watcher;
+	ev_async_init(notify_send_w, &enable_send_data_watcher);
+
+	ev_timer* timer_w = &state->timer_watcher;
+	ev_init(timer_w, &timer_watcher_callback);
+
 	unblock(fd);
 	return state;
 }
@@ -227,10 +236,10 @@ connection_start(ConnectionWorker* connection_worker, int client_fd)
 	conn->f_timer_start = start_timer;
 	conn->f_timer_stop = stop_timer;
 
-	Connection_callback(conn, on_connect);
-
 	enable_receive(conn);
 	ev_async_start(connection_worker->loop, &state->notify_send_data_watcher);
+
+	Connection_callback(conn, on_connect);
 }
 
 void
@@ -241,10 +250,10 @@ ConnectionWorker_run(Worker* worker)
 
 	connection_worker->server_fd = worker->server->socket->fd;
 
-	ev_io_init(&connection_worker->connection_watcher,
-		   connection_watcher, connection_worker->server_fd, EV_READ);
-
+	ev_io* connection_w = &connection_worker->connection_watcher;
+	ev_io_init(connection_w, connection_watcher, connection_worker->server_fd, EV_READ);
 	ev_io_start(connection_worker->loop, &connection_worker->connection_watcher);
+
 	ev_run(connection_worker->loop, 0);        /* blocks until worker is stopped */
 	ev_io_stop(connection_worker->loop, &connection_worker->connection_watcher);
 }
@@ -324,7 +333,8 @@ connection_close(Connection* conn)
 	disable_send(conn);
 
 	/* schedule connection close to beginning of next loop iteration */
-	ev_prepare_init(&state->close_connection_watcher, &close_connection_cb);
+	ev_prepare* close_connection_w = &state->close_connection_watcher;
+	ev_prepare_init(close_connection_w, &close_connection_cb);
 	ev_prepare_start(state->worker->loop, &state->close_connection_watcher);
 }
 

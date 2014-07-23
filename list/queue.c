@@ -9,11 +9,13 @@
 #define __RWLOCK_UNLOCK(rwlock) \
 	cx_assert(pthread_rwlock_unlock(rwlock) == 0); }
 
-//#define __LOCK(mutex) \
-// //	{ cx_assert(pthread_mutex_lock(mutex) == 0);
-//
-//#define __UNLOCK(mutex) \
-// //	cx_assert(pthread_mutex_unlock(mutex) == 0); }
+/*
+   #define __LOCK(mutex) \
+        { cx_assert(pthread_mutex_lock(mutex) == 0);
+
+   #define __UNLOCK(mutex) \
+        cx_assert(pthread_mutex_unlock(mutex) == 0); }
+ */
 
 Queue*
 Queue_new()
