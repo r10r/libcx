@@ -201,6 +201,38 @@ ConnectionWorker_new(F_CreateConnection* f_connection_create, ConnectionCallback
 	return worker;
 }
 
+static void
+connection_start(ConnectionWorker* connection_worker, int client_fd)
+{
+	Connection* conn = connection_worker->f_connection_create(connection_worker->callbacks);
+	ConnectionState* state = ConnectionState_new(connection_worker, conn, client_fd);
+
+	conn->f_free_state = (F_FreeState*)ConnectionState_free;
+
+	conn->state = state;
+
+	/* Register API methods which use on the worker data */
+	conn->f_send = connection_send;
+	conn->f_close = connection_close;
+	conn->f_receive_close = connection_close_receive;
+	conn->f_send_close = connection_close_send;
+	conn->f_get_serverdata = get_serverdata;
+	conn->f_get_id = get_id;
+
+	conn->f_receive_enable = enable_receive;
+	conn->f_receive_disable = disable_receive;
+	conn->f_send_enable = enable_send;
+	conn->f_send_disable = disable_send;
+
+	conn->f_timer_start = start_timer;
+	conn->f_timer_stop = stop_timer;
+
+	Connection_callback(conn, on_connect);
+
+	enable_receive(conn);
+	ev_async_start(connection_worker->loop, &state->notify_send_data_watcher);
+}
+
 void
 ConnectionWorker_run(Worker* worker)
 {
@@ -211,6 +243,7 @@ ConnectionWorker_run(Worker* worker)
 
 	ev_io_init(&connection_worker->connection_watcher,
 		   connection_watcher, connection_worker->server_fd, EV_READ);
+
 	ev_io_start(connection_worker->loop, &connection_worker->connection_watcher);
 	ev_run(connection_worker->loop, 0);        /* blocks until worker is stopped */
 	ev_io_stop(connection_worker->loop, &connection_worker->connection_watcher);
@@ -234,32 +267,7 @@ connection_watcher(ev_loop* loop, ev_io* w, int revents)
 	else
 	{
 		XFDBG("Worker[%lu] - accepted connection on fd:%d", worker->id, client_fd);
-		Connection* conn = connection_worker->f_connection_create(connection_worker->callbacks);
-		ConnectionState* state = ConnectionState_new(connection_worker, conn, client_fd);
-		conn->f_free_state = (F_FreeState*)ConnectionState_free;
-
-		conn->state = state;
-
-		/* Register API methods which use on the worker data */
-		conn->f_send = connection_send;
-		conn->f_close = connection_close;
-		conn->f_receive_close = connection_close_receive;
-		conn->f_send_close = connection_close_send;
-		conn->f_get_serverdata = get_serverdata;
-		conn->f_get_id = get_id;
-
-		conn->f_receive_enable = enable_receive;
-		conn->f_receive_disable = disable_receive;
-		conn->f_send_enable = enable_send;
-		conn->f_send_disable = disable_send;
-
-		conn->f_timer_start = start_timer;
-		conn->f_timer_stop = stop_timer;
-
-		Connection_callback(conn, on_connect);
-
-		enable_receive(conn);
-		ev_async_start(loop, &state->notify_send_data_watcher);
+		connection_start(connection_worker, client_fd);
 	}
 }
 

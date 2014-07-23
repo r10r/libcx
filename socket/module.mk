@@ -4,7 +4,9 @@ L := $(LOCAL_DIR)
 #OBJS += $(L)/
 PROGRAMS += $(L)/echo-server \
 	$(L)/echo-client-threaded \
-	$(L)/echo-server-send-threaded
+	$(L)/echo-server-send-threaded \
+	$(L)/server-simple-accept \
+	$(L)/server-fork-accept \
 	
 #TESTS += $(L)/test_
 
@@ -65,6 +67,17 @@ $(L)/echo-server-send-threaded_OBJS := $(L)/echo-server-send-threaded.o \
 	$(LIBCX_DIR)/list/queue.o \
 	$(LIBCX_DIR)/string/string.o \
 	$(LIBCX_DIR)/string/pair.o
+
+$(L)/server-simple-accept_FLAGS := -lpthread
+$(L)/server-simple-accept_OBJS := $(L)/server-simple-accept.o \
+	$(L)/socket.o \
+	$(L)/socket_unix.o
+	
+$(L)/server-fork-accept_FLAGS := -lpthread
+$(L)/server-fork-accept_OBJS := $(L)/server-fork-accept.o \
+	$(L)/socket.o \
+	$(L)/socket_unix.o \
+	$(L)/socket_tcp.o
 
 # -- tests -- 
 
