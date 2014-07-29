@@ -41,6 +41,7 @@ Websockets_new()
 void
 Websockets_free(Websockets* ws)
 {
+	cx_free(ws->resource);
 	StringBuffer_free(ws->in);
 	StringBuffer_free(ws->fragments_buffer);
 	cx_free(ws);
@@ -147,6 +148,7 @@ Websockets_process_handshake(Connection* conn, Websockets* ws)
 	}
 	else
 	{
+		ws->resource = cx_strdup(handshake->resource);
 		StringBuffer* handshake_buffer = WebsocketsHandshake_create_reply(handshake);
 		WebsocketsHandshake_free(handshake);
 		CXFDBG(conn, "sending handshake response: \n%s", StringBuffer_value(handshake_buffer));
