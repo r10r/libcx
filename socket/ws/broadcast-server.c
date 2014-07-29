@@ -1,9 +1,10 @@
 #include <libcx/socket/server_unix.h>
 #include <libcx/socket/server_tcp.h>
+#include <libcx/list/concurrent_list.h>
 
 #include "ws_connection.h"
 
-static List* CONNECTIONS;
+static ConcurrentList* CONNECTIONS;
 
 static void
 print_usage(const char* message) __attribute__((noreturn));
@@ -44,7 +45,21 @@ on_start(Connection* conn)
 {
 	UNUSED(conn);
 	CXDBG(conn, "ON START");
-	conn->f_timer_start(conn, PING_INTERVAL);
+//	conn->f_timer_start(conn, PING_INTERVAL);
+}
+
+static int
+send_data(int index, Node* node, void* userdata)
+{
+	UNUSED(index);
+
+	Connection* c = (Connection*)node->data;
+	WebsocketsFrame* frame = (WebsocketsFrame*)userdata;
+
+	XFLOG("Sending response to connection[%d]", c->f_get_id(c));
+	StringBuffer* buffer = WebsocketsFrame_create_echo(frame);
+	c->f_send(c, Response_new(buffer), NULL);
+	return 1;
 }
 
 static void
@@ -59,16 +74,7 @@ on_request(Connection* conn, Request* request)
 	WebsocketsFrame* frame = (WebsocketsFrame*)Request_get_data(request);
 	Request_free(request);
 
-	Node* iter = CONNECTIONS->first;
-	Node* elem;
-	LIST_EACH(iter, elem)
-	{
-		Connection* c = (Connection*)elem->data;
-
-		XFLOG("Sending response to connection[%d]", c->f_get_id(c));
-		StringBuffer* buffer = WebsocketsFrame_create_echo(frame);
-		c->f_send(c, Response_new(buffer), NULL);
-	}
+	ConcurrentList_each(CONNECTIONS, send_data, frame);
 }
 
 static void
@@ -82,19 +88,19 @@ on_error(Connection* conn)
 static void
 on_close(Connection* conn)
 {
-	List_remove(CONNECTIONS, conn);
-	XFLOG("%ld active connections", CONNECTIONS->length);
+	ConcurrentList_remove(CONNECTIONS, conn);
+	XFLOG("%ld active connections", ((List*)CONNECTIONS)->length);
 }
 
 static void
 on_connect(Connection* conn)
 {
-	List_push(CONNECTIONS, conn);
-	XFLOG("%ld active connections", CONNECTIONS->length);
+	ConcurrentList_push(CONNECTIONS, conn);
+	XFLOG("%ld active connections", ((List*)CONNECTIONS)->length);
 }
 
-static ConnectionCallbacks ws_echo_handler = {
-	.on_connect                     = &on_connect,
+static ConnectionCallbacks ws_echo_callbacks = {
+	.on_connect     = &on_connect,
 	.on_start       = &on_start,
 	.on_request     = &on_request,
 	.on_error       = &on_error,
@@ -111,13 +117,14 @@ main(int argc, char** argv)
 	Server* server = NULL;
 	server = (Server*)TCPServer_new("0.0.0.0", (uint16_t)atoi(argv[1]));
 
-	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
-	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
-	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
-	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
+	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_callbacks));
+	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_callbacks));
+	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_callbacks));
+	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_callbacks));
 
-	CONNECTIONS = List_new();
-	CONNECTIONS->f_node_data_free = NULL;
+	CONNECTIONS = cx_alloc(sizeof(ConcurrentList));
+	ConcurrentList_init(CONNECTIONS);
+	CONNECTIONS->list.f_node_data_free = NULL;
 
 	Server_start(server);         // blocks
 }
