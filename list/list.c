@@ -287,6 +287,7 @@ List_detach(List* list, unsigned int index)
 
 	if (node)
 	{
+		XFDBG("detach node %u", index);
 		if (node->previous)
 			node->previous->next = node->next;
 		else
@@ -306,10 +307,30 @@ List_detach(List* list, unsigned int index)
 void
 List_delete(List* list, unsigned int index)
 {
+	XFDBG("remove node %u", index);
 	Node* node = List_detach(list, index);
 
 	if (node)
 		Node_free(node, list->f_node_data_free);
+}
+
+int
+List_remove(List* list, void* data)
+{
+	Node* iter = list->first;
+	Node* elem;
+	unsigned int index = 0;
+
+	LIST_EACH_WITH_INDEX(iter, elem, index)
+	{
+		if (elem->data == data)
+		{
+			XFDBG("found node to remove %u", index);
+			List_delete(list, index);
+			return 1;
+		}
+	}
+	return 0;
 }
 
 // add functions: filter,reduce,map actions (like ruby)

@@ -112,5 +112,8 @@ List_last(List* list);
 void*
 List_first(List* list);
 
+/* @return 1 when node was found and deleted, 0 else */
+int
+List_remove(List* list, void* data);
 
 #endif

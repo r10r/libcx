@@ -295,6 +295,30 @@ test_List_delete()
 	List_free(list);
 }
 
+static const char* const foo = "foo";
+static const char* const bar = "bar";
+static const char* const baz = "baz";
+
+static void
+test_List_remove()
+{
+	List* list = List_new();
+
+	list->f_node_data_free = NULL;
+
+	List_push(list, foo);
+	List_push(list, bar);
+	List_push(list, baz);
+
+	List_remove(list, bar);
+
+	TEST_ASSERT_EQUAL_STRING(baz, (const char*)List_pop(list));
+	TEST_ASSERT_EQUAL_STRING(foo, (const char*)List_pop(list));
+	TEST_ASSERT_NULL(List_pop(list));
+
+	List_free(list);
+}
+
 int
 main()
 {
@@ -312,5 +336,6 @@ main()
 	RUN(test_List_free_empty_list);
 	RUN(test_LIST_EACH_WITH_INDEX);
 	RUN(test_List_delete);
+	RUN(test_List_remove);
 	TEST_END
 }
