@@ -1,8 +1,6 @@
 #ifndef _CX_LIST_CONCURRENT_H
 #define _CX_LIST_CONCURRENT_H
 
-#ifdef _CX_LIST_CONCURRENT
-
 #include <pthread.h>
 #include <stdio.h>
 
@@ -91,9 +89,9 @@ typedef struct cx_list_concurrent_t
 	ptr = List_match_node((List*)list, key f_node_match); \
 	__RWLOCK_UNLOCK(list)
 
-#define ConcurrentList_each(list, f_node_iterator) \
+#define ConcurrentList_each(list, f_node_iterator, userdata) \
 	__RWLOCK_LOCK_READ(list) \
-	List_each((List*)list, f_node_iterator); \
+	List_each((List*)list, f_node_iterator, userdata); \
 	__RWLOCK_UNLOCK(list)
 
 #define ConcurrentList_get(list, index, ptr) \
@@ -111,5 +109,4 @@ typedef struct cx_list_concurrent_t
 	ptr = List_first((List*)list); \
 	__RWLOCK_UNLOCK(list)
 
-#endif
 #endif

@@ -1,6 +1,5 @@
 #include <libcx/base/test.h>
 
-#define _CX_LIST_CONCURRENT
 #include "concurrent_list.h"
 
 static const char* const foo = "foo";

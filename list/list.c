@@ -125,14 +125,14 @@ List_match_node(List* list, const void* key, F_NodeMatch* f_node_match)
 }
 
 void
-List_each(List* list, F_NodeIterator* f_node_iterator)
+List_each(List* list, F_NodeIterator* f_node_iterator, void* userdata)
 {
 	if (list->length == 0)
 		return;
 	Node* node = list->first;
 
 	int index = 0;
-	while (node && f_node_iterator(index, node))
+	while (node && f_node_iterator(index, node, userdata))
 	{
 		node = node->next;
 		index++;

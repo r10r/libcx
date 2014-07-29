@@ -60,10 +60,11 @@ match_divide_by_three(Node* node, const void* keydata)
 }
 
 static int
-node_iterator(int index, Node* node)
+node_iterator(int index, Node* node, void* userdata)
 {
 	UNUSED(index);
 	UNUSED(node);
+	UNUSED(userdata);
 	; // noop
 	return 1;
 }
@@ -86,7 +87,7 @@ start_consumer(void* data)
 	{
 		int match_status = Queue_match_node(consumer->queue, match_divide_by_three, (const void*)&key, (void**)&value);
 		/* simply iterate over all elements */
-		(void)Queue_each(consumer->queue, &node_iterator);
+		(void)Queue_each(consumer->queue, &node_iterator, NULL);
 
 		if (match_status == 0)
 			continue;

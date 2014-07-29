@@ -211,13 +211,13 @@ Queue_add(Queue* queue, void* data)
 }
 
 int
-Queue_each(Queue* queue, F_NodeIterator* f_node_iterator)
+Queue_each(Queue* queue, F_NodeIterator* f_node_iterator, void* userdata)
 {
 	if (!Queue_active(queue))
 		return -1;
 
 	__RWLOCK_LOCK_READ(&queue->rwlock)
-	List_each((List*)queue, f_node_iterator);
+	List_each((List*)queue, f_node_iterator, userdata);
 	__RWLOCK_UNLOCK(&queue->rwlock)
 	return 1;
 }

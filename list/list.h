@@ -15,7 +15,7 @@ typedef void F_NodeDataFree (void* data);
  *  1 to continue iteration
  *  0 to stop iteration
  */
-typedef int F_NodeIterator (int index, Node* node);
+typedef int F_NodeIterator (int index, Node* node, void* userdata);
 
 struct cx_node_t
 {
@@ -72,7 +72,7 @@ void*
 List_match_node(List* list, const void* key, F_NodeMatch* f_node_match);
 
 void
-List_each(List* list, F_NodeIterator* f_node_iterator);
+List_each(List* list, F_NodeIterator* f_node_iterator, void* userdata);
 
 void*
 List_shift(List* list);

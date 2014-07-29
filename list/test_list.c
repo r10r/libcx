@@ -71,8 +71,10 @@ test_List_match()
 }
 
 static int
-test_iterator(int index, Node* node)
+test_iterator(int index, Node* node, void* userdata)
 {
+	UNUSED(userdata);
+
 	char buf[16];
 
 	sprintf(buf, "node %d", index + 1);
@@ -85,13 +87,13 @@ test_List_each()
 {
 	List* list = List_new();
 
-	List_each(list, test_iterator); /* test empty list */
+	List_each(list, test_iterator, NULL); /* test empty list */
 
 	List_push(list, cx_strdup("node 1"));
 	List_push(list, cx_strdup("node 2"));
 	List_push(list, cx_strdup("node 3"));
 
-	List_each(list, test_iterator);
+	List_each(list, test_iterator, NULL);
 
 	List_free(list);
 }
