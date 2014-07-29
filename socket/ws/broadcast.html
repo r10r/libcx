@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <script>
+
+        var send_at;
+        var received_at;
+
+        var sock = new WebSocket("ws://localhost:8088");
+        
+        var send_message = function send_message(json)
+        {
+            send_at = new Date().getTime()
+            sock.send(json);
+        }
+        
+        sock.onmessage = function(evt) {
+            received_at = new Date().getTime();
+            console.log(received_at - send_at);
+            console.log(evt.data);
+        };
+
+        var request = {
+            "jsonrpc": "2.0",
+            "id": generateUUID(),
+            "method": "get_person"
+        };
+        sock.onopen = function(evt) {
+            var json = JSON.stringify(request)
+            send_message(json);
+        };
+
+        function rpc_send(event) {
+            if (event.keyCode == 13) {
+                var elem = document.getElementById('request');
+                var request = elem.value;
+                send_message(request);
+            }
+        }
+        </script>
+    </head>
+    <body>
+        <input type="text" id="request" style="width:400px;" onkeypress="rpc_send(event)"></input>
+    </body>
+</html>
+

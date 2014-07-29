@@ -3,6 +3,8 @@
 
 #include "ws_connection.h"
 
+static List* CONNECTIONS;
+
 static void
 print_usage(const char* message) __attribute__((noreturn));
 
@@ -56,8 +58,17 @@ on_request(Connection* conn, Request* request)
 	CXFDBG(conn, "ON REQUEST %s", ws->resource);
 	WebsocketsFrame* frame = (WebsocketsFrame*)Request_get_data(request);
 	Request_free(request);
-	StringBuffer* buffer = WebsocketsFrame_create_echo(frame);
-	conn->f_send(conn, Response_new(buffer), NULL);
+
+	Node* iter = CONNECTIONS->first;
+	Node* elem;
+	LIST_EACH(iter, elem)
+	{
+		Connection* c = (Connection*)elem->data;
+
+		XFLOG("Sending response to connection[%d]", c->f_get_id(c));
+		StringBuffer* buffer = WebsocketsFrame_create_echo(frame);
+		c->f_send(c, Response_new(buffer), NULL);
+	}
 }
 
 static void
@@ -71,11 +82,19 @@ on_error(Connection* conn)
 static void
 on_close(Connection* conn)
 {
-	UNUSED(conn);
-	CXDBG(conn, "ON CLOSE");
+	List_remove(CONNECTIONS, conn);
+	XFLOG("%ld active connections", CONNECTIONS->length);
+}
+
+static void
+on_connect(Connection* conn)
+{
+	List_push(CONNECTIONS, conn);
+	XFLOG("%ld active connections", CONNECTIONS->length);
 }
 
 static ConnectionCallbacks ws_echo_handler = {
+	.on_connect                     = &on_connect,
 	.on_start       = &on_start,
 	.on_request     = &on_request,
 	.on_error       = &on_error,
@@ -96,6 +115,9 @@ main(int argc, char** argv)
 	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
 	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
 	List_push(server->workers, ConnectionWorker_new(WebsocketsConnection_new, &ws_echo_handler));
+
+	CONNECTIONS = List_new();
+	CONNECTIONS->f_node_data_free = NULL;
 
 	Server_start(server);         // blocks
 }
