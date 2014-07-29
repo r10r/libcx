@@ -16,13 +16,13 @@ server_start(Server* server)
 	XDBG("server event start");
 
 	TCPSocket* socket = (TCPSocket*)server->socket;
+	XFLOG("Using socket: %s:%d", socket->ip, socket->port);
 	if (Socket_serve((Socket*)socket) != SOCKET_LISTEN)
 	{
 		Socket_print_status((Socket*)socket);
 		exit(1);
 	}
 
-	XFLOG("Listening to socket: %s:%d", socket->ip, socket->port);
 	// TODO start worker supervisor
 	ev_timer* timer = cx_alloc(sizeof(ev_timer));
 	ev_timer_init(timer, timer_cb, 0., 15.);

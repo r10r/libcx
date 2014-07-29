@@ -18,6 +18,7 @@ server_start(Server* server)
 	XDBG("server event start");
 	/* unlink existing socket */
 	unlink(socket->path);
+	XFLOG("Using socket: %s", socket->path);
 	if (Socket_serve((Socket*)socket) != SOCKET_LISTEN)
 	{
 		Socket_print_status((Socket*)socket);
