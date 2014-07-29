@@ -2,6 +2,8 @@
 #define _CX_SOCKET_H
 
 #include <sys/socket.h> /* guess what ;) */
+#include <stdbool.h>
+#include <fcntl.h>      /* fcntl */
 
 #include <libcx/base/base.h>
 
@@ -36,6 +38,7 @@ typedef struct cx_socket_t
 	struct sockaddr* address;
 	socklen_t address_size;
 	int backlog;
+	bool blocking;
 } Socket;
 
 #define Socket_new \

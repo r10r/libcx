@@ -69,6 +69,9 @@ Socket_connect(Socket* sock)
 {
 	int ret = connect(sock->fd, sock->address, sock->address_size);
 
+	if (!sock->blocking)
+		unblock(sock->fd);
+
 	if (ret == 0)
 		sock->status = SOCKET_CONNECTED;
 	else
@@ -107,6 +110,9 @@ SocketStatus
 Socket_listen(Socket* sock)
 {
 	int ret = listen(sock->fd, sock->backlog);
+
+	if (!sock->blocking)
+		unblock(sock->fd);
 
 	if (ret == 0)
 		sock->status = SOCKET_LISTEN;

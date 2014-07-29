@@ -271,7 +271,12 @@ connection_watcher(ev_loop* loop, ev_io* w, int revents)
 	int client_fd = accept(connection_worker->server_fd, NULL, NULL);
 	if (client_fd == -1)
 	{
-		XFERRNO("worker[%lu] failed to accept connection", worker->id);
+		/* When multiple (connection worker) threads accept on the same server socket
+		 * one thread will get the connection and the others receive EAGAIN */
+		if (errno != EAGAIN)
+		{
+			XFERRNO("worker[%lu] failed to accept connection", worker->id);
+		}
 	}
 	else
 	{
