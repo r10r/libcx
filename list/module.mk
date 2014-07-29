@@ -4,6 +4,7 @@ L := $(LOCAL_DIR)
 #CFLAGS += -D_LIST_DISABLE_LOCKING
 
 TESTS += $(L)/test_list \
+	$(L)/test_concurrent_list \
 	$(L)/test_queue \
 	$(L)/test_queue2
 
@@ -17,6 +18,11 @@ TESTS += $(L)/test_list \
 $(L)/test_list_FLAGS := -Wno-incompatible-pointer-types-discards-qualifiers
 $(L)/test_list_OBJS := $(TEST_OBJS) \
 	$(L)/test_list.o \
+	$(L)/list.o
+
+$(L)/test_concurrent_list_FLAGS := -Wno-incompatible-pointer-types-discards-qualifiers
+$(L)/test_concurrent_list_OBJS := $(TEST_OBJS) \
+	$(L)/test_concurrent_list.o \
 	$(L)/list.o
 
 $(L)/test_queue_FLAGS := -lpthread

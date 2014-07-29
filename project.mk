@@ -40,7 +40,7 @@ CFLAGS += -I$(LIBCX_DIR)/..
 ifeq ($(profile),release)
 	CFLAGS += -O3
 else ifeq ($(profile),debug)
-	CFLAGS += -O0 -g -fno-inline --coverage -D_CX_DEBUG -D_CX_DEBUG_MEM
+	CFLAGS += -O0 -g -fno-inline --coverage -D_CX_DEBUG
 	ifeq ($(OS),Darwin)
 		CFLAGS += -gdwarf-2
 		# when clang is installed through homebrew

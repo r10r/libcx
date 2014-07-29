@@ -9,3 +9,4 @@ string/test_util
 list/test_queue2
 socket/server-simple-accept
 socket/server-fork-accept
+list/test_concurrent_list
