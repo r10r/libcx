@@ -58,15 +58,24 @@ test_json_integer_to_params()
 
 	Params_from_json(&params, json);
 
-	TEST_ASSERT_EQUAL_STRING("int_val", params[0].name);
-	TEST_ASSERT_EQUAL_INT(-1, params[0].position);
-	TEST_ASSERT_EQUAL(RPC_TYPE_INTEGER, params[0].value.type);
-	TEST_ASSERT_EQUAL_INT(INT_MAX, params[0].value.data.integer);
+	/* check order */
+	int int_val_pos = 0;
+	int long_val_pos = 1;
+	if (strcmp("long_val", params[0].name) == 0)
+	{
+		int_val_pos = 1;
+		long_val_pos = 0;
+	}
 
-	TEST_ASSERT_EQUAL_STRING("long_val", params[1].name);
-	TEST_ASSERT_EQUAL_INT(-1, params[1].position);
-	TEST_ASSERT_EQUAL(RPC_TYPE_LONGLONG, params[1].value.type);
-	TEST_ASSERT_EQUAL_INT((long long)INT_MAX + 1, params[1].value.data.longlong);
+	TEST_ASSERT_EQUAL_STRING("int_val", params[int_val_pos].name);
+	TEST_ASSERT_EQUAL_INT(-1, params[int_val_pos].position);
+	TEST_ASSERT_EQUAL(RPC_TYPE_INTEGER, params[int_val_pos].value.type);
+	TEST_ASSERT_EQUAL_INT(INT_MAX, params[int_val_pos].value.data.integer);
+
+	TEST_ASSERT_EQUAL_STRING("long_val", params[long_val_pos].name);
+	TEST_ASSERT_EQUAL_INT(-1, params[long_val_pos].position);
+	TEST_ASSERT_EQUAL(RPC_TYPE_LONGLONG, params[long_val_pos].value.type);
+	TEST_ASSERT_EQUAL_INT((long long)INT_MAX + 1, params[long_val_pos].value.data.longlong);
 
 	cx_free(params);
 	json_decref(json);
