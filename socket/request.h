@@ -64,4 +64,22 @@ Request_get_userdata(Request* request);
 #define Request_log(request) \
 	XFDBG("Request[%s] duration:%f msec", request->id, timeval_diff(request->started_at, request->finished_at))
 
+#define CCXLOG(_req, _msg) \
+	XFLOG("request[%s] - " _msg, ((Request*)_req)->id)
+
+#define CCXFLOG(_req, _fmt, ...) \
+	XFLOG("request[%s] - " _fmt, ((Request*)_req)->id, __VA_ARGS__)
+
+#define CCXDBG(_req, _msg) \
+	XFDBG("request[%s] - " _msg, ((Request*)_req)->id)
+
+#define CCXFDBG(_req, _fmt, ...) \
+	XFDBG("request[%s] - " _fmt, ((Request*)_req)->id, __VA_ARGS__)
+
+#define CCXERR(_req, _msg) \
+	XFERR("request[%s] - " _msg, ((Request*)_req)->id)
+
+#define CCXFERR(_req, _fmt, ...) \
+	XFERR("request[%s] - " _fmt, ((Request*)_req)->id, __VA_ARGS__)
+
 #endif

@@ -62,14 +62,18 @@ Server_start(Server* server)
 	ev_init(shutdown_w, shutdown_watcher);
 
 	/* start workers */
+	unsigned int num_workers = (unsigned int)server->workers->length;
+
 	unsigned int i;
-	for (i = 0; i < (unsigned int)server->workers->length; i++)
+	for (i = 0; i < num_workers; i++)
 	{
 		Worker* worker = (Worker*)List_get(server->workers, i);
 		worker->id = i;
 		worker->server = server;
 		Worker_start(worker);
 	}
+	XFLOG("%d workers started.", num_workers);
+
 
 	/* blocks until SIGINT handler fires and initiates the shutdown process */
 	ev_run(server->loop, 0);

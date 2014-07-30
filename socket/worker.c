@@ -50,11 +50,11 @@ _Worker_run(void* data)
 {
 	Worker* worker = (Worker*)data;
 
-	XFLOG("Worker[%lu] started", worker->id);
+	XFDBG("Worker[%lu] started", worker->id);
 	if (worker->f_handler)
 		worker->f_handler(worker);
 	else
-		XFDBG("Worker[%lu] exiting no handler", worker->id);
+		XFWARN("Worker[%lu] exiting no handler", worker->id);
 	return NULL;
 }
 
