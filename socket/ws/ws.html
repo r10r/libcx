@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <script>
+		var received = 0;
+		var sock = new WebSocket("ws://localhost:8088/echo");
+		sock.onmessage = function(evt) {
+			console.log("<-- " + received++ + " " + evt.data); 
+		};
+		sock.onopen = function(evt) {
+			for(var i = 0; i < 100; i++) 
+				sock.send("foobar");
+		};
+        </script>
+    </head>
+    <body>
+    </body>
+</html>
+

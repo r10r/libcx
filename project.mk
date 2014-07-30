@@ -16,7 +16,8 @@ MODULES := base \
 	list \
 	umtp \
 	socket \
-	rpc
+	rpc \
+	socket/ws
 
 # TODO ignore parameter/functions/values/variables with a macro
 # #define UNUSED(x) (void)(x)
@@ -37,6 +38,7 @@ profile ?= debug
 CFLAGS += -I$(LIBCX_DIR)/..
 
 # TODO Check whether autoconf is of use here ?
+# TODO add profile test (with -D_CX_DEBUG_MEM)
 
 ifeq ($(profile),release)
 	CFLAGS += -O3
