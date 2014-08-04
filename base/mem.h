@@ -8,7 +8,7 @@
 #ifndef _CX_DEBUG_MEM
 
 #define cx_alloc(size) calloc(1, size)
-#define cx_free(ptr) free(ptr)
+#define cx_free(ptr) free((void*)(ptr))
 #define cx_strdup(s) strdup(s)
 #define cx_strndup(s, l) strndup(s, l)
 
@@ -70,7 +70,7 @@ cx_strndup_dbg(const char* s, size_t length, const char* file, int line, const c
 	cx_calloc_dbg(1, eltsize, __FILE__, __LINE__, __func__)
 
 #define cx_free(ptr) \
-	cx_free_dbg(ptr, __FILE__, __LINE__, __func__)
+	cx_free_dbg((void*)(ptr), __FILE__, __LINE__, __func__)
 
 #define cx_strdup(s) \
 	cx_strdup_dbg(s, __FILE__, __LINE__, __func__)
