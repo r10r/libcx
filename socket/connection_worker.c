@@ -3,7 +3,7 @@
 #define WORKERDATA(conn) \
 	((ConnectionState*)conn->state)
 
-typedef struct cx_connection_worker_data_t
+typedef struct cx_connection_state_t
 {
 	int fd;
 	ConnectionWorker* worker;
@@ -14,8 +14,6 @@ typedef struct cx_connection_worker_data_t
 	ev_async notify_send_data_watcher;
 	ev_prepare close_connection_watcher;
 	ev_timer timer_watcher;
-
-	void* userdata;
 
 	Response* response; /* response currently send progress */
 } ConnectionState;
@@ -89,7 +87,6 @@ static inline void
 start_timer(Connection* conn, unsigned millis)
 {
 	ConnectionState* state = WORKERDATA(conn);
-
 
 	if (state->connection->callbacks->on_timeout)
 	{

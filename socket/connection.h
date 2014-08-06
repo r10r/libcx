@@ -29,7 +29,7 @@ typedef void* F_GetData (Connection* conn);
 typedef void F_SetData (Connection* conn, void* data);
 typedef int F_GetId (Connection* conn);
 typedef void F_FreeState (void* state);
-typedef void F_ConnectionTimerStart (Connection* conn, unsigned interval_millis);
+typedef void F_ConnectionTimerStart (Connection* conn, unsigned interval_msec);
 
 /* protocol callbacks */
 struct cx_connection_callbacks_t
@@ -38,7 +38,7 @@ struct cx_connection_callbacks_t
 	F_ConnectionCallback* on_close;         /* called before connection is closed (e.g to release resources) */
 	F_ConnectionCallback* on_error;
 	F_ConnectionCallback* on_timeout;
-	F_ConnectionCallback* on_start;                 /* called when PROTOCOL (e.g websockets) connection is established */
+	F_ConnectionCallback* on_start;         /* called when PROTOCOL (e.g websockets) connection is established */
 
 	F_RequestCallback* on_request;
 };
