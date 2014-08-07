@@ -40,6 +40,9 @@ struct cx_list_t
 #define LIST_EACH_WITH_INDEX(iter, elem, index) \
 	EACH_WITH_INDEX(iter, elem, next, index)
 
+#define LIST_CONTAINS(list, value) \
+	(List_match_get_node(list, value, NULL) > -1)
+
 Node*
 Node_new(void);
 
@@ -66,11 +69,11 @@ List_append(List* list, void* data);
 long
 List_push(List* list, void* data);
 
-Node*
-List_match(List* list, const void* key);
+long
+List_match_get_node(List* list, const void* key, Node** node_ptr);
 
-void*
-List_match_node(List* list, const void* key);
+long
+List_match_get_data(List* list, const void* key, void** data_ptr);
 
 void
 List_each(List* list, F_NodeIterator* f_node_iterator, void* userdata);

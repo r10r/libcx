@@ -29,28 +29,28 @@ void
 Queue_destroy(Queue* queue);
 
 int
-Queue_shift(Queue* queue, void** data);
+Queue_shift(Queue* queue, void** data_ptr);
 
 int
-Queue_get(Queue* queue, void** data);
+Queue_get(Queue* queue, void** data_ptr);
 
 int
-Queue_get_wait(Queue* queue, void** data);
+Queue_get_wait(Queue* queue, void** data_ptr);
 
 int
-Queue_get_timedwait(Queue* queue, void** data, int wait_nanos);
+Queue_get_timedwait(Queue* queue, void** data_ptr, int wait_nanos);
 
 /* 0 when the item was queued */
 int
-Queue_add(Queue* queue, void* data);
+Queue_add(Queue* queue, void* data_ptr);
 
 int
-Queue_push(Queue* queue, void* data);
+Queue_push(Queue* queue, void* data_ptr);
 
 int
 Queue_each(Queue* queue, F_NodeIterator* f_node_iterator, void* userdata);
 
-int
-Queue_match_node(Queue* queue, const void* key, void** data);
+long
+Queue_match_get_data(Queue* queue, const void* key, void** data_ptr);
 
 #endif

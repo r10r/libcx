@@ -1,5 +1,9 @@
 #include "queue.h"
 
+/*
+ * If return value is -1 check whether queue is active !!!
+ */
+
 #define __RWLOCK_LOCK_READ(rwlock) \
 	{ cx_assert(pthread_rwlock_rdlock(rwlock) == 0);
 
@@ -222,26 +226,19 @@ Queue_each(Queue* queue, F_NodeIterator* f_node_iterator, void* userdata)
 	return 1;
 }
 
-int
-Queue_match_node(Queue* queue, const void* key, void** data)
+long
+Queue_match_get_data(Queue* queue, const void* key, void** data)
 {
 	if (!Queue_active(queue))
 		return -1;
 
-	int item_matched = -1;
+	long item_idx = -1;
 
 	__RWLOCK_LOCK_READ(&queue->rwlock)
-	void* node_data = List_match_node((List*)queue, key);
-	if (node_data)
-	{
-		*data = node_data;
-		item_matched = 1;
-	}
-	else
-		item_matched = 0;
+	item_idx = List_match_get_data((List*)queue, key, data);
 	__RWLOCK_UNLOCK(&queue->rwlock)
 
-	return item_matched;
+	return item_idx;
 }
 
 //int

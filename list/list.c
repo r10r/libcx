@@ -47,7 +47,6 @@ List_new()
 void
 List_free_members(List* list)
 {
-// FIXME use iterator to free nodes instead ?
 	Node* next = list->first;
 
 	while (next)
@@ -103,32 +102,44 @@ List_push(List* list, void* data)
 	return _List_push(list, data);
 }
 
-Node*
-List_match(List* list, const void* key)
+/* @return the node index or -1 if the node was not found
+ * @argument ptr points to the node if return value is > -1
+ */
+long
+List_match_get_node(List* list, const void* key, Node** node_ptr)
 {
 	if (list->length == 0)
-		return NULL;
+		return -1;
 
+	long idx = 0;
 	Node* node = list->first;
 	while (node)
 	{
 		if (list->f_node_data_compare(node, key) == 0)
-			return node;
+		{
+			if (node_ptr)
+				*node_ptr = node;
+			return idx;
+		}
 		else
+		{
 			node = node->next;
+			idx++;
+		}
 	}
-	return NULL;
+	return -1;
 }
 
-void*
-List_match_node(List* list, const void* key)
+long
+List_match_get_data(List* list, const void* key, void** data_ptr)
 {
-	Node* node = List_match(list, key);
+	Node* node = NULL;
+	long node_idx = List_match_get_node(list, key, &node);
 
 	if (node)
-		return node->data;
-	else
-		return NULL;
+		*data_ptr = node->data;
+
+	return node_idx;
 }
 
 void
@@ -175,6 +186,7 @@ List_pop(List* list)
 {
 	if (list->length == 0)
 		return NULL;
+
 	Node* node = list->last;
 	void* data = NULL;
 	if (node)

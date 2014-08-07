@@ -85,22 +85,16 @@ start_consumer(void* data)
 
 	while (true)
 	{
-		int match_status = Queue_match_node(consumer->queue, (const void*)&key, (void**)&value);
+		long node_idx = Queue_match_get_data(consumer->queue, (const void*)&key, (void**)&value);
 		/* simply iterate over all elements */
 		(void)Queue_each(consumer->queue, &node_iterator, NULL);
 
-		if (match_status == 0)
+		if (node_idx == -1)
 			continue;
-
-		if (match_status == 1)
+		else
 		{
 			XFDBG("Consumer[%d] matched value %d", consumer->id, *value);
 			consumer->matched++;
-			break;
-		}
-		else if (match_status == -1)
-		{
-			XFDBG("Consumer[%d] - queue inactive", consumer->id);
 			break;
 		}
 	}

@@ -58,15 +58,25 @@ test_List_match()
 
 	list->f_node_data_compare = compare_with_strcmp;
 
-	TEST_ASSERT_NULL(List_match(list, "node 1"));
+	Node* node = NULL;
+
+	TEST_ASSERT_EQUAL_INT(-1, List_match_get_node(list, "node 1", &node));
+	TEST_ASSERT_NULL(node);
 
 	List_push(list, cx_strdup("node 1"));
 	List_push(list, cx_strdup("node 2"));
 	List_push(list, cx_strdup("node 3"));
 
-	TEST_ASSERT_NULL(List_match(list, "node"));
+	TEST_ASSERT_EQUAL_INT(-1, List_match_get_node(list, "node", &node));
+	TEST_ASSERT_NULL(node);
 
-	TEST_ASSERT_EQUAL_STRING("node 2", List_match(list, "node 2")->data);
+	TEST_ASSERT_EQUAL(1, List_match_get_node(list, "node 2", &node));
+	TEST_ASSERT_EQUAL_STRING("node 2", node->data);
+
+	TEST_ASSERT_TRUE(LIST_CONTAINS(list, "node 1"));
+	TEST_ASSERT_TRUE(LIST_CONTAINS(list, "node 2"));
+	TEST_ASSERT_TRUE(LIST_CONTAINS(list, "node 3"));
+	TEST_ASSERT_FALSE(LIST_CONTAINS(list, "node"));
 
 	List_free(list);
 }
