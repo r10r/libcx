@@ -8,7 +8,7 @@
 typedef struct cx_node_t Node;
 typedef struct cx_list_t List;
 
-typedef long F_NodeDataCompare (Node* node, const void* key);
+typedef int F_NodeDataCompare (const char* node_data, const char* key);
 typedef void F_NodeDataFree (void* data);
 
 /* @return
@@ -21,7 +21,7 @@ struct cx_node_t
 {
 	Node* next;
 	Node* previous;
-	void* data;
+	char* data;
 };
 
 struct cx_list_t
@@ -70,10 +70,10 @@ long
 List_push(List* list, void* data);
 
 long
-List_match_get_node(List* list, const void* key, Node** node_ptr);
+List_match_get_node(List* list, const char* key, Node** node_ptr);
 
 long
-List_match_get_data(List* list, const void* key, void** data_ptr);
+List_match_get_data(List* list, const char* key, void** data_ptr);
 
 void
 List_each(List* list, F_NodeIterator* f_node_iterator, void* userdata);

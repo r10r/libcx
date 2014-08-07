@@ -1,12 +1,6 @@
 #include <libcx/base/test.h>
 #include "list.h"
 
-static long
-compare_with_strcmp(Node* node, const void* data)
-{
-	return strcmp((const char*)data, node->data);
-}
-
 static void
 test_List_append()
 {
@@ -56,7 +50,7 @@ test_List_match()
 {
 	List* list = List_new();
 
-	list->f_node_data_compare = compare_with_strcmp;
+	list->f_node_data_compare = strcmp;
 
 	Node* node = NULL;
 

@@ -44,10 +44,10 @@ Consumer_free(Consumer* consumer)
 	cx_free(consumer);
 }
 
-static long
-match_random_number(Node* node, const void* keydata)
+static int
+match_random_number(const char* data, const char* keydata)
 {
-	int node_number = *((int*)(node->data));
+	int node_number = *((int*)(data));
 	int random_number = *((const int*)keydata);
 
 	if (node_number == random_number)

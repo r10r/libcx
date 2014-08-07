@@ -22,10 +22,10 @@ Node_data_free_simple(void* data)
 	cx_free(data);
 }
 
-static inline long
-Node_data_compare_address(Node* node, const void* data)
+static inline int
+Node_data_compare_address(const char* node_data, const char* key)
 {
-	return (char*)data - (char*)node->data;
+	return (int)(key - node_data);
 }
 
 void
@@ -106,7 +106,7 @@ List_push(List* list, void* data)
  * @argument ptr points to the node if return value is > -1
  */
 long
-List_match_get_node(List* list, const void* key, Node** node_ptr)
+List_match_get_node(List* list, const char* key, Node** node_ptr)
 {
 	if (list->length == 0)
 		return -1;
@@ -115,7 +115,7 @@ List_match_get_node(List* list, const void* key, Node** node_ptr)
 	Node* node = list->first;
 	while (node)
 	{
-		if (list->f_node_data_compare(node, key) == 0)
+		if (list->f_node_data_compare(node->data, key) == 0)
 		{
 			if (node_ptr)
 				*node_ptr = node;
@@ -131,7 +131,7 @@ List_match_get_node(List* list, const void* key, Node** node_ptr)
 }
 
 long
-List_match_get_data(List* list, const void* key, void** data_ptr)
+List_match_get_data(List* list, const char* key, void** data_ptr)
 {
 	Node* node = NULL;
 	long node_idx = List_match_get_node(list, key, &node);
