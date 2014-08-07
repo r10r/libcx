@@ -223,7 +223,7 @@ Queue_each(Queue* queue, F_NodeIterator* f_node_iterator, void* userdata)
 }
 
 int
-Queue_match_node(Queue* queue, F_NodeMatch* f_node_match, const void* key, void** data)
+Queue_match_node(Queue* queue, const void* key, void** data)
 {
 	if (!Queue_active(queue))
 		return -1;
@@ -231,7 +231,7 @@ Queue_match_node(Queue* queue, F_NodeMatch* f_node_match, const void* key, void*
 	int item_matched = -1;
 
 	__RWLOCK_LOCK_READ(&queue->rwlock)
-	void* node_data = List_match_node((List*)queue, key, f_node_match);
+	void* node_data = List_match_node((List*)queue, key);
 	if (node_data)
 	{
 		*data = node_data;

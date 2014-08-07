@@ -44,15 +44,15 @@ Consumer_free(Consumer* consumer)
 	cx_free(consumer);
 }
 
-static int
-match_divide_by_three(Node* node, const void* keydata)
+static long
+match_random_number(Node* node, const void* keydata)
 {
-	int value = *((int*)(node->data));
-	int key = *((const int*)keydata);
+	int node_number = *((int*)(node->data));
+	int random_number = *((const int*)keydata);
 
-	if (value == key)
+	if (node_number == random_number)
 	{
-		XFDBG("match expected:%d, actual:%d", key, value);
+		XFDBG("match expected:%d, actual:%d", random_number, node_number);
 		return 0;
 	}
 	else
@@ -85,7 +85,7 @@ start_consumer(void* data)
 
 	while (true)
 	{
-		int match_status = Queue_match_node(consumer->queue, match_divide_by_three, (const void*)&key, (void**)&value);
+		int match_status = Queue_match_node(consumer->queue, (const void*)&key, (void**)&value);
 		/* simply iterate over all elements */
 		(void)Queue_each(consumer->queue, &node_iterator, NULL);
 
@@ -121,6 +121,8 @@ static void
 test_Queue()
 {
 	Queue* queue = Queue_new();
+
+	((List*)queue)->f_node_data_compare = match_random_number;
 
 	Consumer* consumers[NTHREADS_TOTAL];
 

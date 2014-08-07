@@ -17,15 +17,22 @@ Node_free(Node* node, F_NodeDataFree* f_node_data_free)
 }
 
 static inline void
-Node_free_data(void* data)
+Node_data_free_simple(void* data)
 {
 	cx_free(data);
+}
+
+static inline long
+Node_data_compare_address(Node* node, const void* data)
+{
+	return (char*)data - (char*)node->data;
 }
 
 void
 List_init(List* list)
 {
-	list->f_node_data_free = Node_free_data;
+	list->f_node_data_free = &Node_data_free_simple;
+	list->f_node_data_compare = &Node_data_compare_address;
 }
 
 List*
@@ -97,7 +104,7 @@ List_push(List* list, void* data)
 }
 
 Node*
-List_match(List* list, const void* key, F_NodeMatch* f_node_match)
+List_match(List* list, const void* key)
 {
 	if (list->length == 0)
 		return NULL;
@@ -105,7 +112,7 @@ List_match(List* list, const void* key, F_NodeMatch* f_node_match)
 	Node* node = list->first;
 	while (node)
 	{
-		if (f_node_match(node, key) == 0)
+		if (list->f_node_data_compare(node, key) == 0)
 			return node;
 		else
 			node = node->next;
@@ -114,9 +121,9 @@ List_match(List* list, const void* key, F_NodeMatch* f_node_match)
 }
 
 void*
-List_match_node(List* list, const void* key, F_NodeMatch* f_node_match)
+List_match_node(List* list, const void* key)
 {
-	Node* node = List_match(list, key, f_node_match);
+	Node* node = List_match(list, key);
 
 	if (node)
 		return node->data;

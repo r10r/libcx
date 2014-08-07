@@ -1,9 +1,8 @@
 #include <libcx/base/test.h>
 #include "list.h"
 
-static
-int
-data_strcmp(Node* node, const void* data)
+static long
+compare_with_strcmp(Node* node, const void* data)
 {
 	return strcmp((const char*)data, node->data);
 }
@@ -57,15 +56,17 @@ test_List_match()
 {
 	List* list = List_new();
 
-	TEST_ASSERT_NULL(List_match(list, "node 1", data_strcmp));
+	list->f_node_data_compare = compare_with_strcmp;
+
+	TEST_ASSERT_NULL(List_match(list, "node 1"));
 
 	List_push(list, cx_strdup("node 1"));
 	List_push(list, cx_strdup("node 2"));
 	List_push(list, cx_strdup("node 3"));
 
-	TEST_ASSERT_NULL(List_match(list, "node", data_strcmp));
+	TEST_ASSERT_NULL(List_match(list, "node"));
 
-	TEST_ASSERT_EQUAL_STRING("node 2", List_match(list, "node 2", data_strcmp)->data);
+	TEST_ASSERT_EQUAL_STRING("node 2", List_match(list, "node 2")->data);
 
 	List_free(list);
 }
