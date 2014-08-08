@@ -59,10 +59,10 @@
 	(type*)memcpy(cx_alloc(sizeof(type)), obj, sizeof(type))
 
 #define EACH(iter, elem, next) \
-	for (; iter && (elem = iter); iter = (iter)->next)
+	for (elem = NULL; iter && (elem = iter); iter = (iter)->next)
 
 #define EACH_WITH_INDEX(iter, elem, next, index) \
-	for (; iter && (elem = iter); iter = (iter)->next, index++)
+	for (elem = NULL; iter && (elem = iter); iter = (iter)->next, index++)
 
 /* for safely printing NULL values */
 #define NULLS(val) \
