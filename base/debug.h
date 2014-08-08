@@ -18,7 +18,9 @@
 #define cx_printf(format, ...) \
 	{ flockfile(stderr); fprintf(stderr, format, __VA_ARGS__); funlockfile(stderr); }
 
-#ifdef _MULTI_THREADED
+#ifdef _CX_MULTI_THREADED
+#include <pthread.h>
+
 #define cx_log(format, ...) \
 	{ flockfile(stderr); fprintf(stderr, "thread[%d] " format "\n", (int)pthread_self(), __VA_ARGS__); funlockfile(stderr); }
 #else
